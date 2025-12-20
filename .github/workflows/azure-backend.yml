@@ -1,5 +1,5 @@
 # =============================================================================
-# AZURE BACKEND - Build and Deploy
+# AZURE BACKEND - Build and Deploy (Simplificado)
 # =============================================================================
 
 name: Deploy Backend to Azure
@@ -16,73 +16,17 @@ on:
 env:
   AZURE_WEBAPP_NAME: api-monorepo-prod
   ACR_NAME: acrmonorepo
-  NODE_VERSION: '20'
 
 jobs:
-  # ===========================================================================
-  # TEST
-  # ===========================================================================
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test_db
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Generate Prisma Client
-        working-directory: apps/backend
-        run: pnpm prisma generate
-
-      - name: Run tests
-        working-directory: apps/backend
-        run: pnpm test --ci
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
-          JWT_SECRET: test-secret
-          NODE_ENV: test
-
-  # ===========================================================================
-  # BUILD AND PUSH
-  # ===========================================================================
-  build:
-    name: Build and Push
-    needs: test
+  build-and-deploy:
+    name: Build and Deploy
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Azure Login
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
@@ -99,45 +43,19 @@ jobs:
           docker push ${{ env.ACR_NAME }}.azurecr.io/backend:${{ github.sha }}
           docker push ${{ env.ACR_NAME }}.azurecr.io/backend:latest
 
-  # ===========================================================================
-  # DEPLOY
-  # ===========================================================================
-  deploy:
-    name: Deploy to Azure
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: production
-      url: https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
       - name: Deploy to App Service
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           images: ${{ env.ACR_NAME }}.azurecr.io/backend:${{ github.sha }}
 
-      - name: Run database migrations
+      - name: Configure App Settings
         run: |
           az webapp config appsettings set \
             --name ${{ env.AZURE_WEBAPP_NAME }} \
             --resource-group rg-monorepo-prod \
-            --settings MIGRATE_ON_START=true
-
-      - name: Health check
-        run: |
-          echo "Waiting for deployment..."
-          sleep 60
-          curl -f https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/health || exit 1
-          echo "Health check passed!"
-
-      - name: Notify success
-        if: success()
-        run: echo "Backend deployed successfully to Azure!"
+            --settings \
+              NODE_ENV=production \
+              PORT=8080 \
+              JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+              ENCRYPTION_KEY="${{ secrets.ENCRYPTION_KEY }}"

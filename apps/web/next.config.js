@@ -92,8 +92,8 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
 
-  // Output para Azure Static Web Apps
-  output: 'export',
+  // Output standalone para Docker/Azure App Service
+  output: 'standalone',
 
   // Compiler optimizations - CRITICAL para 1M+ users
   compiler: {

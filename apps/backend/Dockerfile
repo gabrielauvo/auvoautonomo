@@ -49,6 +49,9 @@ COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nestjs:nodejs /app/package.json ./package.json
+COPY --chown=nestjs:nodejs docker-entrypoint.sh ./docker-entrypoint.sh
+
+RUN chmod +x ./docker-entrypoint.sh
 
 USER nestjs
 
@@ -57,9 +60,9 @@ EXPOSE 8080
 ENV PORT=8080
 ENV NODE_ENV=production
 
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=3s --start-period=90s --retries=5 \
     CMD curl -f http://localhost:${PORT}/health || exit 1
 
 ENTRYPOINT ["dumb-init", "--"]
 
-CMD ["node", "dist/main"]
+CMD ["./docker-entrypoint.sh"]

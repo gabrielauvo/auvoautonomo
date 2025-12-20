@@ -179,3 +179,4 @@ const nextConfig = {
 };
 
 module.exports = nextConfig;
+// Trigger rebuild sáb, 20 de dez de 2025 18:38:20

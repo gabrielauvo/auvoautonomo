@@ -36,10 +36,16 @@ jobs:
       - name: Login to ACR
         run: az acr login --name ${{ env.ACR_NAME }}
 
-      - name: Build and push Docker image
+      - name: Create env file
         working-directory: apps/web
+        run: echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}" > .env.production
+
+      - name: Build Docker image
+        working-directory: apps/web
+        run: docker build -t ${{ env.ACR_NAME }}.azurecr.io/web:${{ github.sha }} -t ${{ env.ACR_NAME }}.azurecr.io/web:latest .
+
+      - name: Push Docker image
         run: |
-          docker build --build-arg NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }} -t ${{ env.ACR_NAME }}.azurecr.io/web:${{ github.sha }} -t ${{ env.ACR_NAME }}.azurecr.io/web:latest .
           docker push ${{ env.ACR_NAME }}.azurecr.io/web:${{ github.sha }}
           docker push ${{ env.ACR_NAME }}.azurecr.io/web:latest
 

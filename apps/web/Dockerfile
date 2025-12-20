@@ -23,6 +23,9 @@ COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Copiar .env.production se existir
+COPY .env.production* ./
+
 RUN npm run build
 
 # ============================================

@@ -1,0 +1,1365 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER & PLANS
+// ============================================
+
+model User {
+  id             String   @id @default(uuid())
+  email          String   @unique
+  password       String
+  name           String?
+  companyName    String?
+  phone          String?
+  language       String?  @default("pt-BR")
+  timezone       String?  @default("America/Sao_Paulo")
+  role           UserRole @default(USER)
+  planId         String?
+  googleId       String?  @unique
+  avatarUrl      String?
+  companyLogoUrl String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  plan                         Plan?                         @relation(fields: [planId], references: [id])
+  subscription                 UserSubscription?
+  clients                      Client[]
+  quotes                       Quote[]
+  workOrders                   WorkOrder[]
+  invoices                     Invoice[]
+  asaasIntegration             AsaasIntegration?
+  financialAutomationSettings  FinancialAutomationSettings?
+  notificationPreferences      NotificationPreferences?
+  notificationLogs             NotificationLog[]
+  attachments                  Attachment[]                  @relation("UserAttachments")
+  createdAttachments           Attachment[]                  @relation("AttachmentCreator")
+  signatures                   Signature[]
+  clientPayments               ClientPayment[]
+  syncLogs                     SyncLog[]
+  equipment                    Equipment[]
+  items                        Item[]
+  productCategories            ProductCategory[]
+  bundleItems                  BundleItem[]
+  checklistTemplates           ChecklistTemplate[]
+  pdfJobs                      PdfJob[]
+  importJobs                   ImportJob[]
+  templateSettings             TemplateSettings?
+  devices                      Device[]
+  domainEvents                 DomainEvent[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+model Plan {
+  id            String   @id @default(uuid())
+  type          PlanType @unique
+  name          String
+  description   String?
+  price         Decimal  @db.Decimal(10, 2)
+  yearlyPrice   Decimal? @db.Decimal(10, 2)
+  maxClients    Int
+  maxQuotes     Int
+  maxWorkOrders Int
+  maxInvoices   Int
+  features      String[] @default([])
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  users         User[]
+  subscriptions UserSubscription[]
+  usageLimits   UsageLimitsConfig?
+
+  @@map("plans")
+}
+
+enum PlanType {
+  FREE
+  PRO
+  TEAM
+}
+
+model UserSubscription {
+  id                    String             @id @default(uuid())
+  userId                String             @unique
+  planId                String
+  asaasCustomerId       String?
+  asaasSubscriptionId   String?
+  asaasPaymentId        String?            // ID do pagamento atual no Asaas
+  status                SubscriptionStatus @default(ACTIVE)
+  billingPeriod         BillingPeriod      @default(MONTHLY)
+  currentPeriodStart    DateTime?
+  currentPeriodEnd      DateTime?
+  trialEndAt            DateTime?
+  canceledAt            DateTime?
+  cancelAtPeriodEnd     Boolean            @default(false)
+
+  // Campos para controle de inadimplência e retry
+  paymentMethod         PaymentMethod?     // PIX ou CREDIT_CARD
+  lastPaymentDate       DateTime?          // Data do último pagamento confirmado
+  overdueAt             DateTime?          // Data em que ficou inadimplente
+  retryCount            Int                @default(0) // Número de tentativas de cobrança
+  lastRetryAt           DateTime?          // Data da última tentativa de retry
+  blockedAt             DateTime?          // Data em que a conta foi bloqueada
+  blockReason           String?            // Motivo do bloqueio
+
+  // Dados do cartão tokenizado (para retry automático)
+  creditCardToken       String?            // Token do cartão no Asaas
+  creditCardLastFour    String?            // Últimos 4 dígitos
+  creditCardBrand       String?            // Bandeira (VISA, MASTERCARD, etc)
+
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan Plan @relation(fields: [planId], references: [id])
+  paymentHistory SubscriptionPaymentHistory[]
+
+  @@index([userId])
+  @@index([planId])
+  @@index([status])
+  @@index([asaasCustomerId])
+  @@index([asaasSubscriptionId])
+  @@index([overdueAt])
+  @@index([blockedAt])
+  @@map("user_subscriptions")
+}
+
+// Histórico de pagamentos da assinatura
+model SubscriptionPaymentHistory {
+  id                String           @id @default(uuid())
+  subscriptionId    String
+  asaasPaymentId    String?
+  amount            Decimal          @db.Decimal(10, 2)
+  paymentMethod     PaymentMethod
+  status            PaymentStatus
+  paidAt            DateTime?
+  dueDate           DateTime
+  pixQrCode         String?          // QR Code PIX (base64)
+  pixCopyPaste      String?          // Código copia e cola
+  pixExpiresAt      DateTime?        // Expiração do PIX
+  errorMessage      String?          // Mensagem de erro se falhou
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  subscription UserSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId])
+  @@index([asaasPaymentId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("subscription_payment_history")
+}
+
+enum PaymentMethod {
+  PIX
+  CREDIT_CARD
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  TRIALING
+  BLOCKED      // Conta bloqueada por inadimplência > 15 dias
+}
+
+enum BillingPeriod {
+  MONTHLY
+  YEARLY
+}
+
+model UsageLimitsConfig {
+  id                        String   @id @default(uuid())
+  planId                    String   @unique
+  maxClients                Int      @default(-1)
+  maxQuotes                 Int      @default(-1)
+  maxWorkOrders             Int      @default(-1)
+  maxPayments               Int      @default(-1)
+  maxNotificationsPerMonth  Int      @default(-1)
+  enableAdvancedAutomations Boolean  @default(false)
+  enableAdvancedAnalytics   Boolean  @default(false)
+  enableClientPortal        Boolean  @default(false)
+  enablePdfExport           Boolean  @default(true)
+  enableDigitalSignature    Boolean  @default(false)
+  enableWhatsApp            Boolean  @default(false)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  plan Plan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@index([planId])
+  @@map("usage_limits_config")
+}
+
+// ============================================
+// CLIENTS
+// ============================================
+
+model Client {
+  id              String    @id @default(uuid())
+  userId          String
+  name            String
+  email           String?
+  phone           String?
+  address         String?
+  city            String?
+  state           String?
+  zipCode         String?
+  taxId           String?
+  notes           String?
+  asaasCustomerId String?
+  isDelinquent    Boolean   @default(false)
+  delinquentAt    DateTime?
+  deletedAt       DateTime? // Soft delete for sync
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quotes           Quote[]
+  workOrders       WorkOrder[]
+  invoices         Invoice[]
+  attachments      Attachment[]
+  signatures       Signature[]
+  payments         ClientPayment[]
+  notificationLogs NotificationLog[]
+  equipment        Equipment[]
+
+  @@index([userId])
+  @@index([asaasCustomerId])
+  @@index([isDelinquent])
+  @@index([updatedAt])
+  @@index([deletedAt])
+  @@map("clients")
+}
+
+// ============================================
+// PRODUCTS/SERVICES/BUNDLES (CATALOG)
+// ============================================
+
+model ProductCategory {
+  id          String   @id @default(uuid())
+  userId      String
+  name        String
+  description String?
+  color       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items Item[]
+
+  @@index([userId])
+  @@map("product_categories")
+}
+
+model Item {
+  id                     String    @id @default(uuid())
+  userId                 String
+  categoryId             String?
+  name                   String
+  description            String?
+  type                   ItemType  @default(PRODUCT)
+  sku                    String?
+  unit                   String    @default("UN")
+  basePrice              Decimal   @db.Decimal(10, 2)
+  costPrice              Decimal?  @db.Decimal(10, 2)
+  defaultDurationMinutes Int?
+  isActive               Boolean   @default(true)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category       ProductCategory? @relation(fields: [categoryId], references: [id])
+  quoteItems     QuoteItem[]
+  workOrderItems WorkOrderItem[]
+  bundleAsParent BundleItem[]     @relation("BundleParent")
+  bundleAsChild  BundleItem[]     @relation("BundleChild")
+
+  @@index([userId])
+  @@index([categoryId])
+  @@index([type])
+  @@index([sku])
+  @@index([isActive])
+  @@map("items")
+}
+
+enum ItemType {
+  PRODUCT
+  SERVICE
+  BUNDLE
+}
+
+model BundleItem {
+  id        String   @id @default(uuid())
+  userId    String
+  bundleId  String
+  itemId    String
+  quantity  Decimal  @default(1) @db.Decimal(10, 3)
+  createdAt DateTime @default(now())
+
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bundle Item @relation("BundleParent", fields: [bundleId], references: [id], onDelete: Cascade)
+  item   Item @relation("BundleChild", fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([bundleId, itemId])
+  @@index([userId])
+  @@index([bundleId])
+  @@index([itemId])
+  @@map("bundle_items")
+}
+
+// ============================================
+// EQUIPMENT
+// ============================================
+
+model Equipment {
+  id               String    @id @default(uuid())
+  userId           String
+  clientId         String
+  type             String
+  brand            String?
+  model            String?
+  serialNumber     String?
+  installationDate DateTime?
+  warrantyEndDate  DateTime?
+  notes            String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client           Client              @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  workOrderEquipments WorkOrderEquipment[]
+
+  @@index([userId])
+  @@index([clientId])
+  @@map("equipment")
+}
+
+// ============================================
+// QUOTES
+// ============================================
+
+model Quote {
+  id               String      @id @default(uuid())
+  userId           String
+  clientId         String
+  status           QuoteStatus @default(DRAFT)
+  discountValue    Decimal     @default(0) @db.Decimal(15, 2)
+  totalValue       Decimal     @db.Decimal(15, 2)
+  notes            String?
+  sentAt           DateTime?
+  visitScheduledAt DateTime?
+  shareKey         String?     @unique // Chave única para link público de compartilhamento
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client         Client          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  items          QuoteItem[]
+  workOrder      WorkOrder?
+  attachments    Attachment[]
+  signatures     Signature[]
+  clientPayments ClientPayment[]
+
+  @@index([userId])
+  @@index([clientId])
+  @@index([status])
+  @@index([sentAt])
+  @@index([visitScheduledAt])
+  @@map("quotes")
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+model QuoteItem {
+  id            String   @id @default(uuid())
+  quoteId       String
+  itemId        String?
+  name          String
+  type          ItemType @default(PRODUCT)
+  unit          String   @default("UN")
+  quantity      Decimal  @db.Decimal(10, 3)
+  unitPrice     Decimal  @db.Decimal(15, 2)
+  discountValue Decimal  @default(0) @db.Decimal(15, 2)
+  totalPrice    Decimal  @db.Decimal(15, 2)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  quote          Quote           @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  item           Item?           @relation(fields: [itemId], references: [id])
+  workOrderItems WorkOrderItem[]
+
+  @@index([quoteId])
+  @@index([itemId])
+  @@map("quote_items")
+}
+
+// ============================================
+// WORK ORDERS
+// ============================================
+
+model WorkOrder {
+  id                 String          @id @default(uuid())
+  userId             String
+  clientId           String
+  quoteId            String?         @unique
+  title              String
+  description        String?
+  status             WorkOrderStatus @default(SCHEDULED)
+  scheduledDate      DateTime?
+  scheduledStartTime DateTime?
+  scheduledEndTime   DateTime?
+  executionStart     DateTime?
+  executionEnd       DateTime?
+  address            String?
+  notes              String?
+  totalValue         Decimal?        @db.Decimal(15, 2)
+  shareKey           String?         @unique  // Chave única para link público de compartilhamento
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  user               User                          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client             Client                        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  quote              Quote?                        @relation(fields: [quoteId], references: [id])
+  items              WorkOrderItem[]
+  invoice            Invoice?
+  attachments        Attachment[]
+  signatures         Signature[]
+  payments           ClientPayment[]
+  equipments         WorkOrderEquipment[]
+  checklists         WorkOrderChecklist[]          // Legado
+  checklistInstances ChecklistInstance[]           // Novo sistema avançado
+  executionSessions  WorkOrderExecutionSession[]   // Sessões de trabalho e pausa
+
+  @@index([userId])
+  @@index([clientId])
+  @@index([status])
+  @@map("work_orders")
+}
+
+enum WorkOrderStatus {
+  SCHEDULED
+  IN_PROGRESS
+  DONE
+  CANCELED
+}
+
+// Sessões de execução da OS (trabalho e pausas)
+model WorkOrderExecutionSession {
+  id           String                  @id @default(uuid())
+  workOrderId  String
+  technicianId String
+  sessionType  ExecutionSessionType
+  startedAt    DateTime
+  endedAt      DateTime?
+  duration     Int?                    // Duração em segundos
+  pauseReason  String?                 // Motivo da pausa (quando sessionType = PAUSE)
+  notes        String?
+  localId      String?                 // ID local do mobile para idempotência
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+
+  workOrder    WorkOrder               @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+
+  @@index([workOrderId])
+  @@index([technicianId])
+  @@index([localId])
+  @@map("work_order_execution_sessions")
+}
+
+enum ExecutionSessionType {
+  WORK
+  PAUSE
+}
+
+model WorkOrderItem {
+  id            String   @id @default(uuid())
+  workOrderId   String
+  quoteItemId   String?
+  itemId        String?
+  name          String
+  type          ItemType @default(PRODUCT)
+  unit          String   @default("UN")
+  quantity      Decimal  @db.Decimal(10, 3)
+  unitPrice     Decimal  @db.Decimal(15, 2)
+  discountValue Decimal  @default(0) @db.Decimal(15, 2)
+  totalPrice    Decimal  @db.Decimal(15, 2)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  workOrder WorkOrder  @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  quoteItem QuoteItem? @relation(fields: [quoteItemId], references: [id])
+  item      Item?      @relation(fields: [itemId], references: [id])
+
+  @@index([workOrderId])
+  @@index([quoteItemId])
+  @@index([itemId])
+  @@map("work_order_items")
+}
+
+model WorkOrderEquipment {
+  id          String   @id @default(uuid())
+  workOrderId String
+  equipmentId String
+  createdAt   DateTime @default(now())
+
+  workOrder WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  @@index([workOrderId])
+  @@index([equipmentId])
+  @@map("work_order_equipments")
+}
+
+// ============================================
+// CHECKLISTS AVANÇADOS
+// ============================================
+
+// Template de Checklist (modelo reutilizável)
+model ChecklistTemplate {
+  id          String   @id @default(uuid())
+  userId      String
+  name        String
+  description String?
+  version     Int      @default(1)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user      User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sections  ChecklistSection[]
+  questions ChecklistQuestion[]
+  instances ChecklistInstance[]
+
+  @@index([userId])
+  @@index([isActive])
+  @@map("checklist_templates")
+}
+
+// Seções do Checklist (agrupamento opcional de perguntas)
+model ChecklistSection {
+  id          String   @id @default(uuid())
+  templateId  String
+  title       String
+  description String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  template  ChecklistTemplate   @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  questions ChecklistQuestion[]
+
+  @@index([templateId])
+  @@map("checklist_sections")
+}
+
+// Perguntas do Checklist
+model ChecklistQuestion {
+  id               String               @id @default(uuid())
+  templateId       String
+  sectionId        String?
+  type             ChecklistQuestionType
+  title            String
+  description      String?
+  placeholder      String?
+  isRequired       Boolean              @default(false)
+  order            Int                  @default(0)
+  options          Json?                // Para SELECT, MULTI_SELECT: [{value, label}]
+  validations      Json?                // {min, max, pattern, etc}
+  conditionalLogic Json?                // [{questionId, operator, value, action}]
+  metadata         Json?                // Dados extras específicos do tipo
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  template ChecklistTemplate    @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  section  ChecklistSection?    @relation(fields: [sectionId], references: [id])
+  answers  ChecklistAnswer[]
+
+  @@index([templateId])
+  @@index([sectionId])
+  @@map("checklist_questions")
+}
+
+// Tipos de pergunta suportados
+enum ChecklistQuestionType {
+  TEXT_SHORT           // Texto curto
+  TEXT_LONG            // Texto longo (textarea)
+  NUMBER               // Número
+  DATE                 // Data
+  TIME                 // Hora
+  DATETIME             // Data e Hora
+  CHECKBOX             // Sim/Não (boolean)
+  SELECT               // Múltipla escolha (uma opção)
+  MULTI_SELECT         // Seleção múltipla (várias opções)
+  PHOTO_REQUIRED       // Foto obrigatória
+  PHOTO_OPTIONAL       // Foto opcional
+  FILE_UPLOAD          // Upload de arquivo
+  SIGNATURE_TECHNICIAN // Assinatura do técnico
+  SIGNATURE_CLIENT     // Assinatura do cliente
+  SECTION_TITLE        // Título/seção (sem resposta, apenas visual)
+  RATING               // Avaliação (1-5 estrelas)
+  SCALE                // Escala (ex: 1-10)
+}
+
+// Operadores para lógica condicional
+enum ConditionOperator {
+  EQUALS
+  NOT_EQUALS
+  GREATER_THAN
+  LESS_THAN
+  GREATER_THAN_OR_EQUAL
+  LESS_THAN_OR_EQUAL
+  CONTAINS
+  NOT_CONTAINS
+  IS_EMPTY
+  IS_NOT_EMPTY
+  IN
+  NOT_IN
+}
+
+// Ações condicionais
+enum ConditionAction {
+  SHOW       // Mostrar pergunta/seção
+  HIDE       // Esconder pergunta/seção
+  REQUIRE    // Tornar obrigatório
+  SKIP_TO    // Pular para pergunta/seção específica
+}
+
+// Instância de Checklist (vinculada a uma OS)
+model ChecklistInstance {
+  id                     String                  @id @default(uuid())
+  workOrderId            String
+  templateId             String
+  templateVersionSnapshot Json                   // Snapshot completo do template no momento da criação
+  status                 ChecklistInstanceStatus @default(PENDING)
+  startedAt              DateTime?
+  completedAt            DateTime?
+  completedBy            String?                 // userId ou nome do técnico
+  progress               Int                     @default(0) // Porcentagem de conclusão (0-100)
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+
+  workOrder WorkOrder          @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  template  ChecklistTemplate  @relation(fields: [templateId], references: [id])
+  answers   ChecklistAnswer[]
+
+  @@index([workOrderId])
+  @@index([templateId])
+  @@index([status])
+  @@map("checklist_instances")
+}
+
+// Status da instância do checklist
+enum ChecklistInstanceStatus {
+  PENDING      // Não iniciado
+  IN_PROGRESS  // Em andamento
+  COMPLETED    // Concluído
+  CANCELLED    // Cancelado
+}
+
+// Respostas do Checklist
+model ChecklistAnswer {
+  id           String                @id @default(uuid())
+  instanceId   String
+  questionId   String
+  type         ChecklistQuestionType
+  // Valores tipados para cada tipo de resposta
+  valueText    String?               // TEXT_SHORT, TEXT_LONG
+  valueNumber  Decimal?              @db.Decimal(15, 4)
+  valueBoolean Boolean?              // CHECKBOX
+  valueDate    DateTime?             // DATE, TIME, DATETIME
+  valueJson    Json?                 // SELECT, MULTI_SELECT, RATING, SCALE, etc
+  // Campos para rastreamento
+  answeredAt   DateTime              @default(now())
+  answeredBy   String?               // userId ou identificador do técnico
+  deviceInfo   String?               // Info do dispositivo (mobile/web)
+  syncedAt     DateTime?             // Quando foi sincronizado (para offline)
+  localId      String?               // ID local para sincronização offline
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  instance    ChecklistInstance       @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  question    ChecklistQuestion       @relation(fields: [questionId], references: [id])
+  attachments ChecklistAttachment[]
+
+  @@unique([instanceId, questionId])
+  @@index([instanceId])
+  @@index([questionId])
+  @@index([localId])
+  @@map("checklist_answers")
+}
+
+// Anexos das respostas (fotos, arquivos, assinaturas)
+model ChecklistAttachment {
+  id             String                    @id @default(uuid())
+  answerId       String
+  type           ChecklistAttachmentType
+  fileName       String
+  fileSize       Int
+  mimeType       String
+  storagePath    String
+  publicUrl      String?
+  thumbnailPath  String?                   // Para fotos: thumbnail comprimido
+  thumbnailUrl   String?
+  metadata       Json?                     // EXIF, dimensões, etc
+  uploadedAt     DateTime                  @default(now())
+  uploadedBy     String?
+  syncStatus     AttachmentSyncStatus      @default(SYNCED)
+  localPath      String?                   // Caminho local no dispositivo (offline)
+  createdAt      DateTime                  @default(now())
+
+  answer ChecklistAnswer @relation(fields: [answerId], references: [id], onDelete: Cascade)
+
+  @@index([answerId])
+  @@index([syncStatus])
+  @@map("checklist_attachments")
+}
+
+// Tipos de anexo
+enum ChecklistAttachmentType {
+  PHOTO
+  DOCUMENT
+  SIGNATURE
+  VIDEO
+  AUDIO
+}
+
+// Status de sincronização de anexo
+enum AttachmentSyncStatus {
+  PENDING      // Aguardando upload
+  UPLOADING    // Em upload
+  SYNCED       // Sincronizado
+  FAILED       // Falhou
+}
+
+// ============================================
+// CHECKLISTS LEGADO (manter compatibilidade)
+// ============================================
+
+model WorkOrderChecklist {
+  id          String   @id @default(uuid())
+  workOrderId String
+  templateId  String
+  title       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workOrder WorkOrder                  @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  answers   WorkOrderChecklistAnswer[]
+
+  @@index([workOrderId])
+  @@index([templateId])
+  @@map("work_order_checklists")
+}
+
+model WorkOrderChecklistAnswer {
+  id                   String            @id @default(uuid())
+  workOrderChecklistId String
+  templateItemId       String
+  type                 ChecklistItemType
+  valueText            String?
+  valueNumber          Decimal?          @db.Decimal(10, 3)
+  valueBoolean         Boolean?
+  valuePhoto           String?
+  valueSelect          String?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  checklist WorkOrderChecklist @relation(fields: [workOrderChecklistId], references: [id], onDelete: Cascade)
+
+  @@unique([workOrderChecklistId, templateItemId])
+  @@index([workOrderChecklistId])
+  @@index([templateItemId])
+  @@map("work_order_checklist_answers")
+}
+
+enum ChecklistItemType {
+  TEXT
+  NUMERIC
+  BOOLEAN
+  PHOTO
+  SELECT
+}
+
+// ============================================
+// INVOICES
+// ============================================
+
+model Invoice {
+  id            String        @id @default(uuid())
+  userId        String
+  clientId      String
+  workOrderId   String?       @unique
+  invoiceNumber String        @unique
+  status        InvoiceStatus @default(PENDING)
+  subtotal      Decimal       @db.Decimal(15, 2)
+  discount      Decimal       @default(0) @db.Decimal(15, 2)
+  tax           Decimal       @default(0) @db.Decimal(15, 2)
+  total         Decimal       @db.Decimal(15, 2)
+  dueDate       DateTime
+  paidDate      DateTime?
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client    Client     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  workOrder WorkOrder? @relation(fields: [workOrderId], references: [id])
+
+  @@index([userId])
+  @@index([clientId])
+  @@map("invoices")
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+// ============================================
+// ASAAS INTEGRATION
+// ============================================
+
+model AsaasIntegration {
+  id              String           @id @default(uuid())
+  userId          String           @unique
+  apiKeyEncrypted String
+  environment     AsaasEnvironment @default(SANDBOX)
+  isActive        Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("asaas_integrations")
+}
+
+enum AsaasEnvironment {
+  SANDBOX
+  PRODUCTION
+}
+
+model ClientPayment {
+  id              String             @id @default(uuid())
+  userId          String
+  clientId        String
+  quoteId         String?
+  workOrderId     String?
+  asaasPaymentId  String             @unique
+  billingType     PaymentBillingType
+  value           Decimal            @db.Decimal(15, 2)
+  description     String?
+  dueDate         DateTime
+  status          PaymentStatus      @default(PENDING)
+  asaasInvoiceUrl String?
+  asaasQrCodeUrl  String?
+  asaasPixCode    String?
+  paidAt          DateTime?
+  canceledAt      DateTime?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  // Token único para acesso público à página de pagamento
+  publicToken     String?            @unique @default(uuid())
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client    Client     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  quote     Quote?     @relation(fields: [quoteId], references: [id])
+  workOrder WorkOrder? @relation(fields: [workOrderId], references: [id])
+
+  @@index([userId])
+  @@index([clientId])
+  @@index([asaasPaymentId])
+  @@index([status])
+  @@index([dueDate])
+  @@index([paidAt])
+  @@index([billingType])
+  @@index([userId, status])
+  @@index([userId, dueDate])
+  @@index([userId, paidAt])
+  @@index([publicToken])
+  @@map("client_payments")
+}
+
+enum PaymentBillingType {
+  BOLETO
+  PIX
+  CREDIT_CARD
+}
+
+enum PaymentStatus {
+  PENDING
+  CONFIRMED
+  RECEIVED
+  OVERDUE
+  REFUNDED
+  DELETED
+  RECEIVED_IN_CASH
+  REFUND_REQUESTED
+  REFUND_IN_PROGRESS
+  PARTIALLY_REFUNDED
+  CHARGEBACK_REQUESTED
+  CHARGEBACK_DISPUTE
+  AWAITING_CHARGEBACK_REVERSAL
+  DUNNING_REQUESTED
+  DUNNING_RECEIVED
+  AWAITING_RISK_ANALYSIS
+  AUTHORIZED
+  FAILED
+  CANCELED
+}
+
+// ============================================
+// FINANCIAL AUTOMATION
+// ============================================
+
+model FinancialAutomationSettings {
+  id                                   String   @id @default(uuid())
+  userId                               String   @unique
+  isEnabled                            Boolean  @default(true)
+  paymentReminderDaysBefore            Int[]    @default([3, 1])
+  paymentReminderDaysAfter             Int[]    @default([3, 7])
+  autoMarkOverdueAsDelinquentAfterDays Int?     @default(30)
+  enableQuoteFollowUp                  Boolean  @default(true)
+  quoteFollowUpDays                    Int[]    @default([3, 7])
+  autoCancelPaymentAfterDays           Int?
+  createdAt                            DateTime @default(now())
+  updatedAt                            DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("financial_automation_settings")
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+model NotificationPreferences {
+  id                         String   @id @default(uuid())
+  userId                     String   @unique
+  notifyOnQuoteSent          Boolean  @default(true)
+  notifyOnQuoteApproved      Boolean  @default(true)
+  notifyOnWorkOrderCreated   Boolean  @default(true)
+  notifyOnWorkOrderCompleted Boolean  @default(true)
+  notifyOnPaymentCreated     Boolean  @default(true)
+  notifyOnPaymentConfirmed   Boolean  @default(true)
+  notifyOnPaymentOverdue     Boolean  @default(true)
+  defaultChannelEmail        Boolean  @default(true)
+  defaultChannelWhatsApp     Boolean  @default(true)
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("notification_preferences")
+}
+
+model NotificationLog {
+  id              String              @id @default(uuid())
+  userId          String
+  clientId        String?
+  workOrderId     String?
+  quoteId         String?
+  clientPaymentId String?
+  channel         NotificationChannel
+  type            NotificationType
+  recipient       String
+  subject         String?
+  body            String
+  payload         Json?
+  status          NotificationStatus
+  errorMessage    String?
+  createdAt       DateTime            @default(now())
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client Client? @relation(fields: [clientId], references: [id])
+
+  @@index([userId])
+  @@index([clientId])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+  @@map("notification_logs")
+}
+
+enum NotificationChannel {
+  EMAIL
+  WHATSAPP
+}
+
+enum NotificationType {
+  QUOTE_SENT
+  QUOTE_APPROVED
+  QUOTE_FOLLOW_UP
+  WORK_ORDER_CREATED
+  WORK_ORDER_COMPLETED
+  PAYMENT_CREATED
+  PAYMENT_CONFIRMED
+  PAYMENT_OVERDUE
+  PAYMENT_REMINDER_BEFORE_DUE
+  PAYMENT_REMINDER_AFTER_DUE
+}
+
+enum NotificationStatus {
+  SENT
+  FAILED
+}
+
+// ============================================
+// FILES & ATTACHMENTS
+// ============================================
+
+model Attachment {
+  id               String         @id @default(uuid())
+  userId           String
+  clientId         String?
+  quoteId          String?
+  workOrderId      String?
+  type             AttachmentType
+  mimeType         String
+  fileNameOriginal String
+  fileSize         Int
+  storagePath      String
+  publicUrl        String?
+  metadata         Json?
+  createdAt        DateTime       @default(now())
+  createdByUserId  String
+
+  user        User         @relation("UserAttachments", fields: [userId], references: [id], onDelete: Cascade)
+  createdBy   User         @relation("AttachmentCreator", fields: [createdByUserId], references: [id], onDelete: Cascade)
+  client      Client?      @relation(fields: [clientId], references: [id])
+  quote       Quote?       @relation(fields: [quoteId], references: [id])
+  workOrder   WorkOrder?   @relation(fields: [workOrderId], references: [id])
+  signatures  Signature[]
+  publicLinks PublicLink[]
+  pdfJob      PdfJob?
+
+  @@index([userId])
+  @@index([clientId])
+  @@index([quoteId])
+  @@index([workOrderId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("attachments")
+}
+
+enum AttachmentType {
+  PHOTO
+  DOCUMENT
+  SIGNATURE
+}
+
+model PublicLink {
+  id           String    @id @default(uuid())
+  attachmentId String
+  token        String    @unique
+  expiresAt    DateTime?
+  accessCount  Int       @default(0)
+  lastAccessAt DateTime?
+  createdAt    DateTime  @default(now())
+
+  attachment Attachment @relation(fields: [attachmentId], references: [id], onDelete: Cascade)
+
+  @@index([attachmentId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("public_links")
+}
+
+// ============================================
+// SIGNATURES
+// ============================================
+
+model Signature {
+  id             String   @id @default(uuid())
+  userId         String
+  clientId       String
+  workOrderId    String?
+  quoteId        String?
+  attachmentId   String
+  signerName     String
+  signerDocument String?
+  signerRole     String?
+  ipAddress      String?
+  userAgent      String?
+  signedAt       DateTime @default(now())
+  hash           String?
+  localId        String?  // Para idempotência no sync offline
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client     Client      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  workOrder  WorkOrder?  @relation(fields: [workOrderId], references: [id])
+  quote      Quote?      @relation(fields: [quoteId], references: [id])
+  attachment Attachment  @relation(fields: [attachmentId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([clientId])
+  @@index([workOrderId])
+  @@index([quoteId])
+  @@index([attachmentId])
+  @@index([localId])
+  @@map("signatures")
+}
+
+// ============================================
+// SYNC LOGS
+// ============================================
+
+model SyncLog {
+  id           String   @id @default(uuid())
+  userId       String
+  entity       String
+  entityId     String
+  action       String
+  status       String
+  errorMessage String?
+  syncedAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([entity])
+  @@map("sync_logs")
+}
+
+// ============================================
+// PROCESSED MUTATIONS (Idempotency for Sync)
+// ============================================
+
+model ProcessedMutation {
+  id           String   @id @default(uuid())
+  mutationId   String   @unique // Client-generated mutation ID for idempotency
+  userId       String
+  entity       String
+  entityId     String
+  action       String   // create, update, delete
+  status       String   // applied, rejected
+  resultData   Json?    // Server response data
+  processedAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([mutationId])
+  @@index([entity])
+  @@index([processedAt])
+  @@map("processed_mutations")
+}
+
+// ============================================
+// PDF JOBS (Async PDF Generation)
+// ============================================
+
+model PdfJob {
+  id             String        @id @default(uuid())
+  userId         String
+  entityType     PdfEntityType
+  entityId       String
+  status         PdfJobStatus  @default(PENDING)
+  priority       Int           @default(0)
+  attempts       Int           @default(0)
+  maxAttempts    Int           @default(3)
+  attachmentId   String?       @unique
+  errorMessage   String?
+  bullJobId      String?
+  processingTime Int?
+  fileSize       Int?
+  requestedAt    DateTime      @default(now())
+  startedAt      DateTime?
+  completedAt    DateTime?
+  failedAt       DateTime?
+  metadata       Json?
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attachment Attachment? @relation(fields: [attachmentId], references: [id])
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([status])
+  @@index([bullJobId])
+  @@index([requestedAt])
+  @@map("pdf_jobs")
+}
+
+enum PdfEntityType {
+  QUOTE
+  WORK_ORDER
+  INVOICE
+}
+
+enum PdfJobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+// ============================================
+// IMPORT JOBS (Bulk Client Import)
+// ============================================
+
+model ImportJob {
+  id            String          @id @default(uuid())
+  userId        String
+  fileName      String
+  fileSize      Int
+  totalRows     Int             @default(0)
+  processedRows Int             @default(0)
+  successCount  Int             @default(0)
+  errorCount    Int             @default(0)
+  status        ImportJobStatus @default(PENDING)
+  errorDetails  Json?           // Array de {row, field, value, message}
+  createdAt     DateTime        @default(now())
+  startedAt     DateTime?
+  completedAt   DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("import_jobs")
+}
+
+enum ImportJobStatus {
+  PENDING
+  VALIDATING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// ============================================
+// TEMPLATE SETTINGS (PDF/Document Templates)
+// ============================================
+
+model TemplateSettings {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+
+  // Quote Template
+  quoteShowLogo         Boolean @default(true)
+  quoteLogoPosition     String  @default("left") // left, center, right
+  quotePrimaryColor     String  @default("#7C3AED")
+  quoteSecondaryColor   String  @default("#6D28D9")
+  quoteHeaderText       String?
+  quoteFooterText       String  @default("Obrigado pela preferência!")
+  quoteDefaultMessage   String  @default("Segue nosso orçamento conforme solicitado.")
+  quoteTermsConditions  String?
+  quoteShowSignature    Boolean @default(false)
+
+  // Work Order Template
+  workOrderShowLogo         Boolean @default(true)
+  workOrderLogoPosition     String  @default("left") // left, center, right
+  workOrderPrimaryColor     String  @default("#7C3AED")
+  workOrderLayout           String  @default("detailed") // compact, detailed
+  workOrderShowChecklist    Boolean @default(true)
+  workOrderFooterText       String?
+  workOrderShowSignatureField Boolean @default(true)
+  workOrderSignatureLabel   String  @default("Assinatura do Cliente")
+
+  // Invoice/Charge PDF Template
+  invoiceShowLogo         Boolean @default(true)
+  invoiceLogoPosition     String  @default("left") // left, center, right
+  invoicePrimaryColor     String  @default("#7C3AED")
+  invoiceSecondaryColor   String  @default("#6D28D9")
+  invoiceHeaderText       String?
+  invoiceFooterText       String  @default("Obrigado pela preferência!")
+  invoiceShowPaymentInfo  Boolean @default(true)
+  invoiceShowDueDate      Boolean @default(true)
+
+  // Charge Template (messaging)
+  chargeWhatsappMessage String  @default("Olá {nome_cliente}! 👋\n\nSegue sua cobrança:\n\n💰 *Valor:* {valor}\n📅 *Vencimento:* {data}\n\n🔗 *Link para pagamento:*\n{link_pagamento}\n\nQualquer dúvida, estou à disposição! 😊")
+  chargeEmailSubject    String  @default("Cobrança - {valor}")
+  chargeEmailBody       String?
+  chargeReminderMessage String  @default("Olá {nome_cliente}, lembramos que seu pagamento no valor de {valor} vence em {data}.\nSe já pagou, desconsidere esta mensagem.")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("template_settings")
+}
+
+// ============================================
+// PUSH NOTIFICATIONS & DEVICES
+// ============================================
+
+model Device {
+  id             String         @id @default(uuid())
+  userId         String
+  platform       DevicePlatform
+  expoPushToken  String         @unique
+  appVersion     String?
+  deviceModel    String?
+  osVersion      String?
+  isActive       Boolean        @default(true)
+  lastSeenAt     DateTime       @default(now())
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expoPushToken])
+  @@map("devices")
+}
+
+enum DevicePlatform {
+  IOS
+  ANDROID
+}
+
+model DomainEvent {
+  id           String            @id @default(uuid())
+  type         String            // e.g., "work_order.assigned", "quote.approved"
+  entity       String            // e.g., "work_order", "quote", "invoice"
+  entityId     String
+  targetUserId String
+  payload      Json?             // small JSON payload with relevant data
+  status       DomainEventStatus @default(PENDING)
+  retryCount   Int               @default(0)
+  lastError    String?
+  dispatchedAt DateTime?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  targetUser User @relation(fields: [targetUserId], references: [id], onDelete: Cascade)
+
+  @@index([targetUserId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("domain_events")
+}
+
+enum DomainEventStatus {
+  PENDING
+  SENT
+  FAILED
+}

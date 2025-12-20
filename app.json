@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "a1255df3-741e-47f0-bce1-2f9ddd30caba"
+      }
+    },
+    "android": {
+      "package": "com.auvo.monorepo"
+    }
+  }
+}

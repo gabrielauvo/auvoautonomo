@@ -1,0 +1,577 @@
+// @ts-nocheck
+/**
+ * Client Details Screen
+ *
+ * Tela de detalhes e edição de cliente.
+ */
+
+import React, { useState, useCallback, useEffect } from 'react';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { Text, Button, Input, Card, Badge, Avatar } from '../../src/design-system';
+import { useColors, useSpacing } from '../../src/design-system/ThemeProvider';
+import { ClientService, UpdateClientInput } from '../../src/modules/clients/ClientService';
+import { Client } from '../../src/db/schema';
+
+// =============================================================================
+// MAIN SCREEN
+// =============================================================================
+
+export default function ClienteDetalhesScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const colors = useColors();
+  const spacing = useSpacing();
+
+  // State
+  const [client, setClient] = useState<Client | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasPending, setHasPending] = useState(false);
+
+  // Form state
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [taxId, setTaxId] = useState('');
+  const [address, setAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [zipCode, setZipCode] = useState('');
+  const [notes, setNotes] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Load client
+  const loadClient = useCallback(async () => {
+    if (!id) return;
+
+    setIsLoading(true);
+    try {
+      const data = await ClientService.getClient(id);
+      if (data) {
+        setClient(data);
+        // Set form values
+        setName(data.name || '');
+        setEmail(data.email || '');
+        setPhone(data.phone || '');
+        setTaxId(data.document || '');
+        setAddress(data.address || '');
+        setCity(data.city || '');
+        setState(data.state || '');
+        setZipCode(data.zipCode || '');
+        setNotes(data.notes || '');
+
+        // Check pending mutations
+        const pending = await ClientService.hasPendingMutations(id);
+        setHasPending(pending);
+      }
+    } catch (error) {
+      console.error('[ClienteDetalhesScreen] Error loading client:', error);
+      Alert.alert('Erro', 'Não foi possível carregar o cliente.');
+      router.back();
+    } finally {
+      setIsLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    loadClient();
+  }, [loadClient]);
+
+  // Validate form
+  const validate = useCallback((): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!name.trim()) {
+      newErrors.name = 'Nome é obrigatório';
+    }
+
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = 'Email inválido';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }, [name, email]);
+
+  // Handle save
+  const handleSave = useCallback(async () => {
+    if (!id || !validate()) return;
+
+    setIsSaving(true);
+    try {
+      const input: UpdateClientInput = {
+        name: name.trim(),
+        email: email.trim() || undefined,
+        phone: phone.trim() || undefined,
+        taxId: taxId.trim() || undefined,
+        address: address.trim() || undefined,
+        city: city.trim() || undefined,
+        state: state.trim() || undefined,
+        zipCode: zipCode.trim() || undefined,
+        notes: notes.trim() || undefined,
+      };
+
+      await ClientService.updateClient(id, input);
+      setIsEditing(false);
+      setHasPending(true);
+
+      Alert.alert('Sucesso', 'Cliente atualizado!');
+    } catch (error) {
+      console.error('[ClienteDetalhesScreen] Error updating client:', error);
+      Alert.alert('Erro', 'Não foi possível atualizar o cliente.');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [id, validate, name, email, phone, taxId, address, city, state, zipCode, notes]);
+
+  // Handle delete
+  const handleDelete = useCallback(() => {
+    if (!id) return;
+
+    Alert.alert(
+      'Excluir Cliente',
+      'Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await ClientService.deleteClient(id);
+              Alert.alert('Sucesso', 'Cliente excluído!', [
+                { text: 'OK', onPress: () => router.back() },
+              ]);
+            } catch (error) {
+              console.error('[ClienteDetalhesScreen] Error deleting client:', error);
+              Alert.alert('Erro', 'Não foi possível excluir o cliente.');
+            }
+          },
+        },
+      ]
+    );
+  }, [id]);
+
+  // Cancel editing
+  const handleCancel = useCallback(() => {
+    if (client) {
+      setName(client.name || '');
+      setEmail(client.email || '');
+      setPhone(client.phone || '');
+      setTaxId(client.document || '');
+      setAddress(client.address || '');
+      setCity(client.city || '');
+      setState(client.state || '');
+      setZipCode(client.zipCode || '');
+      setNotes(client.notes || '');
+    }
+    setIsEditing(false);
+    setErrors({});
+  }, [client]);
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
+        <View style={styles.loadingContainer}>
+          <Text variant="body" color="secondary">
+            Carregando...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Not found
+  if (!client) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
+        <View style={styles.loadingContainer}>
+          <Text variant="body" color="secondary">
+            Cliente não encontrado
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const initials =
+    client.name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .substring(0, 2)
+      .toUpperCase() || 'CL';
+
+  return (
+    <>
+      <Stack.Screen
+        options={{
+          title: isEditing ? 'Editar Cliente' : 'Detalhes',
+          headerRight: () =>
+            !isEditing ? (
+              <View style={styles.headerButtons}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onPress={() => setIsEditing(true)}
+                  style={{ marginRight: 8 }}
+                >
+                  Editar
+                </Button>
+              </View>
+            ) : null,
+        }}
+      />
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colors.background.primary }]}
+        edges={['bottom']}
+      >
+        <KeyboardAvoidingView
+          style={styles.keyboardView}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={[styles.content, { padding: spacing[4] }]}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Header with avatar */}
+            {!isEditing && (
+              <View style={[styles.headerSection, { marginBottom: spacing[4] }]}>
+                <Avatar size="xl" fallback={initials} />
+                <View style={styles.headerInfo}>
+                  <Text variant="h4" weight="semibold">
+                    {client.name}
+                  </Text>
+                  {hasPending && (
+                    <Badge variant="warning" size="sm">
+                      Pendente de sync
+                    </Badge>
+                  )}
+                </View>
+              </View>
+            )}
+
+            {/* Basic Info */}
+            <Card variant="outlined" style={[styles.section, { marginBottom: spacing[4] }]}>
+              <Text variant="subtitle" weight="semibold" style={{ marginBottom: spacing[4] }}>
+                Informações Básicas
+              </Text>
+
+              {isEditing ? (
+                <>
+                  <Input
+                    label="Nome *"
+                    placeholder="Nome completo"
+                    value={name}
+                    onChangeText={setName}
+                    error={errors.name}
+                    autoCapitalize="words"
+                  />
+                  <View style={{ height: spacing[3] }} />
+                  <Input
+                    label="Email"
+                    placeholder="email@exemplo.com"
+                    value={email}
+                    onChangeText={setEmail}
+                    error={errors.email}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                  <View style={{ height: spacing[3] }} />
+                  <Input
+                    label="Telefone"
+                    placeholder="(00) 00000-0000"
+                    value={phone}
+                    onChangeText={setPhone}
+                    keyboardType="phone-pad"
+                  />
+                  <View style={{ height: spacing[3] }} />
+                  <Input
+                    label="CPF/CNPJ"
+                    placeholder="000.000.000-00"
+                    value={taxId}
+                    onChangeText={setTaxId}
+                    keyboardType="numeric"
+                  />
+                </>
+              ) : (
+                <>
+                  <InfoRow
+                    icon="mail-outline"
+                    label="Email"
+                    value={client.email}
+                    colors={colors}
+                  />
+                  <InfoRow
+                    icon="call-outline"
+                    label="Telefone"
+                    value={client.phone}
+                    colors={colors}
+                  />
+                  <InfoRow
+                    icon="document-text-outline"
+                    label="CPF/CNPJ"
+                    value={client.document}
+                    colors={colors}
+                  />
+                </>
+              )}
+            </Card>
+
+            {/* Address */}
+            <Card variant="outlined" style={[styles.section, { marginBottom: spacing[4] }]}>
+              <Text variant="subtitle" weight="semibold" style={{ marginBottom: spacing[4] }}>
+                Endereço
+              </Text>
+
+              {isEditing ? (
+                <>
+                  <Input
+                    label="Endereço"
+                    placeholder="Rua, número, complemento"
+                    value={address}
+                    onChangeText={setAddress}
+                  />
+                  <View style={{ height: spacing[3] }} />
+                  <View style={styles.row}>
+                    <View style={styles.flex2}>
+                      <Input
+                        label="Cidade"
+                        placeholder="Cidade"
+                        value={city}
+                        onChangeText={setCity}
+                      />
+                    </View>
+                    <View style={{ width: spacing[3] }} />
+                    <View style={styles.flex1}>
+                      <Input
+                        label="Estado"
+                        placeholder="UF"
+                        value={state}
+                        onChangeText={setState}
+                        maxLength={2}
+                        autoCapitalize="characters"
+                      />
+                    </View>
+                  </View>
+                  <View style={{ height: spacing[3] }} />
+                  <Input
+                    label="CEP"
+                    placeholder="00000-000"
+                    value={zipCode}
+                    onChangeText={setZipCode}
+                    keyboardType="numeric"
+                  />
+                </>
+              ) : (
+                <>
+                  <InfoRow
+                    icon="location-outline"
+                    label="Endereço"
+                    value={client.address}
+                    colors={colors}
+                  />
+                  <InfoRow
+                    icon="business-outline"
+                    label="Cidade/Estado"
+                    value={
+                      client.city && client.state
+                        ? `${client.city} - ${client.state}`
+                        : client.city || client.state
+                    }
+                    colors={colors}
+                  />
+                  <InfoRow
+                    icon="map-outline"
+                    label="CEP"
+                    value={client.zipCode}
+                    colors={colors}
+                  />
+                </>
+              )}
+            </Card>
+
+            {/* Notes */}
+            <Card variant="outlined" style={[styles.section, { marginBottom: spacing[4] }]}>
+              <Text variant="subtitle" weight="semibold" style={{ marginBottom: spacing[4] }}>
+                Observações
+              </Text>
+
+              {isEditing ? (
+                <Input
+                  label="Notas"
+                  placeholder="Observações sobre o cliente..."
+                  value={notes}
+                  onChangeText={setNotes}
+                  multiline
+                  numberOfLines={4}
+                />
+              ) : (
+                <Text variant="body" color={client.notes ? 'primary' : 'tertiary'}>
+                  {client.notes || 'Nenhuma observação'}
+                </Text>
+              )}
+            </Card>
+
+            {/* Delete button */}
+            {!isEditing && (
+              <Button
+                variant="ghost"
+                onPress={handleDelete}
+                style={{ marginTop: spacing[4] }}
+              >
+                <Text variant="body" style={{ color: colors.error[500] }}>
+                  Excluir Cliente
+                </Text>
+              </Button>
+            )}
+          </ScrollView>
+
+          {/* Footer for editing */}
+          {isEditing && (
+            <View
+              style={[
+                styles.footer,
+                {
+                  backgroundColor: colors.background.primary,
+                  borderTopColor: colors.border.light,
+                  padding: spacing[4],
+                },
+              ]}
+            >
+              <Button
+                variant="ghost"
+                onPress={handleCancel}
+                disabled={isSaving}
+                style={styles.cancelButton}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="primary"
+                onPress={handleSave}
+                loading={isSaving}
+                style={styles.saveButton}
+              >
+                Salvar
+              </Button>
+            </View>
+          )}
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </>
+  );
+}
+
+// =============================================================================
+// INFO ROW COMPONENT
+// =============================================================================
+
+function InfoRow({
+  icon,
+  label,
+  value,
+  colors,
+}: {
+  icon: string;
+  label: string;
+  value?: string | null;
+  colors: any;
+}) {
+  return (
+    <View style={infoStyles.row}>
+      <Ionicons name={icon as any} size={20} color={colors.text.tertiary} />
+      <View style={infoStyles.content}>
+        <Text variant="caption" color="tertiary">
+          {label}
+        </Text>
+        <Text variant="body" color={value ? 'primary' : 'tertiary'}>
+          {value || 'Não informado'}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+const infoStyles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+    gap: 12,
+  },
+  content: {
+    flex: 1,
+    gap: 2,
+  },
+});
+
+// =============================================================================
+// STYLES
+// =============================================================================
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  content: {
+    flexGrow: 1,
+  },
+  headerSection: {
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerInfo: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+  },
+  section: {
+    padding: 16,
+  },
+  row: {
+    flexDirection: 'row',
+  },
+  flex1: {
+    flex: 1,
+  },
+  flex2: {
+    flex: 2,
+  },
+  footer: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+  },
+  saveButton: {
+    flex: 2,
+  },
+});

@@ -1,0 +1,17 @@
+# Ignore local configs
+.env
+.env.local
+*.log
+
+# Ignore test files
+__tests__/
+__mocks__/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+
+# Ignore development files
+.eslintrc*
+.prettierrc*
+jest.config.*

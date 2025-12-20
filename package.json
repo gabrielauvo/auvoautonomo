@@ -1,0 +1,48 @@
+{
+  "name": "monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Monorepo com Backend, Web e Mobile",
+  "scripts": {
+    "dev": "pnpm --parallel dev:backend dev:web",
+    "dev:all": "pnpm --parallel dev:backend dev:web dev:expo",
+    "dev:backend": "pnpm --filter @monorepo/backend dev",
+    "dev:web": "pnpm --filter @monorepo/web dev",
+    "dev:expo": "pnpm --filter @monorepo/mobile dev",
+    "dev:expo:clean": "pnpm --filter @monorepo/mobile dev:clean",
+    "dev:infra": "docker-compose up -d postgres redis",
+    "dev:infra:stop": "docker-compose down",
+    "build": "pnpm -r build",
+    "build:backend": "pnpm --filter @monorepo/backend build",
+    "build:web": "pnpm --filter @monorepo/web build",
+    "test": "pnpm -r test",
+    "test:backend": "pnpm --filter @monorepo/backend test",
+    "test:web": "pnpm --filter @monorepo/web test",
+    "test:mobile": "pnpm --filter @monorepo/mobile test",
+    "test:watch": "pnpm -r test:watch",
+    "test:coverage": "pnpm -r test:coverage",
+    "lint": "pnpm -r lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "db:migrate": "pnpm --filter @monorepo/backend prisma:migrate",
+    "db:generate": "pnpm --filter @monorepo/backend prisma:generate",
+    "db:studio": "pnpm --filter @monorepo/backend prisma:studio",
+    "db:seed": "pnpm --filter @monorepo/backend prisma:seed"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.1.3",
+    "prettier": "^3.2.5",
+    "typescript": "^5.3.3"
+  },
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

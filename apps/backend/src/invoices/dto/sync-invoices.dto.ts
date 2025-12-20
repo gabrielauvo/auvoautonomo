@@ -1,0 +1,285 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsString,
+  IsOptional,
+  IsArray,
+  ValidateNested,
+  IsEnum,
+  IsDateString,
+  IsUUID,
+  IsNumber,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+
+// =============================================================================
+// ENUMS
+// =============================================================================
+
+export enum SyncScope {
+  ALL = 'all',
+  RECENT = 'recent',
+}
+
+export enum MutationAction {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+}
+
+export enum MutationStatus {
+  APPLIED = 'applied',
+  REJECTED = 'rejected',
+}
+
+export enum InvoiceStatus {
+  PENDING = 'PENDING',
+  PAID = 'PAID',
+  OVERDUE = 'OVERDUE',
+  CANCELLED = 'CANCELLED',
+}
+
+// =============================================================================
+// PULL DTOs
+// =============================================================================
+
+export class SyncPullQueryDto {
+  @ApiPropertyOptional({
+    description: 'ISO date string - only return records updated after this date',
+    example: '2024-01-01T00:00:00.000Z',
+  })
+  @IsOptional()
+  @IsDateString()
+  since?: string;
+
+  @ApiPropertyOptional({
+    description: 'Cursor for pagination (base64 encoded updatedAt+id)',
+  })
+  @IsOptional()
+  @IsString()
+  cursor?: string;
+
+  @ApiPropertyOptional({
+    description: 'Number of records to return per page',
+    example: 100,
+    default: 100,
+  })
+  @IsOptional()
+  limit?: number;
+
+  @ApiPropertyOptional({
+    description: 'Scope of invoices to sync',
+    enum: SyncScope,
+    default: SyncScope.ALL,
+  })
+  @IsOptional()
+  @IsEnum(SyncScope)
+  scope?: SyncScope;
+}
+
+export class SyncInvoiceDto {
+  @ApiProperty({ description: 'Invoice ID (UUID)' })
+  id: string;
+
+  @ApiProperty({ description: 'Technician/User ID' })
+  technicianId: string;
+
+  @ApiProperty({ description: 'Client ID' })
+  clientId: string;
+
+  @ApiPropertyOptional({ description: 'Client name (denormalized)' })
+  clientName?: string;
+
+  @ApiPropertyOptional({ description: 'Work Order ID (if linked)' })
+  workOrderId?: string;
+
+  @ApiProperty({ description: 'Invoice number (auto-generated)' })
+  invoiceNumber: string;
+
+  @ApiProperty({ description: 'Invoice status', enum: InvoiceStatus })
+  status: InvoiceStatus;
+
+  @ApiProperty({ description: 'Subtotal value' })
+  subtotal: number;
+
+  @ApiProperty({ description: 'Tax value' })
+  tax: number;
+
+  @ApiProperty({ description: 'Discount value' })
+  discount: number;
+
+  @ApiProperty({ description: 'Total value' })
+  total: number;
+
+  @ApiPropertyOptional({ description: 'Due date' })
+  dueDate?: string;
+
+  @ApiPropertyOptional({ description: 'Paid at timestamp' })
+  paidAt?: string;
+
+  @ApiPropertyOptional({ description: 'Notes' })
+  notes?: string;
+
+  @ApiProperty({ description: 'Created at timestamp' })
+  createdAt: string;
+
+  @ApiProperty({ description: 'Updated at timestamp' })
+  updatedAt: string;
+}
+
+export class SyncInvoicesPullResponseDto {
+  @ApiProperty({
+    description: 'Array of invoice records',
+    type: [SyncInvoiceDto],
+  })
+  items: SyncInvoiceDto[];
+
+  @ApiPropertyOptional({
+    description: 'Cursor for next page (null if no more pages)',
+  })
+  nextCursor: string | null;
+
+  @ApiProperty({
+    description: 'Server time for next sync',
+  })
+  serverTime: string;
+
+  @ApiProperty({
+    description: 'Whether there are more records',
+  })
+  hasMore: boolean;
+
+  @ApiProperty({
+    description: 'Total count of records matching the query',
+  })
+  total: number;
+}
+
+// =============================================================================
+// PUSH DTOs
+// =============================================================================
+
+export class InvoiceMutationRecordDto {
+  @ApiPropertyOptional({ description: 'Invoice ID (required for update/delete)' })
+  @IsOptional()
+  @IsUUID()
+  id?: string;
+
+  @ApiProperty({ description: 'Client ID' })
+  @IsUUID()
+  clientId: string;
+
+  @ApiPropertyOptional({ description: 'Work Order ID' })
+  @IsOptional()
+  @IsUUID()
+  workOrderId?: string;
+
+  @ApiPropertyOptional({ description: 'Invoice status', enum: InvoiceStatus })
+  @IsOptional()
+  @IsEnum(InvoiceStatus)
+  status?: InvoiceStatus;
+
+  @ApiPropertyOptional({ description: 'Subtotal value' })
+  @IsOptional()
+  @IsNumber()
+  subtotal?: number;
+
+  @ApiPropertyOptional({ description: 'Tax value' })
+  @IsOptional()
+  @IsNumber()
+  tax?: number;
+
+  @ApiPropertyOptional({ description: 'Discount value' })
+  @IsOptional()
+  @IsNumber()
+  discount?: number;
+
+  @ApiPropertyOptional({ description: 'Due date' })
+  @IsOptional()
+  @IsDateString()
+  dueDate?: string;
+
+  @ApiPropertyOptional({ description: 'Paid at timestamp' })
+  @IsOptional()
+  @IsDateString()
+  paidAt?: string;
+
+  @ApiPropertyOptional({ description: 'Notes' })
+  @IsOptional()
+  @IsString()
+  notes?: string;
+}
+
+export class InvoiceMutationDto {
+  @ApiProperty({
+    description: 'Unique mutation ID generated by client for idempotency. Format: {entityId}-{operation}-{localMutationId}',
+  })
+  @IsString()
+  mutationId: string;
+
+  @ApiProperty({
+    description: 'Mutation action',
+    enum: MutationAction,
+  })
+  @IsEnum(MutationAction)
+  action: MutationAction;
+
+  @ApiProperty({
+    description: 'Invoice record data',
+    type: InvoiceMutationRecordDto,
+  })
+  @ValidateNested()
+  @Type(() => InvoiceMutationRecordDto)
+  record: InvoiceMutationRecordDto;
+
+  @ApiProperty({
+    description: 'Client-side updatedAt for conflict resolution',
+  })
+  @IsDateString()
+  clientUpdatedAt: string;
+}
+
+export class SyncInvoicesPushBodyDto {
+  @ApiProperty({
+    description: 'Array of mutations to apply',
+    type: [InvoiceMutationDto],
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => InvoiceMutationDto)
+  mutations: InvoiceMutationDto[];
+}
+
+export class InvoiceMutationResultDto {
+  @ApiProperty({ description: 'Mutation ID from request' })
+  mutationId: string;
+
+  @ApiProperty({
+    description: 'Result status',
+    enum: MutationStatus,
+  })
+  status: MutationStatus;
+
+  @ApiPropertyOptional({
+    description: 'Server record after mutation',
+    type: SyncInvoiceDto,
+  })
+  record?: SyncInvoiceDto;
+
+  @ApiPropertyOptional({
+    description: 'Error message (for rejected mutations)',
+  })
+  error?: string;
+}
+
+export class SyncInvoicesPushResponseDto {
+  @ApiProperty({
+    description: 'Results for each mutation',
+    type: [InvoiceMutationResultDto],
+  })
+  results: InvoiceMutationResultDto[];
+
+  @ApiProperty({
+    description: 'Server time for reference',
+  })
+  serverTime: string;
+}

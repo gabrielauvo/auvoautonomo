@@ -1,0 +1,384 @@
+# ============================================
+# Docker Compose - Production Environment
+# Otimizado para 1M+ usuários
+# ============================================
+version: '3.8'
+
+# ============================================
+# Networks
+# ============================================
+networks:
+  frontend:
+    driver: bridge
+    name: monorepo-prod-frontend
+  backend:
+    driver: bridge
+    name: monorepo-prod-backend
+  database:
+    driver: bridge
+    name: monorepo-prod-database
+  monitoring:
+    driver: bridge
+    name: monorepo-prod-monitoring
+
+# ============================================
+# Volumes
+# ============================================
+volumes:
+  postgres_data:
+    driver: local
+    name: monorepo-prod-postgres-data
+  redis_data:
+    driver: local
+    name: monorepo-prod-redis-data
+  postgres_backup:
+    driver: local
+    name: monorepo-prod-postgres-backup
+  logs:
+    driver: local
+    name: monorepo-prod-logs
+
+# ============================================
+# Services
+# ============================================
+services:
+  # ==========================================
+  # PostgreSQL Database - Production
+  # ==========================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: monorepo-prod-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: "-E UTF8 --locale=en_US.UTF-8"
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - postgres_backup:/backups
+      - logs:/var/log/postgresql
+    networks:
+      - database
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 4G
+        reservations:
+          cpus: '2'
+          memory: 2G
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "10"
+        labels: "service=postgres,env=production"
+    command:
+      - "postgres"
+      # Configurações otimizadas para alta carga
+      - "-c"
+      - "max_connections=500"
+      - "-c"
+      - "shared_buffers=1GB"
+      - "-c"
+      - "effective_cache_size=3GB"
+      - "-c"
+      - "maintenance_work_mem=256MB"
+      - "-c"
+      - "checkpoint_completion_target=0.9"
+      - "-c"
+      - "wal_buffers=16MB"
+      - "-c"
+      - "default_statistics_target=100"
+      - "-c"
+      - "random_page_cost=1.1"
+      - "-c"
+      - "effective_io_concurrency=200"
+      - "-c"
+      - "work_mem=2MB"
+      - "-c"
+      - "min_wal_size=2GB"
+      - "-c"
+      - "max_wal_size=8GB"
+      - "-c"
+      - "max_worker_processes=8"
+      - "-c"
+      - "max_parallel_workers_per_gather=4"
+      - "-c"
+      - "max_parallel_workers=8"
+      - "-c"
+      - "max_parallel_maintenance_workers=4"
+      # Logging para auditoria
+      - "-c"
+      - "log_destination=stderr"
+      - "-c"
+      - "logging_collector=on"
+      - "-c"
+      - "log_directory=/var/log/postgresql"
+      - "-c"
+      - "log_min_duration_statement=1000"
+      - "-c"
+      - "log_line_prefix=%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h "
+      # Segurança
+      - "-c"
+      - "ssl=off"
+      # Use ssl=on em produção com certificados
+
+  # ==========================================
+  # Redis Cache - Production
+  # ==========================================
+  redis:
+    image: redis:7-alpine
+    container_name: monorepo-prod-redis
+    restart: always
+    volumes:
+      - redis_data:/data
+      - logs:/var/log/redis
+    networks:
+      - backend
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "10"
+        labels: "service=redis,env=production"
+    command:
+      - "redis-server"
+      - "--appendonly"
+      - "yes"
+      - "--maxmemory"
+      - "1536mb"
+      - "--maxmemory-policy"
+      - "allkeys-lru"
+      - "--save"
+      - "900 1"
+      - "--save"
+      - "300 10"
+      - "--save"
+      - "60 10000"
+      # Performance
+      - "--tcp-backlog"
+      - "511"
+      - "--timeout"
+      - "300"
+      - "--tcp-keepalive"
+      - "300"
+      # Segurança - Descomente e configure senha
+      # - "--requirepass"
+      # - "${REDIS_PASSWORD}"
+      # Logging
+      - "--loglevel"
+      - "notice"
+
+  # ==========================================
+  # Backend API - Production (Multi-instance)
+  # ==========================================
+  backend:
+    image: ${DOCKER_REGISTRY:-ghcr.io}/${DOCKER_NAMESPACE:-mycompany}/backend:${VERSION:-latest}
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public&connection_limit=50&pool_timeout=30
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      # Configurações de performance
+      UV_THREADPOOL_SIZE: 16
+      NODE_OPTIONS: "--max-old-space-size=2048"
+    networks:
+      - frontend
+      - backend
+      - database
+      - monitoring
+    deploy:
+      mode: replicated
+      replicas: 3  # 3 instâncias para load balancing
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+        order: start-first
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+        labels: "service=backend,env=production"
+    security_opt:
+      - no-new-privileges:true
+    read_only: false
+    tmpfs:
+      - /tmp:size=100M,mode=1777
+
+  # ==========================================
+  # Frontend Web - Production (Multi-instance)
+  # ==========================================
+  web:
+    image: ${DOCKER_REGISTRY:-ghcr.io}/${DOCKER_NAMESPACE:-mycompany}/web:${VERSION:-latest}
+    restart: always
+    depends_on:
+      - backend
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+      # Next.js optimizations
+      NEXT_SHARP_PATH: /app/node_modules/sharp
+    networks:
+      - frontend
+      - monitoring
+    deploy:
+      mode: replicated
+      replicas: 4  # 4 instâncias para alto tráfego
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+      update_config:
+        parallelism: 2
+        delay: 10s
+        failure_action: rollback
+        order: start-first
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+        labels: "service=web,env=production"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:size=100M,mode=1777
+      - /app/.next/cache:size=500M,mode=1777
+
+  # ==========================================
+  # Nginx Load Balancer (Opcional)
+  # ==========================================
+  # Descomente para usar Nginx como load balancer
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: monorepo-prod-nginx
+  #   restart: always
+  #   depends_on:
+  #     - web
+  #     - backend
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+  #     - ./nginx/ssl:/etc/nginx/ssl:ro
+  #     - logs:/var/log/nginx
+  #   networks:
+  #     - frontend
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: '1'
+  #         memory: 512M
+  #       reservations:
+  #         cpus: '0.5'
+  #         memory: 256M
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       max-size: "50m"
+  #       max-file: "10"
+
+# ============================================
+# Como usar em Produção:
+# ============================================
+# 1. Configurar variáveis de ambiente:
+#    cp .env.example .env.production
+#    # Editar .env.production com valores reais
+#
+# 2. Build das imagens:
+#    docker-compose -f docker-compose.prod.yml build
+#
+# 3. Push para registry:
+#    docker-compose -f docker-compose.prod.yml push
+#
+# 4. Deploy:
+#    docker-compose -f docker-compose.prod.yml up -d
+#
+# 5. Escalar serviços:
+#    docker-compose -f docker-compose.prod.yml up -d --scale backend=5 --scale web=6
+#
+# 6. Ver logs:
+#    docker-compose -f docker-compose.prod.yml logs -f [service]
+#
+# 7. Monitoring:
+#    docker-compose -f docker-compose.prod.yml stats
+#
+# 8. Backup do banco:
+#    docker-compose -f docker-compose.prod.yml exec postgres pg_dump -U ${POSTGRES_USER} ${POSTGRES_DB} > backup.sql
+#
+# 9. Rollback:
+#    docker-compose -f docker-compose.prod.yml down
+#    # Ajustar VERSION para versão anterior
+#    docker-compose -f docker-compose.prod.yml up -d
+# ============================================

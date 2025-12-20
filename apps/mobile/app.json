@@ -1,0 +1,52 @@
+{
+  "expo": {
+    "name": "Auvo Field",
+    "slug": "auvo-field",
+    "owner": "auvo",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": false,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#2563EB"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.auvo.field.preview"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#2563EB"
+      },
+      "package": "com.auvo.field.preview"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "scheme": "auvofield",
+    "extra": {
+      "apiUrl": "http://192.168.1.10:3001",
+      "eas": {
+        "projectId": "fdf3f160-daec-4bb5-8555-d67f198d24d8"
+      }
+    },
+    "updates": {
+      "enabled": false
+    },
+    "plugins": [
+      "expo-font",
+      "expo-router",
+      "expo-secure-store",
+      "expo-sqlite",
+      "@react-native-community/datetimepicker"
+    ]
+  }
+}

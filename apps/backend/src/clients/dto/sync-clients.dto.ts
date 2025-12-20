@@ -1,0 +1,278 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsString,
+  IsOptional,
+  IsArray,
+  ValidateNested,
+  IsEnum,
+  IsDateString,
+  IsUUID,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+
+// =============================================================================
+// ENUMS
+// =============================================================================
+
+export enum SyncScope {
+  ALL = 'all',
+  RECENT = 'recent',
+  ASSIGNED = 'assigned',
+}
+
+export enum MutationAction {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+}
+
+export enum MutationStatus {
+  APPLIED = 'applied',
+  REJECTED = 'rejected',
+}
+
+// =============================================================================
+// PULL DTOs
+// =============================================================================
+
+export class SyncPullQueryDto {
+  @ApiPropertyOptional({
+    description: 'ISO date string - only return records updated after this date',
+    example: '2024-01-01T00:00:00.000Z',
+  })
+  @IsOptional()
+  @IsDateString()
+  since?: string;
+
+  @ApiPropertyOptional({
+    description: 'Cursor for pagination (base64 encoded updatedAt+id)',
+    example: 'eyJ1cGRhdGVkQXQiOiIyMDI0LTAxLTAxVDAwOjAwOjAwLjAwMFoiLCJpZCI6ImFiYzEyMyJ9',
+  })
+  @IsOptional()
+  @IsString()
+  cursor?: string;
+
+  @ApiPropertyOptional({
+    description: 'Number of records to return per page',
+    example: 100,
+    default: 100,
+  })
+  @IsOptional()
+  limit?: number;
+
+  @ApiPropertyOptional({
+    description: 'Scope of clients to sync',
+    enum: SyncScope,
+    default: SyncScope.ALL,
+  })
+  @IsOptional()
+  @IsEnum(SyncScope)
+  scope?: SyncScope;
+}
+
+export class SyncClientItemDto {
+  @ApiProperty({ description: 'Client ID (UUID)' })
+  id: string;
+
+  @ApiProperty({ description: 'Technician/User ID for scoping (maps to technicianId on mobile)' })
+  technicianId: string;
+
+  @ApiProperty({ description: 'Client name' })
+  name: string;
+
+  @ApiPropertyOptional({ description: 'Client email' })
+  email?: string;
+
+  @ApiPropertyOptional({ description: 'Client phone' })
+  phone?: string;
+
+  @ApiPropertyOptional({ description: 'Client address' })
+  address?: string;
+
+  @ApiPropertyOptional({ description: 'City' })
+  city?: string;
+
+  @ApiPropertyOptional({ description: 'State' })
+  state?: string;
+
+  @ApiPropertyOptional({ description: 'Zip code' })
+  zipCode?: string;
+
+  @ApiPropertyOptional({ description: 'Tax ID (CPF/CNPJ)' })
+  taxId?: string;
+
+  @ApiPropertyOptional({ description: 'Notes' })
+  notes?: string;
+
+  @ApiProperty({ description: 'Whether client is active (not soft deleted)', default: true })
+  isActive: boolean;
+
+  @ApiProperty({ description: 'Created at timestamp' })
+  createdAt: string;
+
+  @ApiProperty({ description: 'Updated at timestamp' })
+  updatedAt: string;
+
+  @ApiPropertyOptional({ description: 'Deleted at timestamp (soft delete)' })
+  deletedAt?: string;
+}
+
+export class SyncPullResponseDto {
+  @ApiProperty({
+    description: 'Array of client records',
+    type: [SyncClientItemDto],
+  })
+  items: SyncClientItemDto[];
+
+  @ApiPropertyOptional({
+    description: 'Cursor for next page (null if no more pages)',
+  })
+  nextCursor: string | null;
+
+  @ApiProperty({
+    description: 'Server time for next sync',
+  })
+  serverTime: string;
+
+  @ApiProperty({
+    description: 'Whether there are more records',
+  })
+  hasMore: boolean;
+
+  @ApiProperty({
+    description: 'Total count of records matching the query',
+  })
+  total: number;
+}
+
+// =============================================================================
+// PUSH DTOs
+// =============================================================================
+
+export class ClientMutationRecordDto {
+  @ApiPropertyOptional({ description: 'Client ID (required for update/delete)' })
+  @IsOptional()
+  @IsUUID()
+  id?: string;
+
+  @ApiProperty({ description: 'Client name' })
+  @IsString()
+  name: string;
+
+  @ApiPropertyOptional({ description: 'Client email' })
+  @IsOptional()
+  @IsString()
+  email?: string;
+
+  @ApiPropertyOptional({ description: 'Client phone' })
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @ApiPropertyOptional({ description: 'Client address' })
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @ApiPropertyOptional({ description: 'City' })
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @ApiPropertyOptional({ description: 'State' })
+  @IsOptional()
+  @IsString()
+  state?: string;
+
+  @ApiPropertyOptional({ description: 'Zip code' })
+  @IsOptional()
+  @IsString()
+  zipCode?: string;
+
+  @ApiPropertyOptional({ description: 'Tax ID (CPF/CNPJ)' })
+  @IsOptional()
+  @IsString()
+  taxId?: string;
+
+  @ApiPropertyOptional({ description: 'Notes' })
+  @IsOptional()
+  @IsString()
+  notes?: string;
+}
+
+export class ClientMutationDto {
+  @ApiProperty({
+    description: 'Unique mutation ID generated by client for idempotency. Format: {entityId}-{operation}-{localMutationId}',
+    example: '550e8400-e29b-41d4-a716-446655440000-create-123',
+  })
+  @IsString()
+  mutationId: string;
+
+  @ApiProperty({
+    description: 'Mutation action',
+    enum: MutationAction,
+  })
+  @IsEnum(MutationAction)
+  action: MutationAction;
+
+  @ApiProperty({
+    description: 'Client record data',
+    type: ClientMutationRecordDto,
+  })
+  @ValidateNested()
+  @Type(() => ClientMutationRecordDto)
+  record: ClientMutationRecordDto;
+
+  @ApiProperty({
+    description: 'Client-side updatedAt for conflict resolution',
+    example: '2024-01-01T00:00:00.000Z',
+  })
+  @IsDateString()
+  clientUpdatedAt: string;
+}
+
+export class SyncPushBodyDto {
+  @ApiProperty({
+    description: 'Array of mutations to apply',
+    type: [ClientMutationDto],
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ClientMutationDto)
+  mutations: ClientMutationDto[];
+}
+
+export class MutationResultDto {
+  @ApiProperty({ description: 'Mutation ID from request' })
+  mutationId: string;
+
+  @ApiProperty({
+    description: 'Result status',
+    enum: MutationStatus,
+  })
+  status: MutationStatus;
+
+  @ApiPropertyOptional({
+    description: 'Server record after mutation (for applied mutations)',
+    type: SyncClientItemDto,
+  })
+  record?: SyncClientItemDto;
+
+  @ApiPropertyOptional({
+    description: 'Error message (for rejected mutations)',
+  })
+  error?: string;
+}
+
+export class SyncPushResponseDto {
+  @ApiProperty({
+    description: 'Results for each mutation',
+    type: [MutationResultDto],
+  })
+  results: MutationResultDto[];
+
+  @ApiProperty({
+    description: 'Server time for reference',
+  })
+  serverTime: string;
+}

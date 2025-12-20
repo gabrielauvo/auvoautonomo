@@ -1,0 +1,78 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Testing
+coverage
+*.lcov
+.nyc_output
+
+# Production
+build
+dist
+.next
+out
+
+# Misc
+.DS_Store
+*.log
+*.pem
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+
+# Expo
+.expo
+.expo-shared
+
+# Prisma
+prisma/migrations
+
+# Docker
+docker-compose.override.yml
+
+# Terraform
+*.tfstate
+*.tfstate.*
+*.tfvars.backup
+.terraform/
+.terraform.lock.hcl
+tfplan
+crash.log
+
+# Azure
+AZURE-INFO.txt
+
+# Secrets
+*.pem
+*.key
+secrets.tfvars
+
+# Windows NUL files (erros)
+nul

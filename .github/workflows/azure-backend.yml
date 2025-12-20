@@ -141,15 +141,11 @@ jobs:
             echo "⚠️ GOOGLE_CLIENT_SECRET not set in secrets, skipping"
           fi
 
-          # DATABASE_URL - CRÍTICO: nunca sobrescrever com vazio
-          # O valor deve ser mantido no Azure se não estiver no GitHub secrets
-          if [ -n "${{ secrets.DATABASE_URL }}" ]; then
-            SETTINGS="$SETTINGS DATABASE_URL=${{ secrets.DATABASE_URL }}"
-            echo "✅ DATABASE_URL will be updated from secrets"
-          else
-            echo "⚠️ DATABASE_URL not in secrets - keeping existing Azure value"
-            echo "   To update, add DATABASE_URL to GitHub secrets"
-          fi
+          # DATABASE_URL - CRÍTICO: nunca sobrescrever com valor inválido
+          # O valor é gerenciado diretamente no Azure, NÃO via GitHub secrets
+          # Isso evita problemas de truncamento ou valores incorretos
+          echo "ℹ️ DATABASE_URL is managed directly in Azure App Service settings"
+          echo "   To update, use: az webapp config appsettings set --settings DATABASE_URL=..."
 
           # Aplicar settings
           az webapp config appsettings set \

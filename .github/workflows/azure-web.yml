@@ -1,5 +1,5 @@
 # =============================================================================
-# AZURE WEB - Deploy Frontend to App Service
+# AZURE WEB - Deploy Frontend to App Service (Next.js)
 # =============================================================================
 
 name: Deploy Web to Azure
@@ -16,6 +16,9 @@ on:
 env:
   AZURE_WEBAPP_NAME: web-monorepo-prod
   ACR_NAME: acrmonorepoprod
+  RESOURCE_GROUP: rg-monorepo-prod
+  # IMPORTANTE: URL da API para build-time do Next.js
+  API_URL: https://api-monorepo-prod.azurewebsites.net
 
 jobs:
   build-and-deploy:
@@ -25,8 +28,41 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # =========================================================================
+      # STEP 1: Validar secrets críticos
+      # =========================================================================
+      - name: Validate required secrets
+        run: |
+          set -euo pipefail
+
+          MISSING=""
+
+          if [ -z "${{ secrets.ARM_CLIENT_ID }}" ]; then
+            MISSING="${MISSING}ARM_CLIENT_ID "
+          fi
+          if [ -z "${{ secrets.ARM_CLIENT_SECRET }}" ]; then
+            MISSING="${MISSING}ARM_CLIENT_SECRET "
+          fi
+          if [ -z "${{ secrets.ARM_TENANT_ID }}" ]; then
+            MISSING="${MISSING}ARM_TENANT_ID "
+          fi
+          if [ -z "${{ secrets.ARM_SUBSCRIPTION_ID }}" ]; then
+            MISSING="${MISSING}ARM_SUBSCRIPTION_ID "
+          fi
+
+          if [ -n "$MISSING" ]; then
+            echo "::error::Missing required secrets: $MISSING"
+            exit 1
+          fi
+
+          echo "✅ All required secrets configured"
+
+      # =========================================================================
+      # STEP 2: Azure Login
+      # =========================================================================
       - name: Azure CLI Login
         run: |
+          set -euo pipefail
           az login --service-principal \
             -u ${{ secrets.ARM_CLIENT_ID }} \
             -p ${{ secrets.ARM_CLIENT_SECRET }} \
@@ -36,21 +72,99 @@ jobs:
       - name: Login to ACR
         run: az acr login --name ${{ env.ACR_NAME }}
 
-      - name: Create env file
+      # =========================================================================
+      # STEP 3: Create .env.production for Next.js build
+      # NEXT_PUBLIC_* variables MUST be available at build time
+      # =========================================================================
+      - name: Create env file for build
         working-directory: apps/web
-        run: echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}" > .env.production
+        run: |
+          set -euo pipefail
 
+          # Usar secret se existir, senão usar valor padrão do env
+          API_URL_VALUE="${{ secrets.NEXT_PUBLIC_API_URL }}"
+          if [ -z "$API_URL_VALUE" ]; then
+            API_URL_VALUE="${{ env.API_URL }}"
+            echo "ℹ️ Using default API URL: $API_URL_VALUE"
+          fi
+
+          echo "NEXT_PUBLIC_API_URL=$API_URL_VALUE" > .env.production
+          echo "✅ Created .env.production with API URL"
+
+      # =========================================================================
+      # STEP 4: Build Docker image
+      # =========================================================================
       - name: Build Docker image
         working-directory: apps/web
-        run: docker build -t ${{ env.ACR_NAME }}.azurecr.io/web:${{ github.sha }} -t ${{ env.ACR_NAME }}.azurecr.io/web:latest .
+        run: |
+          set -euo pipefail
+          docker build \
+            -t ${{ env.ACR_NAME }}.azurecr.io/web:${{ github.sha }} \
+            -t ${{ env.ACR_NAME }}.azurecr.io/web:latest \
+            .
 
       - name: Push Docker image
         run: |
+          set -euo pipefail
           docker push ${{ env.ACR_NAME }}.azurecr.io/web:${{ github.sha }}
           docker push ${{ env.ACR_NAME }}.azurecr.io/web:latest
 
+      # =========================================================================
+      # STEP 5: Deploy to App Service
+      # =========================================================================
       - name: Deploy to App Service
-        run: az webapp config container set --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group rg-monorepo-prod --container-image-name ${{ env.ACR_NAME }}.azurecr.io/web:${{ github.sha }}
+        run: |
+          set -euo pipefail
+          az webapp config container set \
+            --name ${{ env.AZURE_WEBAPP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --container-image-name ${{ env.ACR_NAME }}.azurecr.io/web:${{ github.sha }}
 
       - name: Configure App Settings
-        run: az webapp config appsettings set --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group rg-monorepo-prod --settings NODE_ENV=production NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
+        run: |
+          set -euo pipefail
+
+          # NEXT_PUBLIC_* em runtime não funciona para client components
+          # Mas mantemos para server components
+          API_URL_VALUE="${{ secrets.NEXT_PUBLIC_API_URL }}"
+          if [ -z "$API_URL_VALUE" ]; then
+            API_URL_VALUE="${{ env.API_URL }}"
+          fi
+
+          az webapp config appsettings set \
+            --name ${{ env.AZURE_WEBAPP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --settings \
+              NODE_ENV=production \
+              NEXT_PUBLIC_API_URL="$API_URL_VALUE"
+
+      # =========================================================================
+      # STEP 6: Health check
+      # =========================================================================
+      - name: Wait for deployment
+        run: sleep 45
+
+      - name: Health check
+        run: |
+          set -euo pipefail
+
+          MAX_RETRIES=5
+          RETRY_DELAY=10
+
+          for i in $(seq 1 $MAX_RETRIES); do
+            echo "Health check attempt $i/$MAX_RETRIES..."
+
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+              https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/ || echo "000")
+
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "✅ Health check passed!"
+              exit 0
+            fi
+
+            echo "Health check returned $HTTP_CODE, retrying in ${RETRY_DELAY}s..."
+            sleep $RETRY_DELAY
+          done
+
+          echo "::error::Health check failed after $MAX_RETRIES attempts"
+          exit 1

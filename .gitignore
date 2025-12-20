@@ -51,8 +51,14 @@ Thumbs.db
 .expo
 .expo-shared
 
-# Prisma
-prisma/migrations
+# Prisma - DO NOT ignore migrations (they must be versioned)
+# prisma/migrations
+
+# Debug logs from Azure
+api-logs/
+api-logs*.zip
+api-diag/
+api-diag*.zip
 
 # Docker
 docker-compose.override.yml

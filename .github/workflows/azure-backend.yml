@@ -1,5 +1,5 @@
 # =============================================================================
-# AZURE BACKEND - Build and Deploy (Simplificado)
+# AZURE BACKEND - Build and Deploy (Protegido contra secrets vazios)
 # =============================================================================
 
 name: Deploy Backend to Azure
@@ -16,6 +16,7 @@ on:
 env:
   AZURE_WEBAPP_NAME: api-monorepo-prod
   ACR_NAME: acrmonorepoprod
+  RESOURCE_GROUP: rg-monorepo-prod
 
 jobs:
   build-and-deploy:
@@ -25,8 +26,48 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # =========================================================================
+      # STEP 1: Validar secrets críticos ANTES de qualquer deploy
+      # =========================================================================
+      - name: Validate required secrets
+        run: |
+          set -euo pipefail
+
+          MISSING=""
+
+          if [ -z "${{ secrets.ARM_CLIENT_ID }}" ]; then
+            MISSING="${MISSING}ARM_CLIENT_ID "
+          fi
+          if [ -z "${{ secrets.ARM_CLIENT_SECRET }}" ]; then
+            MISSING="${MISSING}ARM_CLIENT_SECRET "
+          fi
+          if [ -z "${{ secrets.ARM_TENANT_ID }}" ]; then
+            MISSING="${MISSING}ARM_TENANT_ID "
+          fi
+          if [ -z "${{ secrets.ARM_SUBSCRIPTION_ID }}" ]; then
+            MISSING="${MISSING}ARM_SUBSCRIPTION_ID "
+          fi
+          if [ -z "${{ secrets.JWT_SECRET }}" ]; then
+            MISSING="${MISSING}JWT_SECRET "
+          fi
+          if [ -z "${{ secrets.ENCRYPTION_KEY }}" ]; then
+            MISSING="${MISSING}ENCRYPTION_KEY "
+          fi
+
+          if [ -n "$MISSING" ]; then
+            echo "::error::Missing required secrets: $MISSING"
+            echo "Please configure these secrets in GitHub repository settings."
+            exit 1
+          fi
+
+          echo "✅ All required secrets are configured"
+
+      # =========================================================================
+      # STEP 2: Azure Login
+      # =========================================================================
       - name: Azure CLI Login
         run: |
+          set -euo pipefail
           az login --service-principal \
             -u ${{ secrets.ARM_CLIENT_ID }} \
             -p ${{ secrets.ARM_CLIENT_SECRET }} \
@@ -36,9 +77,13 @@ jobs:
       - name: Login to ACR
         run: az acr login --name ${{ env.ACR_NAME }}
 
+      # =========================================================================
+      # STEP 3: Build and push Docker image
+      # =========================================================================
       - name: Build and push Docker image
         working-directory: apps/backend
         run: |
+          set -euo pipefail
           docker build \
             -t ${{ env.ACR_NAME }}.azurecr.io/backend:${{ github.sha }} \
             -t ${{ env.ACR_NAME }}.azurecr.io/backend:latest \
@@ -46,25 +91,99 @@ jobs:
           docker push ${{ env.ACR_NAME }}.azurecr.io/backend:${{ github.sha }}
           docker push ${{ env.ACR_NAME }}.azurecr.io/backend:latest
 
+      # =========================================================================
+      # STEP 4: Deploy container to App Service
+      # =========================================================================
       - name: Deploy to App Service
         run: |
+          set -euo pipefail
           az webapp config container set \
             --name ${{ env.AZURE_WEBAPP_NAME }} \
-            --resource-group rg-monorepo-prod \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
             --container-image-name ${{ env.ACR_NAME }}.azurecr.io/backend:${{ github.sha }}
 
-      - name: Configure App Settings
+      # =========================================================================
+      # STEP 5: Configure App Settings (APENAS se secrets existirem)
+      # - Não sobrescreve DATABASE_URL se secret estiver vazio
+      # - Valores fixos podem ser setados sempre
+      # =========================================================================
+      - name: Configure App Settings (safe)
         run: |
+          set -euo pipefail
+
+          # Valores fixos que sempre podem ser setados
+          SETTINGS="NODE_ENV=production PORT=8080"
+          SETTINGS="$SETTINGS GOOGLE_CALLBACK_URL=https://api-monorepo-prod.azurewebsites.net/auth/google/callback"
+          SETTINGS="$SETTINGS FRONTEND_URL=https://web-monorepo-prod.azurewebsites.net"
+
+          # Secrets opcionais - só seta se não estiver vazio
+          if [ -n "${{ secrets.JWT_SECRET }}" ]; then
+            SETTINGS="$SETTINGS JWT_SECRET=${{ secrets.JWT_SECRET }}"
+          else
+            echo "⚠️ JWT_SECRET not set in secrets, skipping"
+          fi
+
+          if [ -n "${{ secrets.ENCRYPTION_KEY }}" ]; then
+            SETTINGS="$SETTINGS ENCRYPTION_KEY=${{ secrets.ENCRYPTION_KEY }}"
+          else
+            echo "⚠️ ENCRYPTION_KEY not set in secrets, skipping"
+          fi
+
+          if [ -n "${{ secrets.GOOGLE_CLIENT_ID }}" ]; then
+            SETTINGS="$SETTINGS GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}"
+          else
+            echo "⚠️ GOOGLE_CLIENT_ID not set in secrets, skipping"
+          fi
+
+          if [ -n "${{ secrets.GOOGLE_CLIENT_SECRET }}" ]; then
+            SETTINGS="$SETTINGS GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}"
+          else
+            echo "⚠️ GOOGLE_CLIENT_SECRET not set in secrets, skipping"
+          fi
+
+          # DATABASE_URL - CRÍTICO: nunca sobrescrever com vazio
+          # O valor deve ser mantido no Azure se não estiver no GitHub secrets
+          if [ -n "${{ secrets.DATABASE_URL }}" ]; then
+            SETTINGS="$SETTINGS DATABASE_URL=${{ secrets.DATABASE_URL }}"
+            echo "✅ DATABASE_URL will be updated from secrets"
+          else
+            echo "⚠️ DATABASE_URL not in secrets - keeping existing Azure value"
+            echo "   To update, add DATABASE_URL to GitHub secrets"
+          fi
+
+          # Aplicar settings
           az webapp config appsettings set \
             --name ${{ env.AZURE_WEBAPP_NAME }} \
-            --resource-group rg-monorepo-prod \
-            --settings \
-              NODE_ENV=production \
-              PORT=8080 \
-              JWT_SECRET="${{ secrets.JWT_SECRET }}" \
-              ENCRYPTION_KEY="${{ secrets.ENCRYPTION_KEY }}" \
-              DATABASE_URL="${{ secrets.DATABASE_URL }}" \
-              GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
-              GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
-              GOOGLE_CALLBACK_URL="https://api-monorepo-prod.azurewebsites.net/auth/google/callback" \
-              FRONTEND_URL="https://web-monorepo-prod.azurewebsites.net"
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --settings $SETTINGS
+
+      # =========================================================================
+      # STEP 6: Verificar health após deploy
+      # =========================================================================
+      - name: Wait for deployment
+        run: sleep 60
+
+      - name: Health check
+        run: |
+          set -euo pipefail
+
+          MAX_RETRIES=5
+          RETRY_DELAY=15
+
+          for i in $(seq 1 $MAX_RETRIES); do
+            echo "Health check attempt $i/$MAX_RETRIES..."
+
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+              https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/health || echo "000")
+
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "✅ Health check passed!"
+              exit 0
+            fi
+
+            echo "Health check returned $HTTP_CODE, retrying in ${RETRY_DELAY}s..."
+            sleep $RETRY_DELAY
+          done
+
+          echo "::error::Health check failed after $MAX_RETRIES attempts"
+          exit 1

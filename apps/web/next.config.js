@@ -103,9 +103,10 @@ const nextConfig = {
     } : false,
   },
 
-  // Experimental features para melhor performance
+  // Experimental features - desabilitado para compatibilidade
   experimental: {
-    optimizeCss: true, // Otimiza CSS com lightningcss
+    // optimizeCss: true, // Desabilitado - requer módulo critters
+    missingSuspenseWithCSRBailout: false, // Permite useSearchParams sem Suspense
   },
 
   // Otimização de imagens

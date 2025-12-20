@@ -92,9 +92,8 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
 
-  // CRITICAL: Standalone output para Docker
-  // Reduz tamanho da imagem em até 80%
-  output: 'standalone',
+  // Output para Azure Static Web Apps
+  output: 'export',
 
   // Compiler optimizations - CRITICAL para 1M+ users
   compiler: {

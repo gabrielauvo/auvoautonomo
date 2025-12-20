@@ -39,26 +39,12 @@ jobs:
       - name: Build and push Docker image
         working-directory: apps/web
         run: |
-          docker build \
-            --build-arg NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }} \
-            -t ${{ env.ACR_NAME }}.azurecr.io/web:${{ github.sha }} \
-            -t ${{ env.ACR_NAME }}.azurecr.io/web:latest \
-            .
+          docker build --build-arg NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }} -t ${{ env.ACR_NAME }}.azurecr.io/web:${{ github.sha }} -t ${{ env.ACR_NAME }}.azurecr.io/web:latest .
           docker push ${{ env.ACR_NAME }}.azurecr.io/web:${{ github.sha }}
           docker push ${{ env.ACR_NAME }}.azurecr.io/web:latest
 
       - name: Deploy to App Service
-        run: |
-          az webapp config container set \
-            --name ${{ env.AZURE_WEBAPP_NAME }} \
-            --resource-group rg-monorepo-prod \
-            --container-image-name ${{ env.ACR_NAME }}.azurecr.io/web:${{ github.sha }}
+        run: az webapp config container set --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group rg-monorepo-prod --container-image-name ${{ env.ACR_NAME }}.azurecr.io/web:${{ github.sha }}
 
       - name: Configure App Settings
-        run: |
-          az webapp config appsettings set \
-            --name ${{ env.AZURE_WEBAPP_NAME }} \
-            --resource-group rg-monorepo-prod \
-            --settings \
-              NODE_ENV=production \
-              NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
+        run: az webapp config appsettings set --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group rg-monorepo-prod --settings NODE_ENV=production NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}

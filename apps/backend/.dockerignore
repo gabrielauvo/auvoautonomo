@@ -59,8 +59,7 @@ Dockerfile*
 docker-compose*.yml
 .dockerignore
 
-# Prisma
-prisma/migrations
+# Prisma (keep migrations for deploy)
 *.db
 *.db-journal
 

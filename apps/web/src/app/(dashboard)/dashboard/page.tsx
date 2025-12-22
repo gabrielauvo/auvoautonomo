@@ -16,6 +16,7 @@ import { useSearchParams } from 'next/navigation';
 import { useTranslations } from '@/i18n';
 import { useAuth } from '@/context/auth-context';
 import { useAnalyticsOverview, useRevenueByPeriod } from '@/hooks/use-analytics';
+import { useExpenseSummary } from '@/hooks/use-expenses';
 import { useReportFilters } from '@/hooks/use-reports';
 import { AppLayout } from '@/components/layout';
 import {
@@ -42,6 +43,12 @@ import {
   Clock,
   Receipt,
   BarChart3,
+  TrendingUp,
+  TrendingDown,
+  Wallet,
+  ArrowUpRight,
+  ArrowDownRight,
+  MinusCircle,
 } from 'lucide-react';
 
 /**
@@ -74,6 +81,11 @@ function DashboardContent() {
     groupBy: 'month',
   });
 
+  const { data: expenseSummary, isLoading: isLoadingExpenses } = useExpenseSummary({
+    startDate: filters.startDate,
+    endDate: filters.endDate,
+  });
+
   const revenueChartData = revenueData?.map((item) => ({
     date: item.period,
     label: item.period,
@@ -84,6 +96,13 @@ function DashboardContent() {
 
   // Ticket médio vem calculado do backend (received / paidCount)
   const avgTicket = analytics?.revenue.averageTicket || 0;
+
+  // Cálculos de Receita vs Despesa
+  const totalRevenue = analytics?.revenue.received || 0;
+  const totalExpenses = expenseSummary?.paid.amount || 0;
+  const netResult = totalRevenue - totalExpenses;
+  const pendingExpenses = expenseSummary?.pending.amount || 0;
+  const overdueExpenses = expenseSummary?.overdue.amount || 0;
 
   return (
     <AppLayout>
@@ -291,6 +310,149 @@ function DashboardContent() {
                     <span className="text-sm font-medium text-gray-700">{t('total')}</span>
                     <span className="text-base font-bold text-gray-900">
                       {formatCurrency(analytics?.revenue.total || 0)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </DashboardCard>
+        </div>
+
+        {/* Receita vs Despesa - Resultado Líquido */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Card de Receita vs Despesa */}
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">{t('revenueVsExpenses')}</h3>
+                  <p className="text-sm text-gray-500">{t('periodComparison')}</p>
+                </div>
+                <Wallet className="h-8 w-8 text-primary" />
+              </div>
+
+              {isLoading || isLoadingExpenses ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-16 w-full" />
+                  <Skeleton className="h-16 w-full" />
+                  <Skeleton className="h-20 w-full" />
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Receita */}
+                  <div className="flex items-center justify-between p-4 bg-success-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-success-100 rounded-lg">
+                        <ArrowUpRight className="h-5 w-5 text-success" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">{t('receivedRevenue')}</p>
+                        <p className="text-lg font-bold text-success">{formatCurrency(totalRevenue)}</p>
+                      </div>
+                    </div>
+                    <TrendingUp className="h-6 w-6 text-success" />
+                  </div>
+
+                  {/* Despesas */}
+                  <div className="flex items-center justify-between p-4 bg-error-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-error-100 rounded-lg">
+                        <ArrowDownRight className="h-5 w-5 text-error" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">{t('paidExpenses')}</p>
+                        <p className="text-lg font-bold text-error">{formatCurrency(totalExpenses)}</p>
+                      </div>
+                    </div>
+                    <TrendingDown className="h-6 w-6 text-error" />
+                  </div>
+
+                  {/* Resultado Líquido */}
+                  <div className={`p-4 rounded-lg border-2 ${netResult >= 0 ? 'border-success bg-success-50' : 'border-error bg-error-50'}`}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-700">{t('netResult')}</p>
+                        <p className={`text-2xl font-bold ${netResult >= 0 ? 'text-success' : 'text-error'}`}>
+                          {formatCurrency(netResult)}
+                        </p>
+                      </div>
+                      {netResult >= 0 ? (
+                        <TrendingUp className="h-8 w-8 text-success" />
+                      ) : (
+                        <TrendingDown className="h-8 w-8 text-error" />
+                      )}
+                    </div>
+                    {netResult >= 0 ? (
+                      <p className="text-xs text-success mt-2">{t('positiveResult')}</p>
+                    ) : (
+                      <p className="text-xs text-error mt-2">{t('negativeResult')}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Card de Resumo de Despesas */}
+          <DashboardCard
+            title={t('expensesSummary')}
+            subtitle={t('expensesOverview')}
+          >
+            {isLoadingExpenses ? (
+              <div className="space-y-3 py-2">
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+              </div>
+            ) : (
+              <div className="space-y-4 py-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span className="text-sm text-gray-600">{t('paid')}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-sm font-medium text-success">
+                      {formatCurrency(expenseSummary?.paid.amount || 0)}
+                    </span>
+                    <span className="text-xs text-gray-400 ml-2">
+                      ({expenseSummary?.paid.count || 0})
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-warning" />
+                    <span className="text-sm text-gray-600">{t('pendingExpenses')}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-sm font-medium text-warning">
+                      {formatCurrency(pendingExpenses)}
+                    </span>
+                    <span className="text-xs text-gray-400 ml-2">
+                      ({expenseSummary?.pending.count || 0})
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 text-error" />
+                    <span className="text-sm text-gray-600">{t('overdueExpenses')}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-sm font-medium text-error">
+                      {formatCurrency(overdueExpenses)}
+                    </span>
+                    <span className="text-xs text-gray-400 ml-2">
+                      ({expenseSummary?.overdue.count || 0})
+                    </span>
+                  </div>
+                </div>
+                <div className="border-t border-gray-100 pt-3 mt-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">{t('totalExpenses')}</span>
+                    <span className="text-base font-bold text-gray-900">
+                      {formatCurrency(expenseSummary?.total.amount || 0)}
                     </span>
                   </div>
                 </div>

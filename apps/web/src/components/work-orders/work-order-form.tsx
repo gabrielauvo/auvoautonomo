@@ -29,6 +29,7 @@ import {
 import { UpsellModal } from '@/components/billing';
 import { WorkOrderItemsTable } from '@/components/work-orders';
 import { CatalogSelectModal } from '@/components/quotes';
+import { QuickClientModal } from '@/components/clients';
 import { useAuth } from '@/context/auth-context';
 import { useSearchClients } from '@/hooks/use-clients';
 import { useQuote } from '@/hooks/use-quotes';
@@ -61,6 +62,7 @@ import {
   AlertCircle,
   ClipboardCheck,
   Tag,
+  UserPlus,
 } from 'lucide-react';
 
 interface WorkOrderFormProps {
@@ -111,6 +113,7 @@ function ClientSelector({
 }) {
   const [search, setSearch] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [showQuickClientModal, setShowQuickClientModal] = useState(false);
 
   const { data: clients, isLoading } = useSearchClients(
     search,
@@ -118,6 +121,12 @@ function ClientSelector({
   );
 
   const handleSelect = (client: Client) => {
+    onSelect(client);
+    setIsSearching(false);
+    setSearch('');
+  };
+
+  const handleClientCreated = (client: Client) => {
     onSelect(client);
     setIsSearching(false);
     setSearch('');
@@ -149,56 +158,86 @@ function ClientSelector({
   }
 
   return (
-    <div className="space-y-2">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-        <Input
-          placeholder="Buscar cliente por nome ou telefone..."
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setIsSearching(true);
-          }}
-          onFocus={() => setIsSearching(true)}
-          className="pl-10"
-          error={!!error}
-          disabled={disabled}
-        />
+    <>
+      <div className="space-y-2">
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Buscar cliente por nome ou telefone..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setIsSearching(true);
+              }}
+              onFocus={() => setIsSearching(true)}
+              className="pl-10"
+              error={!!error}
+              disabled={disabled}
+            />
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowQuickClientModal(true)}
+            disabled={disabled}
+            title="Cadastrar novo cliente"
+          >
+            <UserPlus className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {isSearching && search.length >= 2 && (
+          <div className="border rounded-lg max-h-48 overflow-y-auto">
+            {isLoading ? (
+              <div className="p-3">
+                <Skeleton className="h-10 w-full" />
+              </div>
+            ) : clients && clients.length > 0 ? (
+              clients.map((client) => (
+                <button
+                  key={client.id}
+                  type="button"
+                  className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 border-b last:border-b-0 text-left"
+                  onClick={() => handleSelect(client)}
+                >
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-600 font-medium text-sm">
+                    {client.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 text-sm">{client.name}</p>
+                    <p className="text-xs text-gray-500">{client.phone}</p>
+                  </div>
+                </button>
+              ))
+            ) : (
+              <div className="p-4 text-center">
+                <p className="text-sm text-gray-500 mb-3">Nenhum cliente encontrado</p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowQuickClientModal(true)}
+                  leftIcon={<UserPlus className="h-4 w-4" />}
+                >
+                  Cadastrar novo cliente
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {error && <p className="text-sm text-error">{error}</p>}
       </div>
 
-      {isSearching && search.length >= 2 && (
-        <div className="border rounded-lg max-h-48 overflow-y-auto">
-          {isLoading ? (
-            <div className="p-3">
-              <Skeleton className="h-10 w-full" />
-            </div>
-          ) : clients && clients.length > 0 ? (
-            clients.map((client) => (
-              <button
-                key={client.id}
-                type="button"
-                className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 border-b last:border-b-0 text-left"
-                onClick={() => handleSelect(client)}
-              >
-                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-600 font-medium text-sm">
-                  {client.name.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900 text-sm">{client.name}</p>
-                  <p className="text-xs text-gray-500">{client.phone}</p>
-                </div>
-              </button>
-            ))
-          ) : (
-            <div className="p-3 text-center text-sm text-gray-500">
-              Nenhum cliente encontrado
-            </div>
-          )}
-        </div>
-      )}
-
-      {error && <p className="text-sm text-error">{error}</p>}
-    </div>
+      {/* Modal de cadastro rápido de cliente */}
+      <QuickClientModal
+        isOpen={showQuickClientModal}
+        onClose={() => setShowQuickClientModal(false)}
+        onClientCreated={handleClientCreated}
+        initialName={search}
+      />
+    </>
   );
 }
 

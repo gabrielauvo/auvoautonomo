@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { useTranslations } from '@/i18n';
 import { useAuth } from '@/context/auth-context';
 import { useAnalyticsOverview, useRevenueByPeriod } from '@/hooks/use-analytics';
+import { useExpenseSummary } from '@/hooks/use-expenses';
 import { useReportFilters } from '@/hooks/use-reports';
 import {
   KpiCard,
@@ -26,9 +27,14 @@ import {
   Wrench,
   Users,
   TrendingUp,
+  TrendingDown,
   ArrowRight,
+  ArrowUpRight,
+  ArrowDownRight,
   AlertCircle,
   Receipt,
+  Wallet,
+  MinusCircle,
 } from 'lucide-react';
 
 /**
@@ -62,6 +68,19 @@ export default function ReportsOverviewPage() {
     groupBy: 'month',
   });
 
+  const { data: expenseSummary, isLoading: isLoadingExpenses } = useExpenseSummary({
+    startDate: filters.startDate,
+    endDate: filters.endDate,
+  });
+
+  // Financial calculations
+  const totalRevenue = analytics?.revenue.received || 0;
+  const totalExpenses = expenseSummary?.paid.amount || 0;
+  const netResult = totalRevenue - totalExpenses;
+  const pendingExpenses = expenseSummary?.pending.amount || 0;
+  const overdueExpenses = expenseSummary?.overdue.amount || 0;
+  const profitMargin = totalRevenue > 0 ? (netResult / totalRevenue) * 100 : 0;
+
   const revenueChartData = revenueData?.map((item) => ({
     date: item.period,
     label: item.period,
@@ -89,7 +108,7 @@ export default function ReportsOverviewPage() {
       )}
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <KpiCard
           title={t('totalRevenue')}
           value={analytics?.revenue.total || 0}
@@ -97,6 +116,13 @@ export default function ReportsOverviewPage() {
           format="currency"
           icon={<DollarSign className="h-6 w-6" />}
           loading={isLoading}
+        />
+        <KpiCard
+          title={t('totalExpenses')}
+          value={expenseSummary?.total.amount || 0}
+          format="currency"
+          icon={<Wallet className="h-6 w-6" />}
+          loading={isLoadingExpenses}
         />
         <KpiCard
           title={t('quotes')}
@@ -123,6 +149,146 @@ export default function ReportsOverviewPage() {
           icon={<Users className="h-6 w-6" />}
           loading={isLoading}
         />
+      </div>
+
+      {/* Revenue vs Expenses Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Revenue vs Expenses Comparison Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              {t('revenueVsExpenses')}
+            </CardTitle>
+            <p className="text-sm text-gray-500">{t('periodComparison')}</p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Revenue Bar */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <ArrowUpRight className="h-4 w-4 text-green-600" />
+                  <span className="text-sm font-medium text-gray-700">{t('receivedRevenue')}</span>
+                </div>
+                <span className="text-sm font-semibold text-green-600">{formatCurrency(totalRevenue)}</span>
+              </div>
+              <div className="w-full bg-gray-100 rounded-full h-3">
+                <div
+                  className="bg-green-500 h-3 rounded-full transition-all"
+                  style={{ width: `${Math.min(100, totalRevenue > 0 ? 100 : 0)}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Expenses Bar */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <ArrowDownRight className="h-4 w-4 text-red-600" />
+                  <span className="text-sm font-medium text-gray-700">{t('paidExpenses')}</span>
+                </div>
+                <span className="text-sm font-semibold text-red-600">{formatCurrency(totalExpenses)}</span>
+              </div>
+              <div className="w-full bg-gray-100 rounded-full h-3">
+                <div
+                  className="bg-red-500 h-3 rounded-full transition-all"
+                  style={{ width: `${Math.min(100, totalRevenue > 0 ? (totalExpenses / totalRevenue) * 100 : 0)}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Net Result */}
+            <div className="pt-4 border-t">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  {netResult >= 0 ? (
+                    <TrendingUp className="h-5 w-5 text-green-600" />
+                  ) : (
+                    <TrendingDown className="h-5 w-5 text-red-600" />
+                  )}
+                  <span className="font-semibold text-gray-900">{t('netResult')}</span>
+                </div>
+                <span className={`text-lg font-bold ${netResult >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {formatCurrency(netResult)}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                {netResult >= 0 ? t('positiveResult') : t('negativeResult')}
+                {totalRevenue > 0 && ` (${profitMargin.toFixed(1)}% ${t('profitMargin')})`}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Expenses Summary Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <Wallet className="h-5 w-5 text-primary" />
+              {t('expensesSummary')}
+            </CardTitle>
+            <p className="text-sm text-gray-500">{t('expensesOverview')}</p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              {/* Paid */}
+              <div className="p-3 bg-green-50 rounded-lg">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-2 h-2 rounded-full bg-green-500" />
+                  <span className="text-xs text-gray-600">{t('paid')}</span>
+                </div>
+                <p className="text-lg font-semibold text-green-700">
+                  {formatCurrency(expenseSummary?.paid.amount || 0)}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {expenseSummary?.paid.count || 0} {t('items')}
+                </p>
+              </div>
+
+              {/* Pending */}
+              <div className="p-3 bg-yellow-50 rounded-lg">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-2 h-2 rounded-full bg-yellow-500" />
+                  <span className="text-xs text-gray-600">{t('pendingExpenses')}</span>
+                </div>
+                <p className="text-lg font-semibold text-yellow-700">
+                  {formatCurrency(pendingExpenses)}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {expenseSummary?.pending.count || 0} {t('items')}
+                </p>
+              </div>
+
+              {/* Overdue */}
+              <div className="p-3 bg-red-50 rounded-lg">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-2 h-2 rounded-full bg-red-500" />
+                  <span className="text-xs text-gray-600">{t('overdueExpenses')}</span>
+                </div>
+                <p className="text-lg font-semibold text-red-700">
+                  {formatCurrency(overdueExpenses)}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {expenseSummary?.overdue.count || 0} {t('items')}
+                </p>
+              </div>
+
+              {/* Total */}
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-2 h-2 rounded-full bg-gray-500" />
+                  <span className="text-xs text-gray-600">{t('totalExpenses')}</span>
+                </div>
+                <p className="text-lg font-semibold text-gray-700">
+                  {formatCurrency(expenseSummary?.total.amount || 0)}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {expenseSummary?.total.count || 0} {t('items')}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Revenue Chart */}

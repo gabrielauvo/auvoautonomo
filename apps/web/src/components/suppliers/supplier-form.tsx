@@ -4,9 +4,10 @@
  * Supplier Form - Formulário de fornecedor
  *
  * Usado para criar e editar fornecedores
+ * Suporta auto-preenchimento via CNPJ usando API CNPJá
  */
 
-import { useState } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Card,
@@ -23,8 +24,9 @@ import {
 import { UpsellModal } from '@/components/billing';
 import { useAuth } from '@/context/auth-context';
 import { useCreateSupplier, useUpdateSupplier } from '@/hooks/use-suppliers';
+import { useCnpjLookup } from '@/hooks/use-cnpj-lookup';
 import { Supplier, CreateSupplierDto } from '@/services/suppliers.service';
-import { Save, X, Building2, Phone, Mail, MapPin, FileText, AlertCircle } from 'lucide-react';
+import { Save, X, Building2, Phone, Mail, MapPin, FileText, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react';
 import { maskCPFCNPJ, cleanDocument, isValidCPF, isValidCNPJ } from '@/lib/utils';
 
 interface SupplierFormProps {
@@ -54,8 +56,12 @@ export function SupplierForm({ supplier, onSuccess, onCancel }: SupplierFormProp
   const { billing } = useAuth();
   const createSupplier = useCreateSupplier();
   const updateSupplier = useUpdateSupplier();
+  const cnpjLookup = useCnpjLookup();
 
   const isEditing = !!supplier;
+
+  // Ref para controlar se já buscou o CNPJ atual
+  const lastLookedUpCnpj = useRef<string>('');
 
   // Form state
   const [formData, setFormData] = useState<CreateSupplierDto>({
@@ -71,6 +77,7 @@ export function SupplierForm({ supplier, onSuccess, onCancel }: SupplierFormProp
   const [showUpsellModal, setShowUpsellModal] = useState(false);
   const [limitError, setLimitError] = useState<LimitError | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [cnpjSuccess, setCnpjSuccess] = useState(false);
 
   // Validação
   const validate = (): boolean => {
@@ -117,14 +124,46 @@ export function SupplierForm({ supplier, onSuccess, onCancel }: SupplierFormProp
     }
   };
 
-  // Handler especial para documento com máscara
-  const handleDocumentChange = (value: string) => {
+  // Handler especial para documento com máscara e auto-preenchimento via CNPJ
+  const handleDocumentChange = useCallback((value: string) => {
     const maskedValue = maskCPFCNPJ(value);
     setFormData((prev) => ({ ...prev, document: maskedValue }));
+    setCnpjSuccess(false);
+
+    // Limpa erro do campo
     if (errors.document) {
       setErrors((prev) => ({ ...prev, document: undefined }));
     }
-  };
+
+    // Verifica se é um CNPJ válido (14 dígitos) e ainda não foi consultado
+    const cleanDoc = cleanDocument(maskedValue);
+    if (cleanDoc.length === 14 && isValidCNPJ(cleanDoc) && cleanDoc !== lastLookedUpCnpj.current) {
+      lastLookedUpCnpj.current = cleanDoc;
+
+      // Consulta a API de CNPJ
+      cnpjLookup.mutate(cleanDoc, {
+        onSuccess: (data) => {
+          setFormData((prev) => ({
+            ...prev,
+            name: data.name || prev.name,
+            email: data.email || prev.email,
+            phone: data.phone || prev.phone,
+            address: data.address
+              ? `${data.address}${data.city ? `, ${data.city}` : ''}${data.state ? ` - ${data.state}` : ''}`
+              : prev.address,
+          }));
+          setCnpjSuccess(true);
+
+          // Limpa indicador de sucesso após 3 segundos
+          setTimeout(() => setCnpjSuccess(false), 3000);
+        },
+        onError: (error) => {
+          // Não mostra erro, apenas não preenche automaticamente
+          console.warn('Erro ao consultar CNPJ:', error.message);
+        },
+      });
+    }
+  }, [cnpjLookup, errors.document]);
 
   // Máscaras
   const formatPhone = (value: string) => {
@@ -249,15 +288,36 @@ export function SupplierForm({ supplier, onSuccess, onCancel }: SupplierFormProp
                 </FormField>
 
                 <FormField label="CPF / CNPJ" error={errors.document}>
-                  <Input
-                    value={formData.document}
-                    onChange={(e) => handleDocumentChange(e.target.value)}
-                    placeholder="000.000.000-00 ou 00.000.000/0000-00"
-                    error={!!errors.document}
-                    disabled={isLoading}
-                    maxLength={18}
-                    leftIcon={<Building2 className="h-4 w-4" />}
-                  />
+                  <div className="relative">
+                    <Input
+                      value={formData.document}
+                      onChange={(e) => handleDocumentChange(e.target.value)}
+                      placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                      error={!!errors.document}
+                      disabled={isLoading}
+                      maxLength={18}
+                      leftIcon={
+                        cnpjLookup.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                        ) : cnpjSuccess ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <Building2 className="h-4 w-4" />
+                        )
+                      }
+                    />
+                    {cnpjLookup.isPending && (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">
+                        Buscando dados...
+                      </span>
+                    )}
+                  </div>
+                  {cnpjSuccess && (
+                    <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3" />
+                      Dados preenchidos automaticamente
+                    </p>
+                  )}
                 </FormField>
               </div>
             </div>

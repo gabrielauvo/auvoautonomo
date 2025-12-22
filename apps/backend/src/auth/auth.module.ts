@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, Provider } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './auth.service';
@@ -17,6 +17,19 @@ function getJwtSecret(): string {
   return secret;
 }
 
+// Only load GoogleStrategy if credentials are configured
+function getProviders(): Provider[] {
+  const providers: Provider[] = [AuthService, JwtStrategy];
+
+  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    providers.push(GoogleStrategy);
+  } else {
+    console.log('Google OAuth not configured - Google login will be disabled');
+  }
+
+  return providers;
+}
+
 @Module({
   imports: [
     PassportModule.register({ session: false }),
@@ -26,7 +39,7 @@ function getJwtSecret(): string {
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, GoogleStrategy],
+  providers: getProviders(),
   exports: [AuthService],
 })
 export class AuthModule {}

@@ -61,8 +61,16 @@ function toAbsoluteUrl(url: string | null | undefined): string | null {
   }
 
   // Relative URL - prepend BASE_URL
-  const baseUrl = process.env.BASE_URL || process.env.API_URL || '';
-  if (baseUrl && url.startsWith('/')) {
+  // Fallback to Railway URL if not set
+  let baseUrl = process.env.BASE_URL || process.env.API_URL || '';
+  if (!baseUrl && process.env.RAILWAY_PUBLIC_DOMAIN) {
+    baseUrl = `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`;
+  }
+  if (!baseUrl) {
+    baseUrl = 'https://monorepobackend-production.up.railway.app';
+  }
+
+  if (url.startsWith('/')) {
     return `${baseUrl}${url}`;
   }
 

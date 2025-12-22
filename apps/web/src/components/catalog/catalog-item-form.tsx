@@ -35,7 +35,7 @@ import {
   UpdateItemDto,
   BundleItem,
 } from '@/services/catalog.service';
-import { createInventoryMovement } from '@/services/inventory.service';
+import { setInitialStock } from '@/services/inventory.service';
 import {
   Save,
   X,
@@ -221,15 +221,14 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
         };
         result = await createItem.mutateAsync(createData);
 
-        // Se for produto e tiver quantidade inicial de estoque, criar movimentação
+        // Se for produto e tiver quantidade inicial de estoque, definir estoque inicial
         if (type === 'PRODUCT' && initialStock && parseFloat(initialStock) > 0) {
           try {
-            await createInventoryMovement({
-              itemId: result.id,
-              type: 'ADJUSTMENT_IN',
-              quantity: parseFloat(initialStock),
-              notes: 'Estoque inicial',
-            });
+            await setInitialStock(
+              result.id,
+              parseFloat(initialStock),
+              'Estoque inicial',
+            );
           } catch (stockError) {
             // Não bloqueia criação do produto se falhar estoque
             console.warn('Não foi possível adicionar estoque inicial:', stockError);

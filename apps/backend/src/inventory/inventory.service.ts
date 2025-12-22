@@ -286,6 +286,94 @@ export class InventoryService {
   }
 
   // ============================================================================
+  // Initial Stock (sem verificação de isEnabled)
+  // ============================================================================
+
+  /**
+   * Define estoque inicial para um produto recém-criado.
+   * Este método NÃO exige que o controle de estoque esteja ativo,
+   * permitindo definir estoque inicial mesmo antes de ativar o módulo.
+   */
+  async setInitialStock(
+    userId: string,
+    itemId: string,
+    quantity: number,
+    notes?: string,
+  ): Promise<InventoryBalanceResponseDto> {
+    // Apenas verifica feature flag (plano), não se está ativo
+    await this.checkFeatureEnabled(userId);
+
+    // Validate product exists and belongs to user
+    const product = await this.prisma.item.findFirst({
+      where: {
+        id: itemId,
+        userId,
+        type: ItemType.PRODUCT,
+      },
+      include: {
+        inventoryBalance: true,
+      },
+    });
+
+    if (!product) {
+      throw new NotFoundException('Produto não encontrado');
+    }
+
+    // Se já tem saldo, não permite usar este método
+    if (product.inventoryBalance && Number(product.inventoryBalance.quantity) > 0) {
+      throw new BadRequestException(
+        'Produto já possui saldo. Use o ajuste de estoque para modificar.',
+      );
+    }
+
+    // Use transaction to create balance and movement
+    const result = await this.prisma.$transaction(async (tx) => {
+      // Upsert balance
+      const balance = await tx.inventoryBalance.upsert({
+        where: { itemId },
+        update: {
+          quantity,
+          updatedAt: new Date(),
+        },
+        create: {
+          itemId,
+          quantity,
+        },
+      });
+
+      // Create movement record
+      await tx.inventoryMovement.create({
+        data: {
+          itemId,
+          type: InventoryMovementType.ADJUSTMENT_IN,
+          source: InventoryMovementSource.MANUAL,
+          quantity,
+          balanceAfter: quantity,
+          notes: notes || 'Estoque inicial',
+          createdBy: userId,
+        },
+      });
+
+      return balance;
+    });
+
+    this.logger.log(
+      `Initial stock set for item ${itemId}: ${quantity} units`,
+    );
+
+    return {
+      id: result.id,
+      itemId: product.id,
+      itemName: product.name,
+      itemSku: product.sku ?? undefined,
+      itemUnit: product.unit,
+      quantity: Number(result.quantity),
+      createdAt: result.createdAt,
+      updatedAt: result.updatedAt,
+    };
+  }
+
+  // ============================================================================
   // Movements
   // ============================================================================
 

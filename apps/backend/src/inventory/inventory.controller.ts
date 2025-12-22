@@ -113,6 +113,22 @@ export class InventoryController {
     return this.inventoryService.updateBalance(req.user.id, itemId, dto);
   }
 
+  @Post('balances/:itemId/initial')
+  @ApiOperation({ summary: 'Definir estoque inicial de um produto (não exige módulo ativo)' })
+  @ApiParam({ name: 'itemId', description: 'ID do produto' })
+  @ApiResponse({
+    status: 201,
+    description: 'Estoque inicial definido',
+    type: InventoryBalanceResponseDto,
+  })
+  async setInitialStock(
+    @Request() req,
+    @Param('itemId') itemId: string,
+    @Body() dto: UpdateBalanceDto,
+  ): Promise<InventoryBalanceResponseDto> {
+    return this.inventoryService.setInitialStock(req.user.id, itemId, dto.quantity, dto.notes);
+  }
+
   // ============================================================================
   // Movements
   // ============================================================================

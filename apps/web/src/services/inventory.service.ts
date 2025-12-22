@@ -134,6 +134,22 @@ export async function updateInventoryBalance(
   return response.data;
 }
 
+/**
+ * Define estoque inicial para um produto recém-criado.
+ * Este endpoint NÃO exige que o controle de estoque esteja ativo.
+ */
+export async function setInitialStock(
+  itemId: string,
+  quantity: number,
+  notes?: string
+): Promise<InventoryBalance> {
+  const response = await api.post<InventoryBalance>(
+    `/inventory/balances/${itemId}/initial`,
+    { quantity, notes }
+  );
+  return response.data;
+}
+
 // ============================================================================
 // Movements
 // ============================================================================

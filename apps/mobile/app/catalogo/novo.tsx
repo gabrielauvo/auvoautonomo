@@ -30,6 +30,7 @@ import { useColors, useSpacing } from '../../src/design-system/ThemeProvider';
 import { useAuth } from '../../src/services';
 import { CatalogItemRepository, CategoryRepository } from '../../src/db/repositories';
 import { CatalogItem, ProductCategory, ItemType } from '../../src/db/schema';
+import { InventoryService } from '../../src/modules/inventory';
 
 // =============================================================================
 // TYPES
@@ -100,6 +101,7 @@ export default function NovoCatalogoScreen() {
   const [costPrice, setCostPrice] = useState('');
   const [defaultDuration, setDefaultDuration] = useState('');
   const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [initialStock, setInitialStock] = useState('');
 
   // Bundle items state
   const [bundleItems, setBundleItems] = useState<BundleItemEntry[]>([]);
@@ -205,7 +207,7 @@ export default function NovoCatalogoScreen() {
       const costValue = costPrice ? parseFloat(costPrice.replace(',', '.')) : undefined;
       const durationValue = defaultDuration ? parseInt(defaultDuration, 10) : undefined;
 
-      await CatalogItemRepository.create(technicianId, {
+      const createdItem = await CatalogItemRepository.create(technicianId, {
         name: name.trim(),
         type: itemType,
         unit,
@@ -224,6 +226,21 @@ export default function NovoCatalogoScreen() {
             }))
           : undefined,
       });
+
+      // Se for produto e tiver quantidade inicial de estoque, criar movimentação
+      if (itemType === 'PRODUCT' && initialStock && parseFloat(initialStock) > 0) {
+        try {
+          InventoryService.configure(technicianId);
+          await InventoryService.adjustStock({
+            itemId: createdItem.id,
+            newQuantity: parseFloat(initialStock),
+            notes: 'Estoque inicial',
+          });
+        } catch (stockError) {
+          // Não bloqueia criação do produto se falhar estoque
+          console.warn('[NovoCatalogoScreen] Não foi possível adicionar estoque inicial:', stockError);
+        }
+      }
 
       Alert.alert('Sucesso', 'Item criado com sucesso!', [
         { text: 'OK', onPress: () => router.back() },
@@ -482,6 +499,24 @@ export default function NovoCatalogoScreen() {
                     keyboardType="number-pad"
                     error={errors.defaultDuration}
                   />
+                </>
+              )}
+
+              {/* Initial stock for products */}
+              {itemType === 'PRODUCT' && (
+                <>
+                  <View style={{ height: spacing[3] }} />
+                  <Input
+                    label="Quantidade Inicial em Estoque"
+                    placeholder="0"
+                    value={initialStock}
+                    onChangeText={setInitialStock}
+                    keyboardType="number-pad"
+                    leftIcon={<Ionicons name="cube-outline" size={18} color={colors.text.tertiary} />}
+                  />
+                  <Text variant="caption" color="tertiary" style={{ marginTop: spacing[1] }}>
+                    Define a quantidade inicial de estoque (opcional)
+                  </Text>
                 </>
               )}
             </Card>

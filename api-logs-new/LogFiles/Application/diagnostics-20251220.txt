@@ -1,0 +1,529 @@
+2025-12-20 20:53:13.505 +00:00 [Debug] Microsoft.Extensions.Hosting.Internal.Host: Hosting starting
+2025-12-20 20:53:14.038 +00:00 [Warning] Microsoft.AspNetCore.Hosting.Diagnostics: Overriding HTTP_PORTS '8080' and HTTPS_PORTS ''. Binding to values defined by URLS instead 'http://0.0.0.0:8080'.
+2025-12-20 20:53:14.050 +00:00 [Trace] Middleware: Loading configuration settings...
+2025-12-20 20:53:14.056 +00:00 [Information] Middleware: Destination base URL is http://169.254.131.4:8080
+2025-12-20 20:53:14.530 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:53:14.529115Z","SiteName":"api-monorepo-prod","TaskName":"AutoHealingMiddlewareInformation","Message":"/var/middleware/config/autoheal.xml does not exist","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":7}
+2025-12-20 20:53:14.633 +00:00 [Information] Microsoft.Hosting.Lifetime: Now listening on: http://0.0.0.0:8080
+2025-12-20 20:53:14.633 +00:00 [Debug] Microsoft.AspNetCore.Hosting.Diagnostics: Loaded hosting startup assembly Middleware.Host
+2025-12-20 20:53:14.633 +00:00 [Information] Microsoft.Hosting.Lifetime: Application started. Press Ctrl+C to shut down.
+2025-12-20 20:53:14.633 +00:00 [Information] Microsoft.Hosting.Lifetime: Hosting environment: Production
+2025-12-20 20:53:14.633 +00:00 [Information] Microsoft.Hosting.Lifetime: Content root path: /app
+2025-12-20 20:53:14.634 +00:00 [Debug] Microsoft.Extensions.Hosting.Internal.Host: Hosting started
+2025-12-20 20:53:14.880 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI0175QEBO4" accepted.
+2025-12-20 20:53:14.881 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI0175QEBO4" started.
+2025-12-20 20:53:15.055 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://localhost:8080/ - - -
+2025-12-20 20:53:15.357 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:53:15.3568536Z","SiteName":"api-monorepo-prod","TaskName":"TraceConfigurationSetting","ModuleRuntimeVersion":"1.12.4","SettingName":"EasyAuthConfig","SettingValue":"{\"ConfigHelper\":{},\"platform\":{\"enabled\":false},\"globalValidation\":{\"excludedPaths\":[],\"unauthenticatedClientAction\":0,\"redirectToProvider\":null,\"ExcludedPathPrefixesSet\":[],\"ExcludedExactPathsSet\":[]},\"identityProviders\":{\"azureActiveDirectory\":{\"enabled\":true,\"registration\":{\"openIdIssuer\":null,\"clientId\":null,\"clientIdSettingName\":null,\"clientSecretSettingName\":null,\"clientSecretCertificateThumbprint\":null,\"clientSecretCertificateSubjectAlternativeName\":null,\"clientSecretCertificateIssuer\":null,\"OpenIdIssuerValue\":null,\"OpenIdConfigurationUrl\":null},\"login\":{\"loginParameters\":null,\"disableWwwAuthenticate\":false},\"validation\":{\"jwtClaimChecks\":null,\"defaultAuthorizationPolicy\":null,\"allowedAudiences\":null}},\"facebook\":{\"enabled\":true,\"registration\":{\"appId\":null,\"appIdSettingName\":null,\"appSecretSettingName\":null},\"login\":{\"scopes\":null},\"graphApiVersion\":null},\"gitHub\":{\"enabled\":true,\"registration\":{\"clientId\":null,\"clientIdSettingName\":null,\"clientSecretSettingName\":null},\"login\":{\"scopes\":null}},\"twitter\":{\"enabled\":true,\"registration\":{\"consumerKey\":null,\"consumerKeySettingName\":null,\"consumerSecretSettingName\":null}},\"legacyMicrosoftAccount\":{\"enabled\":true,\"registration\":{\"clientId\":null,\"clientIdSettingName\":null,\"clientSecretSettingName\":null},\"login\":{\"scopes\":null},\"validation\":{\"allowedAudiences\":null}},\"google\":{\"enabled\":true,\"registration\":{\"clientId\":null,\"clientIdSettingName\":null,\"clientSecretSettingName\":null},\"login\":{\"scopes\":null},\"validation\":{\"allowedAudiences\":null}},\"apple\":{\"enabled\":true,\"registration\":{\"clientId\":null,\"clientIdSettingName\":null,\"clientSecretSettingName\":null},\"login\":{\"scopes\":null}},\"azureStaticWebApps\":{\"enabled\":true,\"registration\":{\"clientId\":null},\"validation\":null},\"customOpenIdConnectProviders\":null},\"login\":{\"routes\":{\"logoutPath\":null,\"loginPath\":null,\"loginCompletionPath\":null,\"loginIFrameReceiverPath\":null},\"tokenStore\":{\"enabled\":false,\"tokenRefreshExtensionHours\":72.0,\"fileSystem\":{\"directory\":\"/home/data/.auth\",\"Path\":\"/home/data/.auth/tokens\"},\"azureBlobStorage\":{\"ConfigHelper\":{},\"blobContainerUri\":null,\"clientId\":null,\"managedIdentityResourceId\":null,\"sasUrlSettingName\":\"WEBSITE_AUTH_TOKEN_CONTAINER_SASURL\"}},\"preserveUrlFragmentsForLogins\":false,\"shouldLogoutOfProvider\":true,\"allowedExternalRedirectUrls\":null,\"cookieExpiration\":{\"convention\":0,\"timeToExpiration\":\"08:00:00\"},\"nonce\":{\"validateNonce\":true,\"nonceExpirationInterval\":\"00:05:00\"}},\"httpSettings\":{\"requireHttps\":true,\"routes\":{\"apiPrefix\":\"/.auth\"},\"forwardProxy\":{\"convention\":0,\"customHostHeaderName\":null,\"customProtoHeaderName\":null}},\"legacyProperties\":{\"legacyMobileCompatibilityMode\":false,\"customIdentityProviderSettings\":[],\"customAuthorizationSettings\":{\"url\":null,\"allowInsecureRequests\":false},\"authFilePath\":null,\"configVersion\":null,\"legacyVersion\":null},\"clearInboundClaimsMapping\":false,\"AppTracingLevel\":31}","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":4}
+2025-12-20 20:53:15.357 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:53:15.3574299Z","SiteName":"api-monorepo-prod","TaskName":"TraceConfigurationSetting","ModuleRuntimeVersion":"1.12.4","SettingName":"CorsConfig","SettingValue":"{\"AllowedOrigins\":\"https://www.yourdomain.com\",\"SupportCredentials\":true}","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":4}
+2025-12-20 20:53:15.358 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:53:15.3584631Z","SiteName":"api-monorepo-prod","TaskName":"TraceConfigurationSetting","ModuleRuntimeVersion":"1.12.4","SettingName":"WEBSITE_AUTH_INTERNAL_PATHS","SettingValue":"/health","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":4}
+2025-12-20 20:53:15.366 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:53:15.3663706Z","SiteName":"api-monorepo-prod","TaskName":"TraceConfigurationSetting","ModuleRuntimeVersion":"1.12.4","SettingName":"IsMiseEnabled","SettingValue":"False","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":4}
+2025-12-20 20:53:15.367 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:53:15.3675056Z","SiteName":"api-monorepo-prod","TaskName":"TraceConfigurationSetting","ModuleRuntimeVersion":"1.12.4","SettingName":"WEBSITE_AUTH_HIDE_DEPRECATED_SID","SettingValue":"False","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":4}
+2025-12-20 20:53:15.367 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:53:15.3678524Z","SiteName":"api-monorepo-prod","TaskName":"TraceConfigurationSetting","ModuleRuntimeVersion":"1.12.4","SettingName":"WEBSITE_AUTH_ZUMO_USE_TOKEN_STORE_CLAIMS","SettingValue":"False","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":4}
+2025-12-20 20:53:15.368 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:53:15.3681819Z","SiteName":"api-monorepo-prod","TaskName":"TraceConfigurationSetting","ModuleRuntimeVersion":"1.12.4","SettingName":"WEBSITE_AUTH_USE_LEGACY_CLAIMS","SettingValue":"True","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":4}
+2025-12-20 20:53:15.439 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.131.4:8080/
+2025-12-20 20:53:15.440 +00:00 [Trace] Middleware: Forwarding request to http://169.254.131.4:8080/
+2025-12-20 20:53:15.547 +00:00 [Trace] Middleware: Forwarded request finished in 98.579ms 200 OK
+2025-12-20 20:53:15.568 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:53:15.568135Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 20:53:15.597 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI0175QEBO4" completed keep alive response.
+2025-12-20 20:53:15.597 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI0175QEBO4" received FIN.
+2025-12-20 20:53:15.598 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET http://localhost:8080/ - 200 23 text/html;+charset=utf-8 550.4718ms
+2025-12-20 20:53:15.599 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI0175QEBO4" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 20:53:15.611 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI0175QEBO4" disconnecting.
+2025-12-20 20:53:15.612 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI0175QEBO4" stopped.
+2025-12-20 20:53:17.058 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI0175QEBO5" accepted.
+2025-12-20 20:53:17.058 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI0175QEBO5" started.
+2025-12-20 20:53:17.068 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI0175QEBO6" accepted.
+2025-12-20 20:53:17.069 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI0175QEBO6" started.
+2025-12-20 20:53:17.086 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/ - - -
+2025-12-20 20:53:17.087 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.131.4:8080/
+2025-12-20 20:53:17.087 +00:00 [Trace] Middleware: Forwarding request to http://169.254.131.4:8080/
+2025-12-20 20:53:17.088 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/health - - -
+2025-12-20 20:53:17.089 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.131.4:8080/health
+2025-12-20 20:53:17.089 +00:00 [Trace] Middleware: Forwarding request to http://169.254.131.4:8080/health
+2025-12-20 20:53:17.116 +00:00 [Trace] Middleware: Forwarded request finished in 29.188ms 200 OK
+2025-12-20 20:53:17.166 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:53:17.1667314Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 20:53:17.184 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI0175QEBO5" completed keep alive response.
+2025-12-20 20:53:17.185 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/ - 200 23 text/html;+charset=utf-8 107.6117ms
+2025-12-20 20:53:17.189 +00:00 [Trace] Middleware: Forwarded request finished in 100.256ms 200 OK
+2025-12-20 20:53:17.209 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:53:17.2095978Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 20:53:17.218 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI0175QEBO6" completed keep alive response.
+2025-12-20 20:53:17.218 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/health - 200 15 application/json;+charset=utf-8 131.8847ms
+2025-12-20 20:53:17.300 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/ - - -
+2025-12-20 20:53:17.300 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.131.4:8080/
+2025-12-20 20:53:17.300 +00:00 [Trace] Middleware: Forwarding request to http://169.254.131.4:8080/
+2025-12-20 20:53:17.330 +00:00 [Trace] Middleware: Forwarded request finished in 29.928ms 200 OK
+2025-12-20 20:53:17.332 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:53:17.3318948Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 20:53:17.332 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI0175QEBO5" completed keep alive response.
+2025-12-20 20:53:17.341 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/ - 200 23 text/html;+charset=utf-8 40.8657ms
+2025-12-20 20:53:32.694 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI0175QEBO6" received FIN.
+2025-12-20 20:53:32.694 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI0175QEBO5" received FIN.
+2025-12-20 20:53:32.694 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI0175QEBO6" disconnecting.
+2025-12-20 20:53:32.694 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI0175QEBO6" stopped.
+2025-12-20 20:53:32.696 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI0175QEBO5" disconnecting.
+2025-12-20 20:53:32.696 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI0175QEBO5" stopped.
+2025-12-20 20:53:32.696 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI0175QEBO6" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 20:53:32.697 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI0175QEBO5" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 20:53:34.613 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI0175QEBO7" accepted.
+2025-12-20 20:53:34.613 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI0175QEBO7" started.
+2025-12-20 20:53:34.619 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/ - - -
+2025-12-20 20:53:34.633 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.131.4:8080/
+2025-12-20 20:53:34.634 +00:00 [Trace] Middleware: Forwarding request to http://169.254.131.4:8080/
+2025-12-20 20:53:34.650 +00:00 [Trace] Middleware: Forwarded request finished in 16.660ms 200 OK
+2025-12-20 20:53:34.660 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:53:34.6603188Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 20:53:34.661 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI0175QEBO7" completed keep alive response.
+2025-12-20 20:53:34.661 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET https://api-monorepo-prod.azurewebsites.net/ - 200 23 text/html;+charset=utf-8 41.9745ms
+2025-12-20 20:53:43.475 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI0175QEBO8" accepted.
+2025-12-20 20:53:43.475 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI0175QEBO8" started.
+2025-12-20 20:53:43.477 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI0175QEBO7" received FIN.
+2025-12-20 20:53:43.477 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI0175QEBO7" disconnecting.
+2025-12-20 20:53:43.477 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI0175QEBO7" stopped.
+2025-12-20 20:53:43.477 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI0175QEBO7" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 20:53:43.483 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/health - - -
+2025-12-20 20:53:43.484 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.131.4:8080/health
+2025-12-20 20:53:43.484 +00:00 [Trace] Middleware: Forwarding request to http://169.254.131.4:8080/health
+2025-12-20 20:53:43.495 +00:00 [Trace] Middleware: Forwarded request finished in 11.518ms 200 OK
+2025-12-20 20:53:43.497 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:53:43.49693Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 20:53:43.497 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI0175QEBO8" completed keep alive response.
+2025-12-20 20:53:43.497 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET https://api-monorepo-prod.azurewebsites.net/health - 200 15 application/json;+charset=utf-8 20.5445ms
+2025-12-20 20:53:44.580 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/ - - -
+2025-12-20 20:53:44.581 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.131.4:8080/
+2025-12-20 20:53:44.581 +00:00 [Trace] Middleware: Forwarding request to http://169.254.131.4:8080/
+2025-12-20 20:53:44.600 +00:00 [Trace] Middleware: Forwarded request finished in 19.013ms 200 OK
+2025-12-20 20:53:44.601 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:53:44.601135Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 20:53:44.601 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI0175QEBO8" completed keep alive response.
+2025-12-20 20:53:44.601 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET https://api-monorepo-prod.azurewebsites.net/ - 200 23 text/html;+charset=utf-8 20.9227ms
+2025-12-20 20:53:46.470 +00:00 [Debug] Microsoft.Extensions.Hosting.Internal.Host: Hosting starting
+2025-12-20 20:53:46.979 +00:00 [Warning] Microsoft.AspNetCore.Hosting.Diagnostics: Overriding HTTP_PORTS '8080' and HTTPS_PORTS ''. Binding to values defined by URLS instead 'http://0.0.0.0:8080'.
+2025-12-20 20:53:46.989 +00:00 [Trace] Middleware: Loading configuration settings...
+2025-12-20 20:53:46.990 +00:00 [Information] Middleware: Destination base URL is http://169.254.131.7:8080
+2025-12-20 20:53:47.480 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:53:47.4786468Z","SiteName":"api-monorepo-prod","TaskName":"AutoHealingMiddlewareInformation","Message":"/var/middleware/config/autoheal.xml does not exist","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":7}
+2025-12-20 20:53:47.573 +00:00 [Information] Microsoft.Hosting.Lifetime: Now listening on: http://0.0.0.0:8080
+2025-12-20 20:53:47.573 +00:00 [Debug] Microsoft.AspNetCore.Hosting.Diagnostics: Loaded hosting startup assembly Middleware.Host
+2025-12-20 20:53:47.574 +00:00 [Information] Microsoft.Hosting.Lifetime: Application started. Press Ctrl+C to shut down.
+2025-12-20 20:53:47.574 +00:00 [Information] Microsoft.Hosting.Lifetime: Hosting environment: Production
+2025-12-20 20:53:47.574 +00:00 [Information] Microsoft.Hosting.Lifetime: Content root path: /app
+2025-12-20 20:53:47.574 +00:00 [Debug] Microsoft.Extensions.Hosting.Internal.Host: Hosting started
+2025-12-20 20:53:47.815 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMP" accepted.
+2025-12-20 20:53:47.823 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMP" started.
+2025-12-20 20:53:47.916 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://localhost:8080/ - - -
+2025-12-20 20:53:48.270 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:53:48.2705125Z","SiteName":"api-monorepo-prod","TaskName":"TraceConfigurationSetting","ModuleRuntimeVersion":"1.12.4","SettingName":"EasyAuthConfig","SettingValue":"{\"ConfigHelper\":{},\"platform\":{\"enabled\":false},\"globalValidation\":{\"excludedPaths\":[],\"unauthenticatedClientAction\":0,\"redirectToProvider\":null,\"ExcludedPathPrefixesSet\":[],\"ExcludedExactPathsSet\":[]},\"identityProviders\":{\"azureActiveDirectory\":{\"enabled\":true,\"registration\":{\"openIdIssuer\":null,\"clientId\":null,\"clientIdSettingName\":null,\"clientSecretSettingName\":null,\"clientSecretCertificateThumbprint\":null,\"clientSecretCertificateSubjectAlternativeName\":null,\"clientSecretCertificateIssuer\":null,\"OpenIdIssuerValue\":null,\"OpenIdConfigurationUrl\":null},\"login\":{\"loginParameters\":null,\"disableWwwAuthenticate\":false},\"validation\":{\"jwtClaimChecks\":null,\"defaultAuthorizationPolicy\":null,\"allowedAudiences\":null}},\"facebook\":{\"enabled\":true,\"registration\":{\"appId\":null,\"appIdSettingName\":null,\"appSecretSettingName\":null},\"login\":{\"scopes\":null},\"graphApiVersion\":null},\"gitHub\":{\"enabled\":true,\"registration\":{\"clientId\":null,\"clientIdSettingName\":null,\"clientSecretSettingName\":null},\"login\":{\"scopes\":null}},\"twitter\":{\"enabled\":true,\"registration\":{\"consumerKey\":null,\"consumerKeySettingName\":null,\"consumerSecretSettingName\":null}},\"legacyMicrosoftAccount\":{\"enabled\":true,\"registration\":{\"clientId\":null,\"clientIdSettingName\":null,\"clientSecretSettingName\":null},\"login\":{\"scopes\":null},\"validation\":{\"allowedAudiences\":null}},\"google\":{\"enabled\":true,\"registration\":{\"clientId\":null,\"clientIdSettingName\":null,\"clientSecretSettingName\":null},\"login\":{\"scopes\":null},\"validation\":{\"allowedAudiences\":null}},\"apple\":{\"enabled\":true,\"registration\":{\"clientId\":null,\"clientIdSettingName\":null,\"clientSecretSettingName\":null},\"login\":{\"scopes\":null}},\"azureStaticWebApps\":{\"enabled\":true,\"registration\":{\"clientId\":null},\"validation\":null},\"customOpenIdConnectProviders\":null},\"login\":{\"routes\":{\"logoutPath\":null,\"loginPath\":null,\"loginCompletionPath\":null,\"loginIFrameReceiverPath\":null},\"tokenStore\":{\"enabled\":false,\"tokenRefreshExtensionHours\":72.0,\"fileSystem\":{\"directory\":\"/home/data/.auth\",\"Path\":\"/home/data/.auth/tokens\"},\"azureBlobStorage\":{\"ConfigHelper\":{},\"blobContainerUri\":null,\"clientId\":null,\"managedIdentityResourceId\":null,\"sasUrlSettingName\":\"WEBSITE_AUTH_TOKEN_CONTAINER_SASURL\"}},\"preserveUrlFragmentsForLogins\":false,\"shouldLogoutOfProvider\":true,\"allowedExternalRedirectUrls\":null,\"cookieExpiration\":{\"convention\":0,\"timeToExpiration\":\"08:00:00\"},\"nonce\":{\"validateNonce\":true,\"nonceExpirationInterval\":\"00:05:00\"}},\"httpSettings\":{\"requireHttps\":true,\"routes\":{\"apiPrefix\":\"/.auth\"},\"forwardProxy\":{\"convention\":0,\"customHostHeaderName\":null,\"customProtoHeaderName\":null}},\"legacyProperties\":{\"legacyMobileCompatibilityMode\":false,\"customIdentityProviderSettings\":[],\"customAuthorizationSettings\":{\"url\":null,\"allowInsecureRequests\":false},\"authFilePath\":null,\"configVersion\":null,\"legacyVersion\":null},\"clearInboundClaimsMapping\":false,\"AppTracingLevel\":31}","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":4}
+2025-12-20 20:53:48.271 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:53:48.2710953Z","SiteName":"api-monorepo-prod","TaskName":"TraceConfigurationSetting","ModuleRuntimeVersion":"1.12.4","SettingName":"CorsConfig","SettingValue":"{\"AllowedOrigins\":\"https://www.yourdomain.com\",\"SupportCredentials\":true}","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":4}
+2025-12-20 20:53:48.272 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:53:48.27223Z","SiteName":"api-monorepo-prod","TaskName":"TraceConfigurationSetting","ModuleRuntimeVersion":"1.12.4","SettingName":"WEBSITE_AUTH_INTERNAL_PATHS","SettingValue":"/health","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":4}
+2025-12-20 20:53:48.280 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:53:48.2808419Z","SiteName":"api-monorepo-prod","TaskName":"TraceConfigurationSetting","ModuleRuntimeVersion":"1.12.4","SettingName":"IsMiseEnabled","SettingValue":"False","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":4}
+2025-12-20 20:53:48.282 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:53:48.2822718Z","SiteName":"api-monorepo-prod","TaskName":"TraceConfigurationSetting","ModuleRuntimeVersion":"1.12.4","SettingName":"WEBSITE_AUTH_HIDE_DEPRECATED_SID","SettingValue":"False","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":4}
+2025-12-20 20:53:48.282 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:53:48.2826524Z","SiteName":"api-monorepo-prod","TaskName":"TraceConfigurationSetting","ModuleRuntimeVersion":"1.12.4","SettingName":"WEBSITE_AUTH_ZUMO_USE_TOKEN_STORE_CLAIMS","SettingValue":"False","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":4}
+2025-12-20 20:53:48.289 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:53:48.2896428Z","SiteName":"api-monorepo-prod","TaskName":"TraceConfigurationSetting","ModuleRuntimeVersion":"1.12.4","SettingName":"WEBSITE_AUTH_USE_LEGACY_CLAIMS","SettingValue":"True","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":4}
+2025-12-20 20:53:48.371 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.131.7:8080/
+2025-12-20 20:53:48.371 +00:00 [Trace] Middleware: Forwarding request to http://169.254.131.7:8080/
+2025-12-20 20:53:48.519 +00:00 [Trace] Middleware: Forwarded request finished in 139.591ms 200 OK
+2025-12-20 20:53:48.548 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:53:48.5488144Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 20:53:48.574 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMP" completed keep alive response.
+2025-12-20 20:53:48.575 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET http://localhost:8080/ - 200 23 text/html;+charset=utf-8 659.7146ms
+2025-12-20 20:53:48.579 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI017FKHAMP" received FIN.
+2025-12-20 20:53:48.585 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI017FKHAMP" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 20:53:48.604 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMP" disconnecting.
+2025-12-20 20:53:48.605 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMP" stopped.
+2025-12-20 20:54:02.695 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI0175QEBO8" received FIN.
+2025-12-20 20:54:02.696 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI0175QEBO8" disconnecting.
+2025-12-20 20:54:02.696 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI0175QEBO8" stopped.
+2025-12-20 20:54:02.696 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI0175QEBO8" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 20:54:43.459 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMQ" accepted.
+2025-12-20 20:54:43.459 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMQ" started.
+2025-12-20 20:54:43.462 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/health - - -
+2025-12-20 20:54:43.463 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.131.7:8080/health
+2025-12-20 20:54:43.464 +00:00 [Trace] Middleware: Forwarding request to http://169.254.131.7:8080/health
+2025-12-20 20:54:43.474 +00:00 [Trace] Middleware: Forwarded request finished in 10.311ms 200 OK
+2025-12-20 20:54:43.476 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:54:43.4765702Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 20:54:43.477 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMQ" completed keep alive response.
+2025-12-20 20:54:43.477 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET https://api-monorepo-prod.azurewebsites.net/health - 200 15 application/json;+charset=utf-8 14.4482ms
+2025-12-20 20:54:47.691 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI017FKHAMQ" received FIN.
+2025-12-20 20:54:47.692 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMQ" disconnecting.
+2025-12-20 20:54:47.692 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI017FKHAMQ" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 20:54:47.693 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMQ" stopped.
+2025-12-20 20:55:43.456 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMR" accepted.
+2025-12-20 20:55:43.456 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMR" started.
+2025-12-20 20:55:43.457 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/health - - -
+2025-12-20 20:55:43.457 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.131.7:8080/health
+2025-12-20 20:55:43.457 +00:00 [Trace] Middleware: Forwarding request to http://169.254.131.7:8080/health
+2025-12-20 20:55:43.481 +00:00 [Trace] Middleware: Forwarded request finished in 23.838ms 200 OK
+2025-12-20 20:55:43.482 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:55:43.4825358Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 20:55:43.483 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMR" completed keep alive response.
+2025-12-20 20:55:43.483 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET https://api-monorepo-prod.azurewebsites.net/health - 200 15 application/json;+charset=utf-8 25.9481ms
+2025-12-20 20:55:58.453 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI017FKHAMR" received FIN.
+2025-12-20 20:55:58.454 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMR" disconnecting.
+2025-12-20 20:55:58.454 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMR" stopped.
+2025-12-20 20:55:58.454 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI017FKHAMR" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 20:56:43.476 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMS" accepted.
+2025-12-20 20:56:43.476 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMS" started.
+2025-12-20 20:56:43.487 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/health - - -
+2025-12-20 20:56:43.487 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.131.7:8080/health
+2025-12-20 20:56:43.488 +00:00 [Trace] Middleware: Forwarding request to http://169.254.131.7:8080/health
+2025-12-20 20:56:43.516 +00:00 [Trace] Middleware: Forwarded request finished in 28.173ms 200 OK
+2025-12-20 20:56:43.517 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:56:43.5170179Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 20:56:43.517 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMS" completed keep alive response.
+2025-12-20 20:56:43.517 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET https://api-monorepo-prod.azurewebsites.net/health - 200 15 application/json;+charset=utf-8 40.8435ms
+2025-12-20 20:56:58.459 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI017FKHAMS" received FIN.
+2025-12-20 20:56:58.459 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI017FKHAMS" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 20:56:58.460 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMS" disconnecting.
+2025-12-20 20:56:58.460 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMS" stopped.
+2025-12-20 20:57:43.479 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMT" accepted.
+2025-12-20 20:57:43.479 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMT" started.
+2025-12-20 20:57:43.479 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/health - - -
+2025-12-20 20:57:43.480 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.131.7:8080/health
+2025-12-20 20:57:43.480 +00:00 [Trace] Middleware: Forwarding request to http://169.254.131.7:8080/health
+2025-12-20 20:57:43.509 +00:00 [Trace] Middleware: Forwarded request finished in 28.673ms 200 OK
+2025-12-20 20:57:43.510 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:57:43.510021Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 20:57:43.510 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMT" completed keep alive response.
+2025-12-20 20:57:43.510 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET https://api-monorepo-prod.azurewebsites.net/health - 200 15 application/json;+charset=utf-8 30.7558ms
+2025-12-20 20:57:44.890 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/ - - -
+2025-12-20 20:57:44.899 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.131.7:8080/
+2025-12-20 20:57:44.899 +00:00 [Trace] Middleware: Forwarding request to http://169.254.131.7:8080/
+2025-12-20 20:57:44.940 +00:00 [Trace] Middleware: Forwarded request finished in 40.271ms 200 OK
+2025-12-20 20:57:44.941 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:57:44.9414014Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 20:57:44.950 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMT" completed keep alive response.
+2025-12-20 20:57:44.950 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET https://api-monorepo-prod.azurewebsites.net/ - 200 23 text/html;+charset=utf-8 59.2789ms
+2025-12-20 20:57:54.834 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMU" accepted.
+2025-12-20 20:57:54.834 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMU" started.
+2025-12-20 20:57:54.835 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/ - - -
+2025-12-20 20:57:54.838 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI017FKHAMT" received FIN.
+2025-12-20 20:57:54.839 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMT" disconnecting.
+2025-12-20 20:57:54.839 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMT" stopped.
+2025-12-20 20:57:54.839 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI017FKHAMT" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 20:57:54.840 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.131.7:8080/
+2025-12-20 20:57:54.840 +00:00 [Trace] Middleware: Forwarding request to http://169.254.131.7:8080/
+2025-12-20 20:57:54.859 +00:00 [Trace] Middleware: Forwarded request finished in 18.857ms 200 OK
+2025-12-20 20:57:54.860 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:57:54.8603488Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 20:57:54.861 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMU" completed keep alive response.
+2025-12-20 20:57:54.861 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET https://api-monorepo-prod.azurewebsites.net/ - 200 23 text/html;+charset=utf-8 26.0567ms
+2025-12-20 20:58:12.033 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI017FKHAMU" received FIN.
+2025-12-20 20:58:12.034 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMU" disconnecting.
+2025-12-20 20:58:12.034 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI017FKHAMU" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 20:58:12.036 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMV" accepted.
+2025-12-20 20:58:12.036 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMV" started.
+2025-12-20 20:58:12.042 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMU" stopped.
+2025-12-20 20:58:12.044 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/health - - -
+2025-12-20 20:58:12.045 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.131.7:8080/health
+2025-12-20 20:58:12.045 +00:00 [Trace] Middleware: Forwarding request to http://169.254.131.7:8080/health
+2025-12-20 20:58:12.082 +00:00 [Trace] Middleware: Forwarded request finished in 37.216ms 200 OK
+2025-12-20 20:58:12.083 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:58:12.0832588Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 20:58:12.084 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMV" completed keep alive response.
+2025-12-20 20:58:12.084 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET https://api-monorepo-prod.azurewebsites.net/health - 200 15 application/json;+charset=utf-8 39.4321ms
+2025-12-20 20:58:12.185 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/favicon.ico - - -
+2025-12-20 20:58:12.185 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.131.7:8080/favicon.ico
+2025-12-20 20:58:12.185 +00:00 [Trace] Middleware: Forwarding request to http://169.254.131.7:8080/favicon.ico
+2025-12-20 20:58:12.213 +00:00 [Trace] Middleware: Forwarded request finished in 28.122ms 200 Not Found
+2025-12-20 20:58:12.215 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T20:58:12.2153428Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 20:58:12.216 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMV" completed keep alive response.
+2025-12-20 20:58:12.224 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET https://api-monorepo-prod.azurewebsites.net/favicon.ico - 404 74 application/json;+charset=utf-8 31.5485ms
+2025-12-20 20:58:28.477 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI017FKHAMV" received FIN.
+2025-12-20 20:58:28.477 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMV" disconnecting.
+2025-12-20 20:58:28.477 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI017FKHAMV" stopped.
+2025-12-20 20:58:28.477 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI017FKHAMV" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 21:03:20.611 +00:00 [Debug] Microsoft.Extensions.Hosting.Internal.Host: Hosting starting
+2025-12-20 21:03:21.146 +00:00 [Warning] Microsoft.AspNetCore.Hosting.Diagnostics: Overriding HTTP_PORTS '8080' and HTTPS_PORTS ''. Binding to values defined by URLS instead 'http://0.0.0.0:8080'.
+2025-12-20 21:03:21.164 +00:00 [Trace] Middleware: Loading configuration settings...
+2025-12-20 21:03:21.165 +00:00 [Information] Middleware: Destination base URL is http://169.254.130.4:8080
+2025-12-20 21:03:21.665 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:03:21.6578809Z","SiteName":"api-monorepo-prod","TaskName":"AutoHealingMiddlewareInformation","Message":"/var/middleware/config/autoheal.xml does not exist","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":7}
+2025-12-20 21:03:21.744 +00:00 [Information] Microsoft.Hosting.Lifetime: Now listening on: http://0.0.0.0:8080
+2025-12-20 21:03:21.745 +00:00 [Debug] Microsoft.AspNetCore.Hosting.Diagnostics: Loaded hosting startup assembly Middleware.Host
+2025-12-20 21:03:21.745 +00:00 [Information] Microsoft.Hosting.Lifetime: Application started. Press Ctrl+C to shut down.
+2025-12-20 21:03:21.745 +00:00 [Information] Microsoft.Hosting.Lifetime: Hosting environment: Production
+2025-12-20 21:03:21.745 +00:00 [Information] Microsoft.Hosting.Lifetime: Content root path: /app
+2025-12-20 21:03:21.745 +00:00 [Debug] Microsoft.Extensions.Hosting.Internal.Host: Hosting started
+2025-12-20 21:03:22.611 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IK" accepted.
+2025-12-20 21:03:22.612 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IK" started.
+2025-12-20 21:03:22.702 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://localhost:8080/ - - -
+2025-12-20 21:03:23.017 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:03:23.0169772Z","SiteName":"api-monorepo-prod","TaskName":"TraceConfigurationSetting","ModuleRuntimeVersion":"1.12.4","SettingName":"EasyAuthConfig","SettingValue":"{\"ConfigHelper\":{},\"platform\":{\"enabled\":false},\"globalValidation\":{\"excludedPaths\":[],\"unauthenticatedClientAction\":0,\"redirectToProvider\":null,\"ExcludedPathPrefixesSet\":[],\"ExcludedExactPathsSet\":[]},\"identityProviders\":{\"azureActiveDirectory\":{\"enabled\":true,\"registration\":{\"openIdIssuer\":null,\"clientId\":null,\"clientIdSettingName\":null,\"clientSecretSettingName\":null,\"clientSecretCertificateThumbprint\":null,\"clientSecretCertificateSubjectAlternativeName\":null,\"clientSecretCertificateIssuer\":null,\"OpenIdIssuerValue\":null,\"OpenIdConfigurationUrl\":null},\"login\":{\"loginParameters\":null,\"disableWwwAuthenticate\":false},\"validation\":{\"jwtClaimChecks\":null,\"defaultAuthorizationPolicy\":null,\"allowedAudiences\":null}},\"facebook\":{\"enabled\":true,\"registration\":{\"appId\":null,\"appIdSettingName\":null,\"appSecretSettingName\":null},\"login\":{\"scopes\":null},\"graphApiVersion\":null},\"gitHub\":{\"enabled\":true,\"registration\":{\"clientId\":null,\"clientIdSettingName\":null,\"clientSecretSettingName\":null},\"login\":{\"scopes\":null}},\"twitter\":{\"enabled\":true,\"registration\":{\"consumerKey\":null,\"consumerKeySettingName\":null,\"consumerSecretSettingName\":null}},\"legacyMicrosoftAccount\":{\"enabled\":true,\"registration\":{\"clientId\":null,\"clientIdSettingName\":null,\"clientSecretSettingName\":null},\"login\":{\"scopes\":null},\"validation\":{\"allowedAudiences\":null}},\"google\":{\"enabled\":true,\"registration\":{\"clientId\":null,\"clientIdSettingName\":null,\"clientSecretSettingName\":null},\"login\":{\"scopes\":null},\"validation\":{\"allowedAudiences\":null}},\"apple\":{\"enabled\":true,\"registration\":{\"clientId\":null,\"clientIdSettingName\":null,\"clientSecretSettingName\":null},\"login\":{\"scopes\":null}},\"azureStaticWebApps\":{\"enabled\":true,\"registration\":{\"clientId\":null},\"validation\":null},\"customOpenIdConnectProviders\":null},\"login\":{\"routes\":{\"logoutPath\":null,\"loginPath\":null,\"loginCompletionPath\":null,\"loginIFrameReceiverPath\":null},\"tokenStore\":{\"enabled\":false,\"tokenRefreshExtensionHours\":72.0,\"fileSystem\":{\"directory\":\"/home/data/.auth\",\"Path\":\"/home/data/.auth/tokens\"},\"azureBlobStorage\":{\"ConfigHelper\":{},\"blobContainerUri\":null,\"clientId\":null,\"managedIdentityResourceId\":null,\"sasUrlSettingName\":\"WEBSITE_AUTH_TOKEN_CONTAINER_SASURL\"}},\"preserveUrlFragmentsForLogins\":false,\"shouldLogoutOfProvider\":true,\"allowedExternalRedirectUrls\":null,\"cookieExpiration\":{\"convention\":0,\"timeToExpiration\":\"08:00:00\"},\"nonce\":{\"validateNonce\":true,\"nonceExpirationInterval\":\"00:05:00\"}},\"httpSettings\":{\"requireHttps\":true,\"routes\":{\"apiPrefix\":\"/.auth\"},\"forwardProxy\":{\"convention\":0,\"customHostHeaderName\":null,\"customProtoHeaderName\":null}},\"legacyProperties\":{\"legacyMobileCompatibilityMode\":false,\"customIdentityProviderSettings\":[],\"customAuthorizationSettings\":{\"url\":null,\"allowInsecureRequests\":false},\"authFilePath\":null,\"configVersion\":null,\"legacyVersion\":null},\"clearInboundClaimsMapping\":false,\"AppTracingLevel\":31}","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":4}
+2025-12-20 21:03:23.024 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:03:23.0239933Z","SiteName":"api-monorepo-prod","TaskName":"TraceConfigurationSetting","ModuleRuntimeVersion":"1.12.4","SettingName":"CorsConfig","SettingValue":"{\"AllowedOrigins\":\"https://www.yourdomain.com\",\"SupportCredentials\":true}","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":4}
+2025-12-20 21:03:23.025 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:03:23.0252941Z","SiteName":"api-monorepo-prod","TaskName":"TraceConfigurationSetting","ModuleRuntimeVersion":"1.12.4","SettingName":"WEBSITE_AUTH_INTERNAL_PATHS","SettingValue":"/health","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":4}
+2025-12-20 21:03:23.026 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:03:23.0265753Z","SiteName":"api-monorepo-prod","TaskName":"TraceConfigurationSetting","ModuleRuntimeVersion":"1.12.4","SettingName":"IsMiseEnabled","SettingValue":"False","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":4}
+2025-12-20 21:03:23.034 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:03:23.0342684Z","SiteName":"api-monorepo-prod","TaskName":"TraceConfigurationSetting","ModuleRuntimeVersion":"1.12.4","SettingName":"WEBSITE_AUTH_HIDE_DEPRECATED_SID","SettingValue":"False","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":4}
+2025-12-20 21:03:23.034 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:03:23.0346498Z","SiteName":"api-monorepo-prod","TaskName":"TraceConfigurationSetting","ModuleRuntimeVersion":"1.12.4","SettingName":"WEBSITE_AUTH_ZUMO_USE_TOKEN_STORE_CLAIMS","SettingValue":"False","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":4}
+2025-12-20 21:03:23.035 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:03:23.0350005Z","SiteName":"api-monorepo-prod","TaskName":"TraceConfigurationSetting","ModuleRuntimeVersion":"1.12.4","SettingName":"WEBSITE_AUTH_USE_LEGACY_CLAIMS","SettingValue":"True","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":4}
+2025-12-20 21:03:23.105 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.130.4:8080/
+2025-12-20 21:03:23.106 +00:00 [Trace] Middleware: Forwarding request to http://169.254.130.4:8080/
+2025-12-20 21:03:23.200 +00:00 [Trace] Middleware: Forwarded request finished in 92.466ms 200 OK
+2025-12-20 21:03:23.227 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:03:23.2270337Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 21:03:23.248 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01CQU75IK" received FIN.
+2025-12-20 21:03:23.259 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01CQU75IK" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 21:03:23.296 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IK" disconnecting.
+2025-12-20 21:03:23.296 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IK" completed keep alive response.
+2025-12-20 21:03:23.298 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET http://localhost:8080/ - 200 23 text/html;+charset=utf-8 602.5701ms
+2025-12-20 21:03:23.308 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IK" stopped.
+2025-12-20 21:04:18.739 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IL" accepted.
+2025-12-20 21:04:18.739 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IL" started.
+2025-12-20 21:04:18.744 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/health - - -
+2025-12-20 21:04:18.745 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.130.4:8080/health
+2025-12-20 21:04:18.745 +00:00 [Trace] Middleware: Forwarding request to http://169.254.130.4:8080/health
+2025-12-20 21:04:18.783 +00:00 [Trace] Middleware: Forwarded request finished in 38.051ms 200 OK
+2025-12-20 21:04:18.785 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:04:18.7855037Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 21:04:18.786 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IL" completed keep alive response.
+2025-12-20 21:04:18.787 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET https://api-monorepo-prod.azurewebsites.net/health - 200 15 application/json;+charset=utf-8 42.2844ms
+2025-12-20 21:04:26.567 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01CQU75IL" received FIN.
+2025-12-20 21:04:26.567 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IL" disconnecting.
+2025-12-20 21:04:26.567 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IL" stopped.
+2025-12-20 21:04:26.567 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01CQU75IL" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 21:05:18.786 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IM" accepted.
+2025-12-20 21:05:18.796 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IM" started.
+2025-12-20 21:05:18.809 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/health - - -
+2025-12-20 21:05:18.816 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.130.4:8080/health
+2025-12-20 21:05:18.816 +00:00 [Trace] Middleware: Forwarding request to http://169.254.130.4:8080/health
+2025-12-20 21:05:18.865 +00:00 [Trace] Middleware: Forwarded request finished in 48.170ms 200 OK
+2025-12-20 21:05:18.888 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:05:18.8886324Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 21:05:18.895 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IM" completed keep alive response.
+2025-12-20 21:05:18.895 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET https://api-monorepo-prod.azurewebsites.net/health - 200 15 application/json;+charset=utf-8 87.2452ms
+2025-12-20 21:05:26.566 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01CQU75IM" received FIN.
+2025-12-20 21:05:26.566 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IM" disconnecting.
+2025-12-20 21:05:26.566 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IM" stopped.
+2025-12-20 21:05:26.566 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01CQU75IM" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 21:06:18.737 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IN" accepted.
+2025-12-20 21:06:18.737 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IN" started.
+2025-12-20 21:06:18.738 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/health - - -
+2025-12-20 21:06:18.740 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.130.4:8080/health
+2025-12-20 21:06:18.740 +00:00 [Trace] Middleware: Forwarding request to http://169.254.130.4:8080/health
+2025-12-20 21:06:18.750 +00:00 [Trace] Middleware: Forwarded request finished in 10.393ms 200 OK
+2025-12-20 21:06:18.751 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:06:18.7515737Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 21:06:18.751 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IN" completed keep alive response.
+2025-12-20 21:06:18.751 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET https://api-monorepo-prod.azurewebsites.net/health - 200 15 application/json;+charset=utf-8 13.4856ms
+2025-12-20 21:06:30.995 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01CQU75IN" received FIN.
+2025-12-20 21:06:30.995 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IN" disconnecting.
+2025-12-20 21:06:30.995 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01CQU75IN" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 21:06:30.996 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IN" stopped.
+2025-12-20 21:07:18.740 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IO" accepted.
+2025-12-20 21:07:18.740 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IO" started.
+2025-12-20 21:07:18.776 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/health - - -
+2025-12-20 21:07:18.776 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.130.4:8080/health
+2025-12-20 21:07:18.776 +00:00 [Trace] Middleware: Forwarding request to http://169.254.130.4:8080/health
+2025-12-20 21:07:18.795 +00:00 [Trace] Middleware: Forwarded request finished in 11.142ms 200 OK
+2025-12-20 21:07:18.796 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:07:18.7964625Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 21:07:18.796 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IO" completed keep alive response.
+2025-12-20 21:07:18.796 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET https://api-monorepo-prod.azurewebsites.net/health - 200 15 application/json;+charset=utf-8 47.5960ms
+2025-12-20 21:07:25.298 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01CQU75IO" received FIN.
+2025-12-20 21:07:25.299 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IP" accepted.
+2025-12-20 21:07:25.303 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IP" started.
+2025-12-20 21:07:25.303 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/ - - -
+2025-12-20 21:07:25.305 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IO" disconnecting.
+2025-12-20 21:07:25.305 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01CQU75IO" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 21:07:25.313 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IO" stopped.
+2025-12-20 21:07:25.318 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.130.4:8080/
+2025-12-20 21:07:25.318 +00:00 [Trace] Middleware: Forwarding request to http://169.254.130.4:8080/
+2025-12-20 21:07:25.336 +00:00 [Trace] Middleware: Forwarded request finished in 17.057ms 200 OK
+2025-12-20 21:07:25.336 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:07:25.3367498Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 21:07:25.343 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IP" completed keep alive response.
+2025-12-20 21:07:25.343 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET https://api-monorepo-prod.azurewebsites.net/ - 200 23 text/html;+charset=utf-8 39.7083ms
+2025-12-20 21:07:30.686 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01CQU75IP" received FIN.
+2025-12-20 21:07:30.687 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IP" disconnecting.
+2025-12-20 21:07:30.687 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IP" stopped.
+2025-12-20 21:07:30.687 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01CQU75IP" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 21:08:18.738 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IQ" accepted.
+2025-12-20 21:08:18.738 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IQ" started.
+2025-12-20 21:08:18.738 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/health - - -
+2025-12-20 21:08:18.739 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.130.4:8080/health
+2025-12-20 21:08:18.739 +00:00 [Trace] Middleware: Forwarding request to http://169.254.130.4:8080/health
+2025-12-20 21:08:18.748 +00:00 [Trace] Middleware: Forwarded request finished in 9.311ms 200 OK
+2025-12-20 21:08:18.749 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:08:18.7492543Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 21:08:18.749 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IQ" completed keep alive response.
+2025-12-20 21:08:18.749 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET https://api-monorepo-prod.azurewebsites.net/health - 200 15 application/json;+charset=utf-8 10.8561ms
+2025-12-20 21:08:30.709 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01CQU75IQ" received FIN.
+2025-12-20 21:08:30.709 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IQ" disconnecting.
+2025-12-20 21:08:30.709 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IQ" stopped.
+2025-12-20 21:08:30.709 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01CQU75IQ" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 21:09:18.739 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IR" accepted.
+2025-12-20 21:09:18.739 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IR" started.
+2025-12-20 21:09:18.739 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/health - - -
+2025-12-20 21:09:18.740 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.130.4:8080/health
+2025-12-20 21:09:18.740 +00:00 [Trace] Middleware: Forwarding request to http://169.254.130.4:8080/health
+2025-12-20 21:09:18.756 +00:00 [Trace] Middleware: Forwarded request finished in 15.738ms 200 OK
+2025-12-20 21:09:18.756 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:09:18.7567913Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 21:09:18.757 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IR" completed keep alive response.
+2025-12-20 21:09:18.757 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET https://api-monorepo-prod.azurewebsites.net/health - 200 15 application/json;+charset=utf-8 17.6122ms
+2025-12-20 21:09:34.825 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01CQU75IR" received FIN.
+2025-12-20 21:09:34.825 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01CQU75IR" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 21:09:34.827 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IR" disconnecting.
+2025-12-20 21:09:34.827 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IR" stopped.
+2025-12-20 21:10:18.739 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IS" accepted.
+2025-12-20 21:10:18.739 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IS" started.
+2025-12-20 21:10:18.739 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/health - - -
+2025-12-20 21:10:18.739 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.130.4:8080/health
+2025-12-20 21:10:18.740 +00:00 [Trace] Middleware: Forwarding request to http://169.254.130.4:8080/health
+2025-12-20 21:10:18.753 +00:00 [Trace] Middleware: Forwarded request finished in 13.692ms 200 OK
+2025-12-20 21:10:18.761 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:10:18.7563269Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 21:10:18.761 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IS" completed keep alive response.
+2025-12-20 21:10:18.762 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET https://api-monorepo-prod.azurewebsites.net/health - 200 15 application/json;+charset=utf-8 22.4423ms
+2025-12-20 21:10:25.274 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01CQU75IS" received FIN.
+2025-12-20 21:10:25.274 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01CQU75IS" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 21:10:25.275 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IS" disconnecting.
+2025-12-20 21:10:25.275 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IS" stopped.
+2025-12-20 21:11:18.735 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IT" accepted.
+2025-12-20 21:11:18.735 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IT" started.
+2025-12-20 21:11:18.736 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/health - - -
+2025-12-20 21:11:18.743 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.130.4:8080/health
+2025-12-20 21:11:18.743 +00:00 [Trace] Middleware: Forwarding request to http://169.254.130.4:8080/health
+2025-12-20 21:11:18.760 +00:00 [Trace] Middleware: Forwarded request finished in 17.618ms 200 OK
+2025-12-20 21:11:18.766 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:11:18.7616416Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 21:11:18.766 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IT" completed keep alive response.
+2025-12-20 21:11:18.769 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET https://api-monorepo-prod.azurewebsites.net/health - 200 15 application/json;+charset=utf-8 30.3990ms
+2025-12-20 21:11:31.552 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01CQU75IT" received FIN.
+2025-12-20 21:11:31.553 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01CQU75IT" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 21:11:31.553 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IT" disconnecting.
+2025-12-20 21:11:31.553 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IT" stopped.
+2025-12-20 21:12:18.789 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IU" accepted.
+2025-12-20 21:12:18.789 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IU" started.
+2025-12-20 21:12:18.803 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/health - - -
+2025-12-20 21:12:18.804 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.130.4:8080/health
+2025-12-20 21:12:18.804 +00:00 [Trace] Middleware: Forwarding request to http://169.254.130.4:8080/health
+2025-12-20 21:12:18.834 +00:00 [Trace] Middleware: Forwarded request finished in 30.191ms 200 OK
+2025-12-20 21:12:18.835 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:12:18.8355285Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 21:12:18.835 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IU" completed keep alive response.
+2025-12-20 21:12:18.835 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET https://api-monorepo-prod.azurewebsites.net/health - 200 15 application/json;+charset=utf-8 45.7448ms
+2025-12-20 21:12:25.560 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01CQU75IU" received FIN.
+2025-12-20 21:12:25.571 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IU" disconnecting.
+2025-12-20 21:12:25.571 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IU" stopped.
+2025-12-20 21:12:25.588 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01CQU75IU" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 21:12:25.589 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IV" accepted.
+2025-12-20 21:12:25.589 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IV" started.
+2025-12-20 21:12:25.589 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/ - - -
+2025-12-20 21:12:25.590 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.130.4:8080/
+2025-12-20 21:12:25.590 +00:00 [Trace] Middleware: Forwarding request to http://169.254.130.4:8080/
+2025-12-20 21:12:25.815 +00:00 [Trace] Middleware: Forwarded request finished in 225.399ms 200 OK
+2025-12-20 21:12:25.951 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:12:25.9505693Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 21:12:25.951 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IV" completed keep alive response.
+2025-12-20 21:12:25.951 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET https://api-monorepo-prod.azurewebsites.net/ - 200 23 text/html;+charset=utf-8 362.2020ms
+2025-12-20 21:12:30.508 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01CQU75IV" received FIN.
+2025-12-20 21:12:30.508 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IV" disconnecting.
+2025-12-20 21:12:30.508 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75IV" stopped.
+2025-12-20 21:12:30.508 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01CQU75IV" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 21:12:51.868 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75J0" accepted.
+2025-12-20 21:12:51.868 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75J0" started.
+2025-12-20 21:12:51.876 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/health - - -
+2025-12-20 21:12:51.876 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.130.4:8080/health
+2025-12-20 21:12:51.876 +00:00 [Trace] Middleware: Forwarding request to http://169.254.130.4:8080/health
+2025-12-20 21:12:51.887 +00:00 [Trace] Middleware: Forwarded request finished in 10.445ms 200 OK
+2025-12-20 21:12:51.980 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:12:51.9793358Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 21:12:51.980 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75J0" completed keep alive response.
+2025-12-20 21:12:51.980 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET https://api-monorepo-prod.azurewebsites.net/health - 200 15 application/json;+charset=utf-8 104.3336ms
+2025-12-20 21:12:55.228 +00:00 [Debug] Microsoft.Extensions.Hosting.Internal.Host: Hosting starting
+2025-12-20 21:12:55.830 +00:00 [Warning] Microsoft.AspNetCore.Hosting.Diagnostics: Overriding HTTP_PORTS '8080' and HTTPS_PORTS ''. Binding to values defined by URLS instead 'http://0.0.0.0:8080'.
+2025-12-20 21:12:55.853 +00:00 [Trace] Middleware: Loading configuration settings...
+2025-12-20 21:12:55.859 +00:00 [Information] Middleware: Destination base URL is http://169.254.130.6:8080
+2025-12-20 21:12:56.364 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:12:56.3561517Z","SiteName":"api-monorepo-prod","TaskName":"AutoHealingMiddlewareInformation","Message":"/var/middleware/config/autoheal.xml does not exist","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":7}
+2025-12-20 21:12:56.455 +00:00 [Information] Microsoft.Hosting.Lifetime: Now listening on: http://0.0.0.0:8080
+2025-12-20 21:12:56.455 +00:00 [Debug] Microsoft.AspNetCore.Hosting.Diagnostics: Loaded hosting startup assembly Middleware.Host
+2025-12-20 21:12:56.456 +00:00 [Information] Microsoft.Hosting.Lifetime: Application started. Press Ctrl+C to shut down.
+2025-12-20 21:12:56.456 +00:00 [Information] Microsoft.Hosting.Lifetime: Hosting environment: Production
+2025-12-20 21:12:56.456 +00:00 [Information] Microsoft.Hosting.Lifetime: Content root path: /app
+2025-12-20 21:12:56.456 +00:00 [Debug] Microsoft.Extensions.Hosting.Internal.Host: Hosting started
+2025-12-20 21:12:57.555 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01CQU75J0" received FIN.
+2025-12-20 21:12:57.555 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75J0" disconnecting.
+2025-12-20 21:12:57.555 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75J0" stopped.
+2025-12-20 21:12:57.556 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01CQU75J0" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 21:12:57.568 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75J1" accepted.
+2025-12-20 21:12:57.568 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75J1" started.
+2025-12-20 21:12:57.594 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/health - - -
+2025-12-20 21:12:57.594 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.130.4:8080/health
+2025-12-20 21:12:57.594 +00:00 [Trace] Middleware: Forwarding request to http://169.254.130.4:8080/health
+2025-12-20 21:12:57.633 +00:00 [Trace] Middleware: Forwarded request finished in 38.911ms 200 OK
+2025-12-20 21:12:57.635 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:12:57.6348852Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 21:12:57.650 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75J1" completed keep alive response.
+2025-12-20 21:12:57.651 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET https://api-monorepo-prod.azurewebsites.net/health - 200 15 application/json;+charset=utf-8 56.4904ms
+2025-12-20 21:12:57.387 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2H" accepted.
+2025-12-20 21:12:57.388 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2H" started.
+2025-12-20 21:12:57.497 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://localhost:8080/ - - -
+2025-12-20 21:12:58.161 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:12:58.1609699Z","SiteName":"api-monorepo-prod","TaskName":"TraceConfigurationSetting","ModuleRuntimeVersion":"1.12.4","SettingName":"EasyAuthConfig","SettingValue":"{\"ConfigHelper\":{},\"platform\":{\"enabled\":false},\"globalValidation\":{\"excludedPaths\":[],\"unauthenticatedClientAction\":0,\"redirectToProvider\":null,\"ExcludedPathPrefixesSet\":[],\"ExcludedExactPathsSet\":[]},\"identityProviders\":{\"azureActiveDirectory\":{\"enabled\":true,\"registration\":{\"openIdIssuer\":null,\"clientId\":null,\"clientIdSettingName\":null,\"clientSecretSettingName\":null,\"clientSecretCertificateThumbprint\":null,\"clientSecretCertificateSubjectAlternativeName\":null,\"clientSecretCertificateIssuer\":null,\"OpenIdIssuerValue\":null,\"OpenIdConfigurationUrl\":null},\"login\":{\"loginParameters\":null,\"disableWwwAuthenticate\":false},\"validation\":{\"jwtClaimChecks\":null,\"defaultAuthorizationPolicy\":null,\"allowedAudiences\":null}},\"facebook\":{\"enabled\":true,\"registration\":{\"appId\":null,\"appIdSettingName\":null,\"appSecretSettingName\":null},\"login\":{\"scopes\":null},\"graphApiVersion\":null},\"gitHub\":{\"enabled\":true,\"registration\":{\"clientId\":null,\"clientIdSettingName\":null,\"clientSecretSettingName\":null},\"login\":{\"scopes\":null}},\"twitter\":{\"enabled\":true,\"registration\":{\"consumerKey\":null,\"consumerKeySettingName\":null,\"consumerSecretSettingName\":null}},\"legacyMicrosoftAccount\":{\"enabled\":true,\"registration\":{\"clientId\":null,\"clientIdSettingName\":null,\"clientSecretSettingName\":null},\"login\":{\"scopes\":null},\"validation\":{\"allowedAudiences\":null}},\"google\":{\"enabled\":true,\"registration\":{\"clientId\":null,\"clientIdSettingName\":null,\"clientSecretSettingName\":null},\"login\":{\"scopes\":null},\"validation\":{\"allowedAudiences\":null}},\"apple\":{\"enabled\":true,\"registration\":{\"clientId\":null,\"clientIdSettingName\":null,\"clientSecretSettingName\":null},\"login\":{\"scopes\":null}},\"azureStaticWebApps\":{\"enabled\":true,\"registration\":{\"clientId\":null},\"validation\":null},\"customOpenIdConnectProviders\":null},\"login\":{\"routes\":{\"logoutPath\":null,\"loginPath\":null,\"loginCompletionPath\":null,\"loginIFrameReceiverPath\":null},\"tokenStore\":{\"enabled\":false,\"tokenRefreshExtensionHours\":72.0,\"fileSystem\":{\"directory\":\"/home/data/.auth\",\"Path\":\"/home/data/.auth/tokens\"},\"azureBlobStorage\":{\"ConfigHelper\":{},\"blobContainerUri\":null,\"clientId\":null,\"managedIdentityResourceId\":null,\"sasUrlSettingName\":\"WEBSITE_AUTH_TOKEN_CONTAINER_SASURL\"}},\"preserveUrlFragmentsForLogins\":false,\"shouldLogoutOfProvider\":true,\"allowedExternalRedirectUrls\":null,\"cookieExpiration\":{\"convention\":0,\"timeToExpiration\":\"08:00:00\"},\"nonce\":{\"validateNonce\":true,\"nonceExpirationInterval\":\"00:05:00\"}},\"httpSettings\":{\"requireHttps\":true,\"routes\":{\"apiPrefix\":\"/.auth\"},\"forwardProxy\":{\"convention\":0,\"customHostHeaderName\":null,\"customProtoHeaderName\":null}},\"legacyProperties\":{\"legacyMobileCompatibilityMode\":false,\"customIdentityProviderSettings\":[],\"customAuthorizationSettings\":{\"url\":null,\"allowInsecureRequests\":false},\"authFilePath\":null,\"configVersion\":null,\"legacyVersion\":null},\"clearInboundClaimsMapping\":false,\"AppTracingLevel\":31}","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":4}
+2025-12-20 21:12:58.170 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:12:58.1707465Z","SiteName":"api-monorepo-prod","TaskName":"TraceConfigurationSetting","ModuleRuntimeVersion":"1.12.4","SettingName":"CorsConfig","SettingValue":"{\"AllowedOrigins\":\"https://www.yourdomain.com\",\"SupportCredentials\":true}","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":4}
+2025-12-20 21:12:58.172 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:12:58.171987Z","SiteName":"api-monorepo-prod","TaskName":"TraceConfigurationSetting","ModuleRuntimeVersion":"1.12.4","SettingName":"WEBSITE_AUTH_INTERNAL_PATHS","SettingValue":"/health","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":4}
+2025-12-20 21:12:58.173 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:12:58.173431Z","SiteName":"api-monorepo-prod","TaskName":"TraceConfigurationSetting","ModuleRuntimeVersion":"1.12.4","SettingName":"IsMiseEnabled","SettingValue":"False","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":4}
+2025-12-20 21:12:58.182 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:12:58.182557Z","SiteName":"api-monorepo-prod","TaskName":"TraceConfigurationSetting","ModuleRuntimeVersion":"1.12.4","SettingName":"WEBSITE_AUTH_HIDE_DEPRECATED_SID","SettingValue":"False","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":4}
+2025-12-20 21:12:58.183 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:12:58.1829664Z","SiteName":"api-monorepo-prod","TaskName":"TraceConfigurationSetting","ModuleRuntimeVersion":"1.12.4","SettingName":"WEBSITE_AUTH_ZUMO_USE_TOKEN_STORE_CLAIMS","SettingValue":"False","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":4}
+2025-12-20 21:12:58.183 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:12:58.183338Z","SiteName":"api-monorepo-prod","TaskName":"TraceConfigurationSetting","ModuleRuntimeVersion":"1.12.4","SettingName":"WEBSITE_AUTH_USE_LEGACY_CLAIMS","SettingValue":"True","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":4}
+2025-12-20 21:12:58.291 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.130.6:8080/
+2025-12-20 21:12:58.292 +00:00 [Trace] Middleware: Forwarding request to http://169.254.130.6:8080/
+2025-12-20 21:12:58.453 +00:00 [Trace] Middleware: Forwarded request finished in 159.232ms 200 OK
+2025-12-20 21:12:58.483 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:12:58.482971Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 21:12:58.522 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01I67MM2H" received FIN.
+2025-12-20 21:12:58.531 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2H" completed keep alive response.
+2025-12-20 21:12:58.534 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01I67MM2H" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 21:12:58.552 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET http://localhost:8080/ - 200 23 text/html;+charset=utf-8 1043.0114ms
+2025-12-20 21:12:58.563 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2H" disconnecting.
+2025-12-20 21:12:58.572 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2H" stopped.
+2025-12-20 21:13:06.867 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01CQU75J1" received FIN.
+2025-12-20 21:13:06.867 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75J1" disconnecting.
+2025-12-20 21:13:06.867 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01CQU75J1" stopped.
+2025-12-20 21:13:06.867 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01CQU75J1" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 21:13:51.862 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2I" accepted.
+2025-12-20 21:13:51.862 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2I" started.
+2025-12-20 21:13:51.868 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/health - - -
+2025-12-20 21:13:51.869 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.130.6:8080/health
+2025-12-20 21:13:51.869 +00:00 [Trace] Middleware: Forwarding request to http://169.254.130.6:8080/health
+2025-12-20 21:13:51.881 +00:00 [Trace] Middleware: Forwarded request finished in 11.594ms 200 OK
+2025-12-20 21:13:51.883 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:13:51.8829745Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 21:13:51.883 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2I" completed keep alive response.
+2025-12-20 21:13:51.883 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET https://api-monorepo-prod.azurewebsites.net/health - 200 15 application/json;+charset=utf-8 19.6515ms
+2025-12-20 21:14:05.631 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01I67MM2I" received FIN.
+2025-12-20 21:14:05.641 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2J" accepted.
+2025-12-20 21:14:05.641 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2J" started.
+2025-12-20 21:14:05.632 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2I" disconnecting.
+2025-12-20 21:14:05.659 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01I67MM2I" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 21:14:05.659 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2I" stopped.
+2025-12-20 21:14:05.660 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/ - - -
+2025-12-20 21:14:05.661 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.130.6:8080/
+2025-12-20 21:14:05.661 +00:00 [Trace] Middleware: Forwarding request to http://169.254.130.6:8080/
+2025-12-20 21:14:05.717 +00:00 [Trace] Middleware: Forwarded request finished in 55.658ms 200 OK
+2025-12-20 21:14:05.718 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:14:05.7185201Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 21:14:05.719 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2J" completed keep alive response.
+2025-12-20 21:14:05.719 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET https://api-monorepo-prod.azurewebsites.net/ - 200 23 text/html;+charset=utf-8 58.9870ms
+2025-12-20 21:14:15.636 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2K" accepted.
+2025-12-20 21:14:15.636 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2K" started.
+2025-12-20 21:14:15.637 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01I67MM2J" received FIN.
+2025-12-20 21:14:15.637 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2J" disconnecting.
+2025-12-20 21:14:15.637 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2J" stopped.
+2025-12-20 21:14:15.639 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01I67MM2J" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 21:14:15.688 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/ - - -
+2025-12-20 21:14:15.689 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.130.6:8080/
+2025-12-20 21:14:15.689 +00:00 [Trace] Middleware: Forwarding request to http://169.254.130.6:8080/
+2025-12-20 21:14:15.759 +00:00 [Trace] Middleware: Forwarded request finished in 70.467ms 200 OK
+2025-12-20 21:14:15.777 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:14:15.777194Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 21:14:15.778 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2K" completed keep alive response.
+2025-12-20 21:14:15.778 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET https://api-monorepo-prod.azurewebsites.net/ - 200 23 text/html;+charset=utf-8 89.9756ms
+2025-12-20 21:14:21.891 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01I67MM2K" received FIN.
+2025-12-20 21:14:21.891 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01I67MM2K" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 21:14:21.891 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2K" disconnecting.
+2025-12-20 21:14:21.891 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2K" stopped.
+2025-12-20 21:14:25.641 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2L" accepted.
+2025-12-20 21:14:25.644 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2L" started.
+2025-12-20 21:14:25.644 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/ - - -
+2025-12-20 21:14:25.649 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.130.6:8080/
+2025-12-20 21:14:25.649 +00:00 [Trace] Middleware: Forwarding request to http://169.254.130.6:8080/
+2025-12-20 21:14:25.682 +00:00 [Trace] Middleware: Forwarded request finished in 32.708ms 200 OK
+2025-12-20 21:14:25.692 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:14:25.6917663Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 21:14:25.692 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2L" completed keep alive response.
+2025-12-20 21:14:25.692 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET https://api-monorepo-prod.azurewebsites.net/ - 200 23 text/html;+charset=utf-8 47.8694ms
+2025-12-20 21:14:36.906 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01I67MM2L" received FIN.
+2025-12-20 21:14:36.945 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2L" disconnecting.
+2025-12-20 21:14:36.945 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2L" stopped.
+2025-12-20 21:14:36.945 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01I67MM2L" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 21:14:45.164 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2M" accepted.
+2025-12-20 21:14:45.164 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2M" started.
+2025-12-20 21:14:45.181 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/auth/google/callback - - -
+2025-12-20 21:14:45.182 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.130.6:8080/auth/google/callback
+2025-12-20 21:14:45.183 +00:00 [Trace] Middleware: Forwarding request to http://169.254.130.6:8080/auth/google/callback
+2025-12-20 21:14:45.211 +00:00 [Trace] Middleware: Forwarded request finished in 28.768ms 200 Found
+2025-12-20 21:14:45.222 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:14:45.2219986Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 21:14:45.222 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2M" completed keep alive response.
+2025-12-20 21:14:45.223 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET https://api-monorepo-prod.azurewebsites.net/auth/google/callback - 302 0 - 41.3415ms
+2025-12-20 21:14:51.858 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01I67MM2M" received FIN.
+2025-12-20 21:14:51.859 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2N" accepted.
+2025-12-20 21:14:51.859 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2M" disconnecting.
+2025-12-20 21:14:51.859 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2M" stopped.
+2025-12-20 21:14:51.859 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2N" started.
+2025-12-20 21:14:51.860 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01I67MM2M" sending FIN because: "The Socket transport's send loop completed gracefully."
+2025-12-20 21:14:51.860 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request starting HTTP/1.1 GET http://api-monorepo-prod.azurewebsites.net/health - - -
+2025-12-20 21:14:51.867 +00:00 [Trace] Middleware: Request came in on normal port, sending to normal target http://169.254.130.6:8080/health
+2025-12-20 21:14:51.867 +00:00 [Trace] Middleware: Forwarding request to http://169.254.130.6:8080/health
+2025-12-20 21:14:51.879 +00:00 [Trace] Middleware: Forwarded request finished in 11.930ms 200 OK
+2025-12-20 21:14:51.881 +00:00 [Information] MiddlewareConsoleLogs: {"Timestamp":"2025-12-20T21:14:51.8814575Z","SiteName":"api-monorepo-prod","TaskName":"MiddlewareInformation","Message":"Handling CORS regular (non-preflight) request with origin ''","ModuleRuntimeVersion":"1.12.4","ProviderName":"Microsoft-Azure-AppService-Middleware","Level":4,"EventId":1}
+2025-12-20 21:14:51.881 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2N" completed keep alive response.
+2025-12-20 21:14:51.887 +00:00 [Information] Microsoft.AspNetCore.Hosting.Diagnostics: Request finished HTTP/1.1 GET https://api-monorepo-prod.azurewebsites.net/health - 200 15 application/json;+charset=utf-8 22.0262ms
+2025-12-20 21:15:06.899 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01I67MM2N" received FIN.
+2025-12-20 21:15:06.899 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2N" disconnecting.
+2025-12-20 21:15:06.899 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Connections: Connection id "0HNI01I67MM2N" stopped.
+2025-12-20 21:15:06.899 +00:00 [Debug] Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets: Connection id "0HNI01I67MM2N" sending FIN because: "The Socket transport's send loop completed gracefully."

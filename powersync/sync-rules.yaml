@@ -1,0 +1,130 @@
+# ============================================
+# PowerSync Sync Rules
+# ============================================
+# Define quais dados cada usuário pode acessar
+# token_parameters.sub = user ID do JWT
+# token_parameters.technician_id = ID do técnico (se aplicável)
+# ============================================
+
+bucket_definitions:
+  # ==========================================
+  # Dados do Técnico (por technician_id)
+  # ==========================================
+  technician_data:
+    parameters:
+      - SELECT token_parameters.sub as user_id
+    data:
+      # Clients
+      - SELECT id, name, email, phone, tax_id, address, city, state, zip_code,
+               notes, is_active, deleted_at, created_at, updated_at, technician_id
+        FROM clients
+        WHERE technician_id = bucket.user_id
+
+      # Work Orders
+      - SELECT id, client_id, quote_id, title, description, status,
+               scheduled_date, scheduled_start_time, scheduled_end_time,
+               execution_start, execution_end, address, notes, total_value,
+               is_active, deleted_at, created_at, updated_at, technician_id,
+               client_name, client_phone, client_address
+        FROM work_orders
+        WHERE technician_id = bucket.user_id
+
+      # Quotes
+      - SELECT id, client_id, status, discount_value, total_value, notes,
+               sent_at, visit_scheduled_at, created_at, updated_at,
+               technician_id, client_name
+        FROM quotes
+        WHERE technician_id = bucket.user_id
+
+      # Invoices
+      - SELECT id, client_id, work_order_id, invoice_number, status,
+               subtotal, tax, discount, total, due_date, paid_date, notes,
+               created_at, updated_at, technician_id, client_name
+        FROM invoices
+        WHERE technician_id = bucket.user_id
+
+      # Checklist Instances
+      - SELECT id, work_order_id, template_id, template_name,
+               template_version_snapshot, status, progress, started_at,
+               completed_at, completed_by, created_at, updated_at, technician_id
+        FROM checklist_instances
+        WHERE technician_id = bucket.user_id
+
+      # Checklist Attachments
+      - SELECT id, answer_id, work_order_id, type, file_name, mime_type,
+               file_size, local_path, remote_url, thumbnail_path,
+               created_at, updated_at, technician_id
+        FROM checklist_attachments
+        WHERE technician_id = bucket.user_id
+
+      # Signatures
+      - SELECT id, work_order_id, quote_id, client_id, attachment_id,
+               signer_name, signer_document, signer_role, signed_at, hash,
+               ip_address, user_agent, device_info, signature_base64,
+               signature_file_path, created_at, updated_at, technician_id
+        FROM signatures
+        WHERE technician_id = bucket.user_id
+
+      # Execution Sessions
+      - SELECT id, work_order_id, session_type, started_at, ended_at,
+               duration, pause_reason, notes, created_at, updated_at,
+               technician_id, server_id
+        FROM execution_sessions
+        WHERE technician_id = bucket.user_id
+
+  # ==========================================
+  # Quote Items (via relacionamento com quotes)
+  # ==========================================
+  quote_items:
+    parameters:
+      - SELECT token_parameters.sub as user_id
+    data:
+      - SELECT qi.id, qi.quote_id, qi.item_id, qi.name, qi.type, qi.unit,
+               qi.quantity, qi.unit_price, qi.discount_value, qi.total_price,
+               qi.created_at, qi.updated_at
+        FROM quote_items qi
+        INNER JOIN quotes q ON qi.quote_id = q.id
+        WHERE q.technician_id = bucket.user_id
+
+  # ==========================================
+  # Checklist Answers (via relacionamento com instances)
+  # ==========================================
+  checklist_answers:
+    parameters:
+      - SELECT token_parameters.sub as user_id
+    data:
+      - SELECT ca.id, ca.instance_id, ca.question_id, ca.type,
+               ca.value_text, ca.value_number, ca.value_boolean,
+               ca.value_date, ca.value_json, ca.answered_at,
+               ca.answered_by, ca.device_info, ca.created_at, ca.updated_at
+        FROM checklist_answers ca
+        INNER JOIN checklist_instances ci ON ca.instance_id = ci.id
+        WHERE ci.technician_id = bucket.user_id
+
+  # ==========================================
+  # Dados Globais (todos os usuários)
+  # ==========================================
+  global_data:
+    data:
+      # Checklist Templates (read-only)
+      - SELECT id, name, description, version, is_active, sections,
+               questions, created_at, updated_at
+        FROM checklist_templates
+        WHERE is_active = true
+
+      # Product Categories (read-only)
+      - SELECT id, name, description, color, is_active, item_count,
+               created_at, updated_at
+        FROM product_categories
+        WHERE is_active = true
+
+      # Catalog Items (read-only)
+      - SELECT id, category_id, category_name, name, description, sku,
+               type, base_price, cost_price, default_duration_minutes,
+               is_active, created_at, updated_at
+        FROM catalog_items
+        WHERE is_active = true
+
+      # Bundle Items (read-only)
+      - SELECT id, bundle_id, item_id, item_name, quantity, unit_price
+        FROM bundle_items

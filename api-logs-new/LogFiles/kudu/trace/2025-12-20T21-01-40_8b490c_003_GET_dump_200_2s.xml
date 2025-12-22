@@ -1,0 +1,4 @@
+<step title="Incoming Request" date="2025-12-20T21:01:40.488" instance="8b490c" url="/dump" method="GET" type="request" pid="768,1,6" Host="api-monorepo-prod.scm.azurewebsites.net" User-Agent="AZURECLI/2.81.0 (MSI)" Accept-Encoding="identity" Authorization="Bas..." x-ms-client-request-id="1214c7df-dde7-11f0-9d42-00d76d1cb4f6" X-ARR-LOG-ID="1214c7df-dde7-11f0-9d42-00d76d1cb4f6" CLIENT-IP="138.94.187.3:40330" X-SITE-DEPLOYMENT-ID="api-monorepo-prod" WAS-DEFAULT-HOSTNAME="api-monorepo-prod.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/dump" X-Client-IP="138.94.187.3" X-Client-Port="40330" >
+  <step title="Cleanup Xml Logs" date="2025-12-20T21:01:40.510" /><!-- duration: 39ms -->
+  <step title="Outgoing response" date="2025-12-20T21:01:42.348" type="response" statusCode="200" statusText="OK" /><!-- duration: 31ms -->
+</step><!-- duration: 1928ms -->

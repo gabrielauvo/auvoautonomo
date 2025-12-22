@@ -285,7 +285,9 @@
       "Bash(railway whoami:*)",
       "Bash(set RAILWAY_TOKEN=8d94859f-9239-4011-bfce-88186b62ee90)",
       "Bash($env:RAILWAY_TOKEN=\"8d94859f-9239-4011-bfce-88186b62ee90\")",
-      "Bash(RAILWAY_TOKEN=8d94859f-9239-4011-bfce-88186b62ee90 railway whoami:*)"
+      "Bash(RAILWAY_TOKEN=8d94859f-9239-4011-bfce-88186b62ee90 railway whoami:*)",
+      "Bash(sort:*)",
+      "Bash(RAILWAY_TOKEN=9ead7e75-86db-4ae2-b785-472ca6a4c387 railway whoami:*)"
     ]
   }
 }

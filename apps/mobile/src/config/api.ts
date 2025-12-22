@@ -2,12 +2,12 @@
  * API Configuration
  *
  * Configuração da URL base da API.
+ * Usa EXPO_PUBLIC_API_URL do .env como fonte única de verdade.
  */
 
-import Constants from 'expo-constants';
-
-// Get API URL from environment or use default
-const API_URL = Constants.expoConfig?.extra?.apiUrl || 'http://localhost:3001';
+// Get API URL from environment variable (set in .env)
+// EXPO_PUBLIC_* variables are automatically available in process.env
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 
 /**
  * Get the base URL for API requests

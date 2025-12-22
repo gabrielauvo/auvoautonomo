@@ -210,6 +210,7 @@ describe('ServiceFlowService', () => {
         status: WorkOrderStatus.IN_PROGRESS,
         quote: { id: 'quote-123', totalValue: new Decimal(1500) },
         checklists: [],
+        checklistInstances: [],
         executionStart: new Date(),
       };
 
@@ -252,6 +253,7 @@ describe('ServiceFlowService', () => {
         userId,
         status: WorkOrderStatus.DONE,
         checklists: [],
+        checklistInstances: [],
       });
 
       await expect(
@@ -268,6 +270,7 @@ describe('ServiceFlowService', () => {
         userId,
         status: WorkOrderStatus.CANCELED,
         checklists: [],
+        checklistInstances: [],
       });
 
       await expect(
@@ -283,6 +286,7 @@ describe('ServiceFlowService', () => {
         id: workOrderId,
         userId,
         status: WorkOrderStatus.IN_PROGRESS,
+        checklistInstances: [],
         checklists: [
           {
             id: 'checklist-1',

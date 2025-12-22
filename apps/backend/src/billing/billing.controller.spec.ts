@@ -68,6 +68,7 @@ describe('BillingController', () => {
     },
     plan: {
       findUnique: jest.fn(),
+      findMany: jest.fn(),
     },
     userSubscription: {
       findUnique: jest.fn(),
@@ -149,117 +150,58 @@ describe('BillingController', () => {
     });
   });
 
-  describe('upgradeToPro', () => {
-    it('should upgrade user to PRO plan', async () => {
-      const mockUser = {
-        id: mockUserId,
-        email: 'user@example.com',
-        name: 'Test User',
-        subscription: null,
-      };
-
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      mockAsaasBillingService.createCustomer.mockResolvedValue({ id: 'cus_123' });
-      mockAsaasBillingService.createSubscription.mockResolvedValue({
-        id: 'sub_123',
-        nextDueDate: '2025-02-01',
-        paymentUrl: 'https://pay.asaas.com/xxx',
-      });
-      mockSubscriptionService.createOrUpdateSubscription.mockResolvedValue({
-        id: 'local-sub-123',
-        status: SubscriptionStatus.ACTIVE,
-      });
-
-      const result = await controller.upgradeToPro(mockUserId, {
-        billingType: 'PIX' as any,
-        billingPeriod: 'MONTHLY' as any,
-        cpfCnpj: '12345678901',
-      });
-
-      expect(result.subscriptionId).toBe('local-sub-123');
-      expect(result.asaasSubscriptionId).toBe('sub_123');
-      expect(result.paymentUrl).toBe('https://pay.asaas.com/xxx');
-    });
-
-    it('should return message if already PRO', async () => {
-      const mockUser = {
-        id: mockUserId,
-        email: 'user@example.com',
-        subscription: {
-          status: SubscriptionStatus.ACTIVE,
-          planId: 'plan-pro-id',
-        },
-      };
-
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      mockPrisma.plan.findUnique.mockResolvedValue({ type: PlanType.PRO });
-
-      const result = await controller.upgradeToPro(mockUserId, {
-        billingType: 'PIX' as any,
-        billingPeriod: 'MONTHLY' as any,
-        cpfCnpj: '12345678901',
-      });
-
-      expect(result.message).toBe('You are already on the PRO plan');
-    });
-  });
-
   describe('cancelSubscription', () => {
-    it('should cancel subscription at period end', async () => {
-      const mockSubscription = {
-        id: 'sub-123',
-        status: SubscriptionStatus.ACTIVE,
-        asaasSubscriptionId: 'asaas_sub_123',
-        currentPeriodEnd: new Date('2025-02-01'),
-      };
-
-      mockPrisma.userSubscription.findUnique.mockResolvedValue(mockSubscription);
-      mockAsaasBillingService.cancelSubscription.mockResolvedValue(undefined);
-      mockSubscriptionService.cancelSubscription.mockResolvedValue({
-        ...mockSubscription,
-        cancelAtPeriodEnd: true,
-      });
-
-      const result = await controller.cancelSubscription(mockUserId, {
-        cancelImmediately: false,
-      });
-
-      expect(result.cancelAtPeriodEnd).toBe(true);
-      expect(result.message).toContain('será cancelada ao fim do período');
-    });
-
-    it('should cancel subscription immediately when requested', async () => {
-      const mockSubscription = {
-        id: 'sub-123',
-        status: SubscriptionStatus.ACTIVE,
-        asaasSubscriptionId: 'asaas_sub_123',
-      };
-
-      mockPrisma.userSubscription.findUnique.mockResolvedValue(mockSubscription);
-      mockAsaasBillingService.cancelSubscription.mockResolvedValue(undefined);
-      mockSubscriptionService.cancelSubscription.mockResolvedValue({
-        ...mockSubscription,
-        status: SubscriptionStatus.CANCELED,
-      });
-
-      const result = await controller.cancelSubscription(mockUserId, {
-        cancelImmediately: true,
-      });
-
-      expect(result.status).toBe(SubscriptionStatus.CANCELED);
-      expect(result.message).toContain('cancelada imediatamente');
-    });
-
     it('should return message if no subscription exists', async () => {
       mockPrisma.userSubscription.findUnique.mockResolvedValue(null);
 
       const result = await controller.cancelSubscription(mockUserId, {});
 
-      expect(result.message).toBe('No active subscription to cancel');
+      expect(result.message).toBe('Nenhuma assinatura encontrada');
+      expect(result.success).toBe(false);
+    });
+
+    it('should return message if already on FREE plan', async () => {
+      const mockSubscription = {
+        id: 'sub-123',
+        status: SubscriptionStatus.ACTIVE,
+        plan: { type: PlanType.FREE },
+      };
+
+      mockPrisma.userSubscription.findUnique.mockResolvedValue(mockSubscription);
+
+      const result = await controller.cancelSubscription(mockUserId, {});
+
+      expect(result.message).toBe('Você já está no plano gratuito');
+      expect(result.success).toBe(false);
+    });
+
+    it('should cancel subscription and move to FREE plan', async () => {
+      const mockSubscription = {
+        id: 'sub-123',
+        status: SubscriptionStatus.ACTIVE,
+        plan: { type: PlanType.PRO },
+      };
+
+      mockPrisma.userSubscription.findUnique.mockResolvedValue(mockSubscription);
+      mockAsaasBillingService.cancelSubscription.mockResolvedValue(undefined);
+
+      const result = await controller.cancelSubscription(mockUserId, {});
+
+      expect(result.success).toBe(true);
+      expect(result.newPlan).toBe('FREE');
     });
   });
 
   describe('reactivateSubscription', () => {
+    it('should return message if no subscription exists', async () => {
+      mockPrisma.userSubscription.findUnique.mockResolvedValue(null);
+
+      const result = await controller.reactivateSubscription(mockUserId);
+
+      expect(result.message).toBe('Nenhuma assinatura encontrada');
+      expect(result.success).toBe(false);
+    });
+
     it('should reactivate a subscription marked for cancellation', async () => {
       const mockSubscription = {
         id: 'sub-123',
@@ -289,7 +231,7 @@ describe('BillingController', () => {
 
       const result = await controller.reactivateSubscription(mockUserId);
 
-      expect(result.message).toBe('Subscription is already active');
+      expect(result.message).toBe('Assinatura já está ativa');
     });
   });
 

@@ -19,10 +19,10 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 const ContentSecurityPolicy = `
   default-src 'self';
-  script-src 'self' ${process.env.NODE_ENV === 'production' ? '' : "'unsafe-eval' 'unsafe-inline'"};
-  style-src 'self' 'unsafe-inline';
+  script-src 'self' 'unsafe-inline' 'unsafe-eval';
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
   img-src 'self' blob: data: https: ${apiUrl};
-  font-src 'self' data:;
+  font-src 'self' data: https://fonts.gstatic.com;
   connect-src 'self' ${apiUrl} https://wa.me;
   frame-src 'none';
   frame-ancestors 'none';
@@ -93,7 +93,8 @@ const nextConfig = {
   },
 
   // Output standalone para Docker/Azure App Service
-  output: 'standalone',
+  // Comentado para uso local - descomente para deploy em produção
+  // output: 'standalone',
 
   // Compiler optimizations - CRITICAL para 1M+ users
   compiler: {
@@ -123,9 +124,26 @@ const nextConfig = {
         protocol: 'https',
         hostname: '**.googleusercontent.com', // Google images (wildcard)
       },
-      ...(process.env.NODE_ENV === 'development'
-        ? [{ protocol: 'http', hostname: 'localhost' }]
-        : []),
+      // Produção: Railway/Render para backend
+      {
+        protocol: 'https',
+        hostname: '**.railway.app',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.onrender.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.vercel.app',
+      },
+      // Desenvolvimento: permitir IPs locais e localhost
+      { protocol: 'http', hostname: 'localhost', port: '' },
+      { protocol: 'http', hostname: 'localhost', port: '3001' },
+      { protocol: 'http', hostname: '192.168.1.5', port: '' },
+      { protocol: 'http', hostname: '192.168.1.5', port: '3001' },
+      { protocol: 'http', hostname: '127.0.0.1', port: '' },
+      { protocol: 'http', hostname: '127.0.0.1', port: '3001' },
     ],
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],

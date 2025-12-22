@@ -40,6 +40,18 @@ class SignAndApproveDto {
   @IsString()
   @Length(2, 50, { message: 'Signer role must be between 2 and 50 characters' })
   signerRole?: string;
+
+  // Acceptance terms audit fields
+  @IsOptional()
+  @IsString()
+  termsAcceptedAt?: string;
+
+  @IsOptional()
+  @IsString()
+  termsHash?: string;
+
+  @IsOptional()
+  termsVersion?: number;
 }
 
 // DTO para rejeição
@@ -156,5 +168,23 @@ export class QuotesPublicController {
     this.validateShareKey(shareKey);
 
     return this.quotesPublicService.rejectByShareKey(shareKey, dto.reason);
+  }
+
+  @Get(':shareKey/acceptance-terms')
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @ApiOperation({
+    summary: 'Get acceptance terms for quote (public access)',
+    description: 'Returns acceptance terms that must be accepted before signing.',
+  })
+  @ApiParam({ name: 'shareKey', description: 'Unique share key for the quote' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns acceptance terms if configured',
+  })
+  async getAcceptanceTerms(@Param('shareKey') shareKey: string) {
+    // Validar formato antes de processar
+    this.validateShareKey(shareKey);
+
+    return this.quotesPublicService.getAcceptanceTermsForShareKey(shareKey);
   }
 }

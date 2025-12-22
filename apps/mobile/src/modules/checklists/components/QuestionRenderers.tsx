@@ -546,7 +546,6 @@ export const QUESTION_RENDERERS: Record<
   MULTI_SELECT: MultiSelectRenderer,
   PHOTO_REQUIRED: PhotoRenderer,
   PHOTO_OPTIONAL: PhotoRenderer,
-  FILE_UPLOAD: PhotoRenderer, // Reuse photo renderer
   SIGNATURE_TECHNICIAN: SignatureRenderer,
   SIGNATURE_CLIENT: SignatureRenderer,
   SECTION_TITLE: () => null, // Handled separately

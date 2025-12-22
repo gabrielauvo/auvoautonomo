@@ -54,6 +54,10 @@ export interface PaymentReminderContext {
   pixCode?: string;
   workOrderNumber?: string;
   quoteNumber?: string;
+  // Company Pix key info
+  companyPixKey?: string;
+  companyPixKeyType?: string;
+  companyPixKeyOwnerName?: string;
 }
 
 // Quote follow-up context

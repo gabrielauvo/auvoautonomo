@@ -82,10 +82,8 @@ function DashboardContent() {
     overdue: item.overdue,
   })) || [];
 
-  // Calcular ticket médio
-  const avgTicket = analytics?.quotes.total && analytics.revenue.total
-    ? analytics.revenue.total / analytics.quotes.total
-    : 0;
+  // Ticket médio vem calculado do backend (received / paidCount)
+  const avgTicket = analytics?.revenue.averageTicket || 0;
 
   return (
     <AppLayout>

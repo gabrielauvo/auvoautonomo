@@ -36,6 +36,17 @@ export interface ChangePasswordDto {
   confirmPassword: string;
 }
 
+// Pix key types
+export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'RANDOM';
+
+export const PIX_KEY_TYPES: { value: PixKeyType; label: string }[] = [
+  { value: 'CPF', label: 'CPF' },
+  { value: 'CNPJ', label: 'CNPJ' },
+  { value: 'EMAIL', label: 'E-mail' },
+  { value: 'PHONE', label: 'Telefone' },
+  { value: 'RANDOM', label: 'Chave aleatória' },
+];
+
 // Dados da empresa
 export interface CompanySettings {
   id: string;
@@ -49,6 +60,12 @@ export interface CompanySettings {
   address?: CompanyAddress;
   logoUrl?: string;
   branding: CompanyBranding;
+  // Pix settings
+  pixKey?: string | null;
+  pixKeyType?: PixKeyType | null;
+  pixKeyOwnerName?: string | null;
+  pixKeyEnabled?: boolean;
+  pixKeyFeatureEnabled?: boolean; // Feature flag from plan
   createdAt: string;
   updatedAt: string;
 }
@@ -82,6 +99,11 @@ export interface UpdateCompanyDto {
   whatsapp?: string;
   address?: CompanyAddress;
   branding?: Partial<CompanyBranding>;
+  // Pix settings
+  pixKey?: string | null;
+  pixKeyType?: PixKeyType | null;
+  pixKeyOwnerName?: string | null;
+  pixKeyEnabled?: boolean;
 }
 
 // Plano e assinatura
@@ -164,6 +186,22 @@ export interface TemplateSettings {
   quote: QuoteTemplate;
   workOrder: WorkOrderTemplate;
   charge: ChargeTemplate;
+}
+
+// Termos de Aceite (Acceptance Terms)
+export interface AcceptanceTermsSettings {
+  enabled: boolean;
+  termsContent: string | null;
+  version: number;
+  updatedAt: string | null;
+  termsHash: string | null;
+  featureAvailable: boolean;
+  planMessage: string | null;
+}
+
+export interface UpdateAcceptanceTermsDto {
+  enabled?: boolean;
+  termsContent?: string | null;
 }
 
 // Notificações
@@ -501,6 +539,17 @@ export const settingsService = {
 
   async resetTemplateToDefault(type: 'quote' | 'workOrder' | 'charge'): Promise<void> {
     await api.post(`/settings/templates/${type}/reset`);
+  },
+
+  // ========== TERMOS DE ACEITE ==========
+  async getAcceptanceTerms(): Promise<AcceptanceTermsSettings> {
+    const response = await api.get('/settings/acceptance-terms');
+    return response.data;
+  },
+
+  async updateAcceptanceTerms(data: UpdateAcceptanceTermsDto): Promise<AcceptanceTermsSettings> {
+    const response = await api.put('/settings/acceptance-terms', data);
+    return response.data;
   },
 
   // ========== NOTIFICAÇÕES ==========

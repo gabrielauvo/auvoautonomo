@@ -16,8 +16,9 @@ import { WorkOrderStatus } from './dto/update-work-order-status.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType, WorkOrderCreatedContext, WorkOrderCompletedContext } from '../notifications/notifications.types';
 import { Decimal } from '@prisma/client/runtime/library';
-import { ItemType, ChecklistInstanceStatus } from '@prisma/client';
+import { ItemType, ChecklistInstanceStatus, WorkOrderStatus as PrismaWorkOrderStatus } from '@prisma/client';
 import { DomainEventsService } from '../domain-events/domain-events.service';
+import { InventoryService } from '../inventory/inventory.service';
 
 @Injectable()
 export class WorkOrdersService {
@@ -28,6 +29,7 @@ export class WorkOrdersService {
     private notificationsService: NotificationsService,
     private planLimitsService: PlanLimitsService,
     private domainEventsService: DomainEventsService,
+    private inventoryService: InventoryService,
   ) {}
 
   async create(userId: string, createWorkOrderDto: CreateWorkOrderDto) {
@@ -134,6 +136,7 @@ export class WorkOrdersService {
     }
     if (createWorkOrderDto.address) data.address = createWorkOrderDto.address;
     if (createWorkOrderDto.notes) data.notes = createWorkOrderDto.notes;
+    if (createWorkOrderDto.workOrderTypeId) data.workOrderTypeId = createWorkOrderDto.workOrderTypeId;
 
     // Set totalValue from quote if available
     if (quoteTotalValue !== null) {
@@ -290,6 +293,13 @@ export class WorkOrdersService {
             name: true,
           },
         },
+        workOrderType: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+          },
+        },
         _count: {
           select: {
             equipments: true,
@@ -325,6 +335,14 @@ export class WorkOrdersService {
             totalValue: true,
             discountValue: true,
             status: true,
+          },
+        },
+        workOrderType: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            color: true,
           },
         },
         items: {
@@ -412,6 +430,9 @@ export class WorkOrdersService {
     }
     if (updateWorkOrderDto.address !== undefined) updateData.address = updateWorkOrderDto.address;
     if (updateWorkOrderDto.notes !== undefined) updateData.notes = updateWorkOrderDto.notes;
+    if (updateWorkOrderDto.workOrderTypeId !== undefined) {
+      updateData.workOrderTypeId = updateWorkOrderDto.workOrderTypeId;
+    }
 
     return this.prisma.workOrder.update({
       where: { id },
@@ -509,6 +530,9 @@ export class WorkOrdersService {
     if (newStatus === WorkOrderStatus.DONE) {
       await this.sendWorkOrderCompletedNotification(userId, updatedWorkOrder);
     }
+
+    // Process inventory deduction based on configured status
+    await this.processInventoryDeduction(userId, id, newStatus as unknown as PrismaWorkOrderStatus);
 
     // Create domain event for push notification
     const eventType = newStatus === WorkOrderStatus.DONE
@@ -1020,6 +1044,59 @@ export class WorkOrdersService {
         `Failed to create checklist instance: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
       // Don't throw - allow work order creation to continue even if checklist fails
+    }
+  }
+
+  /**
+   * Process inventory deduction when work order reaches configured status
+   * This is called after status update and handles:
+   * - Checking if inventory feature is enabled
+   * - Comparing new status with configured deductOnStatus
+   * - Calling inventory service to perform deduction
+   */
+  private async processInventoryDeduction(
+    userId: string,
+    workOrderId: string,
+    newStatus: PrismaWorkOrderStatus,
+  ): Promise<void> {
+    try {
+      // Get inventory settings for user
+      const settings = await this.prisma.inventorySettings.findUnique({
+        where: { userId },
+      });
+
+      // Skip if inventory not enabled or settings not configured
+      if (!settings?.isEnabled) {
+        return;
+      }
+
+      // Check if current status matches configured deduction status
+      if (settings.deductOnStatus !== newStatus) {
+        return;
+      }
+
+      // Perform deduction
+      const result = await this.inventoryService.deductForWorkOrder(
+        userId,
+        workOrderId,
+      );
+
+      if (result.deducted) {
+        this.logger.log(
+          `Inventory deducted for WO ${workOrderId}: ${result.message}`,
+        );
+      } else {
+        this.logger.debug(
+          `Inventory deduction skipped for WO ${workOrderId}: ${result.message}`,
+        );
+      }
+    } catch (error) {
+      // Log error but don't throw - inventory deduction failure shouldn't block status update
+      this.logger.error(
+        `Failed to process inventory deduction for WO ${workOrderId}: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
+      );
     }
   }
 }

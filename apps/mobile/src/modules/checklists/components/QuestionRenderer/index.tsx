@@ -159,18 +159,6 @@ export function QuestionRenderer({
         />
       );
 
-    case 'FILE_UPLOAD':
-      // FILE_UPLOAD usa o mesmo componente de foto por enquanto
-      // TODO: Implementar componente específico para upload de arquivos
-      return (
-        <PhotoQuestion
-          value={value.valueJson as string[] | undefined}
-          onChange={(photos) => onChange({ valueJson: photos })}
-          onCapture={onPhotoCapture}
-          readOnly={readOnly}
-        />
-      );
-
     case 'SIGNATURE':
     case 'SIGNATURE_TECHNICIAN':
     case 'SIGNATURE_CLIENT':

@@ -88,7 +88,7 @@ describe('AuthService', () => {
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
         where: { email: registerDto.email },
       });
-      expect(bcrypt.hash).toHaveBeenCalledWith(registerDto.password, 10);
+      expect(bcrypt.hash).toHaveBeenCalledWith(registerDto.password, 12);
       expect(prisma.user.create).toHaveBeenCalled();
       expect(jwtService.sign).toHaveBeenCalled();
       expect(result).toEqual({
@@ -185,6 +185,8 @@ describe('AuthService', () => {
       name: 'Test User',
       role: 'USER',
       planId: 'plan-id',
+      avatarUrl: null,
+      companyLogoUrl: null,
       plan: {
         id: 'plan-id',
         type: 'FREE',
@@ -198,11 +200,14 @@ describe('AuthService', () => {
 
       const result = await service.validateUser('user-id');
 
-      expect(result).toEqual(mockUser);
+      expect(result).toEqual({
+        ...mockUser,
+        avatarUrl: null,
+        companyLogoUrl: null,
+      });
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
         where: { id: 'user-id' },
         include: { plan: true },
-        select: expect.any(Object),
       });
     });
 

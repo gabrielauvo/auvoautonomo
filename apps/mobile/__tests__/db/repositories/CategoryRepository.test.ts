@@ -36,7 +36,7 @@ describe('CategoryRepository', () => {
     name: 'Elétrica',
     description: 'Serviços elétricos',
     color: '#FF5722',
-    isActive: 1,
+    isActive: true,
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
     syncedAt: '2024-01-01T00:00:00.000Z',

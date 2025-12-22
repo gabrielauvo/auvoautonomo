@@ -102,11 +102,18 @@ const MENU_SECTIONS: MenuSection[] = [
         route: '/orcamentos',
       },
       {
-        id: 'faturas',
-        icon: 'receipt-outline',
-        activeIcon: 'receipt',
-        label: 'Faturas',
-        route: '/faturas',
+        id: 'cobrancas',
+        icon: 'cash-outline',
+        activeIcon: 'cash',
+        label: 'Cobranças',
+        route: '/cobrancas',
+      },
+      {
+        id: 'despesas',
+        icon: 'wallet-outline',
+        activeIcon: 'wallet',
+        label: 'Despesas',
+        route: '/despesas',
       },
     ],
   },
@@ -256,7 +263,7 @@ export const DrawerMenu: React.FC<DrawerMenuProps> = ({ isOpen, onClose }) => {
       onClose();
 
       // Rotas que ainda não existem
-      const comingSoonRoutes = ['/faturas', '/relatorios', '/ajuda'];
+      const comingSoonRoutes = ['/relatorios', '/ajuda'];
 
       if (comingSoonRoutes.includes(item.route)) {
         setTimeout(() => handleComingSoon(item.label), 300);

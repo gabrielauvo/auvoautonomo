@@ -356,6 +356,37 @@ export const SYNC_FLAGS = {
    * ignorando o debounce restante
    */
   FAST_PUSH_MAX_BUFFER_SIZE: 20,
+
+  // ===========================================================================
+  // DEVICE CONTACTS (Salvar cliente na agenda)
+  // ===========================================================================
+
+  /**
+   * CREATE_CONTACT_ON_CLIENT_CREATE
+   *
+   * Quando ativado, ao criar um cliente com telefone preenchido,
+   * tenta automaticamente criar um contato na agenda do dispositivo.
+   *
+   * Características:
+   * - Solicita permissão apenas quando necessário
+   * - Falha silenciosa (não impede criação do cliente)
+   * - Verifica duplicatas antes de criar
+   * - Respeita privacidade (dados mínimos)
+   *
+   * Default: false (feature flag OFF por padrão - opt-in)
+   * O usuário pode ativar via Configurações > "Salvar clientes na agenda"
+   */
+  CREATE_CONTACT_ON_CLIENT_CREATE: false,
+
+  /**
+   * Se true, adiciona nota "Criado pelo Auvo Autônomos" no contato
+   */
+  CONTACT_ADD_APP_NOTE: true,
+
+  /**
+   * Se true, adiciona o nome da empresa do usuário como "Organização" no contato
+   */
+  CONTACT_ADD_COMPANY_NAME: true,
 } as const;
 
 // =============================================================================

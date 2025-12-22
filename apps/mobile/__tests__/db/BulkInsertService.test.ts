@@ -22,17 +22,15 @@ jest.mock('expo-sqlite', () => ({
   ),
 }));
 
-// Mock syncFlags
-const mockSyncFlags = {
-  SYNC_OPT_BULK_INSERT: true,
-  BULK_INSERT_CHUNK_SIZE: 50,
-  BULK_INSERT_BISECT_MIN_SIZE: 1,
-  BULK_INSERT_CONTINUE_ON_ERROR: true,
-  BULK_INSERT_LOG_INVALID_RECORDS: false,
-};
-
+// Mock syncFlags - using inline values because jest.mock is hoisted
 jest.mock('../../src/config/syncFlags', () => ({
-  SYNC_FLAGS: mockSyncFlags,
+  SYNC_FLAGS: {
+    SYNC_OPT_BULK_INSERT: true,
+    BULK_INSERT_CHUNK_SIZE: 50,
+    BULK_INSERT_BISECT_MIN_SIZE: 1,
+    BULK_INSERT_CONTINUE_ON_ERROR: true,
+    BULK_INSERT_LOG_INVALID_RECORDS: false,
+  },
 }));
 
 import { bulkInsert, simpleBulkInsert } from '../../src/db/BulkInsertService';

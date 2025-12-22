@@ -31,10 +31,26 @@ export interface Client {
 // Status alinhado com backend: SCHEDULED | IN_PROGRESS | DONE | CANCELED
 export type WorkOrderStatus = 'SCHEDULED' | 'IN_PROGRESS' | 'DONE' | 'CANCELED';
 
+// =============================================================================
+// WORK ORDER TYPES (sincronizado do servidor - read-only no mobile)
+// =============================================================================
+export interface WorkOrderType {
+  id: string;
+  name: string;
+  description?: string;
+  color?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  syncedAt?: string;
+  technicianId: string;
+}
+
 export interface WorkOrder {
   id: string;
   clientId: string;
   quoteId?: string;              // Orçamento de origem
+  workOrderTypeId?: string;      // Tipo de OS (opcional)
   title: string;
   description?: string;
   status: WorkOrderStatus;
@@ -56,6 +72,27 @@ export interface WorkOrder {
   clientName?: string;
   clientPhone?: string;
   clientAddress?: string;
+  // Dados desnormalizados do tipo de OS (para exibição offline)
+  workOrderTypeName?: string;
+  workOrderTypeColor?: string;
+}
+
+// Itens de catálogo adicionados à OS (snapshot denormalizado)
+export interface WorkOrderItem {
+  id: string;
+  workOrderId: string;
+  itemId?: string;               // ID do item do catálogo (null para itens manuais)
+  quoteItemId?: string;          // ID do item do orçamento de origem
+  name: string;
+  type: string;                  // SERVICE | PRODUCT
+  unit: string;
+  quantity: number;
+  unitPrice: number;
+  discountValue: number;
+  totalPrice: number;
+  createdAt: string;
+  updatedAt: string;
+  syncedAt?: string;
 }
 
 // Status alinhado com backend: DRAFT | SENT | APPROVED | REJECTED | EXPIRED
@@ -69,6 +106,7 @@ export interface Quote {
   totalValue: number;
   notes?: string;
   sentAt?: string;
+  validUntil?: string;
   visitScheduledAt?: string;
   createdAt: string;
   updatedAt: string;
@@ -76,6 +114,9 @@ export interface Quote {
   technicianId: string;
   // Dados desnormalizados do cliente (para exibição offline)
   clientName?: string;
+  clientPhone?: string;
+  clientEmail?: string;
+  clientAddress?: string;
 }
 
 export interface QuoteItem {
@@ -83,6 +124,7 @@ export interface QuoteItem {
   quoteId: string;
   itemId?: string;               // ID do item do catálogo (null para itens manuais)
   name: string;
+  description?: string;
   type: string;                  // SERVICE | PRODUCT
   unit: string;
   quantity: number;
@@ -133,7 +175,6 @@ export type ChecklistQuestionType =
   | 'MULTI_SELECT'
   | 'PHOTO_REQUIRED'
   | 'PHOTO_OPTIONAL'
-  | 'FILE_UPLOAD'
   | 'SIGNATURE_TECHNICIAN'
   | 'SIGNATURE_CLIENT'
   | 'SECTION_TITLE'
@@ -284,12 +325,12 @@ export interface ChecklistAttachment {
   answerId?: string;           // Opcional: pode ser anexo direto da OS
   workOrderId: string;         // Referência direta à OS
   type: ChecklistAttachmentType;
-  filePath: string;            // Caminho local do arquivo
-  fileName: string;
-  mimeType: string;
-  fileSize: number;
+  localPath?: string;          // Caminho local do arquivo
+  remotePath?: string;         // URL no servidor após sync
+  fileName?: string;
+  mimeType?: string;
+  fileSize?: number;
   thumbnailPath?: string;
-  remoteUrl?: string;          // URL no servidor após sync
   base64Data?: string;         // Dados base64 para upload pendente
   syncStatus: AttachmentSyncStatus;  // Status do upload
   uploadAttempts: number;      // Número de tentativas de upload
@@ -1354,6 +1395,180 @@ export const MIGRATIONS = [
       CREATE INDEX IF NOT EXISTS idx_checklist_attachments_technicianId ON checklist_attachments(technicianId);
     `,
   },
+  // Migration 15: Add work_order_items table for catalog items in work orders
+  {
+    version: 15,
+    sql: `
+      -- ==========================================================================
+      -- WORK ORDER ITEMS (itens de catálogo adicionados à OS - snapshot denormalizado)
+      -- ==========================================================================
+      CREATE TABLE IF NOT EXISTS work_order_items (
+        id TEXT PRIMARY KEY,
+        workOrderId TEXT NOT NULL,
+        itemId TEXT,                  -- ID do item do catálogo (null para itens manuais)
+        quoteItemId TEXT,             -- ID do item do orçamento de origem
+        name TEXT NOT NULL,
+        type TEXT NOT NULL DEFAULT 'SERVICE',
+        unit TEXT NOT NULL DEFAULT 'UN',
+        quantity REAL NOT NULL DEFAULT 1,
+        unitPrice REAL NOT NULL DEFAULT 0,
+        discountValue REAL DEFAULT 0,
+        totalPrice REAL NOT NULL DEFAULT 0,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL,
+        syncedAt TEXT,
+        FOREIGN KEY (workOrderId) REFERENCES work_orders(id) ON DELETE CASCADE
+      );
+
+      -- Indexes
+      CREATE INDEX IF NOT EXISTS idx_work_order_items_workOrderId ON work_order_items(workOrderId);
+      CREATE INDEX IF NOT EXISTS idx_work_order_items_itemId ON work_order_items(itemId);
+      CREATE INDEX IF NOT EXISTS idx_work_order_items_quoteItemId ON work_order_items(quoteItemId);
+
+      -- Initialize sync_meta for work order items
+      INSERT OR IGNORE INTO sync_meta (entity, lastSyncAt, syncStatus) VALUES ('workOrderItems', '1970-01-01T00:00:00Z', 'idle');
+    `,
+  },
+  // Migration 16: Add work_order_types table and workOrderTypeId to work_orders
+  {
+    version: 16,
+    sql: `
+      -- ==========================================================================
+      -- WORK ORDER TYPES (tipos de OS - sincronizado do servidor - read-only no mobile)
+      -- ==========================================================================
+      CREATE TABLE IF NOT EXISTS work_order_types (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT,
+        color TEXT,
+        isActive INTEGER DEFAULT 1,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL,
+        syncedAt TEXT,
+        technicianId TEXT NOT NULL
+      );
+
+      -- Indexes
+      CREATE INDEX IF NOT EXISTS idx_work_order_types_technicianId ON work_order_types(technicianId);
+      CREATE INDEX IF NOT EXISTS idx_work_order_types_isActive ON work_order_types(isActive);
+      CREATE INDEX IF NOT EXISTS idx_work_order_types_updatedAt ON work_order_types(updatedAt);
+      CREATE INDEX IF NOT EXISTS idx_work_order_types_name ON work_order_types(name);
+
+      -- Add workOrderTypeId and denormalized type fields to work_orders
+      ALTER TABLE work_orders ADD COLUMN workOrderTypeId TEXT;
+      ALTER TABLE work_orders ADD COLUMN workOrderTypeName TEXT;
+      ALTER TABLE work_orders ADD COLUMN workOrderTypeColor TEXT;
+
+      -- Create index for filtering by type
+      CREATE INDEX IF NOT EXISTS idx_work_orders_workOrderTypeId ON work_orders(workOrderTypeId);
+
+      -- Initialize sync_meta for work order types
+      INSERT OR IGNORE INTO sync_meta (entity, lastSyncAt, syncStatus) VALUES ('workOrderTypes', '1970-01-01T00:00:00Z', 'idle');
+    `,
+  },
+  // Migration 17: Add inventory tables for stock control
+  {
+    version: 17,
+    sql: `
+      -- ==========================================================================
+      -- INVENTORY SETTINGS (configurações de estoque por técnico - read from server)
+      -- ==========================================================================
+      CREATE TABLE IF NOT EXISTS inventory_settings (
+        id TEXT PRIMARY KEY,
+        userId TEXT NOT NULL UNIQUE,
+        isEnabled INTEGER DEFAULT 0,
+        deductOnStatus TEXT DEFAULT 'DONE',
+        allowNegativeStock INTEGER DEFAULT 0,
+        deductOnlyOncePerWorkOrder INTEGER DEFAULT 1,
+        featureEnabled INTEGER DEFAULT 0,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL,
+        syncedAt TEXT
+      );
+
+      -- Index
+      CREATE INDEX IF NOT EXISTS idx_inventory_settings_userId ON inventory_settings(userId);
+
+      -- ==========================================================================
+      -- INVENTORY BALANCES (saldos de estoque por produto)
+      -- ==========================================================================
+      CREATE TABLE IF NOT EXISTS inventory_balances (
+        id TEXT PRIMARY KEY,
+        itemId TEXT NOT NULL UNIQUE,
+        itemName TEXT,
+        itemSku TEXT,
+        itemUnit TEXT,
+        quantity REAL NOT NULL DEFAULT 0,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL,
+        syncedAt TEXT,
+        technicianId TEXT NOT NULL,
+        FOREIGN KEY (itemId) REFERENCES catalog_items(id)
+      );
+
+      -- Indexes
+      CREATE INDEX IF NOT EXISTS idx_inventory_balances_itemId ON inventory_balances(itemId);
+      CREATE INDEX IF NOT EXISTS idx_inventory_balances_technicianId ON inventory_balances(technicianId);
+      CREATE INDEX IF NOT EXISTS idx_inventory_balances_updatedAt ON inventory_balances(updatedAt);
+
+      -- ==========================================================================
+      -- INVENTORY MOVEMENTS (movimentações de estoque - ledger)
+      -- ==========================================================================
+      CREATE TABLE IF NOT EXISTS inventory_movements (
+        id TEXT PRIMARY KEY,
+        itemId TEXT NOT NULL,
+        itemName TEXT,
+        type TEXT NOT NULL,             -- ADJUSTMENT_IN | ADJUSTMENT_OUT | WORK_ORDER_OUT | INITIAL
+        source TEXT NOT NULL,           -- MANUAL | WORK_ORDER | IMPORT | SYSTEM
+        quantity REAL NOT NULL,         -- Positivo = entrada, Negativo = saída
+        balanceAfter REAL NOT NULL,
+        sourceId TEXT,                  -- ID da entidade relacionada (workOrderId, etc)
+        notes TEXT,
+        createdBy TEXT,
+        createdAt TEXT NOT NULL,
+        syncedAt TEXT,
+        technicianId TEXT NOT NULL,
+        localId TEXT                    -- ID local para idempotência
+      );
+
+      -- Indexes
+      CREATE INDEX IF NOT EXISTS idx_inventory_movements_itemId ON inventory_movements(itemId);
+      CREATE INDEX IF NOT EXISTS idx_inventory_movements_technicianId ON inventory_movements(technicianId);
+      CREATE INDEX IF NOT EXISTS idx_inventory_movements_type ON inventory_movements(type);
+      CREATE INDEX IF NOT EXISTS idx_inventory_movements_source ON inventory_movements(source);
+      CREATE INDEX IF NOT EXISTS idx_inventory_movements_sourceId ON inventory_movements(sourceId);
+      CREATE INDEX IF NOT EXISTS idx_inventory_movements_createdAt ON inventory_movements(createdAt);
+      CREATE INDEX IF NOT EXISTS idx_inventory_movements_localId ON inventory_movements(localId);
+
+      -- ==========================================================================
+      -- INVENTORY MOVEMENTS OUTBOX (movimentações pendentes de sync)
+      -- ==========================================================================
+      CREATE TABLE IF NOT EXISTS inventory_movements_outbox (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        localId TEXT NOT NULL UNIQUE,
+        itemId TEXT NOT NULL,
+        type TEXT NOT NULL,
+        quantity REAL NOT NULL,
+        notes TEXT,
+        status TEXT DEFAULT 'PENDING',  -- PENDING | SYNCING | SYNCED | FAILED
+        attempts INTEGER DEFAULT 0,
+        lastAttempt TEXT,
+        errorMessage TEXT,
+        createdAt TEXT NOT NULL,
+        technicianId TEXT NOT NULL
+      );
+
+      -- Indexes
+      CREATE INDEX IF NOT EXISTS idx_inventory_outbox_status ON inventory_movements_outbox(status);
+      CREATE INDEX IF NOT EXISTS idx_inventory_outbox_localId ON inventory_movements_outbox(localId);
+      CREATE INDEX IF NOT EXISTS idx_inventory_outbox_technicianId ON inventory_movements_outbox(technicianId);
+
+      -- Initialize sync_meta for inventory entities
+      INSERT OR IGNORE INTO sync_meta (entity, lastSyncAt, syncStatus) VALUES ('inventorySettings', '1970-01-01T00:00:00Z', 'idle');
+      INSERT OR IGNORE INTO sync_meta (entity, lastSyncAt, syncStatus) VALUES ('inventoryBalances', '1970-01-01T00:00:00Z', 'idle');
+      INSERT OR IGNORE INTO sync_meta (entity, lastSyncAt, syncStatus) VALUES ('inventoryMovements', '1970-01-01T00:00:00Z', 'idle');
+    `,
+  },
 ];
 
-export const CURRENT_DB_VERSION = 14;
+export const CURRENT_DB_VERSION = 17;

@@ -71,6 +71,8 @@ export class ClientPaymentsService {
   /**
    * Create a payment charge for a client
    * POST /clients/:clientId/payments
+   *
+   * If Asaas integration is not active, creates a local payment record
    */
   async createPayment(userId: string, dto: CreatePaymentDto) {
     // Check plan limit before creating
@@ -107,46 +109,80 @@ export class ClientPaymentsService {
       }
     }
 
-    let asaasCustomerId = client.asaasCustomerId;
+    // Try to get Asaas integration, but allow local payments if not available
+    let asaasIntegrationData: { apiKey: string; environment: any } | null = null;
 
-    if (!asaasCustomerId) {
-      asaasCustomerId = await this.syncCustomer(userId, dto.clientId);
+    try {
+      asaasIntegrationData = await this.asaasIntegration.getApiKey(userId);
+    } catch (error) {
+      this.logger.log(`Asaas integration not available for user ${userId}, creating local payment`);
     }
 
-    const { apiKey, environment } = await this.asaasIntegration.getApiKey(userId);
+    let asaasPaymentId: string | undefined = undefined;
+    let asaasInvoiceUrl: string | undefined = undefined;
+    let asaasQrCodeUrl: string | undefined = undefined;
+    let asaasPixCode: string | undefined = undefined;
+    let paymentStatus: PaymentStatus = PaymentStatus.PENDING;
 
-    const billingTypeMap = {
-      BOLETO: 'BOLETO' as const,
-      PIX: 'PIX' as const,
-      CREDIT_CARD: 'CREDIT_CARD' as const,
-    };
+    // If Asaas integration is active, create payment in Asaas
+    if (asaasIntegrationData) {
+      try {
+        let asaasCustomerId = client.asaasCustomerId;
 
-    const asaasPayment: AsaasPayment = {
-      customer: asaasCustomerId,
-      billingType: billingTypeMap[dto.billingType],
-      value: dto.value,
-      dueDate: dto.dueDate,
-      description: dto.description,
-      externalReference: dto.quoteId || dto.workOrderId,
-    };
+        if (!asaasCustomerId) {
+          asaasCustomerId = await this.syncCustomer(userId, dto.clientId);
+        }
 
-    const paymentResponse = await this.asaasClient.createPayment(apiKey, environment, asaasPayment);
+        const billingTypeMap = {
+          BOLETO: 'BOLETO' as const,
+          PIX: 'PIX' as const,
+          CREDIT_CARD: 'CREDIT_CARD' as const,
+        };
 
+        const asaasPayment: AsaasPayment = {
+          customer: asaasCustomerId,
+          billingType: billingTypeMap[dto.billingType],
+          value: dto.value,
+          dueDate: dto.dueDate,
+          description: dto.description,
+          externalReference: dto.quoteId || dto.workOrderId,
+        };
+
+        const paymentResponse = await this.asaasClient.createPayment(
+          asaasIntegrationData.apiKey,
+          asaasIntegrationData.environment,
+          asaasPayment,
+        );
+
+        asaasPaymentId = paymentResponse.id;
+        asaasInvoiceUrl = paymentResponse.invoiceUrl || paymentResponse.bankSlipUrl || undefined;
+        asaasQrCodeUrl = paymentResponse.pixTransaction?.qrCode?.encodedImage || undefined;
+        asaasPixCode = paymentResponse.pixTransaction?.qrCode?.payload || undefined;
+        paymentStatus = this.mapAsaasStatusToPaymentStatus(paymentResponse.status);
+
+        this.logger.log(`Payment created in Asaas: ${asaasPaymentId}`);
+      } catch (asaasError) {
+        this.logger.warn(`Failed to create payment in Asaas, creating local payment: ${asaasError}`);
+        // Continue with local payment creation
+      }
+    }
+
+    // Create payment record in database (with or without Asaas)
     const payment = await this.prisma.clientPayment.create({
       data: {
         userId,
         clientId: dto.clientId,
         quoteId: dto.quoteId,
         workOrderId: dto.workOrderId,
-        asaasPaymentId: paymentResponse.id,
+        asaasPaymentId: asaasPaymentId || `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         billingType: dto.billingType,
         value: dto.value,
         description: dto.description,
         dueDate: new Date(dto.dueDate),
-        status: this.mapAsaasStatusToPaymentStatus(paymentResponse.status),
-        asaasInvoiceUrl: paymentResponse.invoiceUrl || paymentResponse.bankSlipUrl,
-        asaasQrCodeUrl: paymentResponse.pixTransaction?.qrCode?.encodedImage,
-        asaasPixCode: paymentResponse.pixTransaction?.qrCode?.payload,
+        status: paymentStatus,
+        asaasInvoiceUrl,
+        asaasQrCodeUrl,
+        asaasPixCode,
       },
       include: {
         client: true,
@@ -155,7 +191,7 @@ export class ClientPaymentsService {
       },
     });
 
-    this.logger.log(`Payment created: ${payment.id} (Asaas: ${paymentResponse.id})`);
+    this.logger.log(`Payment created: ${payment.id}${asaasPaymentId ? ` (Asaas: ${asaasPaymentId})` : ' (local only)'}`);
 
     // Send payment created notification
     await this.sendPaymentCreatedNotification(userId, payment);
@@ -188,6 +224,7 @@ export class ClientPaymentsService {
       pixCode: payment.asaasPixCode,
       publicToken: payment.publicToken,
       createdAt: payment.createdAt,
+      isLocalOnly: !asaasPaymentId, // Indicates if payment is local only (no Asaas)
     };
   }
 
@@ -387,6 +424,17 @@ export class ClientPaymentsService {
         CREDIT_CARD: 'Cartão de Crédito',
       };
 
+      // Fetch user to get company Pix key info
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          pixKey: true,
+          pixKeyType: true,
+          pixKeyOwnerName: true,
+          pixKeyEnabled: true,
+        },
+      });
+
       const context: PaymentCreatedContext = {
         clientName: payment.client.name,
         clientEmail: payment.client.email,
@@ -399,6 +447,10 @@ export class ClientPaymentsService {
         pixCode: payment.asaasPixCode || undefined,
         workOrderNumber: payment.workOrder?.id?.substring(0, 8).toUpperCase(),
         quoteNumber: payment.quote?.id?.substring(0, 8).toUpperCase(),
+        // Include company Pix key if enabled
+        companyPixKey: user?.pixKeyEnabled && user?.pixKey ? user.pixKey : undefined,
+        companyPixKeyType: user?.pixKeyEnabled && user?.pixKeyType ? user.pixKeyType : undefined,
+        companyPixKeyOwnerName: user?.pixKeyEnabled && user?.pixKeyOwnerName ? user.pixKeyOwnerName : undefined,
       };
 
       await this.notificationsService.sendNotification({
@@ -463,6 +515,17 @@ export class ClientPaymentsService {
       const today = new Date();
       const daysOverdue = Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
 
+      // Fetch user to get company Pix key info
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          pixKey: true,
+          pixKeyType: true,
+          pixKeyOwnerName: true,
+          pixKeyEnabled: true,
+        },
+      });
+
       const context: PaymentOverdueContext = {
         clientName: payment.client.name,
         clientEmail: payment.client.email,
@@ -473,6 +536,10 @@ export class ClientPaymentsService {
         daysOverdue: Math.max(0, daysOverdue),
         paymentLink: payment.asaasInvoiceUrl || undefined,
         workOrderNumber: payment.workOrder?.id?.substring(0, 8).toUpperCase(),
+        // Include company Pix key if enabled
+        companyPixKey: user?.pixKeyEnabled && user?.pixKey ? user.pixKey : undefined,
+        companyPixKeyType: user?.pixKeyEnabled && user?.pixKeyType ? user.pixKeyType : undefined,
+        companyPixKeyOwnerName: user?.pixKeyEnabled && user?.pixKeyOwnerName ? user.pixKeyOwnerName : undefined,
       };
 
       await this.notificationsService.sendNotification({

@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TemplateSettings } from '@prisma/client';
+import * as crypto from 'crypto';
 
 // Default template values
 const DEFAULT_QUOTE_TEMPLATE = {
@@ -68,6 +69,17 @@ export interface TemplateSettingsResponse {
   quote: QuoteTemplateResponse;
   workOrder: WorkOrderTemplateResponse;
   charge: ChargeTemplateResponse;
+}
+
+/**
+ * Acceptance terms configuration response
+ */
+export interface AcceptanceTermsResponse {
+  enabled: boolean;
+  termsContent: string | null;
+  version: number;
+  updatedAt: string | null;
+  termsHash: string | null;
 }
 
 @Injectable()
@@ -301,6 +313,165 @@ export class SettingsService {
       emailSubject: settings.chargeEmailSubject,
       emailBody: settings.chargeEmailBody,
       reminderMessage: settings.chargeReminderMessage,
+    };
+  }
+
+  // ==================== ACCEPTANCE TERMS ====================
+
+  /**
+   * Calculate SHA256 hash of terms content for audit trail
+   */
+  private calculateTermsHash(content: string | null): string | null {
+    if (!content || content.trim() === '') {
+      return null;
+    }
+    return crypto.createHash('sha256').update(content, 'utf8').digest('hex');
+  }
+
+  /**
+   * Get acceptance terms settings for a user
+   */
+  async getAcceptanceTerms(userId: string): Promise<AcceptanceTermsResponse> {
+    const settings = await this.prisma.templateSettings.findUnique({
+      where: { userId },
+      select: {
+        acceptanceTermsEnabled: true,
+        quoteTermsConditions: true,
+        acceptanceTermsVersion: true,
+        acceptanceTermsUpdatedAt: true,
+      },
+    });
+
+    if (!settings) {
+      return {
+        enabled: false,
+        termsContent: null,
+        version: 0,
+        updatedAt: null,
+        termsHash: null,
+      };
+    }
+
+    return {
+      enabled: settings.acceptanceTermsEnabled,
+      termsContent: settings.quoteTermsConditions,
+      version: settings.acceptanceTermsVersion,
+      updatedAt: settings.acceptanceTermsUpdatedAt?.toISOString() || null,
+      termsHash: this.calculateTermsHash(settings.quoteTermsConditions),
+    };
+  }
+
+  /**
+   * Update acceptance terms settings
+   * Automatically increments version when content changes
+   */
+  async updateAcceptanceTerms(
+    userId: string,
+    data: {
+      enabled?: boolean;
+      termsContent?: string | null;
+    },
+  ): Promise<AcceptanceTermsResponse> {
+    // Get current settings to check if content changed
+    const current = await this.prisma.templateSettings.findUnique({
+      where: { userId },
+      select: {
+        quoteTermsConditions: true,
+        acceptanceTermsVersion: true,
+      },
+    });
+
+    const currentVersion = current?.acceptanceTermsVersion ?? 0;
+    const currentContent = current?.quoteTermsConditions;
+
+    // Check if content is changing
+    const contentChanged =
+      data.termsContent !== undefined && data.termsContent !== currentContent;
+
+    // Build update data
+    const updateData: any = {};
+
+    if (data.enabled !== undefined) {
+      updateData.acceptanceTermsEnabled = data.enabled;
+    }
+
+    if (data.termsContent !== undefined) {
+      updateData.quoteTermsConditions = data.termsContent;
+    }
+
+    // If content changed, increment version and update timestamp
+    if (contentChanged) {
+      updateData.acceptanceTermsVersion = currentVersion + 1;
+      updateData.acceptanceTermsUpdatedAt = new Date();
+    }
+
+    const settings = await this.prisma.templateSettings.upsert({
+      where: { userId },
+      create: {
+        userId,
+        ...DEFAULT_QUOTE_TEMPLATE,
+        ...DEFAULT_WORK_ORDER_TEMPLATE,
+        ...DEFAULT_CHARGE_TEMPLATE,
+        acceptanceTermsEnabled: data.enabled ?? false,
+        quoteTermsConditions: data.termsContent ?? null,
+        acceptanceTermsVersion: data.termsContent ? 1 : 0,
+        acceptanceTermsUpdatedAt: data.termsContent ? new Date() : null,
+      },
+      update: updateData,
+      select: {
+        acceptanceTermsEnabled: true,
+        quoteTermsConditions: true,
+        acceptanceTermsVersion: true,
+        acceptanceTermsUpdatedAt: true,
+      },
+    });
+
+    this.logger.log(
+      `[ACCEPTANCE TERMS] Updated for user ${userId}: enabled=${settings.acceptanceTermsEnabled}, version=${settings.acceptanceTermsVersion}`,
+    );
+
+    return {
+      enabled: settings.acceptanceTermsEnabled,
+      termsContent: settings.quoteTermsConditions,
+      version: settings.acceptanceTermsVersion,
+      updatedAt: settings.acceptanceTermsUpdatedAt?.toISOString() || null,
+      termsHash: this.calculateTermsHash(settings.quoteTermsConditions),
+    };
+  }
+
+  /**
+   * Get acceptance terms for public quote page (no auth required)
+   * Only returns if enabled
+   */
+  async getAcceptanceTermsForQuote(userId: string): Promise<{
+    required: boolean;
+    termsContent: string | null;
+    version: number;
+    termsHash: string | null;
+  }> {
+    const settings = await this.prisma.templateSettings.findUnique({
+      where: { userId },
+      select: {
+        acceptanceTermsEnabled: true,
+        quoteTermsConditions: true,
+        acceptanceTermsVersion: true,
+      },
+    });
+
+    // Only return terms if enabled AND has content
+    const hasValidTerms = Boolean(
+      settings?.acceptanceTermsEnabled &&
+      settings?.quoteTermsConditions &&
+      settings.quoteTermsConditions.trim() !== ''
+    );
+
+    return {
+      required: hasValidTerms,
+      termsContent: hasValidTerms ? settings!.quoteTermsConditions : null,
+      version: hasValidTerms ? settings!.acceptanceTermsVersion : 0,
+      termsHash: hasValidTerms
+        ? this.calculateTermsHash(settings!.quoteTermsConditions!)
+        : null,
     };
   }
 }

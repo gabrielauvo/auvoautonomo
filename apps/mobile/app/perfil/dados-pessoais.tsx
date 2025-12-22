@@ -62,6 +62,11 @@ export default function DadosPessoaisScreen() {
   };
 
   const handleSave = async () => {
+    // CRITICAL: Guard against duplicate submissions
+    if (isSaving) {
+      return;
+    }
+
     if (!name.trim()) {
       Alert.alert('Erro', 'O nome é obrigatório');
       return;

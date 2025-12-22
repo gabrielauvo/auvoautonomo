@@ -64,14 +64,14 @@ export default function MaisScreen() {
       route: '/orcamentos',
     },
     {
-      icon: 'receipt-outline',
-      label: 'Faturas',
-      onPress: () => handleComingSoon('Faturas'),
+      icon: 'cash-outline',
+      label: 'Cobranças',
+      route: '/cobrancas',
     },
     {
       icon: 'bar-chart-outline',
-      label: 'Relatorios',
-      onPress: () => handleComingSoon('Relatorios'),
+      label: 'Relatórios',
+      onPress: () => handleComingSoon('Relatórios'),
     },
     {
       icon: 'help-circle-outline',

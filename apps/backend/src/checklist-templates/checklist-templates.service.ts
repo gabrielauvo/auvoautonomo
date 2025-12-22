@@ -704,7 +704,6 @@ export class ChecklistTemplatesService {
       ChecklistQuestionType.CHECKBOX,
       ChecklistQuestionType.PHOTO_REQUIRED,
       ChecklistQuestionType.PHOTO_OPTIONAL,
-      ChecklistQuestionType.FILE_UPLOAD,
       ChecklistQuestionType.SIGNATURE_TECHNICIAN,
       ChecklistQuestionType.SIGNATURE_CLIENT,
       ChecklistQuestionType.SECTION_TITLE,

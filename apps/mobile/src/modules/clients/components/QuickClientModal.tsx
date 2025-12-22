@@ -164,6 +164,11 @@ export function QuickClientModal({
   };
 
   const handleSubmit = async () => {
+    // CRITICAL: Guard against duplicate submissions
+    if (isLoading) {
+      return;
+    }
+
     if (!validate()) {
       return;
     }

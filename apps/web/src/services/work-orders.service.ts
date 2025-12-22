@@ -175,6 +175,16 @@ export interface ClientSummary {
 }
 
 /**
+ * Tipo de Ordem de Serviço
+ */
+export interface WorkOrderType {
+  id: string;
+  name: string;
+  description?: string;
+  color?: string;
+}
+
+/**
  * Ordem de Serviço completa
  */
 export interface WorkOrder {
@@ -182,6 +192,7 @@ export interface WorkOrder {
   userId: string;
   clientId: string;
   quoteId?: string;
+  workOrderTypeId?: string;
   number: number;
   title: string;
   description?: string;
@@ -206,6 +217,7 @@ export interface WorkOrder {
     totalValue: number;
     status: string;
   };
+  workOrderType?: WorkOrderType;
   items?: WorkOrderItem[];
   equipments?: WorkOrderEquipment[];
   checklists?: WorkOrderChecklist[];
@@ -241,6 +253,7 @@ export interface CreateWorkOrderDto {
   notes?: string;
   equipmentIds?: string[];
   checklistTemplateId?: string;
+  workOrderTypeId?: string;
 }
 
 /**
@@ -256,6 +269,7 @@ export interface UpdateWorkOrderDto {
   executionEnd?: string;
   address?: string;
   notes?: string;
+  workOrderTypeId?: string | null;
 }
 
 /**

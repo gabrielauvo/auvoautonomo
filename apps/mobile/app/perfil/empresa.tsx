@@ -27,6 +27,16 @@ import { AuthService } from '../../src/services/AuthService';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 
+type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'RANDOM';
+
+const PIX_KEY_TYPES: { value: PixKeyType; label: string }[] = [
+  { value: 'CPF', label: 'CPF' },
+  { value: 'CNPJ', label: 'CNPJ' },
+  { value: 'EMAIL', label: 'E-mail' },
+  { value: 'PHONE', label: 'Telefone' },
+  { value: 'RANDOM', label: 'Chave aleatória' },
+];
+
 interface CompanyData {
   tradeName: string;
   legalName: string | null;
@@ -45,6 +55,12 @@ interface CompanyData {
     city?: string;
     state?: string;
   } | null;
+  // Pix settings
+  pixKey: string | null;
+  pixKeyType: PixKeyType | null;
+  pixKeyOwnerName: string | null;
+  pixKeyEnabled: boolean;
+  pixKeyFeatureEnabled: boolean;
 }
 
 export default function EmpresaScreen() {
@@ -73,6 +89,14 @@ export default function EmpresaScreen() {
   const [neighborhood, setNeighborhood] = useState('');
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
+
+  // Pix
+  const [pixKey, setPixKey] = useState('');
+  const [pixKeyType, setPixKeyType] = useState<PixKeyType | ''>('');
+  const [pixKeyOwnerName, setPixKeyOwnerName] = useState('');
+  const [pixKeyEnabled, setPixKeyEnabled] = useState(false);
+  const [pixKeyFeatureEnabled, setPixKeyFeatureEnabled] = useState(true);
+  const [showPixTypePicker, setShowPixTypePicker] = useState(false);
 
   useEffect(() => {
     loadCompanyData();
@@ -107,6 +131,13 @@ export default function EmpresaScreen() {
           setCity(data.address.city || '');
           setState(data.address.state || '');
         }
+
+        // Load Pix data
+        setPixKey(data.pixKey || '');
+        setPixKeyType(data.pixKeyType || '');
+        setPixKeyOwnerName(data.pixKeyOwnerName || '');
+        setPixKeyEnabled(data.pixKeyEnabled || false);
+        setPixKeyFeatureEnabled(data.pixKeyFeatureEnabled !== false);
       }
     } catch (error) {
       console.error('[Empresa] Error loading data:', error);
@@ -116,6 +147,11 @@ export default function EmpresaScreen() {
   };
 
   const handleSave = async () => {
+    // CRITICAL: Guard against duplicate submissions
+    if (isSaving) {
+      return;
+    }
+
     if (!tradeName.trim()) {
       Alert.alert('Erro', 'O nome fantasia é obrigatório');
       return;
@@ -148,6 +184,11 @@ export default function EmpresaScreen() {
             city: city || null,
             state: state || null,
           },
+          // Pix settings
+          pixKey: pixKey || null,
+          pixKeyType: pixKeyType || null,
+          pixKeyOwnerName: pixKeyOwnerName || null,
+          pixKeyEnabled,
         }),
       });
 
@@ -595,6 +636,165 @@ export default function EmpresaScreen() {
             </View>
           </Card>
 
+          {/* Pix Settings */}
+          {pixKeyFeatureEnabled && (
+            <Card style={{ marginBottom: spacing[4] }}>
+              <View style={styles.pixHeader}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Ionicons name="qr-code-outline" size={20} color={colors.primary[500]} />
+                  <Text variant="body" weight="semibold">
+                    Recebimento via Pix
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => setPixKeyEnabled(!pixKeyEnabled)}
+                  style={[
+                    styles.toggleButton,
+                    { backgroundColor: pixKeyEnabled ? colors.success[100] : colors.neutral[100] }
+                  ]}
+                >
+                  <Ionicons
+                    name={pixKeyEnabled ? 'toggle' : 'toggle-outline'}
+                    size={28}
+                    color={pixKeyEnabled ? colors.success[500] : colors.neutral[400]}
+                  />
+                  <Text
+                    variant="caption"
+                    style={{ color: pixKeyEnabled ? colors.success[600] : colors.neutral[500] }}
+                  >
+                    {pixKeyEnabled ? 'Ativado' : 'Desativado'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <Text variant="caption" color="tertiary" style={{ marginBottom: spacing[3] }}>
+                Configure sua chave Pix para exibir nas cobranças e PDF.
+              </Text>
+
+              {/* Tipo da Chave */}
+              <View style={styles.inputGroup}>
+                <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
+                  Tipo da chave
+                </Text>
+                <TouchableOpacity
+                  style={[
+                    styles.inputContainer,
+                    {
+                      borderColor: colors.border.medium,
+                      opacity: pixKeyEnabled ? 1 : 0.5,
+                    }
+                  ]}
+                  onPress={() => pixKeyEnabled && setShowPixTypePicker(true)}
+                  disabled={!pixKeyEnabled}
+                >
+                  <Text
+                    variant="body"
+                    style={{ flex: 1, color: pixKeyType ? colors.text.primary : colors.text.tertiary }}
+                  >
+                    {pixKeyType ? PIX_KEY_TYPES.find(t => t.value === pixKeyType)?.label : 'Selecione o tipo'}
+                  </Text>
+                  <Ionicons name="chevron-down" size={20} color={colors.text.tertiary} />
+                </TouchableOpacity>
+              </View>
+
+              {/* Chave Pix */}
+              <View style={[styles.inputGroup, { marginTop: spacing[3] }]}>
+                <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
+                  Chave Pix
+                </Text>
+                <View style={[styles.inputContainer, { borderColor: colors.border.medium, opacity: pixKeyEnabled ? 1 : 0.5 }]}>
+                  <Ionicons name="key-outline" size={20} color={colors.text.tertiary} />
+                  <TextInput
+                    style={[styles.input, { color: colors.text.primary }]}
+                    placeholder={
+                      pixKeyType === 'CPF' ? '000.000.000-00' :
+                      pixKeyType === 'CNPJ' ? '00.000.000/0000-00' :
+                      pixKeyType === 'EMAIL' ? 'email@exemplo.com' :
+                      pixKeyType === 'PHONE' ? '+55 11 99999-9999' :
+                      pixKeyType === 'RANDOM' ? 'Chave aleatória' :
+                      'Digite sua chave Pix'
+                    }
+                    placeholderTextColor={colors.text.tertiary}
+                    value={pixKey}
+                    onChangeText={setPixKey}
+                    editable={pixKeyEnabled}
+                    autoCapitalize={pixKeyType === 'EMAIL' ? 'none' : 'characters'}
+                    keyboardType={
+                      pixKeyType === 'EMAIL' ? 'email-address' :
+                      pixKeyType === 'CPF' || pixKeyType === 'CNPJ' || pixKeyType === 'PHONE' ? 'phone-pad' :
+                      'default'
+                    }
+                  />
+                </View>
+              </View>
+
+              {/* Nome do Favorecido */}
+              <View style={[styles.inputGroup, { marginTop: spacing[3] }]}>
+                <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
+                  Nome do favorecido (opcional)
+                </Text>
+                <View style={[styles.inputContainer, { borderColor: colors.border.medium, opacity: pixKeyEnabled ? 1 : 0.5 }]}>
+                  <Ionicons name="person-outline" size={20} color={colors.text.tertiary} />
+                  <TextInput
+                    style={[styles.input, { color: colors.text.primary }]}
+                    placeholder="Nome que aparece no Pix"
+                    placeholderTextColor={colors.text.tertiary}
+                    value={pixKeyOwnerName}
+                    onChangeText={setPixKeyOwnerName}
+                    editable={pixKeyEnabled}
+                  />
+                </View>
+              </View>
+
+              {pixKeyEnabled && pixKey && (
+                <View style={[styles.successMessage, { backgroundColor: colors.success[50], marginTop: spacing[3] }]}>
+                  <Ionicons name="checkmark-circle" size={16} color={colors.success[500]} />
+                  <Text variant="caption" style={{ color: colors.success[700], marginLeft: 6, flex: 1 }}>
+                    Chave Pix configurada! Será exibida nas cobranças.
+                  </Text>
+                </View>
+              )}
+            </Card>
+          )}
+
+          {/* Pix Type Picker Modal */}
+          {showPixTypePicker && (
+            <View style={[styles.pickerOverlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+              <View style={[styles.pickerContainer, { backgroundColor: colors.background.primary }]}>
+                <View style={styles.pickerHeader}>
+                  <Text variant="body" weight="semibold">Tipo da Chave Pix</Text>
+                  <TouchableOpacity onPress={() => setShowPixTypePicker(false)}>
+                    <Ionicons name="close" size={24} color={colors.text.primary} />
+                  </TouchableOpacity>
+                </View>
+                {PIX_KEY_TYPES.map((type) => (
+                  <TouchableOpacity
+                    key={type.value}
+                    style={[
+                      styles.pickerOption,
+                      { borderBottomColor: colors.border.light },
+                      pixKeyType === type.value && { backgroundColor: colors.primary[50] }
+                    ]}
+                    onPress={() => {
+                      setPixKeyType(type.value);
+                      setShowPixTypePicker(false);
+                    }}
+                  >
+                    <Text
+                      variant="body"
+                      style={{ color: pixKeyType === type.value ? colors.primary[600] : colors.text.primary }}
+                    >
+                      {type.label}
+                    </Text>
+                    {pixKeyType === type.value && (
+                      <Ionicons name="checkmark" size={20} color={colors.primary[500]} />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+
           {/* Save Button */}
           <Button
             variant="primary"
@@ -682,5 +882,56 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
+  },
+  pixHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  toggleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    gap: 4,
+  },
+  successMessage: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+  },
+  pickerOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  pickerContainer: {
+    width: '85%',
+    borderRadius: 12,
+    overflow: 'hidden',
+    maxHeight: '60%',
+  },
+  pickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
+  },
+  pickerOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
   },
 });

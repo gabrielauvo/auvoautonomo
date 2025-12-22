@@ -263,6 +263,11 @@ export const InvoiceFormScreen: React.FC<InvoiceFormScreenProps> = ({
   );
 
   const handleSave = async () => {
+    // CRITICAL: Guard against duplicate submissions
+    if (loading) {
+      return;
+    }
+
     // Validation
     if (!selectedClient) {
       Alert.alert(t('common.error'), t('validation.required') + ': ' + t('invoices.client'));

@@ -37,6 +37,61 @@ const formatDate = (date: string): string => {
   });
 };
 
+// Helper to format Pix key type label
+const formatPixKeyType = (type?: string): string => {
+  const labels: Record<string, string> = {
+    'CPF': 'CPF',
+    'CNPJ': 'CNPJ',
+    'EMAIL': 'E-mail',
+    'PHONE': 'Telefone',
+    'RANDOM': 'Chave aleatória',
+  };
+  return type ? labels[type] || type : '';
+};
+
+// Helper to generate Pix block for WhatsApp/text messages
+const formatPixBlock = (pixKey?: string, pixKeyType?: string, pixKeyOwnerName?: string): string => {
+  if (!pixKey) return '';
+
+  const typeLabel = formatPixKeyType(pixKeyType);
+  let block = `
+
+📱 *PIX para pagamento*
+Chave: ${pixKey}`;
+
+  if (typeLabel) {
+    block += `
+Tipo: ${typeLabel}`;
+  }
+
+  if (pixKeyOwnerName) {
+    block += `
+Favorecido: ${pixKeyOwnerName}`;
+  }
+
+  block += `
+Copie e cole a chave no seu banco para pagar via Pix.`;
+
+  return block;
+};
+
+// Helper to generate Pix block for HTML emails
+const formatPixBlockHtml = (pixKey?: string, pixKeyType?: string, pixKeyOwnerName?: string): string => {
+  if (!pixKey) return '';
+
+  const typeLabel = formatPixKeyType(pixKeyType);
+
+  return `
+    <div style="background: #E0F2FE; padding: 16px; border-radius: 8px; margin: 16px 0; border-left: 4px solid #0284C7;">
+      <p style="margin: 0 0 8px 0; font-weight: bold; color: #0369A1;">📱 PIX para pagamento</p>
+      <p style="margin: 4px 0;"><strong>Chave:</strong> <code style="background: #F0F9FF; padding: 4px 8px; border-radius: 4px; font-family: monospace;">${pixKey}</code></p>
+      ${typeLabel ? `<p style="margin: 4px 0;"><strong>Tipo:</strong> ${typeLabel}</p>` : ''}
+      ${pixKeyOwnerName ? `<p style="margin: 4px 0;"><strong>Favorecido:</strong> ${pixKeyOwnerName}</p>` : ''}
+      <p style="margin: 8px 0 0 0; font-size: 12px; color: #64748B;">Copie e cole a chave no seu banco para pagar via Pix.</p>
+    </div>
+  `;
+};
+
 // ============================================
 // QUOTE_SENT
 // ============================================
@@ -187,17 +242,23 @@ const renderPaymentCreated = (ctx: PaymentCreatedContext): RenderedTemplate => {
     paymentInfo = `\n\nLink para pagamento: ${ctx.paymentLink}`;
   }
   if (ctx.pixCode) {
-    paymentInfo += `\n\nCódigo PIX: ${ctx.pixCode}`;
+    paymentInfo += `\n\nCódigo PIX (Asaas): ${ctx.pixCode}`;
   }
+
+  // Add company Pix key block if available
+  const pixBlock = formatPixBlock(ctx.companyPixKey, ctx.companyPixKeyType, ctx.companyPixKeyOwnerName);
 
   const body = `Olá, ${ctx.clientName}!
 
 Segue o link para pagamento no valor de ${formatCurrency(ctx.value)}.
 
 Forma de pagamento: ${ctx.billingType}
-Vencimento: ${formatDate(ctx.dueDate)}${refInfo}${paymentInfo}
+Vencimento: ${formatDate(ctx.dueDate)}${refInfo}${paymentInfo}${pixBlock}
 
 Qualquer dúvida, estamos à disposição!`;
+
+  // Add company Pix key HTML block if available
+  const pixBlockHtml = formatPixBlockHtml(ctx.companyPixKey, ctx.companyPixKeyType, ctx.companyPixKeyOwnerName);
 
   const htmlBody = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -212,6 +273,7 @@ Qualquer dúvida, estamos à disposição!`;
       </div>
       ${ctx.paymentLink ? `<p><a href="${ctx.paymentLink}" style="background: #7C3AED; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Pagar Agora</a></p>` : ''}
       ${ctx.pixCode ? `<p style="background: #E5E7EB; padding: 12px; border-radius: 6px; font-family: monospace; word-break: break-all; font-size: 12px;">${ctx.pixCode}</p>` : ''}
+      ${pixBlockHtml}
       <p>Qualquer dúvida, estamos à disposição!</p>
     </div>
   `;
@@ -272,14 +334,20 @@ const renderPaymentOverdue = (ctx: PaymentOverdueContext): RenderedTemplate => {
     paymentInfo = `\n\nLink para pagamento: ${ctx.paymentLink}`;
   }
 
+  // Add company Pix key block if available
+  const pixBlock = formatPixBlock(ctx.companyPixKey, ctx.companyPixKeyType, ctx.companyPixKeyOwnerName);
+
   const body = `Olá, ${ctx.clientName}!
 
 Notamos que o pagamento está em aberto desde ${formatDate(ctx.dueDate)}.
 
 Valor: ${formatCurrency(ctx.value)}
-Dias em atraso: ${ctx.daysOverdue}${refInfo}${paymentInfo}
+Dias em atraso: ${ctx.daysOverdue}${refInfo}${paymentInfo}${pixBlock}
 
 Por favor, regularize seu pagamento. Qualquer dúvida, entre em contato conosco.`;
+
+  // Add company Pix key HTML block if available
+  const pixBlockHtml = formatPixBlockHtml(ctx.companyPixKey, ctx.companyPixKeyType, ctx.companyPixKeyOwnerName);
 
   const htmlBody = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -293,6 +361,7 @@ Por favor, regularize seu pagamento. Qualquer dúvida, entre em contato conosco.
         ${ctx.workOrderNumber ? `<p style="margin: 4px 0;"><strong>Referente à:</strong> OS #${ctx.workOrderNumber}</p>` : ''}
       </div>
       ${ctx.paymentLink ? `<p><a href="${ctx.paymentLink}" style="background: #EF4444; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Regularizar Pagamento</a></p>` : ''}
+      ${pixBlockHtml}
       <p>Qualquer dúvida, entre em contato conosco.</p>
     </div>
   `;
@@ -319,17 +388,23 @@ const renderPaymentReminderBeforeDue = (ctx: PaymentReminderBeforeDueContext): R
     paymentInfo = `\n\nLink para pagamento: ${ctx.paymentLink}`;
   }
   if (ctx.pixCode) {
-    paymentInfo += `\n\nCódigo PIX: ${ctx.pixCode}`;
+    paymentInfo += `\n\nCódigo PIX (Asaas): ${ctx.pixCode}`;
   }
+
+  // Add company Pix key block if available
+  const pixBlock = formatPixBlock(ctx.companyPixKey, ctx.companyPixKeyType, ctx.companyPixKeyOwnerName);
 
   const body = `Olá, ${ctx.clientName}!
 
 Lembramos que você tem um pagamento que vence em ${daysText}.
 
 Valor: ${formatCurrency(ctx.value)}
-Vencimento: ${formatDate(ctx.dueDate)}${refInfo}${paymentInfo}
+Vencimento: ${formatDate(ctx.dueDate)}${refInfo}${paymentInfo}${pixBlock}
 
 Evite atrasos e efetue seu pagamento dentro do prazo!`;
+
+  // Add company Pix key HTML block if available
+  const pixBlockHtml = formatPixBlockHtml(ctx.companyPixKey, ctx.companyPixKeyType, ctx.companyPixKeyOwnerName);
 
   const htmlBody = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -344,6 +419,7 @@ Evite atrasos e efetue seu pagamento dentro do prazo!`;
       </div>
       ${ctx.paymentLink ? `<p><a href="${ctx.paymentLink}" style="background: #F59E0B; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Pagar Agora</a></p>` : ''}
       ${ctx.pixCode ? `<p style="background: #E5E7EB; padding: 12px; border-radius: 6px; font-family: monospace; word-break: break-all; font-size: 12px;">${ctx.pixCode}</p>` : ''}
+      ${pixBlockHtml}
       <p>Evite atrasos e efetue seu pagamento dentro do prazo!</p>
     </div>
   `;
@@ -370,17 +446,23 @@ const renderPaymentReminderAfterDue = (ctx: PaymentReminderAfterDueContext): Ren
     paymentInfo = `\n\nLink para pagamento: ${ctx.paymentLink}`;
   }
   if (ctx.pixCode) {
-    paymentInfo += `\n\nCódigo PIX: ${ctx.pixCode}`;
+    paymentInfo += `\n\nCódigo PIX (Asaas): ${ctx.pixCode}`;
   }
+
+  // Add company Pix key block if available
+  const pixBlock = formatPixBlock(ctx.companyPixKey, ctx.companyPixKeyType, ctx.companyPixKeyOwnerName);
 
   const body = `Olá, ${ctx.clientName}!
 
 Identificamos que seu pagamento está em atraso há ${daysText}.
 
 Valor: ${formatCurrency(ctx.value)}
-Vencimento original: ${formatDate(ctx.dueDate)}${refInfo}${paymentInfo}
+Vencimento original: ${formatDate(ctx.dueDate)}${refInfo}${paymentInfo}${pixBlock}
 
 Por favor, regularize sua situação o mais breve possível para evitar encargos adicionais.`;
+
+  // Add company Pix key HTML block if available
+  const pixBlockHtml = formatPixBlockHtml(ctx.companyPixKey, ctx.companyPixKeyType, ctx.companyPixKeyOwnerName);
 
   const htmlBody = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -396,6 +478,7 @@ Por favor, regularize sua situação o mais breve possível para evitar encargos
       </div>
       ${ctx.paymentLink ? `<p><a href="${ctx.paymentLink}" style="background: #DC2626; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Regularizar Agora</a></p>` : ''}
       ${ctx.pixCode ? `<p style="background: #E5E7EB; padding: 12px; border-radius: 6px; font-family: monospace; word-break: break-all; font-size: 12px;">${ctx.pixCode}</p>` : ''}
+      ${pixBlockHtml}
       <p>Por favor, regularize sua situação o mais breve possível.</p>
     </div>
   `;

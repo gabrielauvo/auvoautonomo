@@ -1,5 +1,20 @@
 import '@testing-library/react-native/extend-expect';
 
+// Mock expo-file-system
+jest.mock('expo-file-system', () => ({
+  cacheDirectory: '/cache/',
+  documentDirectory: '/document/',
+  getInfoAsync: jest.fn(() => Promise.resolve({ exists: true, size: 0, isDirectory: false })),
+  makeDirectoryAsync: jest.fn(() => Promise.resolve()),
+  readAsStringAsync: jest.fn(() => Promise.resolve('[]')),
+  writeAsStringAsync: jest.fn(() => Promise.resolve()),
+  downloadAsync: jest.fn(() => Promise.resolve({ status: 200 })),
+  deleteAsync: jest.fn(() => Promise.resolve()),
+  copyAsync: jest.fn(() => Promise.resolve()),
+  moveAsync: jest.fn(() => Promise.resolve()),
+  readDirectoryAsync: jest.fn(() => Promise.resolve([])),
+}));
+
 // Mock expo-secure-store
 jest.mock('expo-secure-store', () => ({
   setItemAsync: jest.fn(() => Promise.resolve()),
@@ -50,6 +65,11 @@ jest.mock('expo-router', () => ({
     replace: jest.fn(),
     back: jest.fn(),
   },
+  useFocusEffect: jest.fn((callback) => {
+    // Execute callback immediately for testing
+    callback();
+  }),
+  useLocalSearchParams: () => ({}),
 }));
 
 // Mock react-native-safe-area-context

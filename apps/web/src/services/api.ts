@@ -11,8 +11,12 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import Cookies from 'js-cookie';
 
-// Configuração da URL base do backend
+// Configuração da URL base do backend (usada para uploads e URLs absolutas)
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+// URL do proxy para requisições autenticadas (usa cookies HttpOnly)
+// Isso resolve o problema de autenticação com cookies HttpOnly
+const PROXY_BASE_URL = '/api/proxy';
 
 /**
  * Constrói URL completa para recursos estáticos do backend (uploads)
@@ -52,7 +56,7 @@ function sleep(ms: number): Promise<void> {
  * - baseURL validada via env var
  */
 export const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: PROXY_BASE_URL, // Usa proxy para autenticação via HttpOnly cookies
   headers: {
     'Content-Type': 'application/json',
   },
@@ -61,16 +65,12 @@ export const api = axios.create({
 });
 
 /**
- * Interceptor de Request - Adiciona token de autenticação
+ * Interceptor de Request
+ * NOTA: Token é adicionado automaticamente pelo proxy /api/proxy via cookies HttpOnly
  */
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = Cookies.get(AUTH_TOKEN_KEY);
-
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-
+    // Token é gerenciado pelo proxy, não precisa adicionar aqui
     return config;
   },
   (error) => {
@@ -86,15 +86,12 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const config = error.config as InternalAxiosRequestConfig & { _retryCount?: number };
 
-    // Se receber 401, redireciona para login
+    // Se receber 401, NÃO redireciona automaticamente
+    // O auth-context é responsável por gerenciar estado de autenticação
+    // Isso evita loops de redirect quando múltiplas chamadas falham simultaneamente
     if (error.response?.status === 401) {
-      // Remove token inválido
-      Cookies.remove(AUTH_TOKEN_KEY);
-
-      // Redireciona para login (apenas no client)
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login';
-      }
+      // Apenas loga o erro, deixa a aplicação decidir o que fazer
+      console.warn('[API] Unauthorized (401):', config?.url);
     }
 
     // Tratamento específico para erro 403 (Forbidden)

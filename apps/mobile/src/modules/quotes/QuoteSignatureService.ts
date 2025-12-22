@@ -42,6 +42,17 @@ export interface CreateQuoteSignatureInput {
   signerDocument?: string;
   signerRole: string;
   signatureBase64: string;
+  // Acceptance terms audit fields
+  termsAcceptedAt?: string;
+  termsHash?: string;
+  termsVersion?: number;
+}
+
+export interface AcceptanceTermsData {
+  required: boolean;
+  termsContent: string | null;
+  version: number;
+  termsHash: string | null;
 }
 
 // =============================================================================
@@ -320,6 +331,55 @@ class QuoteSignatureServiceClass {
   async getSignatureSyncStatus(quoteId: string): Promise<string | null> {
     const signature = await this.getByQuoteId(quoteId);
     return signature?.syncStatus || null;
+  }
+
+  /**
+   * Buscar termos de aceite do backend para um orcamento
+   * Usa o userId do orcamento para buscar os termos configurados
+   */
+  async getAcceptanceTerms(quoteId: string): Promise<AcceptanceTermsData | null> {
+    const baseUrl = (syncEngine as any).baseUrl;
+    const authToken = (syncEngine as any).authToken;
+
+    if (!baseUrl || !authToken) {
+      console.log('[QuoteSignatureService] SyncEngine not configured, returning null for acceptance terms');
+      return null;
+    }
+
+    // Buscar o quote para obter o userId
+    const quote = await QuoteRepository.getById(quoteId);
+    if (!quote) {
+      console.log(`[QuoteSignatureService] Quote ${quoteId} not found`);
+      return null;
+    }
+
+    try {
+      // Buscar termos de aceite do backend
+      // O endpoint publico usa o userId do tecnico (dono do orcamento)
+      const response = await fetch(`${baseUrl}/quotes/${quoteId}/acceptance-terms`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        console.log(`[QuoteSignatureService] Failed to fetch acceptance terms: ${response.status}`);
+        return null;
+      }
+
+      const data = await response.json();
+      return {
+        required: data.required || false,
+        termsContent: data.termsContent || null,
+        version: data.version || 0,
+        termsHash: data.termsHash || null,
+      };
+    } catch (error) {
+      console.error('[QuoteSignatureService] Error fetching acceptance terms:', error);
+      return null;
+    }
   }
 }
 

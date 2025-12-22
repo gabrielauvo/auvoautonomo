@@ -153,7 +153,7 @@ function calculateDuration(start: string | null, end: string | null): string {
   return hours > 0 ? `${hours}h ${mins}min` : `${mins}min`;
 }
 
-function getChecklistAnswerDisplay(answer: any, questions: any[]): string {
+function getChecklistAnswerDisplay(answer: any, questions: any[]): string | { type: 'signature'; data: string } {
   const question = questions.find((q) => q.id === answer.questionId);
   if (!question) return '-';
 
@@ -181,6 +181,20 @@ function getChecklistAnswerDisplay(answer: any, questions: any[]): string {
     case 'PHOTO_REQUIRED':
     case 'PHOTO_OPTIONAL':
       return answer.attachments?.length > 0 ? `${answer.attachments.length} foto(s)` : '-';
+    case 'SIGNATURE_TECHNICIAN':
+    case 'SIGNATURE_CLIENT':
+      // Assinaturas podem estar em valueText (base64) ou attachments
+      const signatureData = answer.valueText || answer.valueJson?.data || answer.valueJson;
+      if (signatureData && typeof signatureData === 'string' && signatureData.length > 50) {
+        return { type: 'signature', data: signatureData };
+      }
+      if (answer.attachments?.length > 0 && answer.attachments[0].url) {
+        return { type: 'signature', data: answer.attachments[0].url };
+      }
+      return '-';
+    case 'SCALE':
+      const scaleValue = answer.valueNumber ?? answer.valueJson;
+      return scaleValue != null ? scaleValue.toString() : '-';
     default:
       return answer.valueText || answer.valueNumber?.toString() || '-';
   }
@@ -605,14 +619,40 @@ export default function PublicWorkOrderPage() {
                     const displayValue = answer
                       ? getChecklistAnswerDisplay(answer, checklist.templateSnapshot?.questions || [])
                       : '-';
-                    const hasPhotos = answer?.attachments && answer.attachments.length > 0;
+                    const hasPhotos = answer?.attachments && answer.attachments.length > 0 &&
+                      answer.type !== 'SIGNATURE_TECHNICIAN' && answer.type !== 'SIGNATURE_CLIENT';
+                    const isSignature = typeof displayValue === 'object' && displayValue?.type === 'signature';
 
                     return (
                       <div key={question.id} className="py-2 border-b border-gray-100">
-                        <div className="flex justify-between">
+                        <div className="flex justify-between items-start">
                           <span className="text-gray-700">{question.title}</span>
-                          <span className="font-medium text-gray-900">{displayValue}</span>
+                          {isSignature ? (
+                            <div className="flex items-center gap-2">
+                              <CheckCircle2 className="h-4 w-4 text-green-500" />
+                              <span className="text-sm text-green-600">Assinatura registrada</span>
+                            </div>
+                          ) : (
+                            <span className="font-medium text-gray-900">{displayValue as string}</span>
+                          )}
                         </div>
+                        {/* Assinatura */}
+                        {isSignature && (
+                          <div className="mt-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+                            <div className="flex items-center gap-2 mb-2">
+                              <CheckCircle2 className="h-5 w-5 text-green-500" />
+                              <span className="text-sm font-medium text-green-700">Assinatura registrada</span>
+                            </div>
+                            <div className="bg-white border rounded p-2">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={displayValue.data.startsWith('data:') ? displayValue.data : `data:image/png;base64,${displayValue.data}`}
+                                alt={question.title}
+                                className="max-h-24 mx-auto object-contain"
+                              />
+                            </div>
+                          </div>
+                        )}
                         {/* Fotos do checklist */}
                         {hasPhotos && (
                           <div className="mt-2 grid grid-cols-2 md:grid-cols-3 gap-2">

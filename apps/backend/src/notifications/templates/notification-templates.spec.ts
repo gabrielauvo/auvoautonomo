@@ -179,6 +179,47 @@ describe('Notification Templates', () => {
       expect(result.body).toContain('QT222');
       expect(result.body).not.toContain('OS #');
     });
+
+    it('should render company Pix key block when provided', () => {
+      const ctxWithPix: PaymentCreatedContext = {
+        clientName: 'Lucia Mendes',
+        paymentId: 'pay-789',
+        value: 500,
+        billingType: 'PIX',
+        dueDate: '2024-03-01',
+        companyPixKey: '12345678900',
+        companyPixKeyType: 'CPF',
+        companyPixKeyOwnerName: 'João Prestador',
+      };
+
+      const result = renderPaymentCreated(ctxWithPix);
+
+      // Check text body contains Pix block
+      expect(result.body).toContain('PIX para pagamento');
+      expect(result.body).toContain('12345678900');
+      expect(result.body).toContain('CPF');
+      expect(result.body).toContain('João Prestador');
+
+      // Check HTML body contains Pix block
+      expect(result.htmlBody).toContain('PIX para pagamento');
+      expect(result.htmlBody).toContain('12345678900');
+      expect(result.htmlBody).toContain('0284C7'); // Sky blue color for Pix section
+    });
+
+    it('should not render Pix block when company Pix key is not provided', () => {
+      const ctxWithoutPix: PaymentCreatedContext = {
+        clientName: 'Lucia Mendes',
+        paymentId: 'pay-no-pix',
+        value: 500,
+        billingType: 'Boleto',
+        dueDate: '2024-03-01',
+      };
+
+      const result = renderPaymentCreated(ctxWithoutPix);
+
+      expect(result.body).not.toContain('PIX para pagamento');
+      expect(result.htmlBody).not.toContain('PIX para pagamento');
+    });
   });
 
   describe('renderPaymentConfirmed', () => {
@@ -222,6 +263,31 @@ describe('Notification Templates', () => {
       expect(result.body).toContain('15');
       expect(result.htmlBody).toContain('EF4444'); // Red error color
       expect(result.htmlBody).toContain('Regularizar');
+    });
+
+    it('should render company Pix key block when provided', () => {
+      const ctxWithPix: PaymentOverdueContext = {
+        clientName: 'Fernanda Costa',
+        paymentId: 'pay-overdue-pix',
+        value: 250,
+        dueDate: '2024-02-10',
+        daysOverdue: 15,
+        companyPixKey: 'empresa@email.com',
+        companyPixKeyType: 'EMAIL',
+        companyPixKeyOwnerName: 'Empresa LTDA',
+      };
+
+      const result = renderPaymentOverdue(ctxWithPix);
+
+      // Check text body contains Pix block
+      expect(result.body).toContain('PIX para pagamento');
+      expect(result.body).toContain('empresa@email.com');
+      expect(result.body).toContain('E-mail');
+      expect(result.body).toContain('Empresa LTDA');
+
+      // Check HTML body contains Pix block
+      expect(result.htmlBody).toContain('PIX para pagamento');
+      expect(result.htmlBody).toContain('empresa@email.com');
     });
   });
 

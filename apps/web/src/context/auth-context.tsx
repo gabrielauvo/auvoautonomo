@@ -10,14 +10,13 @@
  * - Carregamento inicial
  */
 
-import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   authService,
   User,
   LoginCredentials,
   RegisterData,
-  hasToken,
 } from '@/services/auth.service';
 import { billingService, BillingStatus } from '@/services/billing.service';
 
@@ -103,17 +102,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Refs para evitar race conditions
   const isLoadingRef = useRef(false);
   const isMountedRef = useRef(true);
+  const hasLoadedRef = useRef(false);
 
   /**
    * Carrega dados do usuário a partir do token armazenado
    * Usa ref para prevenir chamadas simultâneas
    */
   const loadUser = useCallback(async () => {
-    // Evita chamadas simultâneas
-    if (isLoadingRef.current) {
+    // Evita chamadas simultâneas ou repetidas
+    if (isLoadingRef.current || hasLoadedRef.current) {
       return;
     }
     isLoadingRef.current = true;
+    hasLoadedRef.current = true;
 
     // Bypass controlado por env var (só em desenvolvimento)
     if (DEV_BYPASS_AUTH) {
@@ -127,15 +128,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    if (!hasToken()) {
-      if (isMountedRef.current) {
-        setIsLoading(false);
-      }
-      isLoadingRef.current = false;
-      return;
-    }
-
     try {
+      // Tenta carregar perfil - se falhar, não está autenticado
       const [profileData, billingData] = await Promise.all([
         authService.getProfile(),
         billingService.getBillingStatus().catch(() => null),
@@ -146,9 +140,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(profileData);
         setBilling(billingData);
       }
-    } catch (err) {
-      // Token inválido ou expirado
-      authService.clearToken();
+    } catch {
+      // Token inválido, expirado ou não existe
       if (isMountedRef.current) {
         setUser(null);
         setBilling(null);
@@ -177,7 +170,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   /**
    * Realiza login
    */
-  const login = async (credentials: LoginCredentials) => {
+  const login = useCallback(async (credentials: LoginCredentials) => {
     setIsLoading(true);
     setError(null);
 
@@ -198,12 +191,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [router]);
 
   /**
    * Login com token (usado pelo Google OAuth callback)
    */
-  const loginWithToken = async (token: string) => {
+  const loginWithToken = useCallback(async (token: string) => {
     setIsLoading(true);
     setError(null);
 
@@ -227,12 +220,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   /**
    * Realiza registro
    */
-  const register = async (data: RegisterData) => {
+  const register = useCallback(async (data: RegisterData) => {
     setIsLoading(true);
     setError(null);
 
@@ -253,12 +246,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [router]);
 
   /**
    * Realiza logout
    */
-  const logout = async () => {
+  const logout = useCallback(async () => {
     setIsLoading(true);
 
     try {
@@ -269,44 +262,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
       router.push('/login');
     }
-  };
+  }, [router]);
 
   /**
    * Atualiza dados do usuário
    */
-  const refreshUser = async () => {
-    if (!hasToken()) return;
-
+  const refreshUser = useCallback(async () => {
     try {
       const profileData = await authService.getProfile();
       setUser(profileData);
-    } catch (err) {
+    } catch {
       // Ignora erro silenciosamente
     }
-  };
+  }, []);
 
   /**
    * Atualiza dados de billing
    */
-  const refreshBilling = async () => {
-    if (!hasToken()) return;
-
+  const refreshBilling = useCallback(async () => {
     try {
       const billingData = await billingService.getBillingStatus();
       setBilling(billingData);
-    } catch (err) {
+    } catch {
       // Ignora erro silenciosamente
     }
-  };
+  }, []);
 
   /**
    * Limpa erro
    */
-  const clearError = () => {
+  const clearError = useCallback(() => {
     setError(null);
-  };
+  }, []);
 
-  const value: AuthContextType = {
+  const value = useMemo<AuthContextType>(() => ({
     user,
     billing,
     isAuthenticated: !!user,
@@ -319,7 +308,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refreshUser,
     refreshBilling,
     clearError,
-  };
+  }), [user, billing, isLoading, error, login, loginWithToken, register, logout, refreshUser, refreshBilling, clearError]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

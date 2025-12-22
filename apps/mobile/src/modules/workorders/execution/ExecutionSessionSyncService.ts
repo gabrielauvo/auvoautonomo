@@ -10,8 +10,6 @@ import { ExecutionSessionRepository } from './ExecutionSessionRepository';
 import { syncEngine } from '../../../sync';
 import { ExecutionSession } from '../../../db/schema';
 
-// LOG DE VERSÃO
-console.log('=== ExecutionSessionSyncService v1.0 LOADED ===');
 
 interface SyncResult {
   totalSynced: number;
@@ -115,7 +113,8 @@ class ExecutionSessionSyncServiceClass {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('[ExecutionSessionSyncService] Sync failed:', response.status, errorText);
+        // Use warn instead of error to avoid LogBox in dev
+        console.warn('[ExecutionSessionSyncService] Sync failed:', response.status, errorText);
         result.errors.push(`HTTP ${response.status}: ${errorText}`);
         result.totalFailed = pendingSessions.length;
         return result;
@@ -135,14 +134,16 @@ class ExecutionSessionSyncServiceClass {
         } else {
           result.totalFailed++;
           result.errors.push(`Session ${syncResult.localId}: ${syncResult.error || 'Unknown error'}`);
-          console.error('[ExecutionSessionSyncService] Session sync failed:', syncResult.localId, syncResult.error);
+          console.warn('[ExecutionSessionSyncService] Session sync failed:', syncResult.localId, syncResult.error);
         }
       }
 
       console.log('[ExecutionSessionSyncService] Sync complete:', result);
       return result;
     } catch (error: any) {
-      console.error('[ExecutionSessionSyncService] Error syncing sessions:', error);
+      // Use warn for network errors to avoid LogBox spam in dev
+      // These are expected when offline or server unreachable
+      console.warn('[ExecutionSessionSyncService] Sync skipped (network issue):', error.message);
       result.errors.push(error.message);
       return result;
     }
@@ -209,7 +210,8 @@ class ExecutionSessionSyncServiceClass {
 
       return totalResult;
     } catch (error: any) {
-      console.error('[ExecutionSessionSyncService] Error syncing all sessions:', error);
+      // Use warn for expected errors (network, no data)
+      console.warn('[ExecutionSessionSyncService] pushAllPendingSessions skipped:', error.message);
       totalResult.errors.push(error.message);
       return totalResult;
     }

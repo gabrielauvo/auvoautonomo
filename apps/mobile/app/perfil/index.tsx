@@ -259,6 +259,14 @@ export default function ProfileScreen() {
       showChevron: true,
     },
     {
+      id: 'preferencias',
+      icon: 'settings-outline',
+      label: 'Preferências',
+      description: 'Contatos e automações',
+      route: '/perfil/preferencias',
+      showChevron: true,
+    },
+    {
       id: 'idioma',
       icon: 'language-outline',
       label: 'Idioma',

@@ -39,6 +39,7 @@ import {
   useRemoveWorkOrderItem,
 } from '@/hooks/use-work-orders';
 import { useChecklistTemplates } from '@/hooks/use-checklists';
+import { useActiveWorkOrderTypes } from '@/hooks/use-work-order-types';
 import {
   WorkOrder,
   WorkOrderItem,
@@ -59,6 +60,7 @@ import {
   FileText,
   AlertCircle,
   ClipboardCheck,
+  Tag,
 } from 'lucide-react';
 
 interface WorkOrderFormProps {
@@ -216,6 +218,9 @@ export function WorkOrderForm({ workOrder, onSuccess, onCancel, preselectedClien
   // Buscar templates de checklist ativos
   const { data: checklistTemplates, isLoading: isLoadingTemplates } = useChecklistTemplates(false);
 
+  // Buscar tipos de OS ativos
+  const { data: workOrderTypes, isLoading: isLoadingTypes } = useActiveWorkOrderTypes();
+
   const isEditing = !!workOrder;
 
   // Form state
@@ -239,7 +244,11 @@ export function WorkOrderForm({ workOrder, onSuccess, onCancel, preselectedClien
   const [errors, setErrors] = useState<FormErrors>({});
   const [showCatalogModal, setShowCatalogModal] = useState(false);
   const [showUpsellModal, setShowUpsellModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedChecklistTemplateId, setSelectedChecklistTemplateId] = useState<string>('');
+  const [selectedWorkOrderTypeId, setSelectedWorkOrderTypeId] = useState<string>(
+    workOrder?.workOrderTypeId || ''
+  );
 
   // Inicializa com dados do orçamento (conversão)
   useEffect(() => {
@@ -398,10 +407,16 @@ export function WorkOrderForm({ workOrder, onSuccess, onCancel, preselectedClien
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // CRITICAL: Guard against duplicate submissions
+    if (isSubmitting) {
+      return;
+    }
+
     if (!validate()) {
       return;
     }
 
+    setIsSubmitting(true);
     setErrors({});
 
     try {
@@ -420,6 +435,7 @@ export function WorkOrderForm({ workOrder, onSuccess, onCancel, preselectedClien
             : undefined,
           address: address || undefined,
           notes: notes || undefined,
+          workOrderTypeId: selectedWorkOrderTypeId || null,
         };
         result = await updateWorkOrder.mutateAsync({
           id: workOrder.id,
@@ -441,6 +457,7 @@ export function WorkOrderForm({ workOrder, onSuccess, onCancel, preselectedClien
           address: address || undefined,
           notes: notes || undefined,
           checklistTemplateId: selectedChecklistTemplateId || undefined,
+          workOrderTypeId: selectedWorkOrderTypeId || undefined,
         };
         result = await createWorkOrder.mutateAsync(createData);
 
@@ -476,6 +493,8 @@ export function WorkOrderForm({ workOrder, onSuccess, onCancel, preselectedClien
           general: errorMessage || 'Erro ao salvar ordem de serviço. Tente novamente.',
         });
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -488,6 +507,7 @@ export function WorkOrderForm({ workOrder, onSuccess, onCancel, preselectedClien
   };
 
   const isLoading =
+    isSubmitting ||
     createWorkOrder.isPending ||
     updateWorkOrder.isPending ||
     addItem.isPending ||
@@ -562,6 +582,42 @@ export function WorkOrderForm({ workOrder, onSuccess, onCancel, preselectedClien
                 disabled={isLoading}
               />
             </FormField>
+
+            {/* Tipo de OS - Apenas se tiver tipos cadastrados */}
+            {workOrderTypes && workOrderTypes.length > 0 && (
+              <FormField label="Tipo de OS">
+                <div className="relative">
+                  <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <select
+                    value={selectedWorkOrderTypeId}
+                    onChange={(e) => setSelectedWorkOrderTypeId(e.target.value)}
+                    disabled={isLoading || isLoadingTypes}
+                    className="w-full h-10 pl-10 pr-3 border rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none"
+                  >
+                    <option value="">Sem tipo definido</option>
+                    {workOrderTypes.map((type) => (
+                      <option key={type.id} value={type.id}>
+                        {type.name}
+                      </option>
+                    ))}
+                  </select>
+                  {/* Color indicator */}
+                  {selectedWorkOrderTypeId && (
+                    <div
+                      className="absolute right-10 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border"
+                      style={{
+                        backgroundColor: workOrderTypes.find(t => t.id === selectedWorkOrderTypeId)?.color || '#6B7280',
+                      }}
+                    />
+                  )}
+                  <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+                    <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </FormField>
+            )}
           </CardContent>
         </Card>
 

@@ -17,8 +17,12 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@azure/core-asynciterator-polyfill": "^1.0.2",
+    "@babel/plugin-transform-async-generator-functions": "^7.28.0",
     "@expo/metro-runtime": "~4.0.1",
     "@expo/vector-icons": "~14.0.4",
+    "@journeyapps/react-native-quick-sqlite": "^2.5.0",
+    "@powersync/react-native": "^1.28.0",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-native-community/datetimepicker": "8.2.0",
     "@react-native-community/netinfo": "11.4.1",
@@ -28,8 +32,8 @@
     "expo-constants": "~17.0.8",
     "expo-contacts": "~14.0.5",
     "expo-crypto": "~15.0.8",
-    "expo-file-system": "~18.0.11",
     "expo-device": "~7.0.3",
+    "expo-file-system": "~18.0.11",
     "expo-font": "~13.0.4",
     "expo-image-manipulator": "~13.0.6",
     "expo-image-picker": "~16.0.6",

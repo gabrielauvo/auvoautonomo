@@ -3,7 +3,9 @@ export default {
   rootDir: 'src',
   testRegex: '.*\\.spec\\.ts$',
   transform: {
-    '^.+\\.(t|j)s$': 'ts-jest',
+    '^.+\\.(t|j)s$': ['ts-jest', {
+      isolatedModules: true,
+    }],
   },
   collectCoverageFrom: [
     '**/*.(t|j)s',

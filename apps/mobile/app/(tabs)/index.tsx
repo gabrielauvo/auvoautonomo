@@ -53,6 +53,39 @@ function formatCurrency(value: number | undefined | null): string {
   }).format(value);
 }
 
+/**
+ * Formata valores monetários de forma compacta para caber em cards pequenos
+ * Ex: 1500 -> R$ 1,5 mil | 1500000 -> R$ 1,5 mi | 1500000000 -> R$ 1,5 bi
+ */
+function formatCompactCurrency(value: number | undefined | null): string {
+  if (value === undefined || value === null) return 'R$ ---';
+
+  const absValue = Math.abs(value);
+  const sign = value < 0 ? '-' : '';
+
+  if (absValue >= 1_000_000_000) {
+    // Bilhões
+    const formatted = (absValue / 1_000_000_000).toFixed(absValue >= 10_000_000_000 ? 0 : 1);
+    return `${sign}R$ ${formatted.replace('.', ',')} bi`;
+  } else if (absValue >= 1_000_000) {
+    // Milhões
+    const formatted = (absValue / 1_000_000).toFixed(absValue >= 10_000_000 ? 0 : 1);
+    return `${sign}R$ ${formatted.replace('.', ',')} mi`;
+  } else if (absValue >= 10_000) {
+    // Milhares (a partir de 10k para não ficar estranho com valores menores)
+    const formatted = (absValue / 1_000).toFixed(absValue >= 100_000 ? 0 : 1);
+    return `${sign}R$ ${formatted.replace('.', ',')} mil`;
+  } else {
+    // Valores menores - formato normal
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  }
+}
+
 // =============================================================================
 // SKELETON COMPONENT
 // =============================================================================
@@ -506,7 +539,7 @@ export default function HomeScreen() {
         <View style={styles.financialGrid}>
           <FinancialCard
             title="Receita Total"
-            value={formatCurrency(financialData?.totalExpected)}
+            value={formatCompactCurrency(financialData?.totalExpected)}
             icon="cash-outline"
             iconBgColor={colors.primary[100]}
             iconColor={colors.primary[500]}
@@ -514,7 +547,7 @@ export default function HomeScreen() {
           />
           <FinancialCard
             title="Receita Recebida"
-            value={formatCurrency(financialData?.received)}
+            value={formatCompactCurrency(financialData?.received)}
             icon="checkmark-circle-outline"
             iconBgColor={colors.success[100]}
             iconColor={colors.success[500]}
@@ -522,7 +555,7 @@ export default function HomeScreen() {
           />
           <FinancialCard
             title="Pendente"
-            value={formatCurrency(financialData?.pending)}
+            value={formatCompactCurrency(financialData?.pending)}
             icon="time-outline"
             iconBgColor={colors.warning[100]}
             iconColor={colors.warning[500]}
@@ -530,7 +563,7 @@ export default function HomeScreen() {
           />
           <FinancialCard
             title="Vencido"
-            value={formatCurrency(financialData?.overdue)}
+            value={formatCompactCurrency(financialData?.overdue)}
             icon="alert-circle-outline"
             iconBgColor={colors.error[100]}
             iconColor={colors.error[500]}

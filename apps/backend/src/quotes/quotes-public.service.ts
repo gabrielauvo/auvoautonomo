@@ -2,6 +2,7 @@ import { Injectable, Logger, BadRequestException, Inject, forwardRef } from '@ne
 import { PrismaService } from '../prisma/prisma.service';
 import { FileStorageService } from '../file-storage/file-storage.service';
 import { AttachmentType } from '../file-storage/dto/upload-file.dto';
+import { SettingsService } from '../settings/settings.service';
 import { randomBytes, createHash } from 'crypto';
 
 /**
@@ -17,6 +18,7 @@ export class QuotesPublicService {
     private prisma: PrismaService,
     @Inject(forwardRef(() => FileStorageService))
     private fileStorageService: FileStorageService,
+    private settingsService: SettingsService,
   ) {
     this.apiUrl = process.env.API_URL || 'http://localhost:3001';
   }
@@ -109,6 +111,9 @@ export class QuotesPublicService {
       return null;
     }
 
+    // Buscar configurações de template do usuário para cores
+    const templateSettings = await this.settingsService.getTemplateSettings(quote.userId);
+
     // Formatar dados para visualização pública
     return {
       id: quote.id,
@@ -160,6 +165,14 @@ export class QuotesPublicService {
         mimeType: att.mimeType,
         createdAt: att.createdAt,
       })),
+      // Configurações de template (cores)
+      template: {
+        primaryColor: templateSettings.quote.primaryColor,
+        secondaryColor: templateSettings.quote.secondaryColor,
+        showLogo: templateSettings.quote.showLogo,
+        logoPosition: templateSettings.quote.logoPosition,
+        footerText: templateSettings.quote.footerText,
+      },
     };
   }
 
@@ -236,6 +249,10 @@ export class QuotesPublicService {
       signerName: string;
       signerDocument?: string;
       signerRole?: string;
+      // Acceptance terms audit fields
+      termsAcceptedAt?: string;
+      termsHash?: string;
+      termsVersion?: number;
     },
     requestInfo: { ipAddress?: string; userAgent?: string },
   ) {
@@ -272,6 +289,26 @@ export class QuotesPublicService {
       throw new BadRequestException('Este orçamento já possui uma assinatura');
     }
 
+    // Verificar se termos de aceite sao obrigatorios e foram aceitos
+    const terms = await this.settingsService.getAcceptanceTermsForQuote(quote.userId);
+    if (terms.required) {
+      // Termos sao obrigatorios - verificar se foram aceitos
+      if (!dto.termsAcceptedAt || !dto.termsHash) {
+        this.logger.warn(`Quote ${quote.id}: Acceptance terms required but not accepted`);
+        throw new BadRequestException(
+          'Este orcamento requer aceite dos termos de condicoes antes da assinatura',
+        );
+      }
+      // Verificar se o hash dos termos aceitos corresponde ao atual
+      if (dto.termsHash !== terms.termsHash) {
+        this.logger.warn(
+          `Quote ${quote.id}: Terms hash mismatch - accepted: ${dto.termsHash}, current: ${terms.termsHash}`,
+        );
+        // Nao bloquear, mas registrar o warning
+        // O conteudo pode ter sido atualizado entre a leitura e o aceite
+      }
+    }
+
     // Upload da imagem da assinatura
     const attachment = await this.fileStorageService.uploadFromBase64(
       quote.userId,
@@ -295,7 +332,7 @@ export class QuotesPublicService {
     });
     const hash = createHash('sha256').update(signatureData).digest('hex');
 
-    // Criar registro de assinatura
+    // Criar registro de assinatura (incluindo campos de aceite dos termos)
     const signature = await this.prisma.signature.create({
       data: {
         userId: quote.userId,
@@ -308,6 +345,10 @@ export class QuotesPublicService {
         ipAddress: requestInfo.ipAddress,
         userAgent: requestInfo.userAgent,
         hash,
+        // Acceptance terms audit fields
+        termsAcceptedAt: dto.termsAcceptedAt ? new Date(dto.termsAcceptedAt) : null,
+        termsHash: dto.termsHash || null,
+        termsVersion: dto.termsVersion || null,
       },
     });
 
@@ -325,6 +366,66 @@ export class QuotesPublicService {
       signatureId: signature.id,
       quoteStatus: 'APPROVED',
     };
+  }
+
+  /**
+   * Buscar termos de aceite para um orcamento
+   * Usado pelo app mobile antes da assinatura
+   */
+  async getAcceptanceTermsForQuote(userId: string, quoteId: string): Promise<{
+    required: boolean;
+    termsContent: string | null;
+    version: number;
+    termsHash: string | null;
+  }> {
+    // Verificar se o orcamento pertence ao usuario
+    const quote = await this.prisma.quote.findFirst({
+      where: {
+        id: quoteId,
+        userId,
+      },
+    });
+
+    if (!quote) {
+      this.logger.warn(`Quote ${quoteId} not found for user ${userId}`);
+      return {
+        required: false,
+        termsContent: null,
+        version: 0,
+        termsHash: null,
+      };
+    }
+
+    // Buscar termos de aceite usando o settingsService
+    return this.settingsService.getAcceptanceTermsForQuote(userId);
+  }
+
+  /**
+   * Buscar termos de aceite para um orcamento via shareKey (publico)
+   */
+  async getAcceptanceTermsForShareKey(shareKey: string): Promise<{
+    required: boolean;
+    termsContent: string | null;
+    version: number;
+    termsHash: string | null;
+  }> {
+    // Buscar orcamento pela shareKey
+    const quote = await this.prisma.quote.findUnique({
+      where: { shareKey },
+      select: { userId: true },
+    });
+
+    if (!quote) {
+      return {
+        required: false,
+        termsContent: null,
+        version: 0,
+        termsHash: null,
+      };
+    }
+
+    // Buscar termos de aceite usando o settingsService
+    return this.settingsService.getAcceptanceTermsForQuote(quote.userId);
   }
 
   /**

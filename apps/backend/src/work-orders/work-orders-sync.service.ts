@@ -9,6 +9,7 @@ import {
   WorkOrderMutationStatus,
   SyncWorkOrderScope,
   SyncWorkOrderItemDto,
+  SyncWorkOrderItemDetailDto,
   WorkOrderMutationResultDto,
   WorkOrderStatus,
 } from './dto/sync-work-orders.dto';
@@ -127,6 +128,14 @@ export class WorkOrdersSyncService {
             address: true,
           },
         },
+        workOrderType: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+          },
+        },
+        items: true, // Include work order items for sync
       },
     });
 
@@ -294,10 +303,14 @@ export class WorkOrdersSyncService {
           : null,
         address: mutation.record.address,
         notes: mutation.record.notes,
+        workOrderTypeId: mutation.record.workOrderTypeId || null,
       },
       include: {
         client: {
           select: { name: true, phone: true, address: true },
+        },
+        workOrderType: {
+          select: { id: true, name: true, color: true },
         },
       },
     });
@@ -390,6 +403,8 @@ export class WorkOrdersSyncService {
       updateData.address = mutation.record.address;
     if (mutation.record.notes !== undefined)
       updateData.notes = mutation.record.notes;
+    if (mutation.record.workOrderTypeId !== undefined)
+      updateData.workOrderTypeId = mutation.record.workOrderTypeId;
 
     const workOrder = await this.prisma.workOrder.update({
       where: { id: mutation.record.id },
@@ -397,6 +412,9 @@ export class WorkOrdersSyncService {
       include: {
         client: {
           select: { name: true, phone: true, address: true },
+        },
+        workOrderType: {
+          select: { id: true, name: true, color: true },
         },
       },
     });
@@ -526,11 +544,31 @@ export class WorkOrdersSyncService {
   }
 
   private toSyncWorkOrderItem(workOrder: any): SyncWorkOrderItemDto {
+    // Transform work order items to sync format
+    const items: SyncWorkOrderItemDetailDto[] = (workOrder.items || []).map(
+      (item: any) => ({
+        id: item.id,
+        workOrderId: item.workOrderId,
+        itemId: item.itemId || undefined,
+        quoteItemId: item.quoteItemId || undefined,
+        name: item.name,
+        type: item.type,
+        unit: item.unit,
+        quantity: Number(item.quantity),
+        unitPrice: Number(item.unitPrice),
+        discountValue: Number(item.discountValue || 0),
+        totalPrice: Number(item.totalPrice),
+        createdAt: item.createdAt.toISOString(),
+        updatedAt: item.updatedAt.toISOString(),
+      }),
+    );
+
     return {
       id: workOrder.id,
       technicianId: workOrder.userId,
       clientId: workOrder.clientId,
       quoteId: workOrder.quoteId || undefined,
+      workOrderTypeId: workOrder.workOrderTypeId || undefined,
       title: workOrder.title,
       description: workOrder.description || undefined,
       status: workOrder.status as WorkOrderStatus,
@@ -549,6 +587,11 @@ export class WorkOrdersSyncService {
       clientName: workOrder.client?.name,
       clientPhone: workOrder.client?.phone || undefined,
       clientAddress: workOrder.client?.address || undefined,
+      // Work order type data
+      workOrderTypeName: workOrder.workOrderType?.name || undefined,
+      workOrderTypeColor: workOrder.workOrderType?.color || undefined,
+      // Work order items
+      items: items.length > 0 ? items : undefined,
     };
   }
 }

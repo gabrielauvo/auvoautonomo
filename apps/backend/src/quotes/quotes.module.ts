@@ -7,9 +7,10 @@ import { QuotesSyncService } from './quotes-sync.service';
 import { QuotesSyncController } from './quotes-sync.controller';
 import { DomainEventsModule } from '../domain-events/domain-events.module';
 import { FileStorageModule } from '../file-storage/file-storage.module';
+import { SettingsModule } from '../settings/settings.module';
 
 @Module({
-  imports: [DomainEventsModule, FileStorageModule],
+  imports: [DomainEventsModule, FileStorageModule, SettingsModule],
   controllers: [QuotesController, QuotesPublicController, QuotesSyncController],
   providers: [QuotesService, QuotesPublicService, QuotesSyncService],
   exports: [QuotesService, QuotesPublicService, QuotesSyncService],

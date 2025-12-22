@@ -24,6 +24,7 @@ import {
 } from './dto/update-template.dto';
 import { UpdateProfileDto, ChangePasswordDto } from './dto/update-profile.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { PlanLimitsService } from '../billing/plan-limits.service';
 import * as bcrypt from 'bcrypt';
 import {
   StorageProvider,
@@ -48,6 +49,26 @@ interface MulterFile {
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_LOGO_SIZE = 2 * 1024 * 1024; // 2MB
 
+/**
+ * Convert relative URLs to absolute URLs for external access (mobile apps, etc.)
+ */
+function toAbsoluteUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+
+  // Already absolute URL
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+
+  // Relative URL - prepend BASE_URL
+  const baseUrl = process.env.BASE_URL || process.env.API_URL || '';
+  if (baseUrl && url.startsWith('/')) {
+    return `${baseUrl}${url}`;
+  }
+
+  return url;
+}
+
 @Controller('settings')
 @UseGuards(JwtAuthGuard)
 export class SettingsController {
@@ -56,6 +77,7 @@ export class SettingsController {
   constructor(
     private readonly settingsService: SettingsService,
     private readonly prisma: PrismaService,
+    private readonly planLimitsService: PlanLimitsService,
     @Inject(STORAGE_PROVIDER)
     private readonly storageProvider: StorageProvider,
   ) {}
@@ -97,7 +119,7 @@ export class SettingsController {
       phone: user.phone || '',
       language: user.language || 'pt-BR',
       timezone: user.timezone || 'America/Sao_Paulo',
-      avatarUrl: user.avatarUrl || null,
+      avatarUrl: toAbsoluteUrl(user.avatarUrl),
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
     };
@@ -143,7 +165,7 @@ export class SettingsController {
       phone: user.phone || '',
       language: user.language || 'pt-BR',
       timezone: user.timezone || 'America/Sao_Paulo',
-      avatarUrl: user.avatarUrl || null,
+      avatarUrl: toAbsoluteUrl(user.avatarUrl),
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
     };
@@ -368,6 +390,62 @@ export class SettingsController {
     return { success: true, message: 'Template resetado com sucesso' };
   }
 
+  // ==================== ACCEPTANCE TERMS ====================
+
+  /**
+   * GET /settings/acceptance-terms
+   * Get acceptance terms configuration
+   * Returns feature availability based on plan
+   */
+  @Get('acceptance-terms')
+  async getAcceptanceTerms(@Req() req: AuthRequest) {
+    const userId = req.user.userId;
+    this.logger.log(`[GET ACCEPTANCE TERMS] Fetching for userId: ${userId}`);
+
+    // Check if feature is available for this plan
+    const featureCheck = await this.planLimitsService.checkFeature({
+      userId,
+      feature: 'ACCEPTANCE_TERMS',
+    });
+
+    // Get current settings
+    const terms = await this.settingsService.getAcceptanceTerms(userId);
+
+    return {
+      ...terms,
+      featureAvailable: featureCheck.available,
+      planMessage: featureCheck.available ? null : featureCheck.message,
+    };
+  }
+
+  /**
+   * PUT /settings/acceptance-terms
+   * Update acceptance terms configuration
+   * Requires ACCEPTANCE_TERMS feature (paid plans only)
+   */
+  @Put('acceptance-terms')
+  async updateAcceptanceTerms(
+    @Req() req: AuthRequest,
+    @Body() dto: { enabled?: boolean; termsContent?: string | null },
+  ) {
+    const userId = req.user.userId;
+    this.logger.log(`[UPDATE ACCEPTANCE TERMS] Updating for userId: ${userId}`);
+
+    // Check if feature is available (throws if not)
+    await this.planLimitsService.checkFeatureOrThrow({
+      userId,
+      feature: 'ACCEPTANCE_TERMS',
+    });
+
+    // Update settings
+    const terms = await this.settingsService.updateAcceptanceTerms(userId, dto);
+
+    return {
+      ...terms,
+      featureAvailable: true,
+    };
+  }
+
   // ==================== COMPANY SETTINGS ====================
 
   /**
@@ -385,36 +463,69 @@ export class SettingsController {
       select: {
         id: true,
         companyName: true,
+        companyLegalName: true,
+        companyTaxId: true,
+        companyStateRegistration: true,
+        companyWhatsapp: true,
+        companyAddress: true,
+        companyBranding: true,
         companyLogoUrl: true,
+        // Pix fields
+        pixKey: true,
+        pixKeyType: true,
+        pixKeyOwnerName: true,
+        pixKeyEnabled: true,
         name: true,
         email: true,
         phone: true,
         createdAt: true,
         updatedAt: true,
+        // Plan feature flag
+        plan: {
+          select: {
+            usageLimits: {
+              select: {
+                enablePixKey: true,
+              },
+            },
+          },
+        },
       },
     });
 
     this.logger.log(`[GET COMPANY] User found: ${user?.id}, logoUrl: ${user?.companyLogoUrl}`);
 
+    const defaultBranding = {
+      primaryColor: '#7C3AED',
+      secondaryColor: '#6D28D9',
+      textColor: '#1F2937',
+      backgroundColor: '#FFFFFF',
+      accentColor: '#10B981',
+    };
+
+    // Check if Pix feature is enabled by plan (default true if no plan/limits)
+    const planEnablesPixKey = user?.plan?.usageLimits?.enablePixKey ?? true;
+
     // Return format expected by frontend
     return {
       id: user?.id || '',
       tradeName: user?.companyName || '',
-      legalName: null,
-      taxId: null,
-      stateRegistration: null,
+      legalName: user?.companyLegalName || null,
+      taxId: user?.companyTaxId || null,
+      stateRegistration: user?.companyStateRegistration || null,
       email: user?.email || '',
       phone: user?.phone || '',
-      whatsapp: null,
-      address: null,
-      logoUrl: user?.companyLogoUrl || null,
-      branding: {
-        primaryColor: '#7C3AED',
-        secondaryColor: '#6D28D9',
-        textColor: '#1F2937',
-        backgroundColor: '#FFFFFF',
-        accentColor: '#10B981',
-      },
+      whatsapp: user?.companyWhatsapp || null,
+      address: user?.companyAddress || null,
+      logoUrl: toAbsoluteUrl(user?.companyLogoUrl),
+      branding: user?.companyBranding || defaultBranding,
+      // Pix settings
+      pixKey: user?.pixKey || null,
+      pixKeyType: user?.pixKeyType || null,
+      pixKeyOwnerName: user?.pixKeyOwnerName || null,
+      pixKeyEnabled: user?.pixKeyEnabled || false,
+      // Feature flag from plan (controls UI visibility)
+      pixKeyFeatureEnabled: planEnablesPixKey,
       createdAt: user?.createdAt?.toISOString() || new Date().toISOString(),
       updatedAt: user?.updatedAt?.toISOString() || new Date().toISOString(),
     };
@@ -439,6 +550,11 @@ export class SettingsController {
       whatsapp?: string;
       address?: any;
       branding?: any;
+      // Pix fields (optional)
+      pixKey?: string | null;
+      pixKeyType?: string | null;
+      pixKeyOwnerName?: string | null;
+      pixKeyEnabled?: boolean;
     },
   ) {
     const userId = req.user.userId;
@@ -446,42 +562,91 @@ export class SettingsController {
     // Support both tradeName (new) and companyName (old)
     const companyName = dto.tradeName ?? dto.companyName;
 
+    // Normalize Pix key if provided
+    const normalizedPixKey = dto.pixKey !== undefined
+      ? this.normalizePixKey(dto.pixKey, dto.pixKeyType)
+      : undefined;
+
     const user = await this.prisma.user.update({
       where: { id: userId },
       data: {
         ...(companyName !== undefined && { companyName }),
         ...(dto.phone !== undefined && { phone: dto.phone }),
+        ...(dto.legalName !== undefined && { companyLegalName: dto.legalName }),
+        ...(dto.taxId !== undefined && { companyTaxId: dto.taxId }),
+        ...(dto.stateRegistration !== undefined && { companyStateRegistration: dto.stateRegistration }),
+        ...(dto.whatsapp !== undefined && { companyWhatsapp: dto.whatsapp }),
+        ...(dto.address !== undefined && { companyAddress: dto.address }),
+        ...(dto.branding !== undefined && { companyBranding: dto.branding }),
+        // Pix fields
+        ...(normalizedPixKey !== undefined && { pixKey: normalizedPixKey }),
+        ...(dto.pixKeyType !== undefined && { pixKeyType: dto.pixKeyType }),
+        ...(dto.pixKeyOwnerName !== undefined && { pixKeyOwnerName: dto.pixKeyOwnerName }),
+        ...(dto.pixKeyEnabled !== undefined && { pixKeyEnabled: dto.pixKeyEnabled }),
       },
       select: {
         id: true,
         companyName: true,
+        companyLegalName: true,
+        companyTaxId: true,
+        companyStateRegistration: true,
+        companyWhatsapp: true,
+        companyAddress: true,
+        companyBranding: true,
         companyLogoUrl: true,
+        // Pix fields
+        pixKey: true,
+        pixKeyType: true,
+        pixKeyOwnerName: true,
+        pixKeyEnabled: true,
         phone: true,
         email: true,
         createdAt: true,
         updatedAt: true,
+        // Plan feature flag
+        plan: {
+          select: {
+            usageLimits: {
+              select: {
+                enablePixKey: true,
+              },
+            },
+          },
+        },
       },
     });
+
+    const defaultBranding = {
+      primaryColor: '#7C3AED',
+      secondaryColor: '#6D28D9',
+      textColor: '#1F2937',
+      backgroundColor: '#FFFFFF',
+      accentColor: '#10B981',
+    };
+
+    // Check if Pix feature is enabled by plan (default true if no plan/limits)
+    const planEnablesPixKey = user.plan?.usageLimits?.enablePixKey ?? true;
 
     // Return format expected by frontend
     return {
       id: user.id,
       tradeName: user.companyName || '',
-      legalName: dto.legalName || null,
-      taxId: dto.taxId || null,
-      stateRegistration: dto.stateRegistration || null,
+      legalName: user.companyLegalName || null,
+      taxId: user.companyTaxId || null,
+      stateRegistration: user.companyStateRegistration || null,
       email: user.email || '',
       phone: user.phone || '',
-      whatsapp: dto.whatsapp || null,
-      address: dto.address || null,
-      logoUrl: user.companyLogoUrl || null,
-      branding: dto.branding || {
-        primaryColor: '#7C3AED',
-        secondaryColor: '#6D28D9',
-        textColor: '#1F2937',
-        backgroundColor: '#FFFFFF',
-        accentColor: '#10B981',
-      },
+      whatsapp: user.companyWhatsapp || null,
+      address: user.companyAddress || null,
+      logoUrl: toAbsoluteUrl(user.companyLogoUrl),
+      branding: user.companyBranding || defaultBranding,
+      // Pix settings
+      pixKey: user.pixKey || null,
+      pixKeyType: user.pixKeyType || null,
+      pixKeyOwnerName: user.pixKeyOwnerName || null,
+      pixKeyEnabled: user.pixKeyEnabled || false,
+      // Feature flag from plan (controls UI visibility)
+      pixKeyFeatureEnabled: planEnablesPixKey,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
     };
@@ -617,5 +782,46 @@ export class SettingsController {
     // URL format: /uploads/logos/userId/filename
     const match = url.match(/\/uploads\/(.+)/);
     return match ? match[1] : null;
+  }
+
+  /**
+   * Normalize Pix key based on type
+   * - CPF/CNPJ: remove non-digits
+   * - PHONE: normalize to E.164 format (+55...)
+   * - EMAIL: lowercase and trim
+   * - RANDOM: keep as-is (UUID format)
+   * - null/empty: return null
+   */
+  private normalizePixKey(key: string | null | undefined, keyType?: string | null): string | null {
+    if (!key || key.trim() === '') {
+      return null;
+    }
+
+    const trimmedKey = key.trim();
+
+    switch (keyType) {
+      case 'CPF':
+      case 'CNPJ':
+        // Remove all non-digit characters
+        return trimmedKey.replace(/\D/g, '');
+
+      case 'PHONE':
+        // Normalize phone to E.164 format
+        let phone = trimmedKey.replace(/\D/g, '');
+        // If doesn't start with country code, add Brazil's
+        if (phone.length <= 11) {
+          phone = '55' + phone;
+        }
+        return '+' + phone;
+
+      case 'EMAIL':
+        // Lowercase and trim
+        return trimmedKey.toLowerCase();
+
+      case 'RANDOM':
+      default:
+        // Keep as-is for random keys or unknown types
+        return trimmedKey;
+    }
   }
 }

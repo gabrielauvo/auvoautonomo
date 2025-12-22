@@ -36,7 +36,12 @@ export class LocalStorageProvider implements StorageProvider {
     const storagePath = path.join(filePath, fileName).replace(/\\/g, '/');
 
     // Build public URL for accessing the file
-    const publicUrl = `/uploads/${storagePath}`;
+    // Use BASE_URL env var to generate full URL for external access (mobile apps, etc.)
+    const baseUrl = process.env.BASE_URL || process.env.API_URL || '';
+    const relativePath = `/uploads/${storagePath}`;
+    const publicUrl = baseUrl ? `${baseUrl}${relativePath}` : relativePath;
+
+    this.logger.log(`Public URL: ${publicUrl} (baseUrl: ${baseUrl || 'not set'})`);
 
     return {
       storagePath,

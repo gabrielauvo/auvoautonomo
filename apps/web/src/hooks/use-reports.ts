@@ -18,6 +18,8 @@ import type {
   OperationsReportData,
   ClientsReportData,
   DashboardOverviewData,
+  ProfitLossReportData,
+  ServicesReportData,
 } from '@/types/reports';
 
 /**
@@ -74,6 +76,30 @@ export function useClientsReport(filters?: ReportFilters, enabled = true) {
   return useQuery<ClientsReportData>({
     queryKey: ['reports', 'clients', filters?.period, filters?.startDate, filters?.endDate, filters?.groupBy],
     queryFn: () => reportsService.getClientsReport(filters),
+    staleTime: 5 * 60 * 1000,
+    enabled,
+  });
+}
+
+/**
+ * Hook para Relatório de Lucro/Prejuízo
+ */
+export function useProfitLossReport(filters?: ReportFilters, enabled = true) {
+  return useQuery<ProfitLossReportData>({
+    queryKey: ['reports', 'profit-loss', filters?.period, filters?.startDate, filters?.endDate, filters?.groupBy],
+    queryFn: () => reportsService.getProfitLossReport(filters),
+    staleTime: 5 * 60 * 1000,
+    enabled,
+  });
+}
+
+/**
+ * Hook para Relatório de Serviços (OS por Tipo)
+ */
+export function useServicesReport(filters?: ReportFilters, enabled = true) {
+  return useQuery<ServicesReportData>({
+    queryKey: ['reports', 'services', filters?.period, filters?.startDate, filters?.endDate, filters?.groupBy],
+    queryFn: () => reportsService.getServicesReport(filters),
     staleTime: 5 * 60 * 1000,
     enabled,
   });

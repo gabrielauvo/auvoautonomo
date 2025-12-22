@@ -87,6 +87,58 @@ services:
       - "min_wal_size=1GB"
       - "-c"
       - "max_wal_size=4GB"
+      # PowerSync requires logical replication
+      - "-c"
+      - "wal_level=logical"
+      - "-c"
+      - "max_replication_slots=5"
+      - "-c"
+      - "max_wal_senders=5"
+
+  # ==========================================
+  # PowerSync Service (Self-hosted)
+  # ==========================================
+  powersync:
+    image: journeyapps/powersync-service:latest
+    container_name: monorepo-powersync
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # PowerSync config via env vars
+      POWERSYNC_CONFIG: |
+        replication:
+          connections:
+            - type: postgresql
+              uri: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-monorepo}
+
+        storage:
+          type: memory
+
+        api:
+          tokens:
+            - ${POWERSYNC_API_TOKEN:-dev-token-change-in-production}
+
+        # JWT validation using same secret as backend (HS256)
+        client_auth:
+          supabase: false
+
+        sync_rules:
+          path: /sync-rules.yaml
+    ports:
+      - "${POWERSYNC_PORT:-8080}:8080"
+    networks:
+      - backend
+      - database
+    volumes:
+      - ./powersync/sync-rules.yaml:/sync-rules.yaml:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # ==========================================
   # Redis Cache

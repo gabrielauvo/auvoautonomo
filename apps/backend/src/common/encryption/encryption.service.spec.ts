@@ -61,12 +61,8 @@ describe('EncryptionService', () => {
       expect(decrypted2).toBe(plainText);
     });
 
-    it('should handle empty string', () => {
-      const plainText = '';
-      const encrypted = service.encrypt(plainText);
-      const decrypted = service.decrypt(encrypted);
-
-      expect(decrypted).toBe(plainText);
+    it('should throw error for empty string', () => {
+      expect(() => service.encrypt('')).toThrow('Cannot encrypt empty text');
     });
 
     it('should handle special characters', () => {
@@ -124,7 +120,7 @@ describe('EncryptionService', () => {
       const envBackup = process.env.ENCRYPTION_KEY;
       process.env.ENCRYPTION_KEY = 'short';
 
-      expect(() => new EncryptionService()).toThrow('ENCRYPTION_KEY must be 64 hexadecimal characters (32 bytes)');
+      expect(() => new EncryptionService()).toThrow('Encryption key must be 64 hexadecimal characters (32 bytes)');
 
       process.env.ENCRYPTION_KEY = envBackup;
     });

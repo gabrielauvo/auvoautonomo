@@ -62,6 +62,10 @@ export interface PaymentCreatedContext {
   pixCode?: string;
   workOrderNumber?: string;
   quoteNumber?: string;
+  // Company Pix key info
+  companyPixKey?: string;
+  companyPixKeyType?: string;
+  companyPixKeyOwnerName?: string;
 }
 
 export interface PaymentConfirmedContext {
@@ -84,6 +88,10 @@ export interface PaymentOverdueContext {
   daysOverdue: number;
   paymentLink?: string;
   workOrderNumber?: string;
+  // Company Pix key info
+  companyPixKey?: string;
+  companyPixKeyType?: string;
+  companyPixKeyOwnerName?: string;
 }
 
 export interface PaymentReminderBeforeDueContext {
@@ -98,6 +106,10 @@ export interface PaymentReminderBeforeDueContext {
   pixCode?: string;
   workOrderNumber?: string;
   quoteNumber?: string;
+  // Company Pix key info
+  companyPixKey?: string;
+  companyPixKeyType?: string;
+  companyPixKeyOwnerName?: string;
 }
 
 export interface PaymentReminderAfterDueContext {
@@ -112,6 +124,10 @@ export interface PaymentReminderAfterDueContext {
   pixCode?: string;
   workOrderNumber?: string;
   quoteNumber?: string;
+  // Company Pix key info
+  companyPixKey?: string;
+  companyPixKeyType?: string;
+  companyPixKeyOwnerName?: string;
 }
 
 export interface QuoteFollowUpContext {

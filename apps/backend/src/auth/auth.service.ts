@@ -18,6 +18,26 @@ export interface GoogleUser {
   accessToken: string;
 }
 
+/**
+ * Convert relative URLs to absolute URLs for external access (mobile apps, etc.)
+ */
+function toAbsoluteUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+
+  // Already absolute URL
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+
+  // Relative URL - prepend BASE_URL
+  const baseUrl = process.env.BASE_URL || process.env.API_URL || '';
+  if (baseUrl && url.startsWith('/')) {
+    return `${baseUrl}${url}`;
+  }
+
+  return url;
+}
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -110,7 +130,11 @@ export class AuthService {
     this.logger.log(`User logged in successfully: ${user.id}`);
 
     return {
-      user: userWithoutPassword,
+      user: {
+        ...userWithoutPassword,
+        avatarUrl: toAbsoluteUrl(user.avatarUrl),
+        companyLogoUrl: toAbsoluteUrl(user.companyLogoUrl),
+      },
       token,
     };
   }
@@ -126,7 +150,12 @@ export class AuthService {
       throw new UnauthorizedException('User not found');
     }
 
-    return user;
+    // Transform relative URLs to absolute for external access
+    return {
+      ...user,
+      avatarUrl: toAbsoluteUrl(user.avatarUrl),
+      companyLogoUrl: toAbsoluteUrl(user.companyLogoUrl),
+    };
   }
 
   private generateToken(userId: string, email: string): string {

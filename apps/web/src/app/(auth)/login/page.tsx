@@ -10,7 +10,7 @@
  * - Loading state
  */
 
-import { useState, FormEvent, useEffect, useRef } from 'react';
+import { useState, FormEvent, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/auth-context';
@@ -30,7 +30,7 @@ import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, isAuthenticated, isLoading: authLoading, error, clearError } = useAuth();
+  const { login, isAuthenticated, isLoading: authLoading, error: authError, clearError } = useAuth();
   const { t } = useTranslations('auth');
 
   const [email, setEmail] = useState('');
@@ -38,23 +38,41 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
   const submitTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hasRedirectedRef = useRef(false);
 
-  // Redireciona se já autenticado
+  // Marca quando o loading inicial terminou
   useEffect(() => {
-    if (isAuthenticated && !authLoading) {
+    if (!authLoading && !initialLoadDone) {
+      setInitialLoadDone(true);
+    }
+  }, [authLoading, initialLoadDone]);
+
+  // Redireciona se já autenticado (apenas uma vez, após load inicial)
+  useEffect(() => {
+    if (initialLoadDone && isAuthenticated && !hasRedirectedRef.current) {
+      hasRedirectedRef.current = true;
       router.push('/dashboard');
     }
-  }, [isAuthenticated, authLoading, router]);
+  }, [isAuthenticated, initialLoadDone, router]);
 
-  // Limpa erro ao mudar campos
+  // Limpar erros do auth context ao montar
   useEffect(() => {
-    if (formError || error) {
-      setFormError(null);
-      clearError();
-    }
+    clearError();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [email, password]);
+  }, []);
+
+  // Handlers com limpeza de erro local
+  const handleEmailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
+    if (formError) setFormError(null);
+  }, [formError]);
+
+  const handlePasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+    if (formError) setFormError(null);
+  }, [formError]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -101,8 +119,8 @@ export default function LoginPage() {
     }
   };
 
-  // Loading inicial
-  if (authLoading) {
+  // Loading inicial (apenas na primeira carga)
+  if (!initialLoadDone && authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-pulse text-primary">{t('loading')}</div>
@@ -131,9 +149,9 @@ export default function LoginPage() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Erro */}
-              {(formError || error) && (
+              {(formError || authError) && (
                 <Alert variant="error">
-                  {formError || error}
+                  {formError || authError}
                 </Alert>
               )}
 
@@ -143,7 +161,7 @@ export default function LoginPage() {
                   type="email"
                   placeholder={t('emailPlaceholder')}
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={handleEmailChange}
                   leftIcon={<Mail className="h-4 w-4" />}
                   disabled={isSubmitting}
                   autoComplete="email"
@@ -157,7 +175,7 @@ export default function LoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   placeholder={t('passwordPlaceholder')}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={handlePasswordChange}
                   leftIcon={<Lock className="h-4 w-4" />}
                   rightIcon={
                     <button

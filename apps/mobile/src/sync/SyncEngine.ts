@@ -690,7 +690,12 @@ export class SyncEngine {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[SyncEngine] Pull error:', errorText);
+      // Use warn instead of error for 401 to avoid showing in LogBox
+      if (response.status === 401) {
+        console.warn('[SyncEngine] Pull unauthorized (401) - user session may have expired');
+      } else {
+        console.warn('[SyncEngine] Pull error:', response.status, errorText);
+      }
       throw new Error(`Pull failed: ${response.status} - ${errorText}`);
     }
 
@@ -1427,6 +1432,11 @@ export class SyncEngine {
       });
 
       if (!response.ok) {
+        // 401 means user session expired - don't show as error
+        if (response.status === 401) {
+          console.warn('[SyncEngine] Templates sync skipped - user not authenticated');
+          return;
+        }
         throw new Error(`Failed to fetch templates: ${response.status}`);
       }
 
@@ -1469,8 +1479,8 @@ export class SyncEngine {
 
       console.log(`[SyncEngine] Saved ${templates.length} checklist templates to local DB`);
     } catch (error) {
-      console.error('[SyncEngine] Failed to sync checklist templates:', error);
-      // Don't propagate - this is secondary to main sync
+      // Use warn to avoid showing in LogBox - this is secondary to main sync
+      console.warn('[SyncEngine] Failed to sync checklist templates:', error);
     }
   }
 
@@ -1532,7 +1542,8 @@ export class SyncEngine {
 
       console.log(`[SyncEngine] [${correlationId}] Checklists sync complete`);
     } catch (error) {
-      console.error(`[SyncEngine] [${correlationId}] Failed to sync checklists:`, error);
+      // Use warn - expected when no checklists to sync or network issue
+      console.warn(`[SyncEngine] [${correlationId}] Checklists sync skipped:`, error instanceof Error ? error.message : error);
       // Não propagar erro - é secundário ao sync principal
     }
   }
@@ -1699,7 +1710,8 @@ export class SyncEngine {
       const result = await ExecutionSessionSyncService.pushAllPendingSessions();
       console.log('[SyncEngine] Execution sessions sync complete:', result);
     } catch (error) {
-      console.error('[SyncEngine] Failed to sync execution sessions:', error);
+      // Use warn - expected when no sessions to sync or network issue
+      console.warn('[SyncEngine] Execution sessions sync skipped:', error instanceof Error ? error.message : error);
       // Não propagar erro - é secundário ao sync principal
     }
   }
@@ -1734,7 +1746,8 @@ export class SyncEngine {
         failed: result.failed,
       });
     } catch (error) {
-      console.error('[SyncEngine] Failed to sync checklist attachments:', error);
+      // Use warn - expected when no attachments to sync or network issue
+      console.warn('[SyncEngine] Checklist attachments sync skipped:', error instanceof Error ? error.message : error);
       // Não propagar erro - é secundário ao sync principal
     }
   }
@@ -1761,7 +1774,8 @@ export class SyncEngine {
         console.log(`[SyncEngine] Cleaned up ${result.changes} invalid attachments`);
       }
     } catch (error) {
-      console.error('[SyncEngine] Failed to cleanup invalid attachments:', error);
+      // Use warn - cleanup failures are not critical
+      console.warn('[SyncEngine] Cleanup attachments skipped:', error instanceof Error ? error.message : error);
     }
   }
 
@@ -1793,7 +1807,8 @@ export class SyncEngine {
         failed: result.failed,
       });
     } catch (error) {
-      console.error('[SyncEngine] Failed to sync quote signatures:', error);
+      // Use warn - expected when no signatures to sync or network issue
+      console.warn('[SyncEngine] Quote signatures sync skipped:', error instanceof Error ? error.message : error);
       // Não propagar erro - é secundário ao sync principal
     }
   }
@@ -1826,7 +1841,8 @@ export class SyncEngine {
         failed: result.failed,
       });
     } catch (error) {
-      console.error('[SyncEngine] Failed to sync work order signatures:', error);
+      // Use warn - expected when no signatures to sync or network issue
+      console.warn('[SyncEngine] Work order signatures sync skipped:', error instanceof Error ? error.message : error);
       // Não propagar erro - é secundário ao sync principal
     }
   }

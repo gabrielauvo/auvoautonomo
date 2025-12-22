@@ -18,6 +18,8 @@ export interface UsageLimits {
   maxQuotes: number;
   maxWorkOrders: number;
   maxPayments: number;
+  maxSuppliers: number;
+  maxExpenses: number;
   maxNotificationsPerMonth: number;
   enableAdvancedAutomations: boolean;
   enableAdvancedAnalytics: boolean;

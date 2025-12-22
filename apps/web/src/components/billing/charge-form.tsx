@@ -223,6 +223,7 @@ export function ChargeForm({
   const [interestValue, setInterestValue] = useState(charge?.interest?.value?.toString() || '');
   const [errors, setErrors] = useState<FormErrors>({});
   const [showUpsellModal, setShowUpsellModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Carregar cliente pré-selecionado
   useEffect(() => {
@@ -266,10 +267,16 @@ export function ChargeForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // CRITICAL: Guard against duplicate submissions
+    if (isSubmitting) {
+      return;
+    }
+
     if (!validate()) {
       return;
     }
 
+    setIsSubmitting(true);
     setErrors({});
 
     try {
@@ -348,6 +355,8 @@ export function ChargeForm({
           general: errorMessage || 'Erro ao salvar cobrança. Tente novamente.',
         });
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -359,7 +368,7 @@ export function ChargeForm({
     }
   };
 
-  const isLoading = createCharge.isPending || updateCharge.isPending;
+  const isLoading = isSubmitting || createCharge.isPending || updateCharge.isPending;
 
   return (
     <>

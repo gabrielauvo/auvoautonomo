@@ -17,6 +17,8 @@ import {
   Shield,
   ClipboardCheck,
   Plug,
+  Warehouse,
+  Folder,
 } from 'lucide-react';
 import { AppLayout } from '@/components/layout';
 import { Card } from '@/components/ui';
@@ -62,6 +64,18 @@ const SETTINGS_NAV = [
     label: 'Integrações',
     icon: Plug,
     description: 'Asaas e outros serviços',
+  },
+  {
+    href: '/settings/inventory',
+    label: 'Estoque',
+    icon: Warehouse,
+    description: 'Controle de estoque',
+  },
+  {
+    href: '/expense-categories',
+    label: 'Categorias de Despesas',
+    icon: Folder,
+    description: 'Organizar despesas',
   },
   {
     href: '/settings/notifications',

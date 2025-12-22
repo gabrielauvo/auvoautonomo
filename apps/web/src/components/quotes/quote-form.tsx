@@ -213,6 +213,7 @@ export function QuoteForm({ quote, onSuccess, onCancel, preselectedClientId }: Q
   const [errors, setErrors] = useState<FormErrors>({});
   const [showCatalogModal, setShowCatalogModal] = useState(false);
   const [showUpsellModal, setShowUpsellModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Inicializa itens do orçamento existente
   useEffect(() => {
@@ -357,10 +358,16 @@ export function QuoteForm({ quote, onSuccess, onCancel, preselectedClientId }: Q
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // CRITICAL: Guard against duplicate submissions
+    if (isSubmitting) {
+      return;
+    }
+
     if (!validate()) {
       return;
     }
 
+    setIsSubmitting(true);
     setErrors({});
 
     try {
@@ -417,6 +424,8 @@ export function QuoteForm({ quote, onSuccess, onCancel, preselectedClientId }: Q
           general: errorMessage || 'Erro ao salvar orçamento. Tente novamente.',
         });
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -430,6 +439,7 @@ export function QuoteForm({ quote, onSuccess, onCancel, preselectedClientId }: Q
   };
 
   const isLoading =
+    isSubmitting ||
     createQuote.isPending ||
     updateQuote.isPending ||
     addQuoteItem.isPending ||

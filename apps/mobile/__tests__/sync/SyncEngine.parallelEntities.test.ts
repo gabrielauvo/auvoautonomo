@@ -45,19 +45,17 @@ jest.mock('../../src/queue/MutationQueue', () => ({
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
 
-// Mock SYNC_FLAGS
-const mockSyncFlags = {
-  SYNC_OPT_CHUNK_PROCESSING: true,
-  CHUNK_SIZE: 100,
-  CHUNK_YIELD_DELAY_MS: 0,
-  SYNC_OPT_PARALLEL_ENTITIES: true,
-  MAX_PARALLEL_ENTITIES: 2,
-  PARALLEL_SAFE_ENTITIES: ['clients', 'categories'] as readonly string[],
-  SEQUENTIAL_ENTITIES: ['catalogItems', 'quotes', 'work_orders'] as readonly string[],
-};
-
+// Mock SYNC_FLAGS - inline because jest.mock is hoisted
 jest.mock('../../src/config/syncFlags', () => ({
-  SYNC_FLAGS: mockSyncFlags,
+  SYNC_FLAGS: {
+    SYNC_OPT_CHUNK_PROCESSING: true,
+    CHUNK_SIZE: 100,
+    CHUNK_YIELD_DELAY_MS: 0,
+    SYNC_OPT_PARALLEL_ENTITIES: true,
+    MAX_PARALLEL_ENTITIES: 2,
+    PARALLEL_SAFE_ENTITIES: ['clients', 'categories'],
+    SEQUENTIAL_ENTITIES: ['catalogItems', 'quotes', 'work_orders'],
+  },
 }));
 
 // Track sync metrics

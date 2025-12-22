@@ -40,6 +40,11 @@ import { DomainEventsModule } from './domain-events/domain-events.module';
 import { CnpjLookupModule } from './cnpj-lookup/cnpj-lookup.module';
 import { HealthModule } from './health/health.module';
 import { SecureLoggerModule } from './common/logging';
+import { SuppliersModule } from './suppliers/suppliers.module';
+import { ExpenseCategoriesModule } from './expense-categories/expense-categories.module';
+import { ExpensesModule } from './expenses/expenses.module';
+import { WorkOrderTypesModule } from './work-order-types/work-order-types.module';
+import { InventoryModule } from './inventory/inventory.module';
 
 @Module({
   imports: [
@@ -101,6 +106,11 @@ import { SecureLoggerModule } from './common/logging';
     CnpjLookupModule,
     HealthModule,
     SecureLoggerModule,
+    SuppliersModule,
+    ExpenseCategoriesModule,
+    ExpensesModule,
+    WorkOrderTypesModule,
+    InventoryModule,
   ],
   controllers: [AppController],
   providers: [

@@ -191,4 +191,84 @@ export interface DashboardOverviewData {
   }[];
 }
 
+/**
+ * Services Report Data (Work Orders by Type)
+ */
+export interface ServicesReportData {
+  summary: {
+    totalWorkOrders: number;
+    completedWorkOrders: number;
+    typesUsed: number;
+    avgTimeToComplete: number | null;
+  };
+  workOrdersByType: {
+    typeId: string | null;
+    typeName: string;
+    typeColor: string;
+    count: number;
+    completedCount: number;
+    completionRate: number;
+    totalValue: number;
+  }[];
+  topClientsByType: {
+    typeId: string | null;
+    typeName: string;
+    typeColor: string;
+    clients: {
+      clientId: string;
+      clientName: string;
+      count: number;
+      totalValue: number;
+    }[];
+  }[];
+  typesByPeriod: {
+    date: string;
+    label: string;
+    types: { typeId: string | null; typeName: string; typeColor: string; count: number }[];
+  }[];
+}
+
+/**
+ * Profit/Loss Report Data
+ */
+export interface ProfitLossReportData {
+  summary: {
+    totalRevenue: number;
+    totalExpenses: number;
+    netProfit: number;
+    profitMargin: number;
+  };
+  byPeriod: {
+    date: string;
+    label: string;
+    revenue: number;
+    expenses: number;
+    profit: number;
+  }[];
+  byCategory: {
+    categoryId: string | null;
+    categoryName: string;
+    totalAmount: number;
+    percentage: number;
+    color: string;
+  }[];
+  byWorkOrder: {
+    workOrderId: string;
+    workOrderNumber: string;
+    clientName: string;
+    revenue: number;
+    expenses: number;
+    profit: number;
+    profitMargin: number;
+  }[];
+  topExpenses: {
+    id: string;
+    description: string;
+    amount: number;
+    categoryName: string | null;
+    supplierName: string | null;
+    dueDate: string;
+  }[];
+}
+
 export default {};

@@ -108,4 +108,13 @@ export class CreateWorkOrderDto {
   @IsUUID('4', { message: 'ID do template de checklist inválido' })
   @IsOptional()
   checklistTemplateId?: string;
+
+  @ApiProperty({
+    description: 'ID do tipo de ordem de serviço',
+    example: 'uuid-work-order-type-id',
+    required: false,
+  })
+  @IsUUID('4', { message: 'ID do tipo de OS inválido' })
+  @IsOptional()
+  workOrderTypeId?: string;
 }

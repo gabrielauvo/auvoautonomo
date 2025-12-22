@@ -21,8 +21,9 @@ import { Text } from '../../design-system/components/Text';
 import { Card } from '../../design-system/components/Card';
 import { colors, spacing, borderRadius, shadows } from '../../design-system/tokens';
 import { QuoteWithItems } from './QuoteService';
-import { QuoteSignatureService } from './QuoteSignatureService';
+import { QuoteSignatureService, AcceptanceTermsData } from './QuoteSignatureService';
 import { SignaturePad, SignatureData } from '../checklists/components/SignaturePad';
+import { AcceptanceTermsModal } from './AcceptanceTermsModal';
 import { useTranslation } from '../../i18n';
 
 // =============================================================================
@@ -60,7 +61,48 @@ export const QuoteSignatureScreen: React.FC<QuoteSignatureScreenProps> = ({
   const [loading, setLoading] = useState(false);
   const [signaturePadVisible, setSignaturePadVisible] = useState(false);
 
+  // Acceptance Terms state
+  const [acceptanceTerms, setAcceptanceTerms] = useState<AcceptanceTermsData | null>(null);
+  const [termsModalVisible, setTermsModalVisible] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [loadingTerms, setLoadingTerms] = useState(true);
+
+  // Load acceptance terms on mount
+  useEffect(() => {
+    loadAcceptanceTerms();
+  }, [quote.id]);
+
+  const loadAcceptanceTerms = async () => {
+    try {
+      setLoadingTerms(true);
+      const terms = await QuoteSignatureService.getAcceptanceTerms(quote.id);
+      setAcceptanceTerms(terms);
+      // If terms are not required, mark as accepted
+      if (!terms?.required) {
+        setTermsAccepted(true);
+      }
+    } catch (error) {
+      console.error('[QuoteSignatureScreen] Error loading acceptance terms:', error);
+      // If we can't load terms, assume they're not required
+      setTermsAccepted(true);
+    } finally {
+      setLoadingTerms(false);
+    }
+  };
+
   const handleOpenSignaturePad = () => {
+    // If terms are required and not accepted, show terms modal first
+    if (acceptanceTerms?.required && !termsAccepted) {
+      setTermsModalVisible(true);
+    } else {
+      setSignaturePadVisible(true);
+    }
+  };
+
+  const handleTermsAccepted = () => {
+    setTermsAccepted(true);
+    setTermsModalVisible(false);
+    // Open signature pad after accepting terms
     setSignaturePadVisible(true);
   };
 
@@ -68,14 +110,24 @@ export const QuoteSignatureScreen: React.FC<QuoteSignatureScreenProps> = ({
     try {
       setLoading(true);
 
-      // Criar assinatura usando o service
-      await QuoteSignatureService.createSignature({
+      // Build signature input with acceptance terms audit data
+      const signatureInput: any = {
         quoteId: quote.id,
         signerName: data.signerName,
         signerDocument: data.signerDocument,
         signerRole: data.signerRole,
         signatureBase64: data.signatureBase64,
-      });
+      };
+
+      // Add acceptance terms audit data if terms were required and accepted
+      if (acceptanceTerms?.required && termsAccepted) {
+        signatureInput.termsAcceptedAt = new Date().toISOString();
+        signatureInput.termsHash = acceptanceTerms.termsHash;
+        signatureInput.termsVersion = acceptanceTerms.version;
+      }
+
+      // Criar assinatura usando o service
+      await QuoteSignatureService.createSignature(signatureInput);
 
       Alert.alert(
         t('quotes.signatureSuccess') || 'Assinatura Coletada',
@@ -176,19 +228,62 @@ export const QuoteSignatureScreen: React.FC<QuoteSignatureScreenProps> = ({
           </View>
         </Card>
 
-        {/* Terms */}
-        <Card style={styles.termsCard}>
-          <Ionicons name="information-circle-outline" size={20} color={colors.primary[600]} />
-          <View style={styles.termsContent}>
-            <Text variant="bodySmall" weight="semibold" color="primary">
-              {t('quotes.signatureTermsTitle') || 'Termos da Assinatura'}
-            </Text>
-            <Text variant="caption" color="secondary" style={styles.termsText}>
-              {t('quotes.signatureTermsMessage') ||
-                'Ao assinar este documento, você declara que leu e concorda com os termos do orçamento apresentado. A assinatura digital tem valor legal.'}
-            </Text>
-          </View>
-        </Card>
+        {/* Terms - show acceptance terms card if configured */}
+        {acceptanceTerms?.required ? (
+          <TouchableOpacity
+            style={[
+              styles.termsCard,
+              { backgroundColor: termsAccepted ? colors.success[50] : colors.warning[50] },
+              { borderColor: termsAccepted ? colors.success[200] : colors.warning[200] },
+            ]}
+            onPress={() => setTermsModalVisible(true)}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name={termsAccepted ? 'checkmark-circle' : 'document-text-outline'}
+              size={24}
+              color={termsAccepted ? colors.success[600] : colors.warning[600]}
+            />
+            <View style={styles.termsContent}>
+              <Text
+                variant="bodySmall"
+                weight="semibold"
+                style={{ color: termsAccepted ? colors.success[700] : colors.warning[700] }}
+              >
+                {t('quotes.acceptanceTermsTitle') || 'Termos de Aceite'}
+              </Text>
+              <Text
+                variant="caption"
+                style={{
+                  ...styles.termsText,
+                  color: termsAccepted ? colors.success[600] : colors.warning[600],
+                }}
+              >
+                {termsAccepted
+                  ? t('quotes.termsAccepted') || 'Termos lidos e aceitos'
+                  : t('quotes.termsRequired') || 'Toque para ler e aceitar os termos obrigatorios'}
+              </Text>
+            </View>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={termsAccepted ? colors.success[400] : colors.warning[400]}
+            />
+          </TouchableOpacity>
+        ) : (
+          <Card style={styles.termsCard}>
+            <Ionicons name="information-circle-outline" size={20} color={colors.primary[600]} />
+            <View style={styles.termsContent}>
+              <Text variant="bodySmall" weight="semibold" color="primary">
+                {t('quotes.signatureTermsTitle') || 'Termos da Assinatura'}
+              </Text>
+              <Text variant="caption" color="secondary" style={styles.termsText}>
+                {t('quotes.signatureTermsMessage') ||
+                  'Ao assinar este documento, voce declara que leu e concorda com os termos do orcamento apresentado. A assinatura digital tem valor legal.'}
+              </Text>
+            </View>
+          </Card>
+        )}
 
         {/* Instructions */}
         <View style={styles.instructions}>
@@ -227,6 +322,14 @@ export const QuoteSignatureScreen: React.FC<QuoteSignatureScreenProps> = ({
         defaultSignerRole="Cliente"
         requireDocument={false}
         title={t('quotes.clientSignature') || 'Assinatura do Cliente'}
+      />
+
+      {/* Acceptance Terms Modal */}
+      <AcceptanceTermsModal
+        visible={termsModalVisible}
+        termsData={acceptanceTerms}
+        onAccept={handleTermsAccepted}
+        onCancel={() => setTermsModalVisible(false)}
       />
     </SafeAreaView>
   );

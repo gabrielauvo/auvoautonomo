@@ -95,7 +95,7 @@ describe('WorkOrderService', () => {
     scheduledEndTime: '2024-01-15T11:00:00.000Z',
     address: '123 Main St',
     notes: 'Test notes',
-    isActive: 1,
+    isActive: true,
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
     technicianId,

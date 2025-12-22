@@ -38,6 +38,7 @@ import {
   Image as ImageIcon,
   PenTool,
   Trash2,
+  ScrollText,
 } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -87,6 +88,13 @@ interface QuoteData {
     mimeType: string;
     createdAt: string;
   }>;
+  template?: {
+    primaryColor: string;
+    secondaryColor: string;
+    showLogo: boolean;
+    logoPosition: string;
+    footerText: string | null;
+  };
 }
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
@@ -115,11 +123,12 @@ function formatDateTime(dateString: string | null): string {
 }
 
 // Componente para seção com título
-function Section({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) {
+function Section({ title, icon: Icon, children, primaryColor }: { title: string; icon: any; children: React.ReactNode; primaryColor?: string }) {
+  const color = primaryColor || '#7C3AED';
   return (
     <div className="mb-6">
-      <div className="flex items-center gap-2 mb-3 pb-2 border-b-2 border-primary">
-        <Icon className="h-5 w-5 text-primary" />
+      <div className="flex items-center gap-2 mb-3 pb-2 border-b-2" style={{ borderColor: color }}>
+        <Icon className="h-5 w-5" style={{ color }} />
         <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
       </div>
       {children}
@@ -509,6 +518,123 @@ function RejectModal({
   );
 }
 
+// Modal de Termos de Aceite
+function AcceptanceTermsModal({
+  isOpen,
+  onClose,
+  onAccept,
+  termsContent,
+  version,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onAccept: () => void;
+  termsContent: string | null;
+  version: number;
+}) {
+  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
+  const [isChecked, setIsChecked] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setHasScrolledToBottom(false);
+      setIsChecked(false);
+    }
+  }, [isOpen]);
+
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const element = e.currentTarget;
+    const isAtBottom = element.scrollHeight - element.scrollTop <= element.clientHeight + 50;
+    if (isAtBottom && !hasScrolledToBottom) {
+      setHasScrolledToBottom(true);
+    }
+  }, [hasScrolledToBottom]);
+
+  const canAccept = hasScrolledToBottom && isChecked;
+
+  if (!isOpen || !termsContent) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col">
+        <div className="p-6 border-b">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold flex items-center gap-2">
+              <ScrollText className="h-5 w-5 text-primary" />
+              Termos de Aceite
+            </h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+          <p className="text-sm text-gray-500 mt-1">
+            Leia atentamente os termos abaixo. Voce deve rolar ate o final para poder aceitar.
+          </p>
+        </div>
+
+        <div
+          ref={scrollRef}
+          className="flex-1 overflow-y-auto p-6"
+          onScroll={handleScroll}
+        >
+          <div className="prose prose-sm max-w-none whitespace-pre-wrap">
+            {termsContent}
+          </div>
+          {!hasScrolledToBottom && (
+            <div className="flex items-center justify-center gap-2 text-gray-400 mt-4 animate-bounce">
+              <ChevronLeft className="h-4 w-4 rotate-[-90deg]" />
+              <span className="text-sm">Role para ler todos os termos</span>
+            </div>
+          )}
+        </div>
+
+        <div className="p-6 border-t space-y-4">
+          <label
+            className={`flex items-start gap-3 cursor-pointer ${!hasScrolledToBottom ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            <input
+              type="checkbox"
+              checked={isChecked}
+              onChange={(e) => hasScrolledToBottom && setIsChecked(e.target.checked)}
+              disabled={!hasScrolledToBottom}
+              className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary disabled:opacity-50"
+            />
+            <span className="text-sm text-gray-700">
+              Li e aceito os termos e condicoes apresentados acima
+            </span>
+          </label>
+
+          {version > 0 && (
+            <p className="text-xs text-gray-500">Versao: {version}</p>
+          )}
+
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={onClose}
+              className="flex-1"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={onAccept}
+              className="flex-1 bg-green-600 hover:bg-green-700"
+              disabled={!canAccept}
+            >
+              <CheckCircle2 className="h-4 w-4 mr-2" />
+              Aceitar e Continuar
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Componente Lightbox para visualização de fotos em tela cheia
 function ImageLightbox({
   images,
@@ -607,8 +733,18 @@ export default function PublicQuotePage() {
   // Estado dos modais de aprovação/rejeição
   const [signatureModalOpen, setSignatureModalOpen] = useState(false);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [actionSuccess, setActionSuccess] = useState<'approved' | 'rejected' | null>(null);
+
+  // Estado dos termos de aceite
+  const [acceptanceTerms, setAcceptanceTerms] = useState<{
+    required: boolean;
+    termsContent: string | null;
+    version: number;
+    termsHash: string | null;
+  } | null>(null);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   // Estado do lightbox
   const [lightboxImages, setLightboxImages] = useState<{ url: string; caption?: string }[]>([]);
@@ -640,10 +776,18 @@ export default function PublicQuotePage() {
   const handleSignAndApprove = async (data: { imageBase64: string; signerName: string; signerDocument?: string }) => {
     setIsSubmitting(true);
     try {
+      // Incluir dados de aceite dos termos se foram aceitos
+      const requestBody: any = { ...data };
+      if (acceptanceTerms?.required && termsAccepted) {
+        requestBody.termsAcceptedAt = new Date().toISOString();
+        requestBody.termsHash = acceptanceTerms.termsHash;
+        requestBody.termsVersion = acceptanceTerms.version;
+      }
+
       const response = await fetch(`${API_URL}/public/quotes/${shareKey}/sign-and-approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -714,6 +858,23 @@ export default function PublicQuotePage() {
 
         const data = await response.json();
         setQuote(data);
+
+        // Buscar termos de aceite
+        try {
+          const termsResponse = await fetch(`${API_URL}/public/quotes/${shareKey}/acceptance-terms`);
+          if (termsResponse.ok) {
+            const termsData = await termsResponse.json();
+            setAcceptanceTerms(termsData);
+            // Se termos nao sao obrigatorios, marcar como aceitos
+            if (!termsData.required) {
+              setTermsAccepted(true);
+            }
+          }
+        } catch (termsErr) {
+          console.error('Error fetching acceptance terms:', termsErr);
+          // Se falhar, assumir que nao ha termos obrigatorios
+          setTermsAccepted(true);
+        }
       } catch (err) {
         console.error('Error fetching quote:', err);
         setError('Erro ao conectar com o servidor.');
@@ -755,6 +916,10 @@ export default function PublicQuotePage() {
   const status = statusConfig[quote.status] || statusConfig.DRAFT;
   const StatusIcon = status.icon;
 
+  // Cores do template (fallback para roxo padrão)
+  const primaryColor = quote.template?.primaryColor || '#7C3AED';
+  const secondaryColor = quote.template?.secondaryColor || primaryColor;
+
   // Calcular subtotal dos itens
   const subtotal = quote.items.reduce((sum, item) => sum + item.totalPrice, 0);
 
@@ -779,12 +944,15 @@ export default function PublicQuotePage() {
                     }}
                   />
                   <div className="hidden w-full h-full items-center justify-center">
-                    <Building2 className="h-8 w-8 text-primary" />
+                    <Building2 className="h-8 w-8" style={{ color: primaryColor }} />
                   </div>
                 </div>
               ) : (
-                <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Building2 className="h-8 w-8 text-primary" />
+                <div
+                  className="w-16 h-16 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: `${primaryColor}1A` }}
+                >
+                  <Building2 className="h-8 w-8" style={{ color: primaryColor }} />
                 </div>
               )}
               <div>
@@ -828,7 +996,7 @@ export default function PublicQuotePage() {
               </div>
               <div className="text-right">
                 <p className="text-sm text-gray-500">Valor Total</p>
-                <p className="text-2xl font-bold text-primary">
+                <p className="text-2xl font-bold" style={{ color: primaryColor }}>
                   {formatCurrency(quote.totalValue)}
                 </p>
               </div>
@@ -841,7 +1009,7 @@ export default function PublicQuotePage() {
           {/* Informações do Cliente */}
           <Card>
             <CardContent className="pt-6">
-              <Section title="Informações do Cliente" icon={User}>
+              <Section title="Informações do Cliente" icon={User} primaryColor={primaryColor}>
                 <dl className="space-y-1">
                   <InfoField label="Nome" value={quote.client.name} />
                   <InfoField label="CPF/CNPJ" value={quote.client.taxId} />
@@ -859,7 +1027,7 @@ export default function PublicQuotePage() {
           {/* Informações do Orçamento */}
           <Card>
             <CardContent className="pt-6">
-              <Section title="Detalhes do Orçamento" icon={FileText}>
+              <Section title="Detalhes do Orçamento" icon={FileText} primaryColor={primaryColor}>
                 <dl className="space-y-1">
                   <InfoField label="Status" value={
                     <Badge className={status.color}>
@@ -884,7 +1052,7 @@ export default function PublicQuotePage() {
         {quote.notes && (
           <Card className="mb-6">
             <CardContent className="pt-6">
-              <Section title="Observações" icon={FileText}>
+              <Section title="Observações" icon={FileText} primaryColor={primaryColor}>
                 <p className="text-gray-700 whitespace-pre-wrap">{quote.notes}</p>
               </Section>
             </CardContent>
@@ -895,7 +1063,7 @@ export default function PublicQuotePage() {
         {quote.items.length > 0 && (
           <Card className="mb-6">
             <CardContent className="pt-6">
-              <Section title="Itens" icon={Package}>
+              <Section title="Itens" icon={Package} primaryColor={primaryColor}>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
@@ -936,9 +1104,9 @@ export default function PublicQuotePage() {
                           <td className="px-3 py-2 text-right text-red-600">-{formatCurrency(quote.discountValue)}</td>
                         </tr>
                       )}
-                      <tr className="bg-primary/5 font-semibold">
+                      <tr className="font-semibold" style={{ backgroundColor: `${primaryColor}0D` }}>
                         <td colSpan={4} className="px-3 py-2 text-right">TOTAL:</td>
-                        <td className="px-3 py-2 text-right text-primary text-lg">
+                        <td className="px-3 py-2 text-right text-lg" style={{ color: primaryColor }}>
                           {formatCurrency(quote.totalValue)}
                         </td>
                       </tr>
@@ -954,7 +1122,7 @@ export default function PublicQuotePage() {
         {quote.attachments.length > 0 && (
           <Card className="mb-6">
             <CardContent className="pt-6">
-              <Section title={`Anexos (${quote.attachments.length} arquivo${quote.attachments.length > 1 ? 's' : ''})`} icon={ImageIcon}>
+              <Section title={`Anexos (${quote.attachments.length} arquivo${quote.attachments.length > 1 ? 's' : ''})`} icon={ImageIcon} primaryColor={primaryColor}>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {quote.attachments.map((attachment, index) => {
                     const isImage = attachment.mimeType?.startsWith('image/');
@@ -1020,7 +1188,7 @@ export default function PublicQuotePage() {
         {quote.signature && (
           <Card className="mb-6">
             <CardContent className="pt-6">
-              <Section title="Assinatura do Cliente" icon={FileText}>
+              <Section title="Assinatura do Cliente" icon={FileText} primaryColor={primaryColor}>
                 <div className="text-center">
                   {quote.signature.imageUrl && (
                     <div className="relative w-64 h-24 mx-auto mb-4 border-b-2 border-gray-300">
@@ -1078,17 +1246,53 @@ export default function PublicQuotePage() {
           </Card>
         )}
 
+        {/* Card de Termos de Aceite - mostrar quando ha termos obrigatorios */}
+        {quote.status === 'SENT' && acceptanceTerms?.required && !actionSuccess && (
+          <Card className={`mb-6 ${termsAccepted ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'}`}>
+            <CardContent className="pt-6">
+              <div
+                className="flex items-start gap-4 cursor-pointer"
+                onClick={() => setTermsModalOpen(true)}
+              >
+                {termsAccepted ? (
+                  <CheckCircle2 className="h-8 w-8 text-green-600 flex-shrink-0" />
+                ) : (
+                  <ScrollText className="h-8 w-8 text-amber-600 flex-shrink-0" />
+                )}
+                <div className="flex-1">
+                  <h3 className={`text-lg font-semibold ${termsAccepted ? 'text-green-800' : 'text-amber-800'}`}>
+                    Termos de Aceite
+                  </h3>
+                  <p className={`text-sm ${termsAccepted ? 'text-green-600' : 'text-amber-600'}`}>
+                    {termsAccepted
+                      ? 'Termos lidos e aceitos. Voce pode prosseguir com a assinatura.'
+                      : 'Antes de assinar, voce precisa ler e aceitar os termos obrigatorios.'}
+                  </p>
+                </div>
+                <ChevronRight className={`h-6 w-6 ${termsAccepted ? 'text-green-400' : 'text-amber-400'}`} />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Botões de ação para orçamentos com status SENT */}
         {quote.status === 'SENT' && !actionSuccess && (
-          <Card className="mb-6 border-primary/20 bg-primary/5">
+          <Card className="mb-6" style={{ borderColor: `${primaryColor}33`, backgroundColor: `${primaryColor}0D` }}>
             <CardContent className="pt-6">
               <div className="text-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">O que deseja fazer?</h3>
-                <p className="text-sm text-gray-600">Você pode aprovar ou recusar este orçamento</p>
+                <p className="text-sm text-gray-600">Voce pode aprovar ou recusar este orcamento</p>
               </div>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button
-                  onClick={() => setSignatureModalOpen(true)}
+                  onClick={() => {
+                    // Se tem termos obrigatorios e nao foram aceitos, mostrar modal de termos
+                    if (acceptanceTerms?.required && !termsAccepted) {
+                      setTermsModalOpen(true);
+                    } else {
+                      setSignatureModalOpen(true);
+                    }
+                  }}
                   className="bg-green-600 hover:bg-green-700 text-white px-8 py-3"
                   size="lg"
                 >
@@ -1102,7 +1306,7 @@ export default function PublicQuotePage() {
                   size="lg"
                 >
                   <XCircle className="h-5 w-5 mr-2" />
-                  Recusar Orçamento
+                  Recusar Orcamento
                 </Button>
               </div>
             </CardContent>
@@ -1142,6 +1346,20 @@ export default function PublicQuotePage() {
         onClose={() => setRejectModalOpen(false)}
         onConfirm={handleReject}
         isSubmitting={isSubmitting}
+      />
+
+      {/* Modal de Termos de Aceite */}
+      <AcceptanceTermsModal
+        isOpen={termsModalOpen}
+        onClose={() => setTermsModalOpen(false)}
+        onAccept={() => {
+          setTermsAccepted(true);
+          setTermsModalOpen(false);
+          // Abrir modal de assinatura apos aceitar termos
+          setSignatureModalOpen(true);
+        }}
+        termsContent={acceptanceTerms?.termsContent || null}
+        version={acceptanceTerms?.version || 0}
       />
     </div>
   );

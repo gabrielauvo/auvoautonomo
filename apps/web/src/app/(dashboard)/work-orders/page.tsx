@@ -261,9 +261,19 @@ function WorkOrdersContent() {
                     >
                       <TableCell>
                         <div>
-                          <p className="font-medium text-gray-900">
-                            #{workOrder.number} - {workOrder.title}
-                          </p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-gray-900">
+                              #{workOrder.number} - {workOrder.title}
+                            </p>
+                            {workOrder.workOrderType && (
+                              <span
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium text-white"
+                                style={{ backgroundColor: workOrder.workOrderType.color || '#6B7280' }}
+                              >
+                                {workOrder.workOrderType.name}
+                              </span>
+                            )}
+                          </div>
                           <p className="text-xs text-gray-500">
                             {t('createdAt', { date: formatDate(workOrder.createdAt) })}
                           </p>

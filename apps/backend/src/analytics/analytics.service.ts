@@ -186,11 +186,13 @@ export class AnalyticsService {
   }
 
   private async getRevenueOverview(userId: string, start: Date, end: Date) {
+    // Usar dueDate para consistência com getRevenueByPeriod
+    // Isso garante que os dados do resumo correspondam ao gráfico de receita
     const payments = await this.prisma.clientPayment.groupBy({
       by: ['status'],
       where: {
         userId,
-        createdAt: { gte: start, lte: end },
+        dueDate: { gte: start, lte: end },
       },
       _count: { id: true },
       _sum: { value: true },
@@ -517,20 +519,16 @@ export class AnalyticsService {
     const period = this.getPeriod(startDate, endDate);
     const { start, end } = this.getPeriodDates(period);
 
-    // Get all payments in period
+    // Get all payments in period (baseado em dueDate para consistência)
     const payments = await this.prisma.clientPayment.findMany({
       where: {
         userId,
-        OR: [
-          { dueDate: { gte: start, lte: end } },
-          { paidAt: { gte: start, lte: end } },
-        ],
+        dueDate: { gte: start, lte: end },
       },
       select: {
         value: true,
         status: true,
         dueDate: true,
-        paidAt: true,
       },
     });
 
@@ -551,33 +549,31 @@ export class AnalyticsService {
     }
 
     // Process payments
+    // IMPORTANTE: Para consistência visual no gráfico, usamos dueDate como base
+    // para todas as métricas. Isso evita que "received" apareça em um período
+    // diferente de "invoiced" para o mesmo pagamento.
     for (const payment of payments) {
       const value = Number(payment.value);
 
-      // Invoiced (by dueDate)
+      // Todos os valores são agrupados por dueDate para consistência
       if (payment.dueDate >= start && payment.dueDate <= end) {
         const key = this.getDateKey(payment.dueDate, groupBy);
         const entry = seriesMap.get(key);
         if (entry) {
-          entry.invoiced += value;
+          // Invoiced: todos os pagamentos não deletados
+          if (payment.status !== 'DELETED') {
+            entry.invoiced += value;
+          }
 
+          // Received: pagamentos confirmados/recebidos
+          if (['CONFIRMED', 'RECEIVED', 'RECEIVED_IN_CASH'].includes(payment.status)) {
+            entry.received += value;
+          }
+
+          // Overdue: pagamentos vencidos
           if (payment.status === 'OVERDUE') {
             entry.overdue += value;
           }
-        }
-      }
-
-      // Received (by paidAt)
-      if (
-        payment.paidAt &&
-        payment.paidAt >= start &&
-        payment.paidAt <= end &&
-        ['CONFIRMED', 'RECEIVED', 'RECEIVED_IN_CASH'].includes(payment.status)
-      ) {
-        const key = this.getDateKey(payment.paidAt, groupBy);
-        const entry = seriesMap.get(key);
-        if (entry) {
-          entry.received += value;
         }
       }
     }

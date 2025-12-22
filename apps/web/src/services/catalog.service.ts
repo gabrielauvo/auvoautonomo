@@ -395,9 +395,12 @@ export function getItemTypeBadgeColor(type: ItemType): string {
 /**
  * Calcula o preço total de um kit baseado em seus itens
  */
-export function calculateBundlePrice(bundleItems: BundleItem[]): number {
+export function calculateBundlePrice(bundleItems: BundleItem[] | undefined | null): number {
+  if (!bundleItems || !Array.isArray(bundleItems)) {
+    return 0;
+  }
   return bundleItems.reduce((total, bi) => {
-    return total + bi.quantity * bi.item.basePrice;
+    return total + bi.quantity * (bi.item?.basePrice || 0);
   }, 0);
 }
 

@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsISO8601 } from 'class-validator';
+import { IsString, IsOptional, IsISO8601, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateWorkOrderDto {
@@ -82,4 +82,13 @@ export class UpdateWorkOrderDto {
   @IsString()
   @IsOptional()
   notes?: string;
+
+  @ApiProperty({
+    description: 'ID do tipo de ordem de serviço',
+    example: 'uuid-work-order-type-id',
+    required: false,
+  })
+  @IsUUID('4', { message: 'ID do tipo de OS inválido' })
+  @IsOptional()
+  workOrderTypeId?: string | null;
 }

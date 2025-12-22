@@ -272,6 +272,9 @@ export function KitCompositionEditor({ bundleId, bundleItems }: KitCompositionEd
 
   // IDs já no kit (para excluir da seleção)
   const excludeIds = useMemo(() => {
+    if (!bundleItems || !Array.isArray(bundleItems)) {
+      return [bundleId];
+    }
     return [bundleId, ...bundleItems.map((bi) => bi.itemId)];
   }, [bundleId, bundleItems]);
 
@@ -374,7 +377,7 @@ export function KitCompositionEditor({ bundleId, bundleItems }: KitCompositionEd
         )}
 
         {/* Tabela de itens */}
-        {bundleItems.length === 0 ? (
+        {(!bundleItems || !Array.isArray(bundleItems) || bundleItems.length === 0) ? (
           <EmptyState
             icon={Package}
             title="Kit vazio"
@@ -397,7 +400,7 @@ export function KitCompositionEditor({ bundleId, bundleItems }: KitCompositionEd
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {bundleItems.map((bi) => (
+                {(Array.isArray(bundleItems) ? bundleItems : []).map((bi) => (
                   <KitItemRow
                     key={bi.id}
                     bundleItem={bi}
@@ -412,7 +415,7 @@ export function KitCompositionEditor({ bundleId, bundleItems }: KitCompositionEd
             <div className="mt-4 pt-4 border-t border-gray-200">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-gray-500">
-                  {bundleItems.length} {bundleItems.length === 1 ? 'item' : 'itens'} no kit
+                  {(Array.isArray(bundleItems) ? bundleItems : []).length} {(Array.isArray(bundleItems) ? bundleItems : []).length === 1 ? 'item' : 'itens'} no kit
                 </p>
                 <div className="text-right">
                   <p className="text-sm text-gray-500">Valor total do kit:</p>

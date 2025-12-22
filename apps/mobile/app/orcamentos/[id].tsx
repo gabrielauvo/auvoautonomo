@@ -71,14 +71,12 @@ export default function OrcamentoDetailScreen() {
     router.back();
   };
 
-  // Handler para converter em fatura
+  // Handler para converter em cobrança
   const handleConvertToInvoice = (quote: QuoteWithItems) => {
-    // TODO: Implementar conversão para fatura
-    Alert.alert(
-      t('common.soon') || 'Em breve',
-      t('quotes.convertToInvoiceSoon') || 'A conversão para fatura será implementada em breve.',
+    // Navega para a tela de criar cobrança com dados pré-preenchidos do orçamento
+    router.push(
+      `/cobrancas/nova?quoteId=${quote.id}&clientId=${quote.clientId}&clientName=${encodeURIComponent(quote.clientName || '')}&value=${quote.totalValue}&description=${encodeURIComponent(`Orçamento aprovado - ${quote.clientName || 'Cliente'}`)}`
     );
-    console.log('[OrcamentoDetail] Convert to invoice:', quote.id);
   };
 
   // Handler para converter em OS

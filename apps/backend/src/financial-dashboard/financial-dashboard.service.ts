@@ -7,7 +7,7 @@ import { OverviewQueryDto, PaymentsQueryDto, RevenueByDayQueryDto, RevenueByClie
  * Status categories for financial calculations
  * Based on PaymentStatus enum from Prisma
  */
-const PAID_STATUSES: PaymentStatus[] = [PaymentStatus.RECEIVED, PaymentStatus.CONFIRMED];
+const PAID_STATUSES: PaymentStatus[] = [PaymentStatus.RECEIVED, PaymentStatus.CONFIRMED, PaymentStatus.RECEIVED_IN_CASH];
 const PENDING_STATUSES: PaymentStatus[] = [PaymentStatus.PENDING, PaymentStatus.AUTHORIZED, PaymentStatus.AWAITING_RISK_ANALYSIS];
 const OVERDUE_STATUSES: PaymentStatus[] = [PaymentStatus.OVERDUE];
 const CANCELED_STATUSES: PaymentStatus[] = [PaymentStatus.DELETED];
@@ -142,10 +142,16 @@ export class FinancialDashboardService {
       where: {
         userId,
         OR: [
-          // Paid payments: filter by paidAt
+          // Paid payments with paidAt: filter by paidAt
           {
             status: { in: PAID_STATUSES },
-            paidAt: { gte: start, lte: end },
+            paidAt: { not: null, gte: start, lte: end },
+          },
+          // Paid payments WITHOUT paidAt (fallback to dueDate)
+          {
+            status: { in: PAID_STATUSES },
+            paidAt: null,
+            dueDate: { gte: start, lte: end },
           },
           // Non-paid payments: filter by dueDate
           {

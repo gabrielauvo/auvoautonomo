@@ -16,6 +16,7 @@ import {
   FileText,
   Wrench,
   Users,
+  Tag,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -43,6 +44,11 @@ const REPORT_LINKS = [
     href: '/reports/operations',
     label: 'Operacional',
     icon: Wrench,
+  },
+  {
+    href: '/reports/services',
+    label: 'Serviços',
+    icon: Tag,
   },
   {
     href: '/reports/clients',

@@ -17,12 +17,18 @@ const DEFAULT_FREE_LIMITS: UsageLimits = {
   maxWorkOrders: 10,
   maxPayments: 5,
   maxNotificationsPerMonth: 50,
+  maxSuppliers: 10,
+  maxExpenses: 20,
   enableAdvancedAutomations: false,
   enableAdvancedAnalytics: false,
   enableClientPortal: false,
   enablePdfExport: true,
   enableDigitalSignature: false,
   enableWhatsApp: false,
+  enableExpenseManagement: false,
+  enableWorkOrderTypes: false,
+  enableAcceptanceTerms: false,
+  enableInventory: false,
 };
 
 /**
@@ -34,12 +40,18 @@ const DEFAULT_PRO_LIMITS: UsageLimits = {
   maxWorkOrders: -1,
   maxPayments: -1,
   maxNotificationsPerMonth: -1,
+  maxSuppliers: -1,
+  maxExpenses: -1,
   enableAdvancedAutomations: true,
   enableAdvancedAnalytics: true,
   enableClientPortal: true,
   enablePdfExport: true,
   enableDigitalSignature: true,
   enableWhatsApp: true,
+  enableExpenseManagement: true,
+  enableWorkOrderTypes: true,
+  enableAcceptanceTerms: true,
+  enableInventory: true,
 };
 
 @Injectable()
@@ -356,12 +368,18 @@ export class SubscriptionService {
       maxWorkOrders: number;
       maxPayments: number;
       maxNotificationsPerMonth: number;
+      maxSuppliers: number;
+      maxExpenses: number;
       enableAdvancedAutomations: boolean;
       enableAdvancedAnalytics: boolean;
       enableClientPortal: boolean;
       enablePdfExport: boolean;
       enableDigitalSignature: boolean;
       enableWhatsApp: boolean;
+      enableExpenseManagement: boolean;
+      enableWorkOrderTypes?: boolean;
+      enableAcceptanceTerms?: boolean;
+      enableInventory?: boolean;
     } | null;
   }): UsageLimits {
     if (plan.usageLimits) {
@@ -371,12 +389,18 @@ export class SubscriptionService {
         maxWorkOrders: plan.usageLimits.maxWorkOrders,
         maxPayments: plan.usageLimits.maxPayments,
         maxNotificationsPerMonth: plan.usageLimits.maxNotificationsPerMonth,
+        maxSuppliers: plan.usageLimits.maxSuppliers,
+        maxExpenses: plan.usageLimits.maxExpenses,
         enableAdvancedAutomations: plan.usageLimits.enableAdvancedAutomations,
         enableAdvancedAnalytics: plan.usageLimits.enableAdvancedAnalytics,
         enableClientPortal: plan.usageLimits.enableClientPortal,
         enablePdfExport: plan.usageLimits.enablePdfExport,
         enableDigitalSignature: plan.usageLimits.enableDigitalSignature,
         enableWhatsApp: plan.usageLimits.enableWhatsApp,
+        enableExpenseManagement: plan.usageLimits.enableExpenseManagement,
+        enableWorkOrderTypes: plan.usageLimits.enableWorkOrderTypes ?? false,
+        enableAcceptanceTerms: plan.usageLimits.enableAcceptanceTerms ?? false,
+        enableInventory: plan.usageLimits.enableInventory ?? false,
       };
     }
 

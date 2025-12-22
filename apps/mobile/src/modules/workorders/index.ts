@@ -22,6 +22,14 @@ export {
   canDeleteWorkOrder,
 } from './WorkOrderSyncConfig';
 
+// Work Order Types Sync Config
+export { default as WorkOrderTypeSyncConfig } from './WorkOrderTypeSyncConfig';
+export {
+  getActiveWorkOrderTypes,
+  getWorkOrderTypeById,
+  getAllWorkOrderTypes,
+} from './WorkOrderTypeSyncConfig';
+
 // Signature
 export { SignatureRepository } from './repositories/SignatureRepository';
 export { WorkOrderSignatureService } from './services/WorkOrderSignatureService';

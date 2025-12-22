@@ -37,6 +37,11 @@ export default function AlterarSenhaScreen() {
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async () => {
+    // CRITICAL: Guard against duplicate submissions
+    if (isSaving) {
+      return;
+    }
+
     // Validações
     if (!currentPassword) {
       Alert.alert('Erro', 'Digite sua senha atual');

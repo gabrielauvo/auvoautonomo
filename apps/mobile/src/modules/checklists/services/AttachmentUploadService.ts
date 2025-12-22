@@ -395,16 +395,34 @@ class AttachmentUploadServiceClass {
     this.processingIds.add(attachment.id);
 
     try {
-      // VERIFICAÇÃO: Se o attachment tem answerId local (prefixo 'local-'),
+      // VERIFICAÇÃO: Se a Answer ainda não foi sincronizada com o servidor,
       // não fazer upload separado - será enviado inline via sync de answers
-      if (attachment.answerId && attachment.answerId.startsWith('local-')) {
-        console.log(`[AttachmentUploadService] Skipping attachment ${attachment.id} - answer ${attachment.answerId} is local, will sync with answer`);
-        this.processingIds.delete(attachment.id);
-        return {
-          success: false,
-          attachmentId: attachment.id,
-          error: 'Answer local - aguardando sync de answers',
-        };
+      if (attachment.answerId) {
+        // Verificar se a Answer já foi sincronizada
+        const answer = await ChecklistAnswerRepository.getById(attachment.answerId);
+
+        // Se a answer existe e não está sincronizada, pular o upload
+        // O anexo será enviado junto com a sincronização da answer via pushPendingAnswers
+        if (answer && answer.syncStatus !== 'SYNCED') {
+          console.log(`[AttachmentUploadService] Skipping attachment ${attachment.id} - answer ${attachment.answerId} not synced yet (status: ${answer.syncStatus}), will sync with answer`);
+          this.processingIds.delete(attachment.id);
+          return {
+            success: false,
+            attachmentId: attachment.id,
+            error: 'Answer ainda não sincronizada - aguardando sync de answers',
+          };
+        }
+
+        // Se a answer não existe localmente (foi deletada ou corrompida), também pular
+        if (!answer) {
+          console.log(`[AttachmentUploadService] Skipping attachment ${attachment.id} - answer ${attachment.answerId} not found locally`);
+          this.processingIds.delete(attachment.id);
+          return {
+            success: false,
+            attachmentId: attachment.id,
+            error: 'Answer não encontrada localmente',
+          };
+        }
       }
 
       // Marcar como uploading

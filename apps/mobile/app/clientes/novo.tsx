@@ -59,6 +59,9 @@ export default function NovoClienteScreen() {
 
   // Handle save
   const handleSave = useCallback(async () => {
+    // CRITICAL: Guard against duplicate submissions
+    if (isLoading) return;
+
     if (!validate()) return;
 
     setIsLoading(true);

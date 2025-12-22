@@ -125,11 +125,23 @@ export async function register(data: RegisterData): Promise<LoginResponse> {
 
 /**
  * Carrega perfil do usuário atual
+ *
+ * SEGURANÇA: Usa API route que faz proxy para o backend com HttpOnly cookie
  */
 export async function getProfile(): Promise<User> {
   try {
-    const response = await api.get<User>('/auth/me');
-    return response.data;
+    // Usa API route do Next.js que tem acesso ao cookie HttpOnly
+    const response = await fetch('/api/auth/me', {
+      method: 'GET',
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Erro ao carregar perfil');
+    }
+
+    return response.json();
   } catch (error) {
     throw new Error(getErrorMessage(error));
   }

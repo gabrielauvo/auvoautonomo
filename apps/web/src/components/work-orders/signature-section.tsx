@@ -8,7 +8,6 @@
  */
 
 import { useState, useEffect } from 'react';
-import Cookies from 'js-cookie';
 import {
   Card,
   CardHeader,
@@ -24,8 +23,6 @@ import {
   User,
   Calendar,
 } from 'lucide-react';
-
-const AUTH_TOKEN_KEY = 'auth_token';
 
 interface SignatureData {
   id: string;
@@ -87,18 +84,9 @@ export function SignatureSection({ workOrderId, workOrderStatus }: SignatureSect
         setIsLoading(true);
         setError(null);
 
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-        const token = Cookies.get(AUTH_TOKEN_KEY);
-
-        if (!token) {
-          setError('Não autenticado');
-          return;
-        }
-
-        const response = await fetch(`${baseUrl}/work-orders/${workOrderId}/signature`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        // Usa o proxy /api/proxy para autenticação via HttpOnly cookies
+        const response = await fetch(`/api/proxy/work-orders/${workOrderId}/signature`, {
+          credentials: 'include', // Envia cookies HttpOnly
         });
 
         if (response.ok) {
@@ -118,6 +106,10 @@ export function SignatureSection({ workOrderId, workOrderStatus }: SignatureSect
         } else if (response.status === 404) {
           // Não encontrado - OK, não tem assinatura
           console.log('[SignatureSection] No signature found (404)');
+        } else if (response.status === 401) {
+          // Não autenticado - pode acontecer se sessão expirou
+          console.log('[SignatureSection] Unauthorized (401)');
+          setError('Sessão expirada');
         } else {
           // Outro erro
           console.error('[SignatureSection] Error response:', response.status);

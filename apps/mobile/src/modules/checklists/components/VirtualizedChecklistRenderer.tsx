@@ -52,7 +52,6 @@ export type QuestionType =
   | 'PHOTO'
   | 'PHOTO_REQUIRED'
   | 'PHOTO_OPTIONAL'
-  | 'FILE_UPLOAD'
   | 'SIGNATURE'
   | 'SIGNATURE_TECHNICIAN'
   | 'SIGNATURE_CLIENT'
@@ -192,7 +191,7 @@ const QuestionItem = React.memo(
 
       // Se tem attachments do servidor e é pergunta de foto, usar as URLs
       if (answer.attachments && answer.attachments.length > 0 &&
-          (question.type === 'PHOTO' || question.type === 'PHOTO_REQUIRED' || question.type === 'PHOTO_OPTIONAL' || question.type === 'FILE_UPLOAD')) {
+          (question.type === 'PHOTO' || question.type === 'PHOTO_REQUIRED' || question.type === 'PHOTO_OPTIONAL')) {
         // Extrair URLs públicas dos attachments
         // Se publicUrl começa com /, adicionar baseUrl da API
         const baseUrl = getApiBaseUrl();

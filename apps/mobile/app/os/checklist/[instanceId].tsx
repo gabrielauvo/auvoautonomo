@@ -29,6 +29,8 @@ import { ChecklistAttachmentRepository } from '../../../src/modules/checklists/r
 import { ChecklistSyncService } from '../../../src/modules/checklists/services/ChecklistSyncService';
 import { AttachmentUploadService } from '../../../src/modules/checklists/services/AttachmentUploadService';
 import { ChecklistInstance, ChecklistAnswer } from '../../../src/db/schema';
+import { SignaturePad, SignatureData } from '../../../src/modules/checklists/components/SignaturePad';
+import { SIGNER_ROLES, SignerRole } from '../../../src/modules/checklists/SignatureSyncConfig';
 
 // =============================================================================
 // TYPES
@@ -174,11 +176,26 @@ export default function ChecklistExecutionScreen() {
   const [hasPendingSync, setHasPendingSync] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Signature modal state
+  const [signatureModalVisible, setSignatureModalVisible] = useState(false);
+  const [activeSignatureQuestionId, setActiveSignatureQuestionId] = useState<string | null>(null);
+  const [activeSignatureRole, setActiveSignatureRole] = useState<SignerRole>(SIGNER_ROLES.CLIENT);
+
   // Refs para debounce
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingAnswersRef = useRef<Map<string, AnswerValue>>(new Map());
-  // Store pending photo attachments (base64) per questionId
-  const pendingAttachmentsRef = useRef<Map<string, Array<{ data: string; fileName: string; type: string }>>>(new Map());
+  // Store pending photo/signature attachments (base64) per questionId
+  const pendingAttachmentsRef = useRef<Map<string, Array<{
+    data: string;
+    fileName: string;
+    type: string;
+    metadata?: {
+      signerName?: string;
+      signerDocument?: string;
+      signerRole?: string;
+      timestamp?: string;
+    };
+  }>>>(new Map());
 
   // ===========================================================================
   // LOAD DATA
@@ -534,11 +551,62 @@ export default function ChecklistExecutionScreen() {
 
   const handleSignatureCapture = useCallback(
     (questionId: string) => {
-      // TODO: Implementar modal de assinatura
-      Alert.alert('Em desenvolvimento', 'Captura de assinatura sera implementada em breve.');
+      // Determinar o papel baseado no tipo da pergunta
+      const question = snapshot?.questions.find((q) => q.id === questionId);
+      let role: SignerRole = SIGNER_ROLES.CLIENT;
+
+      if (question?.type === 'SIGNATURE_TECHNICIAN') {
+        role = SIGNER_ROLES.TECHNICIAN;
+      } else if (question?.type === 'SIGNATURE_CLIENT') {
+        role = SIGNER_ROLES.CLIENT;
+      }
+
+      setActiveSignatureQuestionId(questionId);
+      setActiveSignatureRole(role);
+      setSignatureModalVisible(true);
     },
-    []
+    [snapshot]
   );
+
+  const handleSignatureCaptureDone = useCallback(
+    (data: SignatureData) => {
+      if (!activeSignatureQuestionId) return;
+
+      // Salvar a assinatura como base64 na resposta
+      handleAnswerChange(activeSignatureQuestionId, { valueText: data.signatureBase64 });
+
+      // Também armazenar os metadados da assinatura para sync
+      const existingAttachments = pendingAttachmentsRef.current.get(activeSignatureQuestionId) || [];
+      existingAttachments.push({
+        data: data.signatureBase64,
+        fileName: `signature_${data.signerRole}_${Date.now()}.png`,
+        type: 'SIGNATURE',
+        metadata: {
+          signerName: data.signerName,
+          signerDocument: data.signerDocument,
+          signerRole: data.signerRole,
+          timestamp: data.timestamp,
+        },
+      });
+      pendingAttachmentsRef.current.set(activeSignatureQuestionId, existingAttachments);
+
+      console.log('[ChecklistExecutionScreen] Signature captured:', {
+        questionId: activeSignatureQuestionId,
+        signerName: data.signerName,
+        signerRole: data.signerRole,
+      });
+
+      // Fechar modal
+      setSignatureModalVisible(false);
+      setActiveSignatureQuestionId(null);
+    },
+    [activeSignatureQuestionId, handleAnswerChange]
+  );
+
+  const handleSignatureModalClose = useCallback(() => {
+    setSignatureModalVisible(false);
+    setActiveSignatureQuestionId(null);
+  }, []);
 
   // ===========================================================================
   // SYNC
@@ -722,6 +790,21 @@ export default function ChecklistExecutionScreen() {
           isSaving={isSaving}
         />
       )}
+
+      {/* Signature Modal */}
+      <SignaturePad
+        visible={signatureModalVisible}
+        onClose={handleSignatureModalClose}
+        onCapture={handleSignatureCaptureDone}
+        defaultSignerRole={activeSignatureRole}
+        title={
+          activeSignatureRole === SIGNER_ROLES.TECHNICIAN
+            ? 'Assinatura do Técnico'
+            : activeSignatureRole === SIGNER_ROLES.CLIENT
+            ? 'Assinatura do Cliente'
+            : 'Assinatura Digital'
+        }
+      />
     </SafeAreaView>
   );
 }

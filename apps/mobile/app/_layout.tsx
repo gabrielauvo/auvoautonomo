@@ -1,11 +1,14 @@
 /**
  * Root Layout
  *
- * Layout principal com AuthProvider, DrawerProvider e navegação
+ * Layout principal com AuthProvider, PowerSyncProvider, DrawerProvider e navegação
  */
 
 // MUST be first import - polyfill for crypto.getRandomValues (required by uuid)
 import 'react-native-get-random-values';
+
+// Required for PowerSync async iterator support
+import '@azure/core-asynciterator-polyfill';
 
 import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
@@ -15,6 +18,7 @@ import { AuthProvider, useAuth } from '../src/services/AuthProvider';
 import { ThemeProvider } from '../src/design-system/ThemeProvider';
 import { I18nProvider } from '../src/i18n';
 import { DrawerProvider } from '../src/components';
+import { PowerSyncProvider } from '../src/powersync';
 
 function RootLayoutNav() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -63,9 +67,11 @@ export default function RootLayout() {
     <ThemeProvider forcedColorScheme="light">
       <I18nProvider>
         <AuthProvider>
-          <DrawerProvider>
-            <RootLayoutNav />
-          </DrawerProvider>
+          <PowerSyncProvider>
+            <DrawerProvider>
+              <RootLayoutNav />
+            </DrawerProvider>
+          </PowerSyncProvider>
         </AuthProvider>
       </I18nProvider>
     </ThemeProvider>

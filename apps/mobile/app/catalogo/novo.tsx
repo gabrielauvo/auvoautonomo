@@ -193,6 +193,9 @@ export default function NovoCatalogoScreen() {
   // =============================================================================
 
   const handleSave = useCallback(async () => {
+    // CRITICAL: Guard against duplicate submissions
+    if (isLoading) return;
+
     if (!validate() || !technicianId) return;
 
     setIsLoading(true);

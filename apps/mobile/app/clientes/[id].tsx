@@ -105,6 +105,9 @@ export default function ClienteDetalhesScreen() {
 
   // Handle save
   const handleSave = useCallback(async () => {
+    // CRITICAL: Guard against duplicate submissions
+    if (isSaving) return;
+
     if (!id || !validate()) return;
 
     setIsSaving(true);
@@ -260,6 +263,33 @@ export default function ClienteDetalhesScreen() {
                     </Badge>
                   )}
                 </View>
+              </View>
+            )}
+
+            {/* Quick Action Buttons */}
+            {!isEditing && (
+              <View style={[styles.quickActions, { marginBottom: spacing[4] }]}>
+                <QuickActionButton
+                  icon="construct-outline"
+                  label="Nova OS"
+                  color={colors.primary[500]}
+                  backgroundColor={colors.primary[50]}
+                  onPress={() => router.push(`/os/novo?clientId=${id}&clientName=${encodeURIComponent(client.name)}`)}
+                />
+                <QuickActionButton
+                  icon="document-text-outline"
+                  label="Novo Orçamento"
+                  color={colors.secondary[500]}
+                  backgroundColor={colors.secondary[50]}
+                  onPress={() => router.push(`/orcamentos/novo?clientId=${id}&clientName=${encodeURIComponent(client.name)}`)}
+                />
+                <QuickActionButton
+                  icon="cash-outline"
+                  label="Nova Cobrança"
+                  color={colors.success[500]}
+                  backgroundColor={colors.success[50]}
+                  onPress={() => router.push(`/cobrancas/nova?clientId=${id}&clientName=${encodeURIComponent(client.name)}`)}
+                />
               </View>
             )}
 
@@ -476,6 +506,54 @@ export default function ClienteDetalhesScreen() {
 }
 
 // =============================================================================
+// QUICK ACTION BUTTON COMPONENT
+// =============================================================================
+
+function QuickActionButton({
+  icon,
+  label,
+  color,
+  backgroundColor,
+  onPress,
+}: {
+  icon: string;
+  label: string;
+  color: string;
+  backgroundColor: string;
+  onPress: () => void;
+}) {
+  return (
+    <Button
+      variant="ghost"
+      onPress={onPress}
+      style={[quickActionStyles.button, { backgroundColor }]}
+    >
+      <View style={quickActionStyles.content}>
+        <Ionicons name={icon as any} size={24} color={color} />
+        <Text variant="caption" weight="medium" style={{ color, textAlign: 'center' }}>
+          {label}
+        </Text>
+      </View>
+    </Button>
+  );
+}
+
+const quickActionStyles = StyleSheet.create({
+  button: {
+    flex: 1,
+    paddingVertical: 16,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    minHeight: 80,
+  },
+  content: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+});
+
+// =============================================================================
 // INFO ROW COMPONENT
 // =============================================================================
 
@@ -550,6 +628,10 @@ const styles = StyleSheet.create({
   },
   headerButtons: {
     flexDirection: 'row',
+  },
+  quickActions: {
+    flexDirection: 'row',
+    gap: 12,
   },
   section: {
     padding: 16,

@@ -42,7 +42,7 @@ describe('ClientRepository', () => {
     state: 'SP',
     zipCode: '01234-567',
     notes: 'Test notes',
-    isActive: 1,
+    isActive: true,
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
     syncedAt: '2024-01-01T00:00:00.000Z',

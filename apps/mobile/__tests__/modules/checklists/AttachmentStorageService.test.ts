@@ -50,18 +50,16 @@ jest.mock('../../../src/db/database', () => ({
   getDatabase: () => mockGetDatabase(),
 }));
 
-// Mock SYNC_FLAGS
-const mockSyncFlags = {
-  SYNC_OPT_FS_ATTACHMENTS: true,
-  FS_ATTACHMENTS_DIR: 'attachments',
-  FS_MIGRATION_CHUNK_SIZE: 5,
-  FS_MIGRATION_CHUNK_DELAY_MS: 10,
-  FS_ATTACHMENTS_VERIFY_HASH: false,
-  FS_ATTACHMENTS_DELETE_AFTER_SYNC: true,
-};
-
+// Mock SYNC_FLAGS - inline because jest.mock is hoisted
 jest.mock('../../../src/config/syncFlags', () => ({
-  SYNC_FLAGS: mockSyncFlags,
+  SYNC_FLAGS: {
+    SYNC_OPT_FS_ATTACHMENTS: true,
+    FS_ATTACHMENTS_DIR: 'attachments',
+    FS_MIGRATION_CHUNK_SIZE: 5,
+    FS_MIGRATION_CHUNK_DELAY_MS: 10,
+    FS_ATTACHMENTS_VERIFY_HASH: false,
+    FS_ATTACHMENTS_DELETE_AFTER_SYNC: true,
+  },
 }));
 
 import { AttachmentStorageService } from '../../../src/modules/checklists/services/AttachmentStorageService';

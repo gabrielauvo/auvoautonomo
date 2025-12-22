@@ -44,15 +44,13 @@ jest.mock('../../src/queue/MutationQueue', () => ({
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
 
-// Mock SYNC_FLAGS para poder alterar em testes
-const mockSyncFlags = {
-  SYNC_OPT_CHUNK_PROCESSING: true,
-  CHUNK_SIZE: 100,
-  CHUNK_YIELD_DELAY_MS: 0,
-};
-
+// Mock SYNC_FLAGS - inline because jest.mock is hoisted
 jest.mock('../../src/config/syncFlags', () => ({
-  SYNC_FLAGS: mockSyncFlags,
+  SYNC_FLAGS: {
+    SYNC_OPT_CHUNK_PROCESSING: true,
+    CHUNK_SIZE: 100,
+    CHUNK_YIELD_DELAY_MS: 0,
+  },
 }));
 
 // Mock SyncMetrics

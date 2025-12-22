@@ -571,6 +571,11 @@ export const QuoteFormScreen: React.FC<QuoteFormScreenProps> = ({
   };
 
   const handleSave = async () => {
+    // CRITICAL: Guard against duplicate submissions
+    if (loading) {
+      return;
+    }
+
     // Validation
     if (!selectedClient) {
       Alert.alert(t('common.error'), t('validation.required') + ': ' + t('quotes.client'));

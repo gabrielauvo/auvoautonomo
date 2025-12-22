@@ -226,4 +226,24 @@ export class QuotesController {
       // URL será montada no frontend com base na configuração do ambiente
     };
   }
+
+  // ==================== ACCEPTANCE TERMS ====================
+
+  @Get(':id/acceptance-terms')
+  @ApiOperation({
+    summary: 'Get acceptance terms for quote signature',
+    description: 'Returns the acceptance terms configured by the quote owner. Used by mobile app before signature.',
+  })
+  @ApiParam({ name: 'id', description: 'Quote UUID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns acceptance terms if configured',
+  })
+  @ApiResponse({ status: 404, description: 'Quote not found' })
+  async getAcceptanceTerms(
+    @CurrentUser() user: any,
+    @Param('id') quoteId: string,
+  ) {
+    return this.quotesPublicService.getAcceptanceTermsForQuote(user.id, quoteId);
+  }
 }

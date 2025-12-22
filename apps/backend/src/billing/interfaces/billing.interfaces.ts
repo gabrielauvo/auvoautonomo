@@ -9,12 +9,18 @@ export interface UsageLimits {
   maxWorkOrders: number;
   maxPayments: number;
   maxNotificationsPerMonth: number;
+  maxSuppliers: number;
+  maxExpenses: number;
   enableAdvancedAutomations: boolean;
   enableAdvancedAnalytics: boolean;
   enableClientPortal: boolean;
   enablePdfExport: boolean;
   enableDigitalSignature: boolean;
   enableWhatsApp: boolean;
+  enableExpenseManagement: boolean;
+  enableWorkOrderTypes: boolean;
+  enableAcceptanceTerms: boolean;
+  enableInventory: boolean;
 }
 
 /**
@@ -76,7 +82,9 @@ export type LimitedResource =
   | 'QUOTE'
   | 'WORK_ORDER'
   | 'PAYMENT'
-  | 'NOTIFICATION';
+  | 'NOTIFICATION'
+  | 'SUPPLIER'
+  | 'EXPENSE';
 
 /**
  * Feature flags that can be checked
@@ -87,7 +95,11 @@ export type FeatureFlag =
   | 'CLIENT_PORTAL'
   | 'PDF_EXPORT'
   | 'DIGITAL_SIGNATURE'
-  | 'WHATSAPP';
+  | 'WHATSAPP'
+  | 'EXPENSE_MANAGEMENT'
+  | 'WORK_ORDER_TYPES'
+  | 'ACCEPTANCE_TERMS'
+  | 'INVENTORY';
 
 /**
  * Limit reached error details

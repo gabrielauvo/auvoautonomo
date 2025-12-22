@@ -239,16 +239,18 @@ export class WorkOrderRepository {
       for (const wo of workOrders) {
         await db.runAsync(
           `INSERT OR REPLACE INTO work_orders (
-            id, clientId, quoteId, title, description, status,
+            id, clientId, quoteId, workOrderTypeId, title, description, status,
             scheduledDate, scheduledStartTime, scheduledEndTime,
             executionStart, executionEnd, address, notes, totalValue,
             isActive, deletedAt, createdAt, updatedAt, syncedAt,
-            technicianId, clientName, clientPhone, clientAddress
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            technicianId, clientName, clientPhone, clientAddress,
+            workOrderTypeName, workOrderTypeColor
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             wo.id,
             wo.clientId,
             wo.quoteId || null,
+            wo.workOrderTypeId || null,
             wo.title,
             wo.description || null,
             wo.status,
@@ -269,6 +271,8 @@ export class WorkOrderRepository {
             wo.clientName || null,
             wo.clientPhone || null,
             wo.clientAddress || null,
+            wo.workOrderTypeName || null,
+            wo.workOrderTypeColor || null,
           ],
         );
       }
@@ -291,16 +295,18 @@ export class WorkOrderRepository {
 
     await db.runAsync(
       `INSERT INTO work_orders (
-        id, clientId, quoteId, title, description, status,
+        id, clientId, quoteId, workOrderTypeId, title, description, status,
         scheduledDate, scheduledStartTime, scheduledEndTime,
         executionStart, executionEnd, address, notes, totalValue,
         isActive, deletedAt, createdAt, updatedAt, syncedAt,
-        technicianId, clientName, clientPhone, clientAddress
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        technicianId, clientName, clientPhone, clientAddress,
+        workOrderTypeName, workOrderTypeColor
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         wo.id,
         wo.clientId,
         wo.quoteId || null,
+        wo.workOrderTypeId || null,
         wo.title,
         wo.description || null,
         wo.status,
@@ -321,6 +327,8 @@ export class WorkOrderRepository {
         wo.clientName || null,
         wo.clientPhone || null,
         wo.clientAddress || null,
+        wo.workOrderTypeName || null,
+        wo.workOrderTypeColor || null,
       ],
     );
 
@@ -346,11 +354,12 @@ export class WorkOrderRepository {
     const values: any[] = [now];
 
     const updatableFields: (keyof typeof updates)[] = [
-      'clientId', 'quoteId', 'title', 'description', 'status',
+      'clientId', 'quoteId', 'workOrderTypeId', 'title', 'description', 'status',
       'scheduledDate', 'scheduledStartTime', 'scheduledEndTime',
       'executionStart', 'executionEnd', 'address', 'notes', 'totalValue',
       'isActive', 'deletedAt', 'syncedAt', 'technicianId',
       'clientName', 'clientPhone', 'clientAddress',
+      'workOrderTypeName', 'workOrderTypeColor',
     ];
 
     for (const field of updatableFields) {
@@ -529,6 +538,7 @@ export class WorkOrderRepository {
       id: row.id,
       clientId: row.clientId,
       quoteId: row.quoteId || undefined,
+      workOrderTypeId: row.workOrderTypeId || undefined,
       title: row.title,
       description: row.description || undefined,
       status: row.status as WorkOrderStatus,
@@ -549,6 +559,8 @@ export class WorkOrderRepository {
       clientName: row.clientName || undefined,
       clientPhone: row.clientPhone || undefined,
       clientAddress: row.clientAddress || undefined,
+      workOrderTypeName: row.workOrderTypeName || undefined,
+      workOrderTypeColor: row.workOrderTypeColor || undefined,
     };
   }
 }

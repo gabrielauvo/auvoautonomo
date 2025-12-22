@@ -41,7 +41,7 @@ describe('CatalogItemRepository', () => {
     sku: 'SKU-001',
     basePrice: 100,
     unit: 'UN',
-    isActive: 1,
+    isActive: true,
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
     technicianId,

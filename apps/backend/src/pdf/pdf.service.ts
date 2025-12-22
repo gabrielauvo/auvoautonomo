@@ -274,7 +274,18 @@ export class PdfService {
       include: {
         client: true,
         user: {
-          select: { id: true, name: true, email: true, companyName: true, companyLogoUrl: true },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            companyName: true,
+            companyLogoUrl: true,
+            // Pix key fields
+            pixKey: true,
+            pixKeyType: true,
+            pixKeyOwnerName: true,
+            pixKeyEnabled: true,
+          },
         },
         workOrder: {
           include: {
@@ -888,6 +899,65 @@ export class PdfService {
 
           currentY += 10;
 
+          // ===================== ASSINATURAS DO CHECKLIST =====================
+          // Coletar e renderizar assinaturas (armazenadas em valueText como base64)
+          for (const answer of instance.answers) {
+            if ((answer.type === 'SIGNATURE_TECHNICIAN' || answer.type === 'SIGNATURE_CLIENT') &&
+                answer.valueText && answer.valueText.length > 50) {
+              const question = questions.find((q: any) => q.id === answer.questionId);
+              const signatureTitle = question?.title ||
+                (answer.type === 'SIGNATURE_TECHNICIAN' ? 'Assinatura do Técnico' : 'Assinatura do Cliente');
+
+              // Check for page break
+              if (currentY > doc.page.height - 120) {
+                doc.addPage();
+                currentY = margin;
+              }
+
+              // Draw signature section
+              doc.fontSize(9)
+                .fillColor('#059669')
+                .font('Helvetica-Bold')
+                .text(`✓ ${signatureTitle}`, margin, currentY)
+                .font('Helvetica')
+                .fillColor('#000000');
+              currentY += 15;
+
+              try {
+                // Convert base64 to buffer
+                const base64Data = answer.valueText.replace(/^data:image\/\w+;base64,/, '');
+                const signatureBuffer = Buffer.from(base64Data, 'base64');
+
+                // Draw signature image
+                const signatureWidth = 180;
+                const signatureHeight = 60;
+
+                // Draw white background box
+                doc.rect(margin, currentY, signatureWidth + 20, signatureHeight + 10)
+                  .fillColor('#FFFFFF')
+                  .fill()
+                  .strokeColor('#D1D5DB')
+                  .lineWidth(1)
+                  .stroke();
+
+                doc.image(signatureBuffer, margin + 10, currentY + 5, {
+                  fit: [signatureWidth, signatureHeight],
+                  align: 'center',
+                  valign: 'center',
+                });
+
+                currentY += signatureHeight + 20;
+              } catch (signatureError) {
+                this.logger.warn(`Failed to render checklist signature: ${signatureError}`);
+                doc.fontSize(8)
+                  .fillColor('#9CA3AF')
+                  .text('[Assinatura indisponível]', margin, currentY)
+                  .fillColor('#000000');
+                currentY += 15;
+              }
+            }
+          }
+
           // ===================== FOTOS DO CHECKLIST =====================
           // Coletar todas as fotos das respostas do checklist
           const checklistPhotoAttachments: any[] = [];
@@ -1493,6 +1563,48 @@ export class PdfService {
         });
 
         currentY += 10;
+      }
+
+      // ===================== PIX PARA PAGAMENTO =====================
+      if (invoice.user.pixKeyEnabled && invoice.user.pixKey) {
+        currentY = this.drawSectionTitle(doc, 'Pix para pagamento', margin, currentY, pageWidth, '#0284C7');
+
+        // Format Pix key type label
+        const pixTypeLabels: Record<string, string> = {
+          'CPF': 'CPF',
+          'CNPJ': 'CNPJ',
+          'EMAIL': 'E-mail',
+          'PHONE': 'Telefone',
+          'RANDOM': 'Chave aleatória',
+        };
+        const pixTypeLabel = invoice.user.pixKeyType ? pixTypeLabels[invoice.user.pixKeyType] || invoice.user.pixKeyType : '';
+
+        const pixFields: { label: string; value: string }[] = [
+          { label: 'Chave Pix', value: invoice.user.pixKey },
+        ];
+
+        if (pixTypeLabel) {
+          pixFields.push({ label: 'Tipo', value: pixTypeLabel });
+        }
+
+        if (invoice.user.pixKeyOwnerName) {
+          pixFields.push({ label: 'Favorecido', value: invoice.user.pixKeyOwnerName });
+        }
+
+        currentY = this.drawInfoGrid(doc, pixFields, margin, currentY, {
+          labelWidth: 100,
+          valueWidth: 416,
+          columns: 1,
+          rowHeight: 22,
+        });
+
+        // Add helper text
+        doc.fontSize(8)
+          .fillColor('#64748B')
+          .text('Copie e cole a chave no seu banco para pagar via Pix.', margin, currentY + 2, { width: pageWidth })
+          .fillColor('#000000');
+
+        currentY += 20;
       }
 
       // ===================== OBSERVAÇÕES =====================
@@ -2106,12 +2218,18 @@ export class PdfService {
       case 'PHOTO_REQUIRED':
       case 'PHOTO_OPTIONAL':
         return answer.attachments?.length > 0 ? `[${answer.attachments.length} foto(s) anexada(s)]` : '-';
-      case 'FILE_UPLOAD':
-        return answer.attachments?.length > 0 ? `[${answer.attachments.length} arquivo(s) anexado(s)]` : '-';
       case 'SIGNATURE_TECHNICIAN':
-        return answer.attachments?.length > 0 ? '[Assinatura do técnico capturada]' : '-';
+        // Assinatura pode estar em valueText (base64) ou attachments
+        if (answer.valueText && answer.valueText.length > 50) {
+          return '[Assinatura do técnico]';
+        }
+        return answer.attachments?.length > 0 ? '[Assinatura do técnico]' : '-';
       case 'SIGNATURE_CLIENT':
-        return answer.attachments?.length > 0 ? '[Assinatura do cliente capturada]' : '-';
+        // Assinatura pode estar em valueText (base64) ou attachments
+        if (answer.valueText && answer.valueText.length > 50) {
+          return '[Assinatura do cliente]';
+        }
+        return answer.attachments?.length > 0 ? '[Assinatura do cliente]' : '-';
       case 'RATING':
         const rating = answer.valueNumber != null ? answer.valueNumber : (answer.valueJson ? Number(answer.valueJson) : null);
         return rating != null ? `${rating}/5 estrelas` : '-';

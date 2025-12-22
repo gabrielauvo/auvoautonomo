@@ -322,7 +322,7 @@ export default function CatalogItemDetailsPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {bundleItems.map((bi) => {
+                      {(Array.isArray(bundleItems) ? bundleItems : []).map((bi) => {
                         const itemConfig = typeConfig[bi.item.type];
                         const ItemIcon = itemConfig.icon;
                         return (

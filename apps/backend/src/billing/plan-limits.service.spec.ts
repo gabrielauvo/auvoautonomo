@@ -23,6 +23,7 @@ describe('PlanLimitsService', () => {
     enablePdfExport: true,
     enableDigitalSignature: false,
     enableWhatsApp: false,
+    enableAcceptanceTerms: false,
   };
 
   const mockProLimits = {
@@ -37,6 +38,7 @@ describe('PlanLimitsService', () => {
     enablePdfExport: true,
     enableDigitalSignature: true,
     enableWhatsApp: true,
+    enableAcceptanceTerms: true,
   };
 
   const mockSubscriptionService = {
@@ -283,6 +285,7 @@ describe('PlanLimitsService', () => {
         'CLIENT_PORTAL',
         'DIGITAL_SIGNATURE',
         'WHATSAPP',
+        'ACCEPTANCE_TERMS',
       ];
 
       for (const feature of features) {
@@ -299,6 +302,37 @@ describe('PlanLimitsService', () => {
         feature: 'PDF_EXPORT',
       });
       expect(pdfResult.available).toBe(true);
+    });
+
+    it('should allow ACCEPTANCE_TERMS on PRO plan', async () => {
+      mockSubscriptionService.getUserEffectivePlan.mockResolvedValue({
+        planKey: PlanType.PRO,
+        planName: 'Plano PRO',
+        limits: mockProLimits,
+      });
+
+      const result = await service.checkFeature({
+        userId: mockUserId,
+        feature: 'ACCEPTANCE_TERMS',
+      });
+
+      expect(result.available).toBe(true);
+    });
+
+    it('should block ACCEPTANCE_TERMS on FREE plan', async () => {
+      mockSubscriptionService.getUserEffectivePlan.mockResolvedValue({
+        planKey: PlanType.FREE,
+        planName: 'Plano Gratuito',
+        limits: mockFreeLimits,
+      });
+
+      const result = await service.checkFeature({
+        userId: mockUserId,
+        feature: 'ACCEPTANCE_TERMS',
+      });
+
+      expect(result.available).toBe(false);
+      expect(result.message).toContain('Termos de Aceite');
     });
   });
 

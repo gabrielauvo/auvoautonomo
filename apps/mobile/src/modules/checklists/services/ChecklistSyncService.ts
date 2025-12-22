@@ -161,6 +161,14 @@ class ChecklistSyncServiceClass {
   }
 
   /**
+   * Verificar se o serviço está pronto para chamadas de API
+   * Retorna true se o SyncEngine está configurado com authToken válido
+   */
+  isReady(): boolean {
+    return syncEngine.isConfigured();
+  }
+
+  /**
    * Obter configuração do SyncEngine
    */
   private getApiConfig(): { baseUrl: string; authToken: string } {
@@ -247,6 +255,26 @@ class ChecklistSyncServiceClass {
   async pullChecklistsForWorkOrder(workOrderId: string): Promise<PullChecklistsResult> {
     console.log('[ChecklistSyncService] pullChecklistsForWorkOrder called for:', workOrderId);
 
+    // Verificar se está autenticado antes de tentar sync
+    if (!this.isReady()) {
+      console.log('[ChecklistSyncService] Not authenticated, falling back to local DB only');
+      // Buscar dados locais se disponíveis
+      try {
+        const localInstances = await ChecklistInstanceRepository.getByWorkOrder(workOrderId);
+        return {
+          success: true,
+          checklists: localInstances,
+        };
+      } catch (dbError) {
+        console.error('[ChecklistSyncService] Local DB error:', dbError);
+        return {
+          success: false,
+          checklists: [],
+          error: 'Usuário não autenticado',
+        };
+      }
+    }
+
     // Verificar conectividade real antes de tentar sync
     const connectivity = await this.checkServerConnectivity();
     console.log('[ChecklistSyncService] Server connectivity check:', connectivity);
@@ -294,8 +322,17 @@ class ChecklistSyncServiceClass {
               checklists: localInstances,
             };
           }
+          // 401 significa sessão expirada - fazer fallback silencioso
+          if (response.status === 401) {
+            console.warn('[ChecklistSyncService] Session expired (401) - falling back to local DB');
+            const localInstances = await ChecklistInstanceRepository.getByWorkOrder(workOrderId);
+            return {
+              success: true,
+              checklists: localInstances,
+            };
+          }
           const errorText = await response.text();
-          console.error('[ChecklistSyncService] API error:', response.status, errorText);
+          console.warn('[ChecklistSyncService] API error:', response.status, errorText);
           throw new Error(`Falha ao buscar checklists: ${response.status} - ${errorText}`);
         }
 
@@ -474,6 +511,19 @@ class ChecklistSyncServiceClass {
   async pullChecklistFull(instanceId: string): Promise<PullChecklistFullResult> {
     console.log('[ChecklistSyncService] pullChecklistFull called for:', instanceId);
 
+    // Verificar se está autenticado antes de tentar sync
+    if (!this.isReady()) {
+      console.log('[ChecklistSyncService] Not authenticated, using local DB only');
+      const instance = await ChecklistInstanceRepository.getById(instanceId);
+      const answers = instance ? await ChecklistAnswerRepository.getByInstance(instanceId) : [];
+      return {
+        success: !!instance,
+        instance: instance || undefined,
+        answers,
+        error: instance ? undefined : 'Usuário não autenticado',
+      };
+    }
+
     // Tentar buscar do servidor primeiro
     if (this.isOnline()) {
       try {
@@ -513,8 +563,19 @@ class ChecklistSyncServiceClass {
               };
             }
           }
+          // 401 significa sessão expirada - fazer fallback silencioso
+          if (response.status === 401) {
+            console.warn('[ChecklistSyncService] Session expired (401) - falling back to local DB');
+            const instance = await ChecklistInstanceRepository.getById(instanceId);
+            const answers = instance ? await ChecklistAnswerRepository.getByInstance(instanceId) : [];
+            return {
+              success: !!instance,
+              instance: instance || undefined,
+              answers,
+            };
+          }
           const errorText = await response.text();
-          console.error('[ChecklistSyncService] Full checklist API error:', response.status, errorText);
+          console.warn('[ChecklistSyncService] Full checklist API error:', response.status, errorText);
           throw new Error(`Falha ao buscar checklist: ${response.status} - ${errorText}`);
         }
 

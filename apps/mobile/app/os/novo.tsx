@@ -24,7 +24,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Text, Card, Button, Badge } from '../../src/design-system';
 import { useColors, useSpacing } from '../../src/design-system/ThemeProvider';
@@ -32,10 +32,11 @@ import { workOrderService } from '../../src/modules/workorders/WorkOrderService'
 import { formatLocalDate, formatLocalDateTime } from '../../src/utils/dateUtils';
 import { ClientService } from '../../src/modules/clients/ClientService';
 import { syncEngine, useSyncStatus } from '../../src/sync';
-import { Client, ChecklistTemplate } from '../../src/db/schema';
+import { Client, ChecklistTemplate, WorkOrderType } from '../../src/db/schema';
 import { findAll, findById } from '../../src/db/database';
 import { ChecklistInstanceRepository } from '../../src/modules/checklists/repositories/ChecklistInstanceRepository';
 import { useAuth } from '../../src/services/AuthProvider';
+import { getActiveWorkOrderTypes } from '../../src/modules/workorders/WorkOrderTypeSyncConfig';
 
 // =============================================================================
 // TYPES
@@ -73,6 +74,7 @@ interface FormData {
   notes: string;
   selectedChecklists: string[];
   selectedItems: SelectedItem[];
+  workOrderTypeId?: string;
 }
 
 // =============================================================================
@@ -223,6 +225,11 @@ const QuickCreateClientModal = React.memo(function QuickCreateClientModal({
   const [isCreating, setIsCreating] = useState(false);
 
   const handleCreate = async () => {
+    // CRITICAL: Guard against duplicate submissions
+    if (isCreating) {
+      return;
+    }
+
     if (!name.trim()) {
       Alert.alert('Erro', 'Nome do cliente é obrigatório');
       return;
@@ -514,6 +521,137 @@ const ChecklistSelectionModal = React.memo(function ChecklistSelectionModal({
 });
 
 // =============================================================================
+// WORK ORDER TYPE SELECTION MODAL
+// =============================================================================
+
+const WorkOrderTypeSelectionModal = React.memo(function WorkOrderTypeSelectionModal({
+  visible,
+  onClose,
+  selectedTypeId,
+  onSelect,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  selectedTypeId?: string;
+  onSelect: (type: WorkOrderType | null) => void;
+}) {
+  const colors = useColors();
+  const spacing = useSpacing();
+  const { user } = useAuth();
+  const [types, setTypes] = useState<WorkOrderType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load types from local database
+  useEffect(() => {
+    const load = async () => {
+      if (!visible) return;
+      setIsLoading(true);
+      try {
+        const technicianId = user?.technicianId || '';
+        if (technicianId) {
+          const results = await getActiveWorkOrderTypes(technicianId);
+          setTypes(results);
+        }
+      } catch (err) {
+        console.error('[WorkOrderTypeSelectionModal] Error loading types:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    load();
+  }, [visible, user?.technicianId]);
+
+  const handleSelect = (type: WorkOrderType | null) => {
+    onSelect(type);
+    onClose();
+  };
+
+  return (
+    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+      <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background.primary }]}>
+        {/* Header */}
+        <View style={[styles.modalHeader, { borderBottomColor: colors.border.light }]}>
+          <TouchableOpacity onPress={onClose} style={styles.modalCloseButton}>
+            <Ionicons name="close" size={24} color={colors.text.primary} />
+          </TouchableOpacity>
+          <Text variant="h4" weight="semibold">Tipo de OS</Text>
+          <View style={{ width: 40 }} />
+        </View>
+
+        {/* Type List */}
+        <ScrollView style={styles.clientList} contentContainerStyle={{ padding: spacing[4] }}>
+          {isLoading ? (
+            <Text variant="body" color="secondary" style={{ textAlign: 'center', marginTop: 20 }}>
+              Carregando tipos...
+            </Text>
+          ) : types.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="pricetag-outline" size={48} color={colors.text.tertiary} />
+              <Text variant="body" color="secondary" style={{ textAlign: 'center', marginTop: 12 }}>
+                Nenhum tipo de OS cadastrado.{'\n'}Cadastre tipos no painel web.
+              </Text>
+            </View>
+          ) : (
+            <>
+              {/* Option to clear selection */}
+              <TouchableOpacity
+                style={[
+                  styles.typeItem,
+                  {
+                    backgroundColor: !selectedTypeId ? colors.primary[50] : colors.background.secondary,
+                    borderColor: !selectedTypeId ? colors.primary[500] : colors.border.light,
+                  },
+                ]}
+                onPress={() => handleSelect(null)}
+              >
+                <View style={[styles.typeColorDot, { backgroundColor: colors.text.tertiary }]} />
+                <View style={styles.typeItemContent}>
+                  <Text variant="body" weight="medium">Sem tipo definido</Text>
+                  <Text variant="caption" color="secondary">Não classificar esta OS</Text>
+                </View>
+                {!selectedTypeId && (
+                  <Ionicons name="checkmark-circle" size={24} color={colors.primary[500]} />
+                )}
+              </TouchableOpacity>
+
+              {types.map((type) => {
+                const isSelected = selectedTypeId === type.id;
+                return (
+                  <TouchableOpacity
+                    key={type.id}
+                    style={[
+                      styles.typeItem,
+                      {
+                        backgroundColor: isSelected ? colors.primary[50] : colors.background.secondary,
+                        borderColor: isSelected ? colors.primary[500] : colors.border.light,
+                      },
+                    ]}
+                    onPress={() => handleSelect(type)}
+                  >
+                    <View style={[styles.typeColorDot, { backgroundColor: type.color || colors.primary[500] }]} />
+                    <View style={styles.typeItemContent}>
+                      <Text variant="body" weight="medium">{type.name}</Text>
+                      {type.description && (
+                        <Text variant="caption" color="secondary" numberOfLines={2}>
+                          {type.description}
+                        </Text>
+                      )}
+                    </View>
+                    {isSelected && (
+                      <Ionicons name="checkmark-circle" size={24} color={colors.primary[500]} />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </>
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    </Modal>
+  );
+});
+
+// =============================================================================
 // ITEM SELECTION MODAL
 // =============================================================================
 
@@ -535,15 +673,44 @@ const ItemSelectionModal = React.memo(function ItemSelectionModal({
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'PRODUCT' | 'SERVICE' | 'BUNDLE'>('ALL');
 
-  // Load items from API
+  // Load items from local database (offline-first) with API fallback
   useEffect(() => {
     const load = async () => {
       if (!visible) return;
       setIsLoading(true);
       try {
+        // 1. Primeiro, tenta carregar do banco local (offline-first)
+        console.log('[ItemSelectionModal] Loading items from local database...');
+        let sql = `SELECT * FROM catalog_items WHERE isActive = 1`;
+        const params: any[] = [];
+
+        if (searchQuery) {
+          sql += ` AND (name LIKE ? OR description LIKE ? OR sku LIKE ?)`;
+          const searchPattern = `%${searchQuery}%`;
+          params.push(searchPattern, searchPattern, searchPattern);
+        }
+
+        if (typeFilter !== 'ALL') {
+          sql += ` AND type = ?`;
+          params.push(typeFilter);
+        }
+
+        sql += ` ORDER BY name ASC LIMIT 100`;
+
+        const { rawQuery } = await import('../../src/db/database');
+        const localItems = await rawQuery<CatalogItem>(sql, params);
+
+        if (localItems && localItems.length > 0) {
+          console.log('[ItemSelectionModal] Found', localItems.length, 'items in local database');
+          setCatalogItems(localItems);
+          setIsLoading(false);
+          return;
+        }
+
+        // 2. Se não há itens locais, tenta API (se online)
+        console.log('[ItemSelectionModal] No local items, trying API...');
         const engine = syncEngine as any;
         if (engine.baseUrl && engine.authToken) {
-          console.log('[ItemSelectionModal] Fetching items from API...');
           let url = `${engine.baseUrl}/items?isActive=true`;
           if (searchQuery) {
             url += `&search=${encodeURIComponent(searchQuery)}`;
@@ -568,6 +735,8 @@ const ItemSelectionModal = React.memo(function ItemSelectionModal({
         }
       } catch (err) {
         console.error('[ItemSelectionModal] Error loading items:', err);
+        // Em caso de erro de rede, mantém lista vazia
+        setCatalogItems([]);
       } finally {
         setIsLoading(false);
       }
@@ -720,7 +889,9 @@ const ItemSelectionModal = React.memo(function ItemSelectionModal({
             <View style={styles.emptyState}>
               <Ionicons name="cube-outline" size={48} color={colors.text.tertiary} />
               <Text variant="body" color="secondary" style={{ textAlign: 'center', marginTop: 12 }}>
-                {searchQuery ? 'Nenhum item encontrado' : 'Nenhum item cadastrado.\nCadastre itens no painel web.'}
+                {searchQuery
+                  ? 'Nenhum item encontrado'
+                  : 'Nenhum item no catálogo local.\n\nCadastre itens no painel web e sincronize o app quando estiver online.'}
               </Text>
             </View>
           ) : (
@@ -828,6 +999,7 @@ export default function CreateWorkOrderScreen() {
   const spacing = useSpacing();
   const { isOnline } = useSyncStatus();
   const { user } = useAuth();
+  const params = useLocalSearchParams<{ clientId?: string; clientName?: string }>();
 
   // Form state
   const [formData, setFormData] = useState<FormData>({
@@ -846,14 +1018,57 @@ export default function CreateWorkOrderScreen() {
     selectedItems: [],
   });
 
+  // Pre-fill client if coming from client details page
+  useEffect(() => {
+    const loadPreSelectedClient = async () => {
+      if (params.clientId && !formData.clientId) {
+        try {
+          const client = await ClientService.getClient(params.clientId);
+          if (client) {
+            setFormData((prev) => ({
+              ...prev,
+              clientId: client.id,
+              clientName: client.name,
+              clientPhone: client.phone || '',
+              clientAddress: client.address || '',
+              address: client.address || prev.address,
+            }));
+          } else if (params.clientName) {
+            // Fallback: use params if client not found locally
+            setFormData((prev) => ({
+              ...prev,
+              clientId: params.clientId!,
+              clientName: decodeURIComponent(params.clientName!),
+            }));
+          }
+        } catch (error) {
+          console.warn('[CreateWorkOrderScreen] Error loading pre-selected client:', error);
+          if (params.clientName) {
+            setFormData((prev) => ({
+              ...prev,
+              clientId: params.clientId!,
+              clientName: decodeURIComponent(params.clientName!),
+            }));
+          }
+        }
+      }
+    };
+    loadPreSelectedClient();
+  }, [params.clientId, params.clientName]);
+
   // Modal states
   const [showClientModal, setShowClientModal] = useState(false);
   const [showQuickCreateClient, setShowQuickCreateClient] = useState(false);
   const [showChecklistModal, setShowChecklistModal] = useState(false);
   const [showItemsModal, setShowItemsModal] = useState(false);
+  const [showTypeModal, setShowTypeModal] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+
+  // Selected work order type display info
+  const [selectedTypeName, setSelectedTypeName] = useState<string | undefined>();
+  const [selectedTypeColor, setSelectedTypeColor] = useState<string | undefined>();
 
   // Loading state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -897,7 +1112,24 @@ export default function CreateWorkOrderScreen() {
     }
   }, []);
 
+  const handleTypeSelect = useCallback((type: WorkOrderType | null) => {
+    if (type) {
+      setFormData((prev) => ({ ...prev, workOrderTypeId: type.id }));
+      setSelectedTypeName(type.name);
+      setSelectedTypeColor(type.color || undefined);
+    } else {
+      setFormData((prev) => ({ ...prev, workOrderTypeId: undefined }));
+      setSelectedTypeName(undefined);
+      setSelectedTypeColor(undefined);
+    }
+  }, []);
+
   const handleSubmit = async () => {
+    // CRITICAL: Guard against duplicate submissions
+    if (isSubmitting) {
+      return;
+    }
+
     // Validação
     if (!formData.clientId) {
       Alert.alert('Erro', 'Selecione um cliente');
@@ -923,6 +1155,9 @@ export default function CreateWorkOrderScreen() {
         clientName: formData.clientName,
         clientPhone: formData.clientPhone,
         clientAddress: formData.clientAddress,
+        workOrderTypeId: formData.workOrderTypeId,
+        workOrderTypeName: selectedTypeName,
+        workOrderTypeColor: selectedTypeColor,
       });
 
       console.log('[CreateWorkOrderScreen] Work order created:', workOrder.id);
@@ -1102,7 +1337,10 @@ export default function CreateWorkOrderScreen() {
                 notes: '',
                 selectedChecklists: [],
                 selectedItems: [],
+                workOrderTypeId: undefined,
               });
+              setSelectedTypeName(undefined);
+              setSelectedTypeColor(undefined);
             },
           },
         ]
@@ -1222,6 +1460,36 @@ export default function CreateWorkOrderScreen() {
                 numberOfLines={3}
               />
             </View>
+          </Card>
+
+          {/* Tipo de OS */}
+          <Card variant="outlined" style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="pricetag-outline" size={20} color={colors.primary[500]} />
+              <Text variant="body" weight="semibold" style={{ marginLeft: 8 }}>Tipo de OS</Text>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.selectButton, { borderColor: colors.border.light }]}
+              onPress={() => setShowTypeModal(true)}
+            >
+              {formData.workOrderTypeId ? (
+                <View style={styles.selectedClient}>
+                  <View style={[styles.typeColorDot, { backgroundColor: selectedTypeColor || colors.primary[500], marginRight: 12 }]} />
+                  <View style={styles.selectedClientInfo}>
+                    <Text variant="body" weight="medium">{selectedTypeName}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={colors.text.tertiary} />
+                </View>
+              ) : (
+                <View style={styles.selectButtonContent}>
+                  <Ionicons name="add-circle-outline" size={20} color={colors.primary[500]} />
+                  <Text variant="body" style={{ color: colors.primary[500], marginLeft: 8 }}>
+                    Selecionar tipo (opcional)
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
           </Card>
 
           {/* Agendamento */}
@@ -1434,6 +1702,13 @@ export default function CreateWorkOrderScreen() {
         onClose={() => setShowItemsModal(false)}
         selectedItems={formData.selectedItems}
         onItemsChange={(items) => setFormData((prev) => ({ ...prev, selectedItems: items }))}
+      />
+
+      <WorkOrderTypeSelectionModal
+        visible={showTypeModal}
+        onClose={() => setShowTypeModal(false)}
+        selectedTypeId={formData.workOrderTypeId}
+        onSelect={handleTypeSelect}
       />
 
       {/* Date/Time Pickers */}
@@ -1750,5 +2025,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     borderBottomWidth: 1,
+  },
+  // Work order type selection styles
+  typeItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderWidth: 2,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  typeItemContent: {
+    flex: 1,
+  },
+  typeColorDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
   },
 });

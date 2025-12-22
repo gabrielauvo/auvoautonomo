@@ -46,24 +46,22 @@ jest.mock('../../src/queue/MutationQueue', () => ({
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
 
-// Mock SYNC_FLAGS - will be modified per test
-const mockSyncFlags = {
-  SYNC_OPT_CHUNK_PROCESSING: true,
-  CHUNK_SIZE: 100,
-  CHUNK_YIELD_DELAY_MS: 0,
-  SYNC_OPT_PARALLEL_ENTITIES: true,
-  MAX_PARALLEL_ENTITIES: 2,
-  PARALLEL_SAFE_ENTITIES: ['clients', 'categories'] as readonly string[],
-  SEQUENTIAL_ENTITIES: ['catalogItems', 'quotes', 'work_orders'] as readonly string[],
-  SYNC_OPT_CHECKLIST_BATCH_PULL: true,
-  CHECKLIST_PULL_CONCURRENCY: 3,
-  CHECKLIST_PULL_MAX_RETRIES: 2,
-  CHECKLIST_PULL_RETRY_DELAY_MS: 100, // Short for tests
-  CHECKLIST_PULL_TIMEOUT_MS: 5000,
-};
-
+// Mock SYNC_FLAGS - inline because jest.mock is hoisted
 jest.mock('../../src/config/syncFlags', () => ({
-  SYNC_FLAGS: mockSyncFlags,
+  SYNC_FLAGS: {
+    SYNC_OPT_CHUNK_PROCESSING: true,
+    CHUNK_SIZE: 100,
+    CHUNK_YIELD_DELAY_MS: 0,
+    SYNC_OPT_PARALLEL_ENTITIES: true,
+    MAX_PARALLEL_ENTITIES: 2,
+    PARALLEL_SAFE_ENTITIES: ['clients', 'categories'],
+    SEQUENTIAL_ENTITIES: ['catalogItems', 'quotes', 'work_orders'],
+    SYNC_OPT_CHECKLIST_BATCH_PULL: true,
+    CHECKLIST_PULL_CONCURRENCY: 3,
+    CHECKLIST_PULL_MAX_RETRIES: 2,
+    CHECKLIST_PULL_RETRY_DELAY_MS: 100, // Short for tests
+    CHECKLIST_PULL_TIMEOUT_MS: 5000,
+  },
 }));
 
 // Mock ChecklistSyncService

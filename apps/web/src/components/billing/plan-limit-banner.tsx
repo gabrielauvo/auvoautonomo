@@ -14,7 +14,7 @@ import { AlertCircle, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface PlanLimitBannerProps {
-  resource: 'clients' | 'quotes' | 'workOrders' | 'payments';
+  resource: 'clients' | 'quotes' | 'workOrders' | 'payments' | 'suppliers' | 'expenses';
   className?: string;
 }
 
@@ -23,6 +23,8 @@ const resourceLabels: Record<string, { singular: string; plural: string }> = {
   quotes: { singular: 'orçamento', plural: 'orçamentos' },
   workOrders: { singular: 'ordem de serviço', plural: 'ordens de serviço' },
   payments: { singular: 'pagamento', plural: 'pagamentos' },
+  suppliers: { singular: 'fornecedor', plural: 'fornecedores' },
+  expenses: { singular: 'despesa', plural: 'despesas' },
 };
 
 export function PlanLimitBanner({ resource, className }: PlanLimitBannerProps) {
@@ -46,6 +48,8 @@ export function PlanLimitBanner({ resource, className }: PlanLimitBannerProps) {
     quotes: usage.quotesCount || 0,
     workOrders: usage.workOrdersCount || 0,
     payments: usage.paymentsCount || 0,
+    suppliers: 0, // TODO: Add suppliersCount to CurrentUsage when backend supports it
+    expenses: 0, // TODO: Add expensesCount to CurrentUsage when backend supports it
   };
 
   const limitMap: Record<string, number> = {
@@ -53,6 +57,8 @@ export function PlanLimitBanner({ resource, className }: PlanLimitBannerProps) {
     quotes: limits.maxQuotes ?? 0,
     workOrders: limits.maxWorkOrders ?? 0,
     payments: limits.maxPayments ?? 0,
+    suppliers: limits.maxSuppliers ?? 0,
+    expenses: limits.maxExpenses ?? 0,
   };
 
   const current = usageMap[resource] || 0;

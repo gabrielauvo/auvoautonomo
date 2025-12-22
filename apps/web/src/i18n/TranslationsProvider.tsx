@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { Locale, defaultLocale, locales } from './config';
 
 // Import all messages statically
@@ -90,8 +90,15 @@ export function TranslationsProvider({ children }: { children: React.ReactNode }
     return value;
   }, [locale]);
 
+  const value = useMemo(() => ({
+    locale,
+    setLocale,
+    t,
+    isLoading,
+  }), [locale, setLocale, t, isLoading]);
+
   return (
-    <TranslationsContext.Provider value={{ locale, setLocale, t, isLoading }}>
+    <TranslationsContext.Provider value={value}>
       {children}
     </TranslationsContext.Provider>
   );

@@ -91,3 +91,85 @@ export type {
   GeneratePdfResponse,
   PublicLinkResponse,
 } from './quotes.service';
+
+// Suppliers (Fornecedores)
+export {
+  suppliersService,
+  listSuppliers,
+  getSupplierById,
+  createSupplier,
+  updateSupplier,
+  deleteSupplier,
+} from './suppliers.service';
+export type {
+  Supplier,
+  CreateSupplierDto,
+  UpdateSupplierDto,
+  SupplierListResponse,
+  SupplierSearchParams,
+} from './suppliers.service';
+
+// Expense Categories (Categorias de Despesas)
+export {
+  expenseCategoriesService,
+  listExpenseCategories,
+  getExpenseCategoryById,
+  createExpenseCategory,
+  updateExpenseCategory,
+  deleteExpenseCategory,
+} from './expense-categories.service';
+export type {
+  ExpenseCategory,
+  CreateExpenseCategoryDto,
+  UpdateExpenseCategoryDto,
+} from './expense-categories.service';
+
+// Expenses (Despesas/Contas a Pagar)
+export {
+  expensesService,
+  listExpenses,
+  getExpenseSummary,
+  getExpenseById,
+  createExpense,
+  updateExpense,
+  markExpenseAsPaid,
+  deleteExpense,
+  getStatusLabel,
+  getStatusColor,
+  getPaymentMethodLabel,
+} from './expenses.service';
+export type {
+  Expense,
+  ExpenseStatus,
+  ExpensePaymentMethod,
+  CreateExpenseDto,
+  UpdateExpenseDto,
+  ExpenseFilters,
+  ExpenseListResponse,
+  ExpenseSummary,
+  MarkAsPaidDto,
+} from './expenses.service';
+
+// Inventory (Estoque)
+export {
+  getInventorySettings,
+  updateInventorySettings,
+  getInventoryBalances,
+  getInventoryBalance,
+  updateInventoryBalance,
+  createInventoryMovement,
+  getInventoryMovements,
+  getInventoryDashboard,
+} from './inventory.service';
+export type {
+  InventorySettings,
+  UpdateInventorySettingsDto,
+  InventoryBalance,
+  InventoryBalanceList,
+  UpdateBalanceDto,
+  InventoryMovement,
+  CreateMovementDto,
+  MovementListQuery,
+  MovementListResponse,
+  InventoryDashboard,
+} from './inventory.service';

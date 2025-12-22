@@ -141,7 +141,6 @@ export function getAnswerValue(answer: ChecklistAnswer): unknown {
 
     case 'PHOTO_REQUIRED':
     case 'PHOTO_OPTIONAL':
-    case 'FILE_UPLOAD':
     case 'SIGNATURE_TECHNICIAN':
     case 'SIGNATURE_CLIENT':
       // Attachments são referenciados via answerId na tabela checklist_attachments
@@ -204,7 +203,6 @@ export function setAnswerValue(
 
     case 'PHOTO_REQUIRED':
     case 'PHOTO_OPTIONAL':
-    case 'FILE_UPLOAD':
     case 'SIGNATURE_TECHNICIAN':
     case 'SIGNATURE_CLIENT':
       // value contém informações sobre os attachments

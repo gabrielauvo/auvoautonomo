@@ -240,6 +240,8 @@ export class PlanLimitsService {
       maxWorkOrders: number;
       maxPayments: number;
       maxNotificationsPerMonth: number;
+      maxSuppliers?: number;
+      maxExpenses?: number;
     },
   ): Promise<{ max: number; current: number }> {
     const max = this.getMaxLimit(resource, limits);
@@ -258,6 +260,8 @@ export class PlanLimitsService {
       maxWorkOrders: number;
       maxPayments: number;
       maxNotificationsPerMonth: number;
+      maxSuppliers?: number;
+      maxExpenses?: number;
     },
   ): number {
     switch (resource) {
@@ -271,6 +275,10 @@ export class PlanLimitsService {
         return limits.maxPayments;
       case 'NOTIFICATION':
         return limits.maxNotificationsPerMonth;
+      case 'SUPPLIER':
+        return limits.maxSuppliers ?? -1; // Default unlimited if not defined
+      case 'EXPENSE':
+        return limits.maxExpenses ?? -1; // Default unlimited if not defined
       default:
         throw new Error(`Unknown resource type: ${resource}`);
     }
@@ -301,6 +309,12 @@ export class PlanLimitsService {
       case 'NOTIFICATION':
         return await this.getNotificationsSentThisMonth(userId);
 
+      case 'SUPPLIER':
+        return await prismaOrTx.supplier.count({ where: { userId, deletedAt: null } });
+
+      case 'EXPENSE':
+        return await prismaOrTx.expense.count({ where: { userId, deletedAt: null } });
+
       default:
         throw new Error(`Unknown resource type: ${resource}`);
     }
@@ -318,6 +332,9 @@ export class PlanLimitsService {
       enablePdfExport: boolean;
       enableDigitalSignature: boolean;
       enableWhatsApp: boolean;
+      enableExpenseManagement?: boolean;
+      enableAcceptanceTerms?: boolean;
+      enableInventory?: boolean;
     },
   ): boolean {
     switch (feature) {
@@ -333,6 +350,12 @@ export class PlanLimitsService {
         return limits.enableDigitalSignature;
       case 'WHATSAPP':
         return limits.enableWhatsApp;
+      case 'EXPENSE_MANAGEMENT':
+        return limits.enableExpenseManagement ?? false;
+      case 'ACCEPTANCE_TERMS':
+        return limits.enableAcceptanceTerms ?? false;
+      case 'INVENTORY':
+        return limits.enableInventory ?? false;
       default:
         return false;
     }
@@ -349,6 +372,10 @@ export class PlanLimitsService {
       PDF_EXPORT: 'Exportação de PDF',
       DIGITAL_SIGNATURE: 'Assinatura Digital',
       WHATSAPP: 'Notificações WhatsApp',
+      EXPENSE_MANAGEMENT: 'Gestão de Despesas',
+      WORK_ORDER_TYPES: 'Tipos de Ordem de Serviço',
+      ACCEPTANCE_TERMS: 'Termos de Aceite',
+      INVENTORY: 'Controle de Estoque',
     };
     return names[feature] || feature;
   }
@@ -363,6 +390,8 @@ export class PlanLimitsService {
       WORK_ORDER: 'ordens de serviço',
       PAYMENT: 'cobranças',
       NOTIFICATION: 'notificações mensais',
+      SUPPLIER: 'fornecedores',
+      EXPENSE: 'despesas',
     };
     return names[resource] || resource;
   }

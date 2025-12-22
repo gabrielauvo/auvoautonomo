@@ -35,6 +35,7 @@ import {
   UpdateItemDto,
   BundleItem,
 } from '@/services/catalog.service';
+import { createInventoryMovement } from '@/services/inventory.service';
 import {
   Save,
   X,
@@ -47,6 +48,7 @@ import {
   AlertCircle,
   Plus,
   FolderPlus,
+  Warehouse,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -121,7 +123,9 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
     item?.defaultDurationMinutes?.toString() || ''
   );
   const [isActive, setIsActive] = useState(item?.isActive ?? true);
+  const [initialStock, setInitialStock] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Modal de nova categoria
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -134,7 +138,7 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
 
   // Inicializa kitItems se editando um kit
   useEffect(() => {
-    if (bundleItems && bundleItems.length > 0) {
+    if (bundleItems && Array.isArray(bundleItems) && bundleItems.length > 0) {
       setKitItems(bundleItems.map(bi => ({ itemId: bi.itemId, quantity: bi.quantity })));
     }
   }, [bundleItems]);
@@ -168,10 +172,16 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // CRITICAL: Guard against duplicate submissions
+    if (isSubmitting) {
+      return;
+    }
+
     if (!validate()) {
       return;
     }
 
+    setIsSubmitting(true);
     setErrors({});
 
     const effectiveUnit = unit === 'custom' ? customUnit : unit;
@@ -210,6 +220,21 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
             : undefined,
         };
         result = await createItem.mutateAsync(createData);
+
+        // Se for produto e tiver quantidade inicial de estoque, criar movimentação
+        if (type === 'PRODUCT' && initialStock && parseFloat(initialStock) > 0) {
+          try {
+            await createInventoryMovement({
+              itemId: result.id,
+              type: 'ADJUSTMENT_IN',
+              quantity: parseFloat(initialStock),
+              notes: 'Estoque inicial',
+            });
+          } catch (stockError) {
+            // Não bloqueia criação do produto se falhar estoque
+            console.warn('Não foi possível adicionar estoque inicial:', stockError);
+          }
+        }
       }
 
       if (onSuccess) {
@@ -221,6 +246,8 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
       setErrors({
         general: error.message || 'Erro ao salvar item. Tente novamente.',
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -260,7 +287,7 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
     }
   };
 
-  const isLoading = createItem.isPending || updateItem.isPending;
+  const isLoading = isSubmitting || createItem.isPending || updateItem.isPending;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -483,6 +510,29 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
                   className="w-40"
                 />
                 <span className="text-sm text-gray-500">minutos</span>
+              </div>
+            </FormField>
+          )}
+
+          {/* Estoque inicial (apenas para produtos novos) */}
+          {type === 'PRODUCT' && !isEditing && (
+            <FormField
+              label="Quantidade Inicial em Estoque"
+              hint="Define a quantidade inicial de estoque ao criar o produto (opcional)"
+            >
+              <div className="flex items-center gap-2">
+                <Warehouse className="h-4 w-4 text-gray-400" />
+                <Input
+                  type="number"
+                  min="0"
+                  step="1"
+                  placeholder="0"
+                  value={initialStock}
+                  onChange={(e) => setInitialStock(e.target.value)}
+                  disabled={isLoading}
+                  className="w-40"
+                />
+                <span className="text-sm text-gray-500">{unit === 'custom' ? customUnit || 'un' : unit}</span>
               </div>
             </FormField>
           )}

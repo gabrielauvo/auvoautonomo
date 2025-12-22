@@ -13,6 +13,7 @@ import { ClientRepository } from '../../db/repositories/ClientRepository';
 import { MutationQueue } from '../../queue/MutationQueue';
 import { Client } from '../../db/schema';
 import { syncEngine } from '../../sync';
+import { DeviceContactsService } from '../../services/DeviceContactsService';
 
 // =============================================================================
 // TYPES
@@ -54,12 +55,14 @@ export interface ClientSearchResult {
 
 class ClientServiceClass {
   private technicianId: string | null = null;
+  private companyName: string | null = null;
 
   /**
    * Configurar o serviço com o ID do técnico
    */
-  configure(technicianId: string): void {
+  configure(technicianId: string, companyName?: string): void {
     this.technicianId = technicianId;
+    this.companyName = companyName || null;
   }
 
   /**
@@ -112,7 +115,14 @@ class ClientServiceClass {
 
     console.log(`[ClientService] Client ${id} created and queued for sync`);
 
-    // 3. Tentar sincronizar imediatamente se online
+    // 3. Tentar criar contato na agenda do dispositivo (best effort, não bloqueia)
+    // A criação do contato é local (offline-first) e não depende da sincronização
+    DeviceContactsService.onClientCreated(
+      { name: client.name, phone: client.phone },
+      this.companyName || undefined
+    );
+
+    // 4. Tentar sincronizar imediatamente se online
     if (syncEngine.isNetworkOnline()) {
       console.log('[ClientService] Online - triggering immediate sync');
       syncEngine.syncAll().catch((err) => {

@@ -16,6 +16,8 @@ import type {
   OperationsReportData,
   ClientsReportData,
   DashboardOverviewData,
+  ProfitLossReportData,
+  ServicesReportData,
 } from '@/types/reports';
 
 /**
@@ -103,6 +105,34 @@ export async function getClientsReport(filters?: ReportFilters): Promise<Clients
 }
 
 /**
+ * Relatório de Lucro/Prejuízo (Receita vs Despesas)
+ */
+export async function getProfitLossReport(filters?: ReportFilters): Promise<ProfitLossReportData> {
+  try {
+    const params = filters ? buildQueryParams(filters) : new URLSearchParams();
+    const url = `/reports/profit-loss${params.toString() ? `?${params}` : ''}`;
+    const response = await api.get<ProfitLossReportData>(url);
+    return response.data;
+  } catch (error) {
+    throw new Error(getErrorMessage(error));
+  }
+}
+
+/**
+ * Relatório de Serviços (OS por Tipo)
+ */
+export async function getServicesReport(filters?: ReportFilters): Promise<ServicesReportData> {
+  try {
+    const params = filters ? buildQueryParams(filters) : new URLSearchParams();
+    const url = `/reports/services${params.toString() ? `?${params}` : ''}`;
+    const response = await api.get<ServicesReportData>(url);
+    return response.data;
+  } catch (error) {
+    throw new Error(getErrorMessage(error));
+  }
+}
+
+/**
  * Exportar relatório (CSV/PDF)
  */
 export async function exportReport(
@@ -130,6 +160,8 @@ export const reportsService = {
   getSalesReport,
   getOperationsReport,
   getClientsReport,
+  getProfitLossReport,
+  getServicesReport,
   exportReport,
 };
 

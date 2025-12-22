@@ -425,62 +425,6 @@ function PhotoInput({ question, value, attachments, onChange, readOnly }: Questi
   );
 }
 
-function FileUploadInput({ question, value, onChange, readOnly }: QuestionInputProps) {
-  const files = (value as string[]) || [];
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const fileList = e.target.files;
-    if (!fileList || fileList.length === 0) return;
-
-    const newFiles = Array.from(fileList).map((f) => f.name);
-    onChange([...files, ...newFiles]);
-  };
-
-  const removeFile = (index: number) => {
-    const newFiles = files.filter((_, i) => i !== index);
-    onChange(newFiles);
-  };
-
-  return (
-    <div className="space-y-3">
-      {files.length > 0 && (
-        <div className="space-y-2">
-          {files.map((file, index) => (
-            <div
-              key={index}
-              className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg"
-            >
-              <FileText className="h-4 w-4 text-gray-400" />
-              <span className="flex-1 text-sm truncate">{file}</span>
-              {!readOnly && (
-                <button
-                  type="button"
-                  onClick={() => removeFile(index)}
-                  className="p-1 text-red-500 hover:bg-red-50 rounded"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-      {!readOnly && (
-        <label className="flex items-center justify-center gap-2 p-4 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-primary hover:bg-primary-50 transition-colors">
-          <Upload className="h-5 w-5 text-gray-400" />
-          <span className="text-sm text-gray-600">Adicionar Arquivo</span>
-          <input
-            type="file"
-            multiple
-            onChange={handleFileChange}
-            className="hidden"
-          />
-        </label>
-      )}
-    </div>
-  );
-}
-
 function SignatureInput({ question, value, onChange, readOnly }: QuestionInputProps) {
   const hasSignature = Boolean(value);
 
@@ -569,8 +513,6 @@ function QuestionInput(props: QuestionInputProps) {
     case 'PHOTO_REQUIRED':
     case 'PHOTO_OPTIONAL':
       return <PhotoInput {...props} />;
-    case 'FILE_UPLOAD':
-      return <FileUploadInput {...props} />;
     case 'SIGNATURE_TECHNICIAN':
     case 'SIGNATURE_CLIENT':
       return <SignatureInput {...props} />;
@@ -780,7 +722,6 @@ export function ChecklistResponseForm({
       case 'MULTI_SELECT':
       case 'PHOTO_REQUIRED':
       case 'PHOTO_OPTIONAL':
-      case 'FILE_UPLOAD':
       case 'SIGNATURE_TECHNICIAN':
       case 'SIGNATURE_CLIENT':
       default:

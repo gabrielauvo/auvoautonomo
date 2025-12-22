@@ -16,13 +16,14 @@ import { AuthService, User, LoginResponse } from './AuthService';
 import { syncEngine, ClientSyncConfig, CategorySyncConfig, CatalogItemSyncConfig } from '../sync';
 import { initDatabase, resetDatabase } from '../db';
 import { ClientService } from '../modules/clients/ClientService';
-import { workOrderService, WorkOrderSyncConfig } from '../modules/workorders';
+import { workOrderService, WorkOrderSyncConfig, WorkOrderTypeSyncConfig } from '../modules/workorders';
 import { WorkOrderExecutionService } from '../modules/workorders/execution';
 import { AttachmentUploadService } from '../modules/checklists/services/AttachmentUploadService';
 import { ChecklistSyncService } from '../modules/checklists/services/ChecklistSyncService';
 import { SignatureSyncConfig } from '../modules/checklists/SignatureSyncConfig';
 import { QuoteService, QuoteSyncConfig, QuoteSignatureService } from '../modules/quotes';
 import { WorkOrderSignatureService } from '../modules/workorders/services/WorkOrderSignatureService';
+import { InventoryService, inventorySyncService } from '../modules/inventory';
 
 // =============================================================================
 // TYPES
@@ -99,22 +100,39 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setUser(storedUser);
 
           // Buscar perfil atualizado do servidor (para sincronizar avatar)
-          try {
-            const profileRes = await fetch(`${API_URL}/settings/profile`, {
-              headers: { Authorization: `Bearer ${accessToken}` },
-            });
-            if (profileRes.ok) {
-              const profileData = await profileRes.json();
-              if (profileData.avatarUrl !== storedUser.avatarUrl) {
-                const updatedUser = { ...storedUser, avatarUrl: profileData.avatarUrl };
-                await AuthService.saveUser(updatedUser);
-                setUser(updatedUser);
-                console.log('[AuthProvider] Updated user avatar from server');
+          // Não bloqueia inicialização - usa timeout curto e executa em background
+          const fetchProfile = async () => {
+            try {
+              const controller = new AbortController();
+              const timeoutId = setTimeout(() => controller.abort(), 3000); // 3s timeout
+
+              const profileRes = await fetch(`${API_URL}/settings/profile`, {
+                headers: { Authorization: `Bearer ${accessToken}` },
+                signal: controller.signal,
+              });
+              clearTimeout(timeoutId);
+
+              if (profileRes.ok) {
+                const profileData = await profileRes.json();
+                if (profileData.avatarUrl !== storedUser.avatarUrl) {
+                  const updatedUser = { ...storedUser, avatarUrl: profileData.avatarUrl };
+                  await AuthService.saveUser(updatedUser);
+                  setUser(updatedUser);
+                  console.log('[AuthProvider] Updated user avatar from server');
+                }
               }
+            } catch (profileError) {
+              // Silently ignore - profile sync is optional
+              console.log('[AuthProvider] Profile sync skipped:',
+                profileError instanceof Error && profileError.name === 'AbortError'
+                  ? 'timeout'
+                  : 'network error'
+              );
             }
-          } catch (profileError) {
-            console.warn('[AuthProvider] Failed to fetch profile:', profileError);
-          }
+          };
+
+          // Execute in background - don't await
+          fetchProfile();
 
           // Configurar sync engine
           syncEngine.configure({
@@ -127,6 +145,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           // Registrar entidades para sincronização
           syncEngine.registerEntity(ClientSyncConfig);
           syncEngine.registerEntity(WorkOrderSyncConfig);
+          syncEngine.registerEntity(WorkOrderTypeSyncConfig);
           syncEngine.registerEntity(QuoteSyncConfig);
           syncEngine.registerEntity(CategorySyncConfig);
           syncEngine.registerEntity(CatalogItemSyncConfig);
@@ -141,11 +160,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
           QuoteService.configure(storedUser.technicianId);
           QuoteSignatureService.configure(storedUser.technicianId);
           WorkOrderSignatureService.configure(storedUser.technicianId);
+          InventoryService.configure(storedUser.technicianId);
+          inventorySyncService.configure(API_URL, accessToken);
 
-          // Iniciar sync inicial
+          // Iniciar sync inicial (não bloqueia login)
           console.log('[AuthProvider] Starting initial sync...');
           syncEngine.syncAll().catch((err) => {
-            console.error('[AuthProvider] Initial sync failed:', err);
+            // Use warn - sync failures are expected when offline or no data
+            console.warn('[AuthProvider] Initial sync skipped:', err.message || err);
+          });
+
+          // Sync inventory em background (separado do sync principal)
+          inventorySyncService.fullSync().catch((err) => {
+            console.warn('[AuthProvider] Inventory sync skipped:', err.message || err);
           });
         } else {
           console.log('[AuthProvider] No stored user found');
@@ -187,11 +214,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Registrar entidades para sincronização
       syncEngine.registerEntity(ClientSyncConfig);
       syncEngine.registerEntity(WorkOrderSyncConfig);
+      syncEngine.registerEntity(WorkOrderTypeSyncConfig);
       syncEngine.registerEntity(QuoteSyncConfig);
       syncEngine.registerEntity(CategorySyncConfig);
       syncEngine.registerEntity(CatalogItemSyncConfig);
       syncEngine.registerEntity(SignatureSyncConfig);
-      console.log('[AuthProvider] Entities registered (clients, workOrders, quotes, categories, catalogItems, signatures)');
+      console.log('[AuthProvider] Entities registered (clients, workOrders, workOrderTypes, quotes, categories, catalogItems, signatures)');
 
       // Configurar serviços
       ClientService.configure(response.user.technicianId);
@@ -202,11 +230,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
       QuoteService.configure(response.user.technicianId);
       QuoteSignatureService.configure(response.user.technicianId);
       WorkOrderSignatureService.configure(response.user.technicianId);
+      InventoryService.configure(response.user.technicianId);
+      inventorySyncService.configure(API_URL, response.tokens.accessToken);
 
-      // Iniciar sync inicial
+      // Iniciar sync inicial (não bloqueia login)
       console.log('[AuthProvider] Starting initial sync...');
       syncEngine.syncAll().catch((err) => {
-        console.error('[AuthProvider] Initial sync failed:', err);
+        // Use warn - sync failures are expected when offline or no data
+        console.warn('[AuthProvider] Initial sync skipped:', err.message || err);
+      });
+
+      // Sync inventory em background
+      inventorySyncService.fullSync().catch((err: Error) => {
+        console.warn('[AuthProvider] Inventory sync skipped:', err.message || err);
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro no login';

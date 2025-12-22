@@ -18,6 +18,10 @@ import {
   Check,
   AlertCircle,
   RotateCcw,
+  ScrollText,
+  Lock,
+  Info,
+  Crown,
 } from 'lucide-react';
 import {
   Card,
@@ -47,6 +51,8 @@ import {
   useUpdateChargeTemplate,
   useResetTemplate,
   useCompanySettings,
+  useAcceptanceTerms,
+  useUpdateAcceptanceTerms,
 } from '@/hooks/use-settings';
 import {
   DEFAULT_QUOTE_TEMPLATE,
@@ -67,8 +73,16 @@ export default function TemplatesSettingsPage() {
   const updateChargeTemplate = useUpdateChargeTemplate();
   const resetTemplate = useResetTemplate();
 
+  // Acceptance terms
+  const { data: acceptanceTerms, isLoading: isLoadingTerms } = useAcceptanceTerms();
+  const updateAcceptanceTerms = useUpdateAcceptanceTerms();
+
   const [activeTab, setActiveTab] = useState('quote');
   const [saved, setSaved] = useState(false);
+
+  // Acceptance terms state
+  const [termsEnabled, setTermsEnabled] = useState(false);
+  const [termsContent, setTermsContent] = useState('');
 
   // Quote template state
   const [quoteTemplate, setQuoteTemplate] = useState<QuoteTemplate>(DEFAULT_QUOTE_TEMPLATE);
@@ -87,6 +101,14 @@ export default function TemplatesSettingsPage() {
       setChargeTemplate({ ...DEFAULT_CHARGE_TEMPLATE, ...templates.charge });
     }
   }, [templates]);
+
+  // Load acceptance terms
+  useEffect(() => {
+    if (acceptanceTerms) {
+      setTermsEnabled(acceptanceTerms.enabled);
+      setTermsContent(acceptanceTerms.termsContent || '');
+    }
+  }, [acceptanceTerms]);
 
   const handleSaveQuote = async () => {
     try {
@@ -129,6 +151,19 @@ export default function TemplatesSettingsPage() {
     }
   };
 
+  const handleSaveAcceptanceTerms = async () => {
+    try {
+      await updateAcceptanceTerms.mutateAsync({
+        enabled: termsEnabled,
+        termsContent: termsContent || null,
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (error) {
+      console.error('Erro ao salvar termos:', error);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -153,6 +188,10 @@ export default function TemplatesSettingsPage() {
           <TabsTrigger value="charge">
             <Receipt className="h-4 w-4 mr-2" />
             {t('charge')}
+          </TabsTrigger>
+          <TabsTrigger value="acceptanceTerms">
+            <ScrollText className="h-4 w-4 mr-2" />
+            {t('acceptanceTerms')}
           </TabsTrigger>
         </TabsList>
 
@@ -512,6 +551,137 @@ export default function TemplatesSettingsPage() {
                 <Button
                   onClick={handleSaveCharge}
                   loading={updateChargeTemplate.isPending}
+                  leftIcon={<Check className="h-4 w-4" />}
+                >
+                  {t('saveTemplate')}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Termos de Aceite */}
+        <TabsContent value="acceptanceTerms">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ScrollText className="h-5 w-5" />
+                {t('acceptanceTerms')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Feature not available message */}
+              {acceptanceTerms && !acceptanceTerms.featureAvailable && (
+                <Alert variant="default" className="bg-amber-50 border-amber-200">
+                  <div className="flex items-start gap-3">
+                    <Crown className="h-5 w-5 text-amber-600 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-amber-800">
+                        {t('acceptanceTermsFeatureUnavailable')}
+                      </p>
+                      <p className="text-sm text-amber-700 mt-1">
+                        {t('acceptanceTermsFeatureDescription')}
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-3 border-amber-300 text-amber-700 hover:bg-amber-100"
+                        onClick={() => window.location.href = '/settings/plan'}
+                      >
+                        {t('acceptanceTermsUpgrade')}
+                      </Button>
+                    </div>
+                  </div>
+                </Alert>
+              )}
+
+              {/* Description */}
+              <div className="text-sm text-gray-600">
+                {t('acceptanceTermsDescription')}
+              </div>
+
+              {/* Toggle */}
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  {acceptanceTerms?.featureAvailable ? (
+                    <ScrollText className="h-5 w-5 text-primary" />
+                  ) : (
+                    <Lock className="h-5 w-5 text-gray-400" />
+                  )}
+                  <div>
+                    <p className="font-medium">{t('acceptanceTermsEnabled')}</p>
+                    <p className="text-xs text-gray-500">
+                      {termsEnabled ? 'Cliente precisará aceitar os termos' : 'Assinatura sem termos de aceite'}
+                    </p>
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={termsEnabled}
+                    onChange={(e) => setTermsEnabled(e.target.checked)}
+                    disabled={!acceptanceTerms?.featureAvailable}
+                    className="sr-only peer"
+                  />
+                  <div className={`w-11 h-6 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all ${
+                    acceptanceTerms?.featureAvailable
+                      ? 'bg-gray-200 peer-checked:bg-primary'
+                      : 'bg-gray-200 cursor-not-allowed'
+                  }`}></div>
+                </label>
+              </div>
+
+              {/* Terms Content Editor */}
+              <FormField label={t('acceptanceTermsContent')}>
+                <Textarea
+                  value={termsContent}
+                  onChange={(e) => setTermsContent(e.target.value)}
+                  placeholder={t('acceptanceTermsContentPlaceholder')}
+                  rows={10}
+                  disabled={!acceptanceTerms?.featureAvailable}
+                  className={!acceptanceTerms?.featureAvailable ? 'bg-gray-100 cursor-not-allowed' : ''}
+                />
+              </FormField>
+
+              {/* Info Card */}
+              {acceptanceTerms?.featureAvailable && (
+                <Alert variant="default" className="bg-blue-50 border-blue-200">
+                  <div className="flex items-start gap-2">
+                    <Info className="h-4 w-4 text-blue-600 mt-0.5" />
+                    <p className="text-sm text-blue-800">
+                      {t('acceptanceTermsInfo')}
+                    </p>
+                  </div>
+                </Alert>
+              )}
+
+              {/* Version info */}
+              {acceptanceTerms?.version > 0 && acceptanceTerms?.featureAvailable && (
+                <div className="flex items-center gap-6 text-sm text-gray-500 pt-4 border-t">
+                  <span>
+                    <strong>{t('acceptanceTermsVersion')}:</strong> {acceptanceTerms.version}
+                  </span>
+                  {acceptanceTerms.updatedAt && (
+                    <span>
+                      <strong>{t('acceptanceTermsUpdatedAt')}:</strong>{' '}
+                      {new Date(acceptanceTerms.updatedAt).toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Save Button */}
+              <div className="flex justify-end pt-4 border-t">
+                <Button
+                  onClick={handleSaveAcceptanceTerms}
+                  loading={updateAcceptanceTerms.isPending}
+                  disabled={!acceptanceTerms?.featureAvailable}
                   leftIcon={<Check className="h-4 w-4" />}
                 >
                   {t('saveTemplate')}

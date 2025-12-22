@@ -25,3 +25,8 @@ export {
   DeepLinkHandler,
   useNotifications,
 } from './notifications';
+
+// Device Contacts
+export { DeviceContactsService } from './DeviceContactsService';
+export type { CreateContactInput, ContactCreationResult } from './DeviceContactsService';
+export { normalizePhone, areNamesSimilar } from './DeviceContactsService';

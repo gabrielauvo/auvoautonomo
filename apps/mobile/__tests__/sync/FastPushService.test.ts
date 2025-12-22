@@ -22,18 +22,16 @@ jest.mock('@react-native-community/netinfo', () => ({
   fetch: () => mockNetInfoFetch(),
 }));
 
-// Mock syncFlags para controle nos testes
-const mockSyncFlags = {
-  SYNC_OPT_FAST_PUSH_ONLY: true,
-  FAST_PUSH_DEBOUNCE_MS: 100, // Reduzido para testes
-  FULL_SYNC_THROTTLE_MS: 1000, // Reduzido para testes
-  FAST_PUSH_SCHEDULE_FULL_SYNC: true,
-  FULL_SYNC_PREFER_WIFI: false,
-  FAST_PUSH_MAX_BUFFER_SIZE: 5,
-};
-
+// Mock syncFlags para controle nos testes - inline because jest.mock is hoisted
 jest.mock('../../src/config/syncFlags', () => ({
-  SYNC_FLAGS: mockSyncFlags,
+  SYNC_FLAGS: {
+    SYNC_OPT_FAST_PUSH_ONLY: true,
+    FAST_PUSH_DEBOUNCE_MS: 100, // Reduzido para testes
+    FULL_SYNC_THROTTLE_MS: 1000, // Reduzido para testes
+    FAST_PUSH_SCHEDULE_FULL_SYNC: true,
+    FULL_SYNC_PREFER_WIFI: false,
+    FAST_PUSH_MAX_BUFFER_SIZE: 5,
+  },
 }));
 
 // Mock callbacks

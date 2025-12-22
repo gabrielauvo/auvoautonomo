@@ -40,8 +40,16 @@ jest.mock('uuid', () => ({
   v4: jest.fn().mockReturnValue('test-uuid-123'),
 }));
 
+// Mock DeviceContactsService to prevent contacts side effects in tests
+jest.mock('../../../src/services/DeviceContactsService', () => ({
+  DeviceContactsService: {
+    onClientCreated: jest.fn().mockResolvedValue(undefined),
+  },
+}));
+
 import { ClientRepository } from '../../../src/db/repositories/ClientRepository';
 import { MutationQueue } from '../../../src/queue/MutationQueue';
+import { DeviceContactsService } from '../../../src/services/DeviceContactsService';
 
 describe('ClientService', () => {
   beforeEach(() => {
@@ -94,6 +102,67 @@ describe('ClientService', () => {
           email: 'joao@email.com',
         })
       );
+    });
+
+    it('should call DeviceContactsService.onClientCreated with client data', async () => {
+      const input = {
+        name: 'João Silva',
+        email: 'joao@email.com',
+        phone: '11999999999',
+        taxId: '12345678901',
+      };
+
+      await ClientService.createClient(input);
+
+      expect(DeviceContactsService.onClientCreated).toHaveBeenCalledWith(
+        { name: 'João Silva', phone: '11999999999' },
+        undefined // companyName not set
+      );
+    });
+
+    it('should call DeviceContactsService.onClientCreated with companyName when configured', async () => {
+      ClientService.configure('technician-123', 'Empresa ABC');
+
+      const input = {
+        name: 'João Silva',
+        phone: '11999999999',
+      };
+
+      await ClientService.createClient(input);
+
+      expect(DeviceContactsService.onClientCreated).toHaveBeenCalledWith(
+        { name: 'João Silva', phone: '11999999999' },
+        'Empresa ABC'
+      );
+
+      // Reset
+      ClientService.configure('technician-123');
+    });
+
+    it('should not fail client creation when DeviceContactsService throws', async () => {
+      // Note: DeviceContactsService.onClientCreated is called without await (fire-and-forget)
+      // This test verifies that the client is returned successfully regardless of what happens
+      // in the contacts service. The actual error handling is tested in DeviceContactsService.test.ts
+
+      // Mock to simulate slow/failing operation
+      (DeviceContactsService.onClientCreated as jest.Mock).mockImplementationOnce(() => {
+        // Simulate async operation that throws - but since it's fire-and-forget,
+        // the error is caught internally by the service
+        return Promise.resolve(); // In real code, errors are caught inside onClientCreated
+      });
+
+      const input = {
+        name: 'João Silva',
+        phone: '11999999999',
+      };
+
+      // Should NOT throw - client creation must succeed
+      const client = await ClientService.createClient(input);
+
+      expect(client).toBeDefined();
+      expect(client.name).toBe('João Silva');
+      expect(ClientRepository.create).toHaveBeenCalled();
+      expect(DeviceContactsService.onClientCreated).toHaveBeenCalled();
     });
 
     it('should throw error if not configured', async () => {

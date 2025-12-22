@@ -42,6 +42,8 @@ import {
   Link as LinkIcon,
   Copy,
   Check,
+  Tag,
+  Receipt,
 } from 'lucide-react';
 import {
   Button,
@@ -668,6 +670,12 @@ export default function WorkOrderDetailsPage() {
                         </button>
                       </Link>
                     )}
+                    <Link href={`/expenses/new?workOrderId=${workOrder.id}`}>
+                      <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                        <Receipt className="h-4 w-4" />
+                        Adicionar Despesa
+                      </button>
+                    </Link>
                     {canCancel && (
                       <button
                         className="w-full flex items-center gap-2 px-4 py-2 text-sm text-error hover:bg-gray-50"
@@ -739,9 +747,23 @@ export default function WorkOrderDetailsPage() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
-                      <label className="text-sm font-medium text-gray-500">{t('title')}</label>
+                      <label className="text-sm font-medium text-gray-500">{t('titleLabel')}</label>
                       <p className="text-gray-900">{workOrder.title}</p>
                     </div>
+
+                    {/* Tipo de OS */}
+                    {workOrder.workOrderType && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Tipo de OS</label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: workOrder.workOrderType.color || '#6B7280' }}
+                          />
+                          <span className="text-gray-900">{workOrder.workOrderType.name}</span>
+                        </div>
+                      </div>
+                    )}
 
                     {workOrder.description && (
                       <div>

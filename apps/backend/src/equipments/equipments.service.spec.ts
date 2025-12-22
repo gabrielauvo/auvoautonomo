@@ -163,7 +163,7 @@ describe('EquipmentsService', () => {
           },
           _count: {
             select: {
-              workOrders: true,
+              workOrderEquipments: true,
             },
           },
         },
@@ -218,7 +218,7 @@ describe('EquipmentsService', () => {
           },
           _count: {
             select: {
-              workOrders: true,
+              workOrderEquipments: true,
             },
           },
         },
@@ -292,7 +292,7 @@ describe('EquipmentsService', () => {
           },
           _count: {
             select: {
-              workOrders: true,
+              workOrderEquipments: true,
             },
           },
         },
@@ -352,7 +352,7 @@ describe('EquipmentsService', () => {
           },
           _count: {
             select: {
-              workOrders: true,
+              workOrderEquipments: true,
             },
           },
         },
@@ -412,7 +412,7 @@ describe('EquipmentsService', () => {
               email: true,
             },
           },
-          workOrders: {
+          workOrderEquipments: {
             orderBy: {
               createdAt: 'desc',
             },
@@ -430,7 +430,7 @@ describe('EquipmentsService', () => {
           },
           _count: {
             select: {
-              workOrders: true,
+              workOrderEquipments: true,
             },
           },
         },
@@ -461,7 +461,7 @@ describe('EquipmentsService', () => {
               email: true,
             },
           },
-          workOrders: {
+          workOrderEquipments: {
             orderBy: {
               createdAt: 'desc',
             },
@@ -479,7 +479,7 @@ describe('EquipmentsService', () => {
           },
           _count: {
             select: {
-              workOrders: true,
+              workOrderEquipments: true,
             },
           },
         },
@@ -780,7 +780,7 @@ describe('EquipmentsService', () => {
         include: {
           _count: {
             select: {
-              workOrders: true,
+              workOrderEquipments: true,
             },
           },
         },

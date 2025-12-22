@@ -300,7 +300,6 @@ export class WorkOrderChecklistsService {
       'MULTI_SELECT': ChecklistItemType.SELECT,
       'PHOTO_REQUIRED': ChecklistItemType.PHOTO,
       'PHOTO_OPTIONAL': ChecklistItemType.PHOTO,
-      'FILE_UPLOAD': ChecklistItemType.TEXT,
       'SIGNATURE_TECHNICIAN': ChecklistItemType.PHOTO,
       'SIGNATURE_CLIENT': ChecklistItemType.PHOTO,
       'SECTION_TITLE': ChecklistItemType.TEXT,

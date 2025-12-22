@@ -28,6 +28,7 @@ import {
   TrendingUp,
   ArrowRight,
   AlertCircle,
+  Receipt,
 } from 'lucide-react';
 
 /**
@@ -229,6 +230,22 @@ export default function ReportsOverviewPage() {
                 <div>
                   <p className="font-medium text-gray-900">{t('clients')}</p>
                   <p className="text-xs text-gray-500">{t('clientsDescription')}</p>
+                </div>
+              </div>
+              <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-primary transition-colors" />
+            </Link>
+
+            <Link
+              href="/reports/profit-loss"
+              className="flex items-center justify-between p-3 rounded-lg border hover:border-primary hover:bg-primary-50 transition-colors group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600">
+                  <Receipt className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900">Lucro/Prejuízo</p>
+                  <p className="text-xs text-gray-500">Receitas vs despesas e análise de lucratividade</p>
                 </div>
               </div>
               <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-primary transition-colors" />

@@ -399,11 +399,6 @@ describe('setAnswerValue', () => {
     expect(result.valueJson).toBe('{"attachmentId":"att-1"}');
   });
 
-  it('should set FILE_UPLOAD value as JSON', () => {
-    const result = setAnswerValue('FILE_UPLOAD', { fileId: 'file-1' });
-    expect(result.valueJson).toBe('{"fileId":"file-1"}');
-  });
-
   it('should set SIGNATURE_TECHNICIAN value as JSON', () => {
     const result = setAnswerValue('SIGNATURE_TECHNICIAN', { signatureUrl: 'url' });
     expect(result.valueJson).toBe('{"signatureUrl":"url"}');

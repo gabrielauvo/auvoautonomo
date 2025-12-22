@@ -32,7 +32,6 @@ export type ChecklistQuestionType =
   | 'MULTI_SELECT'
   | 'PHOTO_REQUIRED'
   | 'PHOTO_OPTIONAL'
-  | 'FILE_UPLOAD'
   | 'SIGNATURE_TECHNICIAN'
   | 'SIGNATURE_CLIENT'
   | 'SECTION_TITLE'

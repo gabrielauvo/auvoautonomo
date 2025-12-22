@@ -96,6 +96,48 @@ export class SyncWorkOrderPullQueryDto {
   endDate?: string;
 }
 
+// DTO para itens de catálogo da OS (snapshot denormalizado)
+export class SyncWorkOrderItemDetailDto {
+  @ApiProperty({ description: 'Work Order Item ID (UUID)' })
+  id: string;
+
+  @ApiProperty({ description: 'Work Order ID' })
+  workOrderId: string;
+
+  @ApiPropertyOptional({ description: 'Original catalog item ID' })
+  itemId?: string;
+
+  @ApiPropertyOptional({ description: 'Original quote item ID' })
+  quoteItemId?: string;
+
+  @ApiProperty({ description: 'Item name (snapshot)' })
+  name: string;
+
+  @ApiProperty({ description: 'Item type (PRODUCT or SERVICE)' })
+  type: string;
+
+  @ApiProperty({ description: 'Unit (UN, M, KG, etc.)' })
+  unit: string;
+
+  @ApiProperty({ description: 'Quantity' })
+  quantity: number;
+
+  @ApiProperty({ description: 'Unit price' })
+  unitPrice: number;
+
+  @ApiProperty({ description: 'Discount value' })
+  discountValue: number;
+
+  @ApiProperty({ description: 'Total price (quantity * unitPrice - discountValue)' })
+  totalPrice: number;
+
+  @ApiProperty({ description: 'Created at timestamp' })
+  createdAt: string;
+
+  @ApiProperty({ description: 'Updated at timestamp' })
+  updatedAt: string;
+}
+
 export class SyncWorkOrderItemDto {
   @ApiProperty({ description: 'Work Order ID (UUID)' })
   id: string;
@@ -108,6 +150,9 @@ export class SyncWorkOrderItemDto {
 
   @ApiPropertyOptional({ description: 'Quote ID (if originated from quote)' })
   quoteId?: string;
+
+  @ApiPropertyOptional({ description: 'Work Order Type ID' })
+  workOrderTypeId?: string;
 
   @ApiProperty({ description: 'Work order title' })
   title: string;
@@ -163,6 +208,20 @@ export class SyncWorkOrderItemDto {
 
   @ApiPropertyOptional({ description: 'Client address (denormalized)' })
   clientAddress?: string;
+
+  // Work order type data (denormalized)
+  @ApiPropertyOptional({ description: 'Work order type name (denormalized)' })
+  workOrderTypeName?: string;
+
+  @ApiPropertyOptional({ description: 'Work order type color (denormalized)' })
+  workOrderTypeColor?: string;
+
+  // Work order items (catalog items snapshot)
+  @ApiPropertyOptional({
+    description: 'Work order items (products/services)',
+    type: [SyncWorkOrderItemDetailDto],
+  })
+  items?: SyncWorkOrderItemDetailDto[];
 }
 
 export class SyncWorkOrderPullResponseDto {
@@ -257,6 +316,11 @@ export class WorkOrderMutationRecordDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @ApiPropertyOptional({ description: 'Work Order Type ID' })
+  @IsOptional()
+  @IsUUID()
+  workOrderTypeId?: string;
 }
 
 export class WorkOrderMutationDto {

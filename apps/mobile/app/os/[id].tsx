@@ -413,6 +413,30 @@ const InfoTab = React.memo(function InfoTab({
         )}
       </Card>
 
+      {/* Tipo de OS */}
+      {workOrder.workOrderTypeName && (
+        <Card variant="outlined" style={[styles.infoCard, { marginBottom: spacing[3] }]}>
+          <View style={styles.infoCardHeader}>
+            <Ionicons name="pricetag-outline" size={20} color={colors.primary[500]} />
+            <Text variant="body" weight="semibold" style={{ marginLeft: 8 }}>
+              Tipo de OS
+            </Text>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View
+              style={{
+                width: 12,
+                height: 12,
+                borderRadius: 6,
+                backgroundColor: workOrder.workOrderTypeColor || colors.primary[500],
+                marginRight: 8,
+              }}
+            />
+            <Text variant="body">{workOrder.workOrderTypeName}</Text>
+          </View>
+        </Card>
+      )}
+
       {/* Agendamento */}
       <Card variant="outlined" style={[styles.infoCard, { marginBottom: spacing[3] }]}>
         <View style={styles.infoCardHeader}>

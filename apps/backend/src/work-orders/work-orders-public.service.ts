@@ -17,13 +17,30 @@ export class WorkOrdersPublicService {
 
   /**
    * Constrói URL completa para arquivos armazenados localmente
+   * Também corrige URLs que foram salvas com IP antigo
    */
   private buildFileUrl(publicUrl: string | null): string | null {
     if (!publicUrl) return null;
-    // Se já é uma URL completa (http/https), retorna como está
+
+    // Se já é uma URL completa (http/https)
     if (publicUrl.startsWith('http://') || publicUrl.startsWith('https://')) {
+      // Substituir IPs locais antigos pelo API_URL atual
+      // Isso corrige URLs salvas com IPs de desenvolvimento diferentes
+      const urlObj = new URL(publicUrl);
+      const currentApiUrl = new URL(this.apiUrl);
+
+      // Se é um IP local (192.168.x.x ou 10.x.x.x ou localhost), substituir pelo API_URL atual
+      const isLocalIP = /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.|127\.|localhost)/i.test(urlObj.hostname);
+      if (isLocalIP) {
+        urlObj.protocol = currentApiUrl.protocol;
+        urlObj.hostname = currentApiUrl.hostname;
+        urlObj.port = currentApiUrl.port;
+        return urlObj.toString();
+      }
+
       return publicUrl;
     }
+
     // Senão, adiciona o domínio do backend
     return `${this.apiUrl}${publicUrl.startsWith('/') ? '' : '/'}${publicUrl}`;
   }

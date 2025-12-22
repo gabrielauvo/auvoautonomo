@@ -37,7 +37,6 @@ export interface SignatureSyncResult {
 
 class WorkOrderSignatureServiceClass {
   private technicianId: string | null = null;
-  private isOnlineCheck: boolean = true;
 
   /**
    * Configurar o serviço
@@ -48,10 +47,10 @@ class WorkOrderSignatureServiceClass {
   }
 
   /**
-   * Verificar se está online
+   * Verificar se está online e configurado
    */
   private isOnline(): boolean {
-    return syncEngine.isConfigured() && this.isOnlineCheck;
+    return syncEngine.isConfigured() && syncEngine.isNetworkOnline();
   }
 
   /**
@@ -167,7 +166,9 @@ class WorkOrderSignatureServiceClass {
         attachmentId: result.attachmentId,
       };
     } catch (error) {
-      console.error('[WorkOrderSignatureService] Sync error:', error);
+      // Use warn for network errors to avoid LogBox spam
+      // These are expected when offline or server unreachable
+      console.warn('[WorkOrderSignatureService] Sync skipped (network issue):', error instanceof Error ? error.message : error);
       return {
         success: false,
         signatureId: signature.id,
@@ -184,7 +185,18 @@ class WorkOrderSignatureServiceClass {
       return { synced: 0, failed: 0 };
     }
 
+    // Skip if offline - will retry on next sync
+    if (!this.isOnline()) {
+      console.log('[WorkOrderSignatureService] Offline, skipping sync');
+      return { synced: 0, failed: 0 };
+    }
+
     const pending = await SignatureRepository.getPendingSync(this.technicianId);
+
+    if (pending.length === 0) {
+      return { synced: 0, failed: 0 };
+    }
+
     console.log('[WorkOrderSignatureService] Found', pending.length, 'pending signatures');
 
     let synced = 0;

@@ -215,6 +215,17 @@ export class FinancialAutomationsService {
         }
 
         try {
+          // Fetch user to get company Pix key info
+          const user = await this.prisma.user.findUnique({
+            where: { id: settings.userId },
+            select: {
+              pixKey: true,
+              pixKeyType: true,
+              pixKeyOwnerName: true,
+              pixKeyEnabled: true,
+            },
+          });
+
           const context: PaymentReminderContext = {
             clientName: payment.client.name,
             clientEmail: payment.client.email || undefined,
@@ -227,6 +238,10 @@ export class FinancialAutomationsService {
             pixCode: payment.asaasPixCode || undefined,
             workOrderNumber: payment.workOrder?.id?.substring(0, 8).toUpperCase(),
             quoteNumber: payment.quote?.id?.substring(0, 8).toUpperCase(),
+            // Include company Pix key if enabled
+            companyPixKey: user?.pixKeyEnabled && user?.pixKey ? user.pixKey : undefined,
+            companyPixKeyType: user?.pixKeyEnabled && user?.pixKeyType ? user.pixKeyType : undefined,
+            companyPixKeyOwnerName: user?.pixKeyEnabled && user?.pixKeyOwnerName ? user.pixKeyOwnerName : undefined,
           };
 
           await this.notificationsService.sendNotification({
@@ -316,6 +331,17 @@ export class FinancialAutomationsService {
         }
 
         try {
+          // Fetch user to get company Pix key info
+          const user = await this.prisma.user.findUnique({
+            where: { id: settings.userId },
+            select: {
+              pixKey: true,
+              pixKeyType: true,
+              pixKeyOwnerName: true,
+              pixKeyEnabled: true,
+            },
+          });
+
           const context: PaymentReminderContext = {
             clientName: payment.client.name,
             clientEmail: payment.client.email || undefined,
@@ -328,6 +354,10 @@ export class FinancialAutomationsService {
             pixCode: payment.asaasPixCode || undefined,
             workOrderNumber: payment.workOrder?.id?.substring(0, 8).toUpperCase(),
             quoteNumber: payment.quote?.id?.substring(0, 8).toUpperCase(),
+            // Include company Pix key if enabled
+            companyPixKey: user?.pixKeyEnabled && user?.pixKey ? user.pixKey : undefined,
+            companyPixKeyType: user?.pixKeyEnabled && user?.pixKeyType ? user.pixKeyType : undefined,
+            companyPixKeyOwnerName: user?.pixKeyEnabled && user?.pixKeyOwnerName ? user.pixKeyOwnerName : undefined,
           };
 
           await this.notificationsService.sendNotification({

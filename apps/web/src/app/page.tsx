@@ -1,24 +1,26 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { hasToken } from '@/services';
+import { useAuth } from '@/context/auth-context';
 import { Spinner } from '@/components/ui';
 
 export default function Home() {
   const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuth();
+  const hasRedirectedRef = useRef(false);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const isAuthenticated = await hasToken();
+    // Só redireciona quando o loading terminar e ainda não tiver redirecionado
+    if (!isLoading && !hasRedirectedRef.current) {
+      hasRedirectedRef.current = true;
       if (isAuthenticated) {
         router.replace('/dashboard');
       } else {
         router.replace('/login');
       }
-    };
-    checkAuth();
-  }, [router]);
+    }
+  }, [isAuthenticated, isLoading, router]);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center">

@@ -25,6 +25,9 @@ import {
   Package,
   ChevronLeft,
   ChevronRight,
+  Building2,
+  Receipt,
+  Warehouse,
 } from 'lucide-react';
 
 interface NavItem {
@@ -65,9 +68,24 @@ const navItems: NavItem[] = [
     icon: <Package className="h-5 w-5" />,
   },
   {
+    labelKey: 'inventory',
+    href: '/inventory',
+    icon: <Warehouse className="h-5 w-5" />,
+  },
+  {
     labelKey: 'billing',
     href: '/billing/charges',
     icon: <CreditCard className="h-5 w-5" />,
+  },
+  {
+    labelKey: 'suppliers',
+    href: '/suppliers',
+    icon: <Building2 className="h-5 w-5" />,
+  },
+  {
+    labelKey: 'expenses',
+    href: '/expenses',
+    icon: <Receipt className="h-5 w-5" />,
   },
   {
     labelKey: 'reports',

@@ -215,6 +215,9 @@ export default function EditarCatalogoScreen() {
   // =============================================================================
 
   const handleSave = useCallback(async () => {
+    // CRITICAL: Guard against duplicate submissions
+    if (isLoading) return;
+
     if (!validate() || !technicianId || !id) return;
 
     setIsLoading(true);

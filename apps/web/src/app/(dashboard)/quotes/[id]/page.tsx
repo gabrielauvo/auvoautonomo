@@ -52,6 +52,8 @@ import {
   useSendWhatsApp,
   useQuoteAttachments,
 } from '@/hooks/use-quotes';
+import { useTemplateSettings } from '@/hooks/use-settings';
+import { DEFAULT_QUOTE_TEMPLATE } from '@/services/settings.service';
 import {
   canEditQuote,
   canSendQuote,
@@ -116,6 +118,12 @@ export default function QuoteDetailsPage({ params }: QuoteDetailsPageProps) {
   // Queries
   const { data: quote, isLoading, error, refetch } = useQuote(id);
   const { data: attachments } = useQuoteAttachments(id);
+  const { data: templateSettings } = useTemplateSettings();
+
+  // Get template colors (fallback to defaults)
+  const quoteTemplate = templateSettings?.quote || DEFAULT_QUOTE_TEMPLATE;
+  const primaryColor = quoteTemplate.primaryColor;
+  const secondaryColor = quoteTemplate.secondaryColor || primaryColor;
 
   // Mutations
   const updateStatus = useUpdateQuoteStatus();
@@ -486,7 +494,10 @@ export default function QuoteDetailsPage({ params }: QuoteDetailsPageProps) {
                   href={`/clients/${quote.clientId}`}
                   className="flex items-center gap-3 hover:bg-gray-50 rounded-lg -mx-2 px-2 py-2 transition-colors"
                 >
-                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary-100 text-primary font-medium">
+                  <div
+                    className="flex items-center justify-center w-10 h-10 rounded-full font-medium"
+                    style={{ backgroundColor: `${primaryColor}20`, color: primaryColor }}
+                  >
                     {quote.client?.name?.charAt(0).toUpperCase() || 'C'}
                   </div>
                   <div className="flex-1">
@@ -506,7 +517,10 @@ export default function QuoteDetailsPage({ params }: QuoteDetailsPageProps) {
                     </div>
                     <div>
                       <p className="text-xs text-gray-500">{t('phone')}</p>
-                      <p className="text-sm font-medium text-primary hover:underline">
+                      <p
+                        className="text-sm font-medium hover:underline"
+                        style={{ color: primaryColor }}
+                      >
                         {quote.client.phone}
                       </p>
                     </div>
@@ -523,7 +537,10 @@ export default function QuoteDetailsPage({ params }: QuoteDetailsPageProps) {
                     </div>
                     <div>
                       <p className="text-xs text-gray-500">{t('email')}</p>
-                      <p className="text-sm font-medium text-primary hover:underline break-all">
+                      <p
+                        className="text-sm font-medium hover:underline break-all"
+                        style={{ color: primaryColor }}
+                      >
                         {quote.client.email}
                       </p>
                     </div>

@@ -23,6 +23,8 @@ import {
   SecurityInfo,
   PlanType,
   UpgradeResult,
+  AcceptanceTermsSettings,
+  UpdateAcceptanceTermsDto,
 } from '@/services/settings.service';
 
 // ============================================
@@ -275,6 +277,36 @@ export function useResetTemplate() {
       settingsService.resetTemplateToDefault(type),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings', 'templates'] });
+    },
+  });
+}
+
+// ============================================
+// ACCEPTANCE TERMS HOOKS
+// ============================================
+
+/**
+ * Hook para obter configurações de termos de aceite
+ */
+export function useAcceptanceTerms() {
+  return useQuery<AcceptanceTermsSettings>({
+    queryKey: ['settings', 'acceptanceTerms'],
+    queryFn: () => settingsService.getAcceptanceTerms(),
+    staleTime: 60000,
+  });
+}
+
+/**
+ * Hook para atualizar termos de aceite
+ */
+export function useUpdateAcceptanceTerms() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: UpdateAcceptanceTermsDto) =>
+      settingsService.updateAcceptanceTerms(data),
+    onSuccess: (updatedTerms) => {
+      queryClient.setQueryData(['settings', 'acceptanceTerms'], updatedTerms);
     },
   });
 }

@@ -34,6 +34,10 @@ export interface CreateWorkOrderInput {
   clientName?: string;
   clientPhone?: string;
   clientAddress?: string;
+  // Work order type (optional)
+  workOrderTypeId?: string;
+  workOrderTypeName?: string;
+  workOrderTypeColor?: string;
 }
 
 export interface UpdateWorkOrderInput {
@@ -202,6 +206,9 @@ class WorkOrderService {
       clientName: input.clientName,
       clientPhone: input.clientPhone,
       clientAddress: input.clientAddress,
+      workOrderTypeId: input.workOrderTypeId,
+      workOrderTypeName: input.workOrderTypeName,
+      workOrderTypeColor: input.workOrderTypeColor,
     } as unknown as WorkOrder;
 
     // Save to local database

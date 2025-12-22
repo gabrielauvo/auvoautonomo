@@ -24,6 +24,10 @@ import {
   AlertCircle,
   Loader2,
   CheckCircle2,
+  QrCode,
+  ToggleLeft,
+  ToggleRight,
+  Copy,
 } from 'lucide-react';
 import {
   Card,
@@ -46,7 +50,7 @@ import {
   useDeleteLogo,
 } from '@/hooks/use-settings';
 import { useCnpjLookup } from '@/hooks/use-cnpj-lookup';
-import { DEFAULT_BRANDING, CompanyBranding } from '@/services/settings.service';
+import { DEFAULT_BRANDING, CompanyBranding, PIX_KEY_TYPES, PixKeyType } from '@/services/settings.service';
 import { getUploadUrl } from '@/services/api';
 
 // Estados brasileiros
@@ -88,6 +92,13 @@ export default function CompanySettingsPage() {
   // Branding state
   const [branding, setBranding] = useState<CompanyBranding>(DEFAULT_BRANDING);
 
+  // Pix state
+  const [pixKey, setPixKey] = useState('');
+  const [pixKeyType, setPixKeyType] = useState<PixKeyType | ''>('');
+  const [pixKeyOwnerName, setPixKeyOwnerName] = useState('');
+  const [pixKeyEnabled, setPixKeyEnabled] = useState(false);
+  const [pixKeyCopied, setPixKeyCopied] = useState(false);
+
   // UI state
   const [saved, setSaved] = useState(false);
   const [taxIdError, setTaxIdError] = useState<string | null>(null);
@@ -117,6 +128,12 @@ export default function CompanySettingsPage() {
       if (company.branding) {
         setBranding({ ...DEFAULT_BRANDING, ...company.branding });
       }
+
+      // Load Pix data
+      setPixKey(company.pixKey || '');
+      setPixKeyType((company.pixKeyType as PixKeyType) || '');
+      setPixKeyOwnerName(company.pixKeyOwnerName || '');
+      setPixKeyEnabled(company.pixKeyEnabled || false);
     }
   }, [company]);
 
@@ -184,6 +201,18 @@ export default function CompanySettingsPage() {
       const cleanedPhone = cleanDocument(phone);
       const cleanedWhatsapp = cleanDocument(whatsapp);
 
+      // Só envia address se pelo menos um campo tiver valor
+      const addressData = {
+        street: street || undefined,
+        number: number || undefined,
+        complement: complement || undefined,
+        neighborhood: neighborhood || undefined,
+        city: city || undefined,
+        state: state || undefined,
+        zipCode: zipCode || undefined,
+      };
+      const hasAddress = Object.values(addressData).some(v => v !== undefined);
+
       await updateCompany.mutateAsync({
         tradeName,
         legalName: legalName || undefined,
@@ -192,16 +221,13 @@ export default function CompanySettingsPage() {
         email: email || undefined,
         phone: cleanedPhone || undefined,
         whatsapp: cleanedWhatsapp || undefined,
-        address: {
-          street: street || undefined,
-          number: number || undefined,
-          complement: complement || undefined,
-          neighborhood: neighborhood || undefined,
-          city: city || undefined,
-          state: state || undefined,
-          zipCode: zipCode || undefined,
-        },
+        address: hasAddress ? addressData : undefined,
         branding,
+        // Pix settings
+        pixKey: pixKey || null,
+        pixKeyType: pixKeyType || null,
+        pixKeyOwnerName: pixKeyOwnerName || null,
+        pixKeyEnabled,
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
@@ -220,6 +246,14 @@ export default function CompanySettingsPage() {
 
   const updateBrandingColor = (key: keyof CompanyBranding, color: string) => {
     setBranding((prev) => ({ ...prev, [key]: color }));
+  };
+
+  const handleCopyPixKey = async () => {
+    if (pixKey) {
+      await navigator.clipboard.writeText(pixKey);
+      setPixKeyCopied(true);
+      setTimeout(() => setPixKeyCopied(false), 2000);
+    }
   };
 
   if (isLoading) {
@@ -420,6 +454,119 @@ export default function CompanySettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Recebimento via Pix */}
+      {company?.pixKeyFeatureEnabled !== false && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <QrCode className="h-5 w-5" />
+                Recebimento via Pix
+              </div>
+              <button
+                type="button"
+                onClick={() => setPixKeyEnabled(!pixKeyEnabled)}
+                className="flex items-center gap-2 text-sm font-normal"
+              >
+                {pixKeyEnabled ? (
+                  <>
+                    <ToggleRight className="h-6 w-6 text-green-500" />
+                    <span className="text-green-600">Ativado</span>
+                  </>
+                ) : (
+                  <>
+                    <ToggleLeft className="h-6 w-6 text-gray-400" />
+                    <span className="text-gray-500">Desativado</span>
+                  </>
+                )}
+              </button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-gray-500">
+              Configure sua chave Pix para exibir nas mensagens de cobrança e no PDF.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField label="Tipo da chave">
+                <select
+                  value={pixKeyType}
+                  onChange={(e) => setPixKeyType(e.target.value as PixKeyType | '')}
+                  className="w-full h-10 px-3 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  disabled={!pixKeyEnabled}
+                >
+                  <option value="">Selecione o tipo</option>
+                  {PIX_KEY_TYPES.map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+
+              <FormField label="Chave Pix">
+                <div className="relative">
+                  <Input
+                    value={pixKey}
+                    onChange={(e) => setPixKey(e.target.value)}
+                    placeholder={
+                      pixKeyType === 'CPF' ? '000.000.000-00' :
+                      pixKeyType === 'CNPJ' ? '00.000.000/0000-00' :
+                      pixKeyType === 'EMAIL' ? 'email@exemplo.com' :
+                      pixKeyType === 'PHONE' ? '+55 11 99999-9999' :
+                      pixKeyType === 'RANDOM' ? 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx' :
+                      'Digite sua chave Pix'
+                    }
+                    disabled={!pixKeyEnabled}
+                    className="pr-10"
+                  />
+                  {pixKey && (
+                    <button
+                      type="button"
+                      onClick={handleCopyPixKey}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      title="Copiar chave"
+                    >
+                      {pixKeyCopied ? (
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </button>
+                  )}
+                </div>
+              </FormField>
+            </div>
+
+            <FormField label="Nome do favorecido (opcional)">
+              <Input
+                value={pixKeyOwnerName}
+                onChange={(e) => setPixKeyOwnerName(e.target.value)}
+                placeholder="Nome que aparece no Pix"
+                disabled={!pixKeyEnabled}
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                Exibido nas mensagens e PDF para identificar o recebedor.
+              </p>
+            </FormField>
+
+            {pixKeyEnabled && pixKey && (
+              <Alert variant="default" className="bg-green-50 border-green-200">
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5" />
+                  <div className="text-sm text-green-800">
+                    <strong>Chave Pix configurada!</strong>
+                    <p className="mt-1">
+                      Sua chave será exibida nas mensagens de WhatsApp e no PDF de cobrança.
+                    </p>
+                  </div>
+                </div>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Logo */}
       <Card>

@@ -13,6 +13,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimiters, getClientIP, isValidEmail } from '@/lib/security';
 
+export const dynamic = 'force-dynamic';
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 const AUTH_TOKEN_KEY = 'auth_token';
 const REFRESH_TOKEN_KEY = 'refresh_token';

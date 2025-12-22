@@ -11,6 +11,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
 import { generateCSRFToken, rateLimiters, getClientIP } from '@/lib/security';
 
 const CSRF_TOKEN_KEY = 'csrf_token';

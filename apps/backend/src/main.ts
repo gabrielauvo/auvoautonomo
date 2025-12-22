@@ -112,6 +112,7 @@ async function bootstrap() {
     'http://localhost:3001',
     'http://localhost:3002',
     'http://localhost:8081', // Expo
+    'https://auvoautonomo-web-7duo.vercel.app', // Vercel production
   ];
 
   app.enableCors({

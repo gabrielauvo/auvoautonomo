@@ -59,8 +59,9 @@ async function bootstrap() {
   app.useBodyParser('urlencoded', { limit: '50mb', extended: true });
 
   // Serve static files from storage directory
-  const storagePath = process.env.STORAGE_PATH || './storage';
-  app.useStaticAssets(join(process.cwd(), storagePath), {
+  // Railway uses /app/storage with volumes
+  const storagePath = process.env.STORAGE_PATH || (process.env.NODE_ENV === 'production' ? '/app/storage' : './storage');
+  app.useStaticAssets(storagePath.startsWith('/') ? storagePath : join(process.cwd(), storagePath), {
     prefix: '/uploads/',
   });
 

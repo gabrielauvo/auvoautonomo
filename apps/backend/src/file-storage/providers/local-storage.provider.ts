@@ -14,7 +14,8 @@ export class LocalStorageProvider implements StorageProvider {
 
   constructor() {
     // Base path for local file storage
-    this.basePath = process.env.STORAGE_PATH || './storage';
+    // Railway uses /app/storage with volumes
+    this.basePath = process.env.STORAGE_PATH || (process.env.NODE_ENV === 'production' ? '/app/storage' : './storage');
   }
 
   async upload(params: UploadParams): Promise<UploadResult> {
@@ -37,9 +38,16 @@ export class LocalStorageProvider implements StorageProvider {
 
     // Build public URL for accessing the file
     // Use BASE_URL env var to generate full URL for external access (mobile apps, etc.)
-    const baseUrl = process.env.BASE_URL || process.env.API_URL || '';
+    // Fallback to Railway URL if not set
+    let baseUrl = process.env.BASE_URL || process.env.API_URL || '';
+    if (!baseUrl && process.env.RAILWAY_PUBLIC_DOMAIN) {
+      baseUrl = `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`;
+    }
+    if (!baseUrl) {
+      baseUrl = 'https://monorepobackend-production.up.railway.app';
+    }
     const relativePath = `/uploads/${storagePath}`;
-    const publicUrl = baseUrl ? `${baseUrl}${relativePath}` : relativePath;
+    const publicUrl = `${baseUrl}${relativePath}`;
 
     this.logger.log(`Public URL: ${publicUrl} (baseUrl: ${baseUrl || 'not set'})`);
 

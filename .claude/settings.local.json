@@ -279,7 +279,13 @@
       "Bash(if exist \"node_modules\\\\.cache\" rmdir /s /q \"node_modules\\\\.cache\")",
       "Bash(pnpm run dev:*)",
       "Bash(dir \"c:\\\\Users\\\\Auvo\\\\Nova pasta\\\\apps\\\\web\"\" /b)",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: add Vercel config, inventory module, expenses, and fix duplicate submissions\n\n- Add vercel.json configuration for Vercel deployment\n- Add inventory module \\(backend + web + mobile\\)\n- Add expenses and expense categories modules\n- Add work order types feature\n- Add Pix key configuration\n- Add acceptance terms for quotes\n- Fix duplicate submission bug in all forms \\(web and mobile\\)\n- Add duplicate submission guards to prevent data duplication\n- Update next.config.js with production image domains\n- Add new database migrations\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: add Vercel config, inventory module, expenses, and fix duplicate submissions\n\n- Add vercel.json configuration for Vercel deployment\n- Add inventory module \\(backend + web + mobile\\)\n- Add expenses and expense categories modules\n- Add work order types feature\n- Add Pix key configuration\n- Add acceptance terms for quotes\n- Fix duplicate submission bug in all forms \\(web and mobile\\)\n- Add duplicate submission guards to prevent data duplication\n- Update next.config.js with production image domains\n- Add new database migrations\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(railway login:*)",
+      "Bash(export RAILWAY_TOKEN=\"8d94859f-9239-4011-bfce-88186b62ee90\")",
+      "Bash(railway whoami:*)",
+      "Bash(set RAILWAY_TOKEN=8d94859f-9239-4011-bfce-88186b62ee90)",
+      "Bash($env:RAILWAY_TOKEN=\"8d94859f-9239-4011-bfce-88186b62ee90\")",
+      "Bash(RAILWAY_TOKEN=8d94859f-9239-4011-bfce-88186b62ee90 railway whoami:*)"
     ]
   }
 }

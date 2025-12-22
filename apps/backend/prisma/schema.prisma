@@ -1340,6 +1340,7 @@ model Expense {
   workOrderId   String?               // Vínculo opcional com OS para cálculo de lucro
   description   String
   notes         String?
+  invoiceNumber String?               // Número da nota fiscal
   amount        Decimal               @db.Decimal(15, 2)
   dueDate       DateTime
   paidAt        DateTime?

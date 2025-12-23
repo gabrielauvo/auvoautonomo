@@ -226,17 +226,17 @@ export default function GettingStartedPage() {
       title: 'Baixe o aplicativo',
       description:
         'Acesse suas informações de qualquer lugar com o app Auvo Field.',
-      icon: <Smartphone className="h-4 w-4" />,
+      icon: <Smartphone className="h-5 w-5" />,
       externalLinks: [
         {
           label: 'Google Play',
           url: 'https://play.google.com/store/apps/details?id=com.auvo.field',
-          icon: <ExternalLink className="h-3 w-3" />,
+          icon: <ExternalLink className="h-4 w-4" />,
         },
         {
           label: 'App Store',
           url: 'https://apps.apple.com/app/auvo-field/id123456789',
-          icon: <ExternalLink className="h-3 w-3" />,
+          icon: <ExternalLink className="h-4 w-4" />,
         },
       ],
       completed: completedItems.includes('download-app'),
@@ -246,7 +246,7 @@ export default function GettingStartedPage() {
       title: 'Cadastre um cliente',
       description:
         'Adicione seu primeiro cliente para gerenciar casos e cobranças.',
-      icon: <Users className="h-4 w-4" />,
+      icon: <Users className="h-5 w-5" />,
       href: '/clients/new',
       completed: completedItems.includes('add-client'),
     },
@@ -255,7 +255,7 @@ export default function GettingStartedPage() {
       title: 'Cadastre um orçamento',
       description:
         'Crie orçamentos profissionais e envie para aprovação dos clientes.',
-      icon: <FileText className="h-4 w-4" />,
+      icon: <FileText className="h-5 w-5" />,
       href: '/quotes/new',
       completed: completedItems.includes('create-quote'),
     },
@@ -263,7 +263,7 @@ export default function GettingStartedPage() {
       id: 'create-charge',
       title: 'Cadastre uma cobrança',
       description: 'Registre cobranças e acompanhe os pagamentos dos clientes.',
-      icon: <Receipt className="h-4 w-4" />,
+      icon: <Receipt className="h-5 w-5" />,
       href: '/billing/charges/new',
       completed: completedItems.includes('create-charge'),
     },
@@ -272,7 +272,7 @@ export default function GettingStartedPage() {
       title: 'Cadastre uma despesa',
       description:
         'Controle suas despesas e tenha visão completa do financeiro.',
-      icon: <Wallet className="h-4 w-4" />,
+      icon: <Wallet className="h-5 w-5" />,
       href: '/billing/expenses/new',
       completed: completedItems.includes('add-expense'),
     },
@@ -281,7 +281,7 @@ export default function GettingStartedPage() {
       title: 'Emita cobranças com o Asaas',
       description:
         'Integre com o Asaas para emitir boletos, Pix e cartão automaticamente.',
-      icon: <CreditCard className="h-4 w-4" />,
+      icon: <CreditCard className="h-5 w-5" />,
       href: '/settings/integrations',
       completed: completedItems.includes('setup-asaas'),
     },
@@ -329,25 +329,25 @@ export default function GettingStartedPage() {
 
       {/* Progress Card */}
       <Card>
-        <CardContent className="py-4">
+        <CardContent className="py-5">
           <div className="flex items-center justify-between mb-3">
             <div>
               <h3 className="text-sm font-medium text-gray-900">Seu progresso</h3>
-              <p className="text-xs text-gray-500">
+              <p className="text-sm text-gray-500">
                 {completedCount} de {checklistItems.length} etapas concluídas
               </p>
             </div>
             {daysRemaining > 0 && (
               <div className="text-right">
-                <div className="flex items-center gap-1 text-xs text-gray-500">
-                  <Calendar className="h-3.5 w-3.5" />
+                <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                  <Calendar className="h-4 w-4" />
                   <span>{daysRemaining} dias restantes</span>
                 </div>
               </div>
             )}
           </div>
           {/* Progress bar */}
-          <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+          <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
             <div
               className="h-full bg-primary rounded-full transition-all duration-500"
               style={{ width: `${progressPercent}%` }}
@@ -359,21 +359,21 @@ export default function GettingStartedPage() {
       {/* Checklist */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Checklist de configuração</CardTitle>
+          <CardTitle>Checklist de configuração</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y divide-gray-100">
             {checklistItems.map((item) => (
               <div
                 key={item.id}
-                className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${
+                className={`flex items-start gap-4 px-5 py-4 hover:bg-gray-50 transition-colors ${
                   completedItems.includes(item.id) ? 'bg-green-50/50' : ''
                 }`}
               >
                 {/* Checkbox com animação */}
                 <button
                   onClick={() => toggleItem(item.id, item.title)}
-                  className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
+                  className={`mt-0.5 flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
                     completedItems.includes(item.id)
                       ? 'bg-green-500 border-green-500 text-white scale-110'
                       : 'border-gray-300 hover:border-primary hover:scale-105'
@@ -383,7 +383,7 @@ export default function GettingStartedPage() {
                   }}
                 >
                   {completedItems.includes(item.id) && (
-                    <Check className="h-3 w-3" />
+                    <Check className="h-4 w-4" />
                   )}
                 </button>
                 <style jsx>{`
@@ -409,7 +409,7 @@ export default function GettingStartedPage() {
                       {item.icon}
                     </span>
                     <h4
-                      className={`text-sm font-medium ${
+                      className={`font-medium ${
                         completedItems.includes(item.id)
                           ? 'text-gray-400 line-through'
                           : 'text-gray-900'
@@ -419,7 +419,7 @@ export default function GettingStartedPage() {
                     </h4>
                   </div>
                   <p
-                    className={`text-xs mt-0.5 ${
+                    className={`text-sm mt-1 ${
                       completedItems.includes(item.id)
                         ? 'text-gray-400'
                         : 'text-gray-500'
@@ -430,12 +430,12 @@ export default function GettingStartedPage() {
 
                   {/* Action buttons */}
                   {!completedItems.includes(item.id) && (
-                    <div className="flex flex-wrap gap-2 mt-2">
+                    <div className="flex flex-wrap gap-2 mt-3">
                       {item.href && (
                         <Link href={item.href}>
-                          <Button size="sm" variant="outline" className="h-7 text-xs">
+                          <Button size="sm" variant="outline">
                             Começar
-                            <ChevronRight className="h-3 w-3 ml-1" />
+                            <ChevronRight className="h-4 w-4 ml-1" />
                           </Button>
                         </Link>
                       )}
@@ -446,7 +446,7 @@ export default function GettingStartedPage() {
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          <Button size="sm" variant="outline" className="h-7 text-xs">
+                          <Button size="sm" variant="outline">
                             {link.label}
                             {link.icon && <span className="ml-1">{link.icon}</span>}
                           </Button>
@@ -459,7 +459,7 @@ export default function GettingStartedPage() {
                 {/* Chevron */}
                 {item.href && !completedItems.includes(item.id) && (
                   <Link href={item.href} className="flex-shrink-0">
-                    <ChevronRight className="h-4 w-4 text-gray-400" />
+                    <ChevronRight className="h-5 w-5 text-gray-400" />
                   </Link>
                 )}
               </div>
@@ -470,78 +470,78 @@ export default function GettingStartedPage() {
 
       {/* Resources Section */}
       <div>
-        <h2 className="text-sm font-medium text-gray-900 mb-3">
+        <h2 className="font-medium text-gray-900 mb-4">
           Explore mais
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Central de Ajuda */}
           <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-4">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-3">
-                <HelpCircle className="h-5 w-5 text-blue-600" />
+            <CardContent className="p-5">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                <HelpCircle className="h-6 w-6 text-blue-600" />
               </div>
-              <h3 className="text-sm font-medium text-gray-900 mb-1">
+              <h3 className="font-medium text-gray-900 mb-1">
                 Central de Ajuda
               </h3>
-              <p className="text-xs text-gray-500 mb-3">
+              <p className="text-sm text-gray-500 mb-3">
                 Encontre tutoriais, guias e respostas para suas dúvidas.
               </p>
               <a
                 href="https://ajuda.auvo.com.br"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-primary font-medium hover:underline inline-flex items-center gap-1"
+                className="text-sm text-primary font-medium hover:underline inline-flex items-center gap-1"
               >
                 Acessar
-                <ExternalLink className="h-3 w-3" />
+                <ExternalLink className="h-4 w-4" />
               </a>
             </CardContent>
           </Card>
 
           {/* Suporte Online */}
           <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-4">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mb-3">
-                <MessageCircle className="h-5 w-5 text-green-600" />
+            <CardContent className="p-5">
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+                <MessageCircle className="h-6 w-6 text-green-600" />
               </div>
-              <h3 className="text-sm font-medium text-gray-900 mb-1">
+              <h3 className="font-medium text-gray-900 mb-1">
                 Suporte Online
               </h3>
-              <p className="text-xs text-gray-500 mb-3">
+              <p className="text-sm text-gray-500 mb-3">
                 Fale com nossa equipe para tirar dúvidas ou resolver problemas.
               </p>
               <a
                 href="https://wa.me/5511999999999"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-primary font-medium hover:underline inline-flex items-center gap-1"
+                className="text-sm text-primary font-medium hover:underline inline-flex items-center gap-1"
               >
                 Iniciar conversa
-                <ExternalLink className="h-3 w-3" />
+                <ExternalLink className="h-4 w-4" />
               </a>
             </CardContent>
           </Card>
 
           {/* Video Tutorial */}
           <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-4">
-              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mb-3">
-                <PlayCircle className="h-5 w-5 text-purple-600" />
+            <CardContent className="p-5">
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+                <PlayCircle className="h-6 w-6 text-purple-600" />
               </div>
-              <h3 className="text-sm font-medium text-gray-900 mb-1">
+              <h3 className="font-medium text-gray-900 mb-1">
                 Aprenda o Básico
               </h3>
-              <p className="text-xs text-gray-500 mb-3">
+              <p className="text-sm text-gray-500 mb-3">
                 Assista ao vídeo tutorial e aprenda a usar o sistema.
               </p>
               <a
                 href="https://youtube.com/watch?v=tutorial"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-primary font-medium hover:underline inline-flex items-center gap-1"
+                className="text-sm text-primary font-medium hover:underline inline-flex items-center gap-1"
               >
                 Assistir vídeo
-                <ExternalLink className="h-3 w-3" />
+                <ExternalLink className="h-4 w-4" />
               </a>
             </CardContent>
           </Card>

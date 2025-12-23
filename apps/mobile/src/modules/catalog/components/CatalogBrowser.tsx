@@ -21,10 +21,9 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { CatalogItem, ProductCategory, ItemType } from '../../../db/schema';
+import { CatalogItem, ItemType } from '../../../db/schema';
 import { CatalogService } from '../CatalogService';
 import { ItemSearchBar } from './ItemSearchBar';
-import { CategoryFilter } from './CategoryFilter';
 import { CatalogItemCard } from './CatalogItemCard';
 import { useColors } from '../../../design-system/ThemeProvider';
 
@@ -310,49 +309,29 @@ export function CatalogBrowser({
 
   // State
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<TypeFilterValue>('ALL');
-  const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
   const [showQuantityModal, setShowQuantityModal] = useState(false);
-
-  // Load categories
-  useEffect(() => {
-    if (visible) {
-      loadCategories();
-    }
-  }, [visible]);
 
   // Load items when filters change
   useEffect(() => {
     if (visible) {
       loadItems();
     }
-  }, [visible, searchQuery, selectedCategoryId, selectedType]);
-
-  const loadCategories = async () => {
-    try {
-      const cats = await CatalogService.getCategories();
-      setCategories(cats);
-    } catch (error) {
-      console.error('[CatalogBrowser] Error loading categories:', error);
-    }
-  };
+  }, [visible, searchQuery, selectedType]);
 
   const loadItems = useCallback(async () => {
     setIsLoading(true);
     try {
       console.log('[CatalogBrowser] loadItems called with:', {
         searchQuery,
-        selectedCategoryId,
         selectedType,
         technicianId,
       });
       const results = await CatalogService.searchItems({
         query: searchQuery || undefined,
-        categoryId: selectedCategoryId || undefined,
         type: selectedType === 'ALL' ? undefined : selectedType,
         limit: 100,
       });
@@ -364,7 +343,7 @@ export function CatalogBrowser({
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery, selectedCategoryId, selectedType, technicianId]);
+  }, [searchQuery, selectedType, technicianId]);
 
   // Handlers
   const handleItemPress = (item: CatalogItem) => {
@@ -388,7 +367,6 @@ export function CatalogBrowser({
 
   const handleClose = () => {
     setSearchQuery('');
-    setSelectedCategoryId(null);
     setSelectedType('ALL');
     onClose();
   };
@@ -398,7 +376,7 @@ export function CatalogBrowser({
     <CatalogItemCard
       item={item}
       onPress={handleItemPress}
-      showCategory={selectedCategoryId === null}
+      showCategory
     />
   );
 
@@ -447,15 +425,6 @@ export function CatalogBrowser({
 
         {/* Type Filter */}
         <TypeFilter selected={selectedType} onSelect={setSelectedType} colors={colors} />
-
-        {/* Category Filter */}
-        {categories.length > 0 && (
-          <CategoryFilter
-            categories={categories}
-            selectedId={selectedCategoryId}
-            onSelect={setSelectedCategoryId}
-          />
-        )}
 
         {/* Items List */}
         {isLoading ? (

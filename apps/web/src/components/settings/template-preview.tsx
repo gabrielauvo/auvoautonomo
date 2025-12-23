@@ -6,6 +6,7 @@
  * Preview de templates de documentos (orçamento, OS, cobrança)
  */
 
+import { useState } from 'react';
 import { FileText, Wrench, Receipt } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -34,6 +35,8 @@ export function TemplatePreview({
   footerText,
   className,
 }: TemplatePreviewProps) {
+  const [imageError, setImageError] = useState(false);
+
   const config = {
     quote: {
       icon: FileText,
@@ -74,11 +77,13 @@ export function TemplatePreview({
         style={{ backgroundColor: primaryColor }}
       >
         <div className={cn('flex items-center gap-3', logoAlignClass)}>
-          {showLogo && logoUrl && logoUrl.trim() ? (
+          {showLogo && logoUrl && logoUrl.trim() && !imageError ? (
             <img
               src={logoUrl}
               alt="Logo"
               className="h-8 w-auto object-contain bg-white rounded px-2 py-1"
+              onError={() => setImageError(true)}
+              crossOrigin="anonymous"
             />
           ) : showLogo ? (
             <div className="h-8 w-8 bg-white/20 rounded flex items-center justify-center">

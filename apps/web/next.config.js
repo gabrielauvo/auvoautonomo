@@ -16,14 +16,15 @@
  * - Whitelist apenas domínios necessários
  */
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const railwayUrl = 'https://monorepobackend-production.up.railway.app';
 
 const ContentSecurityPolicy = `
   default-src 'self';
   script-src 'self' 'unsafe-inline' 'unsafe-eval';
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-  img-src 'self' blob: data: https: ${apiUrl};
+  img-src 'self' blob: data: https: http://localhost:3001 ${apiUrl} ${railwayUrl} *.railway.app;
   font-src 'self' data: https://fonts.gstatic.com;
-  connect-src 'self' ${apiUrl} https://wa.me;
+  connect-src 'self' ${apiUrl} ${railwayUrl} https://wa.me;
   frame-src 'none';
   frame-ancestors 'none';
   base-uri 'self';

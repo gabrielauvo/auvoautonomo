@@ -41,57 +41,57 @@ const navItems: NavItem[] = [
   {
     labelKey: 'dashboard',
     href: '/dashboard',
-    icon: <LayoutDashboard className="h-5 w-5" />,
+    icon: <LayoutDashboard className="h-[18px] w-[18px]" />,
   },
   {
     labelKey: 'schedule',
     href: '/schedule',
-    icon: <Calendar className="h-5 w-5" />,
+    icon: <Calendar className="h-[18px] w-[18px]" />,
   },
   {
     labelKey: 'clients',
     href: '/clients',
-    icon: <Users className="h-5 w-5" />,
+    icon: <Users className="h-[18px] w-[18px]" />,
   },
   {
     labelKey: 'quotes',
     href: '/quotes',
-    icon: <FileText className="h-5 w-5" />,
+    icon: <FileText className="h-[18px] w-[18px]" />,
   },
   {
     labelKey: 'workOrders',
     href: '/work-orders',
-    icon: <Wrench className="h-5 w-5" />,
+    icon: <Wrench className="h-[18px] w-[18px]" />,
   },
   {
     labelKey: 'catalog',
     href: '/catalog',
-    icon: <Package className="h-5 w-5" />,
+    icon: <Package className="h-[18px] w-[18px]" />,
   },
   {
     labelKey: 'inventory',
     href: '/inventory',
-    icon: <Warehouse className="h-5 w-5" />,
+    icon: <Warehouse className="h-[18px] w-[18px]" />,
   },
   {
     labelKey: 'billing',
     href: '/billing/charges',
-    icon: <CreditCard className="h-5 w-5" />,
+    icon: <CreditCard className="h-[18px] w-[18px]" />,
   },
   {
     labelKey: 'suppliers',
     href: '/suppliers',
-    icon: <Building2 className="h-5 w-5" />,
+    icon: <Building2 className="h-[18px] w-[18px]" />,
   },
   {
     labelKey: 'expenses',
     href: '/expenses',
-    icon: <Receipt className="h-5 w-5" />,
+    icon: <Receipt className="h-[18px] w-[18px]" />,
   },
   {
     labelKey: 'reports',
     href: '/reports',
-    icon: <BarChart3 className="h-5 w-5" />,
+    icon: <BarChart3 className="h-[18px] w-[18px]" />,
   },
 ];
 
@@ -152,7 +152,7 @@ export function Sidebar({ className }: SidebarProps) {
                 <Link
                   href={item.href}
                   className={cn(
-                    'group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
+                    'group flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all duration-200',
                     active
                       ? 'bg-primary text-white shadow-auvo hover:bg-primary-600'
                       : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-neutral-900 hover:text-gray-900 dark:hover:text-gray-100'
@@ -166,7 +166,7 @@ export function Sidebar({ className }: SidebarProps) {
                     {item.icon}
                   </span>
                   {!collapsed && (
-                    <span className="font-medium">{label}</span>
+                    <span className="text-[13px] font-medium">{label}</span>
                   )}
                 </Link>
               </li>
@@ -180,7 +180,7 @@ export function Sidebar({ className }: SidebarProps) {
         <Link
           href="/getting-started"
           className={cn(
-            'group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
+            'group flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all duration-200',
             pathname === '/getting-started'
               ? 'bg-gradient-to-r from-primary to-primary-600 text-white shadow-auvo'
               : 'bg-gradient-to-r from-primary-50 to-primary-100 text-primary hover:from-primary-100 hover:to-primary-200'
@@ -191,10 +191,10 @@ export function Sidebar({ className }: SidebarProps) {
             'transition-colors duration-200',
             pathname === '/getting-started' ? 'text-white' : 'text-primary'
           )}>
-            <Rocket className="h-5 w-5" />
+            <Rocket className="h-[18px] w-[18px]" />
           </span>
           {!collapsed && (
-            <span className="font-medium">{t('gettingStarted')}</span>
+            <span className="text-[13px] font-medium">{t('gettingStarted')}</span>
           )}
         </Link>
       </div>

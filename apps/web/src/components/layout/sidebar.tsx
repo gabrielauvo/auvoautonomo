@@ -41,57 +41,57 @@ const navItems: NavItem[] = [
   {
     labelKey: 'dashboard',
     href: '/dashboard',
-    icon: <LayoutDashboard className="h-[18px] w-[18px]" />,
+    icon: <LayoutDashboard className="h-[19px] w-[19px]" />,
   },
   {
     labelKey: 'schedule',
     href: '/schedule',
-    icon: <Calendar className="h-[18px] w-[18px]" />,
+    icon: <Calendar className="h-[19px] w-[19px]" />,
   },
   {
     labelKey: 'clients',
     href: '/clients',
-    icon: <Users className="h-[18px] w-[18px]" />,
+    icon: <Users className="h-[19px] w-[19px]" />,
   },
   {
     labelKey: 'quotes',
     href: '/quotes',
-    icon: <FileText className="h-[18px] w-[18px]" />,
+    icon: <FileText className="h-[19px] w-[19px]" />,
   },
   {
     labelKey: 'workOrders',
     href: '/work-orders',
-    icon: <Wrench className="h-[18px] w-[18px]" />,
+    icon: <Wrench className="h-[19px] w-[19px]" />,
   },
   {
     labelKey: 'catalog',
     href: '/catalog',
-    icon: <Package className="h-[18px] w-[18px]" />,
+    icon: <Package className="h-[19px] w-[19px]" />,
   },
   {
     labelKey: 'inventory',
     href: '/inventory',
-    icon: <Warehouse className="h-[18px] w-[18px]" />,
+    icon: <Warehouse className="h-[19px] w-[19px]" />,
   },
   {
     labelKey: 'billing',
     href: '/billing/charges',
-    icon: <CreditCard className="h-[18px] w-[18px]" />,
+    icon: <CreditCard className="h-[19px] w-[19px]" />,
   },
   {
     labelKey: 'suppliers',
     href: '/suppliers',
-    icon: <Building2 className="h-[18px] w-[18px]" />,
+    icon: <Building2 className="h-[19px] w-[19px]" />,
   },
   {
     labelKey: 'expenses',
     href: '/expenses',
-    icon: <Receipt className="h-[18px] w-[18px]" />,
+    icon: <Receipt className="h-[19px] w-[19px]" />,
   },
   {
     labelKey: 'reports',
     href: '/reports',
-    icon: <BarChart3 className="h-[18px] w-[18px]" />,
+    icon: <BarChart3 className="h-[19px] w-[19px]" />,
   },
 ];
 
@@ -166,7 +166,7 @@ export function Sidebar({ className }: SidebarProps) {
                     {item.icon}
                   </span>
                   {!collapsed && (
-                    <span className="text-[13px] font-medium">{label}</span>
+                    <span className="text-[14px] font-medium">{label}</span>
                   )}
                 </Link>
               </li>
@@ -191,10 +191,10 @@ export function Sidebar({ className }: SidebarProps) {
             'transition-colors duration-200',
             pathname === '/getting-started' ? 'text-white' : 'text-primary'
           )}>
-            <Rocket className="h-[18px] w-[18px]" />
+            <Rocket className="h-[19px] w-[19px]" />
           </span>
           {!collapsed && (
-            <span className="text-[13px] font-medium">{t('gettingStarted')}</span>
+            <span className="text-[14px] font-medium">{t('gettingStarted')}</span>
           )}
         </Link>
       </div>

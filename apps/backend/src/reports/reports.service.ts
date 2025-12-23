@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { PaymentStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { GroupByPeriod, ReportQueryDto } from './dto/report-query.dto';
 
@@ -399,6 +400,8 @@ export class ReportsService {
 
   /**
    * Get Finance Report
+   * Filters payments by STATUS DATE (paidAt for received, dueDate for pending/overdue)
+   * NOT by createdAt - this ensures accurate financial reporting
    */
   async getFinanceReport(userId: string, query: ReportQueryDto): Promise<FinanceReportData> {
     const { start, end } = this.getPeriodDates(query);
@@ -406,11 +409,16 @@ export class ReportsService {
 
     this.logger.log(`[Reports] getFinanceReport: userId=${userId}, start=${start.toISOString()}, end=${end.toISOString()}, groupBy=${groupBy}`);
 
-    // Get all payments in period
-    const payments = await this.prisma.clientPayment.findMany({
+    const receivedStatuses: PaymentStatus[] = ['CONFIRMED', 'RECEIVED', 'RECEIVED_IN_CASH'];
+    const pendingStatuses: PaymentStatus[] = ['PENDING'];
+    const overdueStatuses: PaymentStatus[] = ['OVERDUE'];
+
+    // Get received payments by paidAt date (actual receipt date)
+    const receivedPayments = await this.prisma.clientPayment.findMany({
       where: {
         userId,
-        createdAt: { gte: start, lte: end },
+        status: { in: receivedStatuses },
+        paidAt: { gte: start, lte: end },
       },
       include: {
         client: {
@@ -419,15 +427,42 @@ export class ReportsService {
       },
     });
 
+    // Get pending payments by dueDate (expected receipt date)
+    const pendingPayments = await this.prisma.clientPayment.findMany({
+      where: {
+        userId,
+        status: { in: pendingStatuses },
+        dueDate: { gte: start, lte: end },
+      },
+      include: {
+        client: {
+          select: { id: true, name: true },
+        },
+      },
+    });
+
+    // Get overdue payments by dueDate (original expected date)
+    const overduePayments = await this.prisma.clientPayment.findMany({
+      where: {
+        userId,
+        status: { in: overdueStatuses },
+        dueDate: { gte: start, lte: end },
+      },
+      include: {
+        client: {
+          select: { id: true, name: true },
+        },
+      },
+    });
+
+    // Combine all payments for processing
+    const payments = [...receivedPayments, ...pendingPayments, ...overduePayments];
+
     // Calculate summary
     let totalRevenue = 0;
     let totalReceived = 0;
     let totalPending = 0;
     let totalOverdue = 0;
-
-    const receivedStatuses = ['CONFIRMED', 'RECEIVED', 'RECEIVED_IN_CASH'];
-    const pendingStatuses = ['PENDING'];
-    const overdueStatuses = ['OVERDUE'];
 
     for (const payment of payments) {
       const value = Number(payment.value) || 0;
@@ -458,9 +493,13 @@ export class ReportsService {
       this.incrementDate(currentDate, groupBy);
     }
 
-    // Process payments into periods
+    // Process payments into periods using appropriate date for each status
     for (const payment of payments) {
-      const key = this.getDateKey(payment.createdAt, groupBy);
+      // Use paidAt for received payments, dueDate for pending/overdue
+      const dateToUse = receivedStatuses.includes(payment.status) && payment.paidAt
+        ? payment.paidAt
+        : payment.dueDate;
+      const key = this.getDateKey(dateToUse, groupBy);
       const entry = periodMap.get(key);
       if (entry) {
         const value = Number(payment.value) || 0;
@@ -574,6 +613,7 @@ export class ReportsService {
 
   /**
    * Get Clients Report
+   * Revenue is filtered by paidAt (receipt date) within the selected period
    */
   async getClientsReport(userId: string, query: ReportQueryDto): Promise<ClientsReportData> {
     const { start, end } = this.getPeriodDates(query);
@@ -581,7 +621,9 @@ export class ReportsService {
 
     this.logger.log(`[Reports] getClientsReport: userId=${userId}, start=${start.toISOString()}, end=${end.toISOString()}`);
 
-    // Get all clients
+    const receivedStatuses: PaymentStatus[] = ['CONFIRMED', 'RECEIVED', 'RECEIVED_IN_CASH'];
+
+    // Get all clients with payments filtered by paidAt within period
     const allClients = await this.prisma.client.findMany({
       where: { userId },
       include: {
@@ -592,7 +634,18 @@ export class ReportsService {
           select: { id: true, status: true },
         },
         payments: {
-          select: { id: true, value: true, status: true },
+          where: {
+            OR: [
+              // Received payments within period (by paidAt)
+              {
+                status: { in: receivedStatuses },
+                paidAt: { gte: start, lte: end },
+              },
+              // Overdue payments (to count clients with overdue)
+              { status: PaymentStatus.OVERDUE },
+            ],
+          },
+          select: { id: true, value: true, status: true, paidAt: true },
         },
       },
     });
@@ -606,7 +659,6 @@ export class ReportsService {
     });
 
     // Calculate summary
-    const receivedStatuses = ['CONFIRMED', 'RECEIVED', 'RECEIVED_IN_CASH'];
     const overdueStatuses = ['OVERDUE'];
 
     let totalRevenue = 0;
@@ -1109,6 +1161,7 @@ export class ReportsService {
 
   /**
    * Get Dashboard Overview
+   * Revenue is filtered by paidAt (receipt date) for received payments
    */
   async getDashboardOverview(userId: string, query: ReportQueryDto): Promise<DashboardOverviewData> {
     const { start, end } = this.getPeriodDates(query);
@@ -1121,13 +1174,23 @@ export class ReportsService {
     const prevEnd = new Date(start.getTime() - 1);
     const prevStart = new Date(prevEnd.getTime() - periodLength);
 
-    // Get payments for current and previous period
+    const receivedStatuses: PaymentStatus[] = ['CONFIRMED', 'RECEIVED', 'RECEIVED_IN_CASH'];
+
+    // Get received payments for current and previous period (by paidAt date)
     const [currentPayments, prevPayments] = await Promise.all([
       this.prisma.clientPayment.findMany({
-        where: { userId, createdAt: { gte: start, lte: end } },
+        where: {
+          userId,
+          status: { in: receivedStatuses },
+          paidAt: { gte: start, lte: end },
+        },
       }),
       this.prisma.clientPayment.findMany({
-        where: { userId, createdAt: { gte: prevStart, lte: prevEnd } },
+        where: {
+          userId,
+          status: { in: receivedStatuses },
+          paidAt: { gte: prevStart, lte: prevEnd },
+        },
       }),
     ]);
 
@@ -1161,13 +1224,10 @@ export class ReportsService {
       }),
     ]);
 
-    // Calculate revenue
-    const receivedStatuses = ['CONFIRMED', 'RECEIVED', 'RECEIVED_IN_CASH'];
+    // Calculate revenue (payments already filtered by status and paidAt)
     const currentRevenue = currentPayments
-      .filter(p => receivedStatuses.includes(p.status))
       .reduce((sum, p) => sum + (Number(p.value) || 0), 0);
     const prevRevenue = prevPayments
-      .filter(p => receivedStatuses.includes(p.status))
       .reduce((sum, p) => sum + (Number(p.value) || 0), 0);
 
     const revenueChange = prevRevenue > 0 ? Math.round(((currentRevenue - prevRevenue) / prevRevenue) * 100) : 0;
@@ -1189,9 +1249,10 @@ export class ReportsService {
       this.incrementDate(currentDate, groupBy);
     }
 
+    // Build revenue chart using paidAt (payments already filtered by status)
     for (const payment of currentPayments) {
-      if (receivedStatuses.includes(payment.status)) {
-        const key = this.getDateKey(payment.createdAt, groupBy);
+      if (payment.paidAt) {
+        const key = this.getDateKey(payment.paidAt, groupBy);
         revenueMap.set(key, (revenueMap.get(key) || 0) + (Number(payment.value) || 0));
       }
     }
@@ -1312,8 +1373,8 @@ export class ReportsService {
 
   /**
    * Get Profit/Loss Report
-   * Revenue from payments (CONFIRMED, RECEIVED, RECEIVED_IN_CASH)
-   * Expenses from expenses table (PAID status)
+   * Revenue from payments (CONFIRMED, RECEIVED, RECEIVED_IN_CASH) - filtered by paidAt (receipt date)
+   * Expenses from expenses table (PAID status) - filtered by paidAt
    */
   async getProfitLossReport(userId: string, query: ReportQueryDto): Promise<ProfitLossReportData> {
     const { start, end } = this.getPeriodDates(query);
@@ -1321,12 +1382,12 @@ export class ReportsService {
 
     this.logger.log(`[Reports] getProfitLossReport: userId=${userId}, start=${start.toISOString()}, end=${end.toISOString()}`);
 
-    // Get payments (revenue) in period
+    // Get payments (revenue) by paidAt date (actual receipt date, not createdAt)
     const payments = await this.prisma.clientPayment.findMany({
       where: {
         userId,
-        createdAt: { gte: start, lte: end },
         status: { in: ['CONFIRMED', 'RECEIVED', 'RECEIVED_IN_CASH'] },
+        paidAt: { gte: start, lte: end },
       },
       include: {
         workOrder: {
@@ -1380,11 +1441,13 @@ export class ReportsService {
       this.incrementDate(currentDate, groupBy);
     }
 
-    // Process payments into periods
+    // Process payments into periods using paidAt (receipt date)
     for (const payment of payments) {
-      const key = this.getDateKey(payment.createdAt, groupBy);
-      const current = periodRevenueMap.get(key) || 0;
-      periodRevenueMap.set(key, current + (Number(payment.value) || 0));
+      if (payment.paidAt) {
+        const key = this.getDateKey(payment.paidAt, groupBy);
+        const current = periodRevenueMap.get(key) || 0;
+        periodRevenueMap.set(key, current + (Number(payment.value) || 0));
+      }
     }
 
     // Process expenses into periods

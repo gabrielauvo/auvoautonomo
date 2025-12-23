@@ -35,6 +35,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateUser: (updates: Partial<User>) => Promise<void>;
   error: string | null;
 }
 
@@ -270,12 +271,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
 
+  const updateUser = useCallback(async (updates: Partial<User>) => {
+    if (!user) return;
+
+    const updatedUser = { ...user, ...updates };
+    await AuthService.saveUser(updatedUser);
+    setUser(updatedUser);
+    console.log('[AuthProvider] User updated:', updates);
+  }, [user]);
+
   const value: AuthContextValue = {
     user,
     isLoading,
     isAuthenticated: !!user,
     login,
     logout,
+    updateUser,
     error,
   };
 

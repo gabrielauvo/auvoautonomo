@@ -70,7 +70,7 @@ interface MenuItem {
 export default function ProfileScreen() {
   const colors = useColors();
   const spacing = useSpacing();
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
 
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
@@ -161,6 +161,10 @@ export default function ProfileScreen() {
       if (response.ok) {
         const data = await response.json();
         setProfile((prev) => prev ? { ...prev, avatarUrl: data.avatarUrl } : null);
+
+        // Atualizar o contexto de autenticação para propagar para outras telas
+        await updateUser({ avatarUrl: data.avatarUrl });
+
         Alert.alert('Sucesso', 'Foto atualizada com sucesso');
       } else {
         const error = await response.json();

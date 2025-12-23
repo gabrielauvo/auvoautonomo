@@ -19,6 +19,7 @@ const ONBOARDING_BANNER_DISMISSED_KEY = 'auvo_onboarding_banner_dismissed';
 // IDs dos itens do checklist (sincronizado com getting-started page)
 const CHECKLIST_ITEM_IDS = [
   'download-app',
+  'setup-company',
   'add-client',
   'create-quote',
   'create-charge',

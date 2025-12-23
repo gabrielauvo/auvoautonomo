@@ -18,6 +18,9 @@ export type { ShareEntityType, ShareLinkResponse } from './ShareService';
 export { DashboardService } from './DashboardService';
 export type { DashboardOverview, DashboardPeriod } from './DashboardService';
 
+export { ExpensesService } from './ExpensesService';
+export type { ExpenseSummary } from './ExpensesService';
+
 // Notifications
 export {
   NotificationService,

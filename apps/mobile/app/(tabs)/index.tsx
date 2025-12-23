@@ -19,7 +19,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, Card, Badge, Avatar, Button } from '../../src/design-system';
 import { useColors } from '../../src/design-system/ThemeProvider';
-import { useAuth, DashboardService, DashboardOverview } from '../../src/services';
+import { useAuth, DashboardService, DashboardOverview, ExpensesService, ExpenseSummary } from '../../src/services';
 import { useSyncStatus } from '../../src/sync';
 import { spacing, borderRadius } from '../../src/design-system/tokens';
 import { WorkOrder } from '../../src/db/schema';
@@ -291,6 +291,7 @@ export default function HomeScreen() {
     osConcluidasMes: 0,
   });
   const [financialData, setFinancialData] = useState<DashboardOverview | null>(null);
+  const [expensesData, setExpensesData] = useState<ExpenseSummary | null>(null);
   const [financialLoading, setFinancialLoading] = useState(false);
   const [isFromCache, setIsFromCache] = useState(false);
   const [cacheAge, setCacheAge] = useState<number | null>(null);
@@ -389,15 +390,25 @@ export default function HomeScreen() {
       setFinancialLoading(true);
       try {
         const { startDate, endDate } = getPeriodDates(selectedPeriod);
-        const result = await DashboardService.getOverview('custom', {
-          startDate,
-          endDate,
-          forceRefresh,
-        });
 
-        setFinancialData(result.data);
-        setIsFromCache(result.fromCache);
-        setCacheAge(result.cacheAge);
+        // Load both financial and expenses data in parallel
+        const [financialResult, expensesResult] = await Promise.all([
+          DashboardService.getOverview('custom', {
+            startDate,
+            endDate,
+            forceRefresh,
+          }),
+          ExpensesService.getSummary({
+            startDate,
+            endDate,
+            forceRefresh,
+          }),
+        ]);
+
+        setFinancialData(financialResult.data);
+        setExpensesData(expensesResult.data);
+        setIsFromCache(financialResult.fromCache);
+        setCacheAge(financialResult.cacheAge);
       } catch (error) {
         console.error('[HomeScreen] Error loading financial data:', error);
       } finally {
@@ -567,6 +578,14 @@ export default function HomeScreen() {
             icon="alert-circle-outline"
             iconBgColor={colors.error[100]}
             iconColor={colors.error[500]}
+            loading={showFinancialLoading}
+          />
+          <FinancialCard
+            title="Despesas"
+            value={formatCompactCurrency(expensesData?.total?.amount)}
+            icon="trending-down-outline"
+            iconBgColor={colors.gray[100]}
+            iconColor={colors.gray[600]}
             loading={showFinancialLoading}
           />
         </View>

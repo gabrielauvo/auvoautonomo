@@ -1250,7 +1250,7 @@ export default function PublicQuotePage() {
         )}
 
         {/* Card de Termos de Aceite - mostrar quando ha termos obrigatorios */}
-        {quote.status === 'SENT' && acceptanceTerms?.required && !actionSuccess && (
+        {(quote.status === 'SENT' || quote.status === 'DRAFT') && acceptanceTerms?.required && !actionSuccess && (
           <Card className={`mb-6 ${termsAccepted ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'}`}>
             <CardContent className="pt-6">
               <div
@@ -1278,8 +1278,8 @@ export default function PublicQuotePage() {
           </Card>
         )}
 
-        {/* Botões de ação para orçamentos com status SENT */}
-        {quote.status === 'SENT' && !actionSuccess && (
+        {/* Botões de ação para orçamentos com status SENT ou DRAFT */}
+        {(quote.status === 'SENT' || quote.status === 'DRAFT') && !actionSuccess && (
           <Card className="mb-6" style={{ borderColor: `${primaryColor}33`, backgroundColor: `${primaryColor}0D` }}>
             <CardContent className="pt-6">
               <div className="text-center mb-4">

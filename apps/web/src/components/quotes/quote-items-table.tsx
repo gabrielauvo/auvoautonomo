@@ -199,10 +199,10 @@ export function QuoteItemsTable({
     );
   }
 
-  // Calcular totais
-  const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
-  const totalDiscount = items.reduce((sum, item) => sum + item.discountValue, 0);
-  const total = items.reduce((sum, item) => sum + item.totalPrice, 0);
+  // Calcular totais (garantir conversão para número)
+  const subtotal = items.reduce((sum, item) => sum + Number(item.quantity) * Number(item.unitPrice), 0);
+  const totalDiscount = items.reduce((sum, item) => sum + Number(item.discountValue || 0), 0);
+  const total = items.reduce((sum, item) => sum + Number(item.totalPrice), 0);
 
   return (
     <div className="border rounded-lg overflow-hidden">

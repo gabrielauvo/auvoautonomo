@@ -13,7 +13,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
-import { Badge, Avatar, ThemeToggle } from '@/components/ui';
+import { Badge, Avatar } from '@/components/ui';
 import { LogOut, User, Settings, ChevronDown, Bell, CreditCard, FileText, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslations } from '@/i18n';
@@ -146,9 +146,6 @@ export function Header({ className }: HeaderProps) {
 
       {/* Lado direito */}
       <div className="flex items-center gap-4">
-        {/* Toggle de tema */}
-        <ThemeToggle />
-
         {/* Notificações */}
         <div className="relative" ref={notificationsRef}>
           <button

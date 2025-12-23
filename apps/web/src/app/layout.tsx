@@ -83,27 +83,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
-      <head>
-        {/* Script to prevent flash of wrong theme */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  var theme = localStorage.getItem('auvo-theme');
-                  var resolved = theme;
-                  if (theme === 'system' || !theme) {
-                    resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-                  }
-                  document.documentElement.classList.add(resolved);
-                  document.documentElement.style.colorScheme = resolved;
-                } catch (e) {}
-              })();
-            `,
-          }}
-        />
-      </head>
+    <html lang="pt-BR" className="light">
+      <head></head>
       <body className={inter.className}>
         <ThemeProvider>
           <ProgressBar />

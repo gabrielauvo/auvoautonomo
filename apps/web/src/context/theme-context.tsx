@@ -41,68 +41,27 @@ interface ThemeProviderProps {
   defaultTheme?: Theme;
 }
 
-export function ThemeProvider({ children, defaultTheme = 'system' }: ThemeProviderProps) {
-  const [theme, setThemeState] = useState<Theme>(defaultTheme);
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
-  const [mounted, setMounted] = useState(false);
+export function ThemeProvider({ children }: ThemeProviderProps) {
+  // Sempre usar tema claro - modo dark removido
+  const theme: Theme = 'light';
+  const resolvedTheme: 'light' | 'dark' = 'light';
 
-  // Initialize theme from storage on mount
+  // Garantir que o tema claro está aplicado
   useEffect(() => {
-    const storedTheme = getStoredTheme();
-    setThemeState(storedTheme);
-    setMounted(true);
+    const root = document.documentElement;
+    root.classList.remove('dark');
+    root.classList.add('light');
+    root.style.colorScheme = 'light';
+    localStorage.removeItem(THEME_STORAGE_KEY);
   }, []);
 
-  // Update resolved theme and apply class to document
-  useEffect(() => {
-    if (!mounted) return;
-
-    const resolved = theme === 'system' ? getSystemTheme() : theme;
-    setResolvedTheme(resolved);
-
-    // Apply theme class to html element
-    const root = document.documentElement;
-    root.classList.remove('light', 'dark');
-    root.classList.add(resolved);
-
-    // Also set color-scheme for native elements
-    root.style.colorScheme = resolved;
-  }, [theme, mounted]);
-
-  // Listen for system theme changes
-  useEffect(() => {
-    if (!mounted || theme !== 'system') return;
-
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-
-    const handleChange = (e: MediaQueryListEvent) => {
-      setResolvedTheme(e.matches ? 'dark' : 'light');
-      const root = document.documentElement;
-      root.classList.remove('light', 'dark');
-      root.classList.add(e.matches ? 'dark' : 'light');
-    };
-
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [theme, mounted]);
-
-  const setTheme = useCallback((newTheme: Theme) => {
-    setThemeState(newTheme);
-    localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+  const setTheme = useCallback(() => {
+    // No-op - modo dark desativado
   }, []);
 
   const toggleTheme = useCallback(() => {
-    setTheme(resolvedTheme === 'light' ? 'dark' : 'light');
-  }, [resolvedTheme, setTheme]);
-
-  // Prevent flash of wrong theme
-  if (!mounted) {
-    return (
-      <ThemeContext.Provider value={{ theme: defaultTheme, resolvedTheme: 'light', setTheme: () => {}, toggleTheme: () => {} }}>
-        {children}
-      </ThemeContext.Provider>
-    );
-  }
+    // No-op - modo dark desativado
+  }, []);
 
   return (
     <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme, toggleTheme }}>

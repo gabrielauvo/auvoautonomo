@@ -22,6 +22,7 @@ const CHECKLIST_ITEM_IDS = [
   'setup-company',
   'add-client',
   'create-quote',
+  'create-work-order',
   'create-charge',
   'add-expense',
   'setup-asaas',

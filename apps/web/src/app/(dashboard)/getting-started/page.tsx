@@ -27,6 +27,7 @@ import {
   Building2,
   Users,
   FileText,
+  Wrench,
   Receipt,
   Wallet,
   CreditCard,
@@ -268,6 +269,15 @@ export default function GettingStartedPage() {
       icon: <FileText className="h-5 w-5" />,
       href: '/quotes/new',
       completed: completedItems.includes('create-quote'),
+    },
+    {
+      id: 'create-work-order',
+      title: 'Cadastre uma ordem de serviço',
+      description:
+        'Crie ordens de serviço para organizar e acompanhar seus trabalhos.',
+      icon: <Wrench className="h-5 w-5" />,
+      href: '/work-orders/new',
+      completed: completedItems.includes('create-work-order'),
     },
     {
       id: 'create-charge',

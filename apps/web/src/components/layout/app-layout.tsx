@@ -7,12 +7,14 @@
  * - SkipLink para acessibilidade
  * - Sidebar (menu lateral) com role="navigation"
  * - Header (barra superior) com role="banner"
+ * - Onboarding Banner (faixa de progresso)
  * - Área de conteúdo com role="main" e id para skip link
  */
 
 import { ProtectedRoute } from '@/components/auth';
 import { Sidebar } from './sidebar';
 import { Header } from './header';
+import { OnboardingBanner } from './onboarding-banner';
 import { cn } from '@/lib/utils';
 
 interface AppLayoutProps {
@@ -31,6 +33,9 @@ export function AppLayout({ children, className }: AppLayoutProps) {
         <div className="flex flex-col flex-1 overflow-hidden">
           {/* Header */}
           <Header />
+
+          {/* Onboarding Banner */}
+          <OnboardingBanner />
 
           {/* Page content - Main landmark */}
           <main

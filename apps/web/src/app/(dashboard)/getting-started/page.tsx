@@ -225,17 +225,17 @@ export default function GettingStartedPage() {
       title: 'Baixe o aplicativo',
       description:
         'Acesse suas informações de qualquer lugar com o app Auvo Field.',
-      icon: <Smartphone className="h-5 w-5" />,
+      icon: <Smartphone className="h-4 w-4" />,
       externalLinks: [
         {
           label: 'Google Play',
           url: 'https://play.google.com/store/apps/details?id=com.auvo.field',
-          icon: <ExternalLink className="h-4 w-4" />,
+          icon: <ExternalLink className="h-3 w-3" />,
         },
         {
           label: 'App Store',
           url: 'https://apps.apple.com/app/auvo-field/id123456789',
-          icon: <ExternalLink className="h-4 w-4" />,
+          icon: <ExternalLink className="h-3 w-3" />,
         },
       ],
       completed: completedItems.includes('download-app'),
@@ -245,7 +245,7 @@ export default function GettingStartedPage() {
       title: 'Cadastre um cliente',
       description:
         'Adicione seu primeiro cliente para gerenciar casos e cobranças.',
-      icon: <Users className="h-5 w-5" />,
+      icon: <Users className="h-4 w-4" />,
       href: '/clients/new',
       completed: completedItems.includes('add-client'),
     },
@@ -254,7 +254,7 @@ export default function GettingStartedPage() {
       title: 'Cadastre um orçamento',
       description:
         'Crie orçamentos profissionais e envie para aprovação dos clientes.',
-      icon: <FileText className="h-5 w-5" />,
+      icon: <FileText className="h-4 w-4" />,
       href: '/quotes/new',
       completed: completedItems.includes('create-quote'),
     },
@@ -262,7 +262,7 @@ export default function GettingStartedPage() {
       id: 'create-charge',
       title: 'Cadastre uma cobrança',
       description: 'Registre cobranças e acompanhe os pagamentos dos clientes.',
-      icon: <Receipt className="h-5 w-5" />,
+      icon: <Receipt className="h-4 w-4" />,
       href: '/billing/charges/new',
       completed: completedItems.includes('create-charge'),
     },
@@ -271,7 +271,7 @@ export default function GettingStartedPage() {
       title: 'Cadastre uma despesa',
       description:
         'Controle suas despesas e tenha visão completa do financeiro.',
-      icon: <Wallet className="h-5 w-5" />,
+      icon: <Wallet className="h-4 w-4" />,
       href: '/billing/expenses/new',
       completed: completedItems.includes('add-expense'),
     },
@@ -280,7 +280,7 @@ export default function GettingStartedPage() {
       title: 'Emita cobranças com o Asaas',
       description:
         'Integre com o Asaas para emitir boletos, Pix e cartão automaticamente.',
-      icon: <CreditCard className="h-5 w-5" />,
+      icon: <CreditCard className="h-4 w-4" />,
       href: '/settings/integrations',
       completed: completedItems.includes('setup-asaas'),
     },
@@ -315,39 +315,38 @@ export default function GettingStartedPage() {
         onClose={() => setShowCelebration(false)}
       />
 
-    <div className="p-6 max-w-5xl mx-auto space-y-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900">
-          Comece a usar o Auvo
+      <div>
+        <h1 className="text-xl font-semibold text-gray-900">
+          Comece Aqui
         </h1>
-        <p className="text-gray-600 max-w-2xl mx-auto">
-          Complete as etapas abaixo para aproveitar ao máximo todas as
-          funcionalidades do sistema.
+        <p className="text-sm text-gray-500 mt-1">
+          Complete as etapas abaixo para aproveitar ao máximo o sistema.
         </p>
       </div>
 
       {/* Progress Card */}
       <Card>
-        <CardContent className="py-6">
-          <div className="flex items-center justify-between mb-4">
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="font-semibold text-gray-900">Seu progresso</h3>
-              <p className="text-sm text-gray-500">
+              <h3 className="text-sm font-medium text-gray-900">Seu progresso</h3>
+              <p className="text-xs text-gray-500">
                 {completedCount} de {checklistItems.length} etapas concluídas
               </p>
             </div>
             {daysRemaining > 0 && (
               <div className="text-right">
-                <div className="flex items-center gap-1 text-sm text-gray-500">
-                  <Calendar className="h-4 w-4" />
+                <div className="flex items-center gap-1 text-xs text-gray-500">
+                  <Calendar className="h-3.5 w-3.5" />
                   <span>{daysRemaining} dias restantes</span>
                 </div>
               </div>
             )}
           </div>
           {/* Progress bar */}
-          <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+          <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
             <div
               className="h-full bg-primary rounded-full transition-all duration-500"
               style={{ width: `${progressPercent}%` }}
@@ -358,22 +357,22 @@ export default function GettingStartedPage() {
 
       {/* Checklist */}
       <Card>
-        <CardHeader>
-          <CardTitle>Checklist de configuração</CardTitle>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Checklist de configuração</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y divide-gray-100">
             {checklistItems.map((item) => (
               <div
                 key={item.id}
-                className={`flex items-start gap-4 p-4 hover:bg-gray-50 transition-colors ${
+                className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${
                   completedItems.includes(item.id) ? 'bg-green-50/50' : ''
                 }`}
               >
                 {/* Checkbox com animação */}
                 <button
                   onClick={() => toggleItem(item.id, item.title)}
-                  className={`mt-0.5 flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
+                  className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
                     completedItems.includes(item.id)
                       ? 'bg-green-500 border-green-500 text-white scale-110'
                       : 'border-gray-300 hover:border-primary hover:scale-105'
@@ -383,7 +382,7 @@ export default function GettingStartedPage() {
                   }}
                 >
                   {completedItems.includes(item.id) && (
-                    <Check className="h-4 w-4" />
+                    <Check className="h-3 w-3" />
                   )}
                 </button>
                 <style jsx>{`
@@ -409,7 +408,7 @@ export default function GettingStartedPage() {
                       {item.icon}
                     </span>
                     <h4
-                      className={`font-medium ${
+                      className={`text-sm font-medium ${
                         completedItems.includes(item.id)
                           ? 'text-gray-400 line-through'
                           : 'text-gray-900'
@@ -419,10 +418,10 @@ export default function GettingStartedPage() {
                     </h4>
                   </div>
                   <p
-                    className={`text-sm mt-1 ${
+                    className={`text-xs mt-0.5 ${
                       completedItems.includes(item.id)
                         ? 'text-gray-400'
-                        : 'text-gray-600'
+                        : 'text-gray-500'
                     }`}
                   >
                     {item.description}
@@ -430,12 +429,12 @@ export default function GettingStartedPage() {
 
                   {/* Action buttons */}
                   {!completedItems.includes(item.id) && (
-                    <div className="flex flex-wrap gap-2 mt-3">
+                    <div className="flex flex-wrap gap-2 mt-2">
                       {item.href && (
                         <Link href={item.href}>
-                          <Button size="sm" variant="outline">
+                          <Button size="sm" variant="outline" className="h-7 text-xs">
                             Começar
-                            <ChevronRight className="h-4 w-4 ml-1" />
+                            <ChevronRight className="h-3 w-3 ml-1" />
                           </Button>
                         </Link>
                       )}
@@ -446,7 +445,7 @@ export default function GettingStartedPage() {
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          <Button size="sm" variant="outline">
+                          <Button size="sm" variant="outline" className="h-7 text-xs">
                             {link.label}
                             {link.icon && <span className="ml-1">{link.icon}</span>}
                           </Button>
@@ -459,7 +458,7 @@ export default function GettingStartedPage() {
                 {/* Chevron */}
                 {item.href && !completedItems.includes(item.id) && (
                   <Link href={item.href} className="flex-shrink-0">
-                    <ChevronRight className="h-5 w-5 text-gray-400" />
+                    <ChevronRight className="h-4 w-4 text-gray-400" />
                   </Link>
                 )}
               </div>
@@ -470,28 +469,27 @@ export default function GettingStartedPage() {
 
       {/* Resources Section */}
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+        <h2 className="text-sm font-medium text-gray-900 mb-3">
           Explore mais
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Central de Ajuda */}
           <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-6">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                <HelpCircle className="h-6 w-6 text-blue-600" />
+            <CardContent className="p-4">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-3">
+                <HelpCircle className="h-5 w-5 text-blue-600" />
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">
+              <h3 className="text-sm font-medium text-gray-900 mb-1">
                 Central de Ajuda
               </h3>
-              <p className="text-sm text-gray-600 mb-4">
-                Encontre tutoriais, guias e respostas para suas dúvidas sobre o
-                sistema.
+              <p className="text-xs text-gray-500 mb-3">
+                Encontre tutoriais, guias e respostas para suas dúvidas.
               </p>
               <a
                 href="https://ajuda.auvo.com.br"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-primary font-medium hover:underline inline-flex items-center gap-1"
+                className="text-xs text-primary font-medium hover:underline inline-flex items-center gap-1"
               >
                 Acessar
                 <ExternalLink className="h-3 w-3" />
@@ -501,22 +499,21 @@ export default function GettingStartedPage() {
 
           {/* Suporte Online */}
           <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-6">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
-                <MessageCircle className="h-6 w-6 text-green-600" />
+            <CardContent className="p-4">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mb-3">
+                <MessageCircle className="h-5 w-5 text-green-600" />
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">
+              <h3 className="text-sm font-medium text-gray-900 mb-1">
                 Suporte Online
               </h3>
-              <p className="text-sm text-gray-600 mb-4">
-                Fale com nossa equipe de suporte para tirar dúvidas ou resolver
-                problemas.
+              <p className="text-xs text-gray-500 mb-3">
+                Fale com nossa equipe para tirar dúvidas ou resolver problemas.
               </p>
               <a
                 href="https://wa.me/5511999999999"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-primary font-medium hover:underline inline-flex items-center gap-1"
+                className="text-xs text-primary font-medium hover:underline inline-flex items-center gap-1"
               >
                 Iniciar conversa
                 <ExternalLink className="h-3 w-3" />
@@ -526,22 +523,21 @@ export default function GettingStartedPage() {
 
           {/* Video Tutorial */}
           <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-6">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
-                <PlayCircle className="h-6 w-6 text-purple-600" />
+            <CardContent className="p-4">
+              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mb-3">
+                <PlayCircle className="h-5 w-5 text-purple-600" />
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">
+              <h3 className="text-sm font-medium text-gray-900 mb-1">
                 Aprenda o Básico
               </h3>
-              <p className="text-sm text-gray-600 mb-4">
-                Assista ao vídeo tutorial e aprenda a usar o sistema em poucos
-                minutos.
+              <p className="text-xs text-gray-500 mb-3">
+                Assista ao vídeo tutorial e aprenda a usar o sistema.
               </p>
               <a
                 href="https://youtube.com/watch?v=tutorial"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-primary font-medium hover:underline inline-flex items-center gap-1"
+                className="text-xs text-primary font-medium hover:underline inline-flex items-center gap-1"
               >
                 Assistir vídeo
                 <ExternalLink className="h-3 w-3" />
@@ -554,24 +550,24 @@ export default function GettingStartedPage() {
       {/* Completion message */}
       {completedCount === checklistItems.length && (
         <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
-          <CardContent className="py-8 text-center">
-            <div className="w-20 h-20 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <Trophy className="h-10 w-10 text-white" />
+          <CardContent className="py-6 text-center">
+            <div className="w-14 h-14 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
+              <Trophy className="h-7 w-7 text-white" />
             </div>
-            <div className="flex justify-center gap-1 mb-4">
+            <div className="flex justify-center gap-0.5 mb-3">
               {[...Array(5)].map((_, i) => (
-                <Star key={i} className="h-6 w-6 text-yellow-400 fill-yellow-400" />
+                <Star key={i} className="h-4 w-4 text-yellow-400 fill-yellow-400" />
               ))}
             </div>
-            <h3 className="text-2xl font-bold text-green-900 mb-2">
+            <h3 className="text-base font-semibold text-green-900 mb-1">
               Parabéns! Você completou todas as etapas!
             </h3>
-            <p className="text-green-700 mb-6">
+            <p className="text-sm text-green-700 mb-4">
               Agora você está pronto para aproveitar ao máximo o Auvo.
             </p>
             <Link href="/dashboard">
-              <Button size="lg" className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700">
-                <Sparkles className="h-5 w-5 mr-2" />
+              <Button className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700">
+                <Sparkles className="h-4 w-4 mr-2" />
                 Ir para o Dashboard
               </Button>
             </Link>

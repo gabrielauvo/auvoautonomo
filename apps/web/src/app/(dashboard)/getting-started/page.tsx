@@ -11,6 +11,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/auth-context';
+import { AppLayout } from '@/components/layout';
 import {
   Card,
   CardHeader,
@@ -306,7 +307,7 @@ export default function GettingStartedPage() {
   }
 
   return (
-    <>
+    <AppLayout>
       {/* Efeitos de celebração */}
       <Confetti show={showConfetti} />
       <CelebrationToast
@@ -315,7 +316,7 @@ export default function GettingStartedPage() {
         onClose={() => setShowCelebration(false)}
       />
 
-    <div className="space-y-6">
+      <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-xl font-semibold text-gray-900">
@@ -574,7 +575,7 @@ export default function GettingStartedPage() {
           </CardContent>
         </Card>
       )}
-    </div>
-    </>
+      </div>
+    </AppLayout>
   );
 }

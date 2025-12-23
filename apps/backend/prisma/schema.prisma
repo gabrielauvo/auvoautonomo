@@ -316,6 +316,7 @@ model Quote {
   notes            String?
   sentAt           DateTime?
   visitScheduledAt DateTime?
+  validUntil       DateTime?
   shareKey         String?         @unique
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt

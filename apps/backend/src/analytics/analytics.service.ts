@@ -186,13 +186,25 @@ export class AnalyticsService {
   }
 
   private async getRevenueOverview(userId: string, start: Date, end: Date) {
-    // Usar dueDate para consistência com getRevenueByPeriod
-    // Isso garante que os dados do resumo correspondam ao gráfico de receita
-    const payments = await this.prisma.clientPayment.groupBy({
+    // Buscar pagamentos por dueDate para invoiced/overdue/canceled
+    const paymentsByDueDate = await this.prisma.clientPayment.groupBy({
       by: ['status'],
       where: {
         userId,
         dueDate: { gte: start, lte: end },
+      },
+      _count: { id: true },
+      _sum: { value: true },
+    });
+
+    // Buscar pagamentos recebidos separadamente usando updatedAt (quando foi marcado como recebido)
+    // Isso garante que pagamentos com vencimento futuro mas já recebidos apareçam no período correto
+    const receivedPayments = await this.prisma.clientPayment.groupBy({
+      by: ['status'],
+      where: {
+        userId,
+        status: { in: ['CONFIRMED', 'RECEIVED', 'RECEIVED_IN_CASH'] },
+        updatedAt: { gte: start, lte: end },
       },
       _count: { id: true },
       _sum: { value: true },
@@ -206,7 +218,8 @@ export class AnalyticsService {
     let paidCount = 0;
     let overdueCount = 0;
 
-    for (const p of payments) {
+    // Processar pagamentos por dueDate para invoiced/overdue/canceled
+    for (const p of paymentsByDueDate) {
       const value = Number(p._sum.value) || 0;
       const count = p._count.id;
 
@@ -217,12 +230,6 @@ export class AnalyticsService {
       }
 
       switch (p.status) {
-        case 'CONFIRMED':
-        case 'RECEIVED':
-        case 'RECEIVED_IN_CASH':
-          received += value;
-          paidCount += count;
-          break;
         case 'OVERDUE':
           overdue += value;
           overdueCount += count;
@@ -231,6 +238,14 @@ export class AnalyticsService {
           canceled += value;
           break;
       }
+    }
+
+    // Processar pagamentos recebidos por updatedAt
+    for (const p of receivedPayments) {
+      const value = Number(p._sum.value) || 0;
+      const count = p._count.id;
+      received += value;
+      paidCount += count;
     }
 
     const averageTicketPaid = paidCount > 0 ? Math.round((received / paidCount) * 100) / 100 : null;

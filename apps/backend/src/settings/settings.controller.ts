@@ -663,6 +663,10 @@ export class SettingsController {
   /**
    * POST /settings/company/logo
    * Upload company logo
+   *
+   * NOTE: Saves logo as base64 Data URL directly in database.
+   * This avoids needing persistent file storage (which Railway doesn't have configured).
+   * For logos under 2MB, this is acceptable and works reliably.
    */
   @Post('company/logo')
   @UseInterceptors(FileInterceptor('logo'))
@@ -692,54 +696,22 @@ export class SettingsController {
       throw new BadRequestException('Arquivo muito grande. Máximo 2MB.');
     }
 
-    // Delete old logo if exists
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { companyLogoUrl: true },
-    });
-    this.logger.log(`[LOGO UPLOAD] Current user logo: ${user?.companyLogoUrl}`);
+    // Convert to base64 Data URL - this stores directly in database
+    // Avoids filesystem storage issues with Railway's ephemeral storage
+    const base64 = file.buffer.toString('base64');
+    const dataUrl = `data:${file.mimetype};base64,${base64}`;
 
-    if (user?.companyLogoUrl && this.storageProvider.delete) {
-      try {
-        // Extract storage path from URL
-        const oldPath = this.extractPathFromUrl(user.companyLogoUrl);
-        if (oldPath) {
-          this.logger.log(`[LOGO UPLOAD] Deleting old logo: ${oldPath}`);
-          await this.storageProvider.delete(oldPath);
-        }
-      } catch (error) {
-        this.logger.warn(`[LOGO UPLOAD] Error deleting old logo: ${error}`);
-        // Ignore deletion errors
-      }
-    }
+    this.logger.log(`[LOGO UPLOAD] Converted to Data URL, length: ${dataUrl.length} chars`);
 
-    // Generate unique filename
-    const fileId = randomUUID();
-    const ext = path.extname(file.originalname) || this.getExtensionFromMime(file.mimetype);
-    const fileName = `logo_${fileId}${ext}`;
-
-    // Build storage path
-    const storagePath = `logos/${userId}`;
-    this.logger.log(`[LOGO UPLOAD] Uploading to path: ${storagePath}/${fileName}`);
-
-    // Upload to storage provider
-    const uploadResult = await this.storageProvider.upload({
-      buffer: file.buffer,
-      mimeType: file.mimetype,
-      path: storagePath,
-      fileName,
-    });
-    this.logger.log(`[LOGO UPLOAD] Upload result: storagePath=${uploadResult.storagePath}, publicUrl=${uploadResult.publicUrl}`);
-
-    // Update user with new logo URL
+    // Update user with new logo as Data URL
     const updatedUser = await this.prisma.user.update({
       where: { id: userId },
-      data: { companyLogoUrl: uploadResult.publicUrl },
-      select: { id: true, companyLogoUrl: true },
+      data: { companyLogoUrl: dataUrl },
+      select: { id: true },
     });
-    this.logger.log(`[LOGO UPLOAD] Updated user ${updatedUser.id}, new logoUrl: ${updatedUser.companyLogoUrl}`);
+    this.logger.log(`[LOGO UPLOAD] Updated user ${updatedUser.id} with base64 logo`);
 
-    return { logoUrl: uploadResult.publicUrl };
+    return { logoUrl: dataUrl };
   }
 
   /**
@@ -749,28 +721,14 @@ export class SettingsController {
   @Delete('company/logo')
   async deleteCompanyLogo(@Req() req: AuthRequest) {
     const userId = req.user.userId;
-
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { companyLogoUrl: true },
-    });
-
-    if (user?.companyLogoUrl && this.storageProvider.delete) {
-      try {
-        const oldPath = this.extractPathFromUrl(user.companyLogoUrl);
-        if (oldPath) {
-          await this.storageProvider.delete(oldPath);
-        }
-      } catch (error) {
-        // Ignore deletion errors
-      }
-    }
+    this.logger.log(`[LOGO DELETE] Deleting logo for userId: ${userId}`);
 
     await this.prisma.user.update({
       where: { id: userId },
       data: { companyLogoUrl: null },
     });
 
+    this.logger.log(`[LOGO DELETE] Logo deleted successfully`);
     return { success: true, message: 'Logo removida com sucesso' };
   }
 

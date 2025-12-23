@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsDateString, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateQuoteDto {
@@ -21,4 +21,13 @@ export class UpdateQuoteDto {
   @IsString()
   @IsOptional()
   notes?: string;
+
+  @ApiProperty({
+    description: 'Quote validity date',
+    example: '2025-01-31',
+    required: false,
+  })
+  @IsDateString()
+  @IsOptional()
+  validUntil?: string;
 }

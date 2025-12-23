@@ -277,6 +277,10 @@ export class QuotesService {
       updateData.notes = updateQuoteDto.notes;
     }
 
+    if (updateQuoteDto.validUntil !== undefined) {
+      updateData.validUntil = new Date(updateQuoteDto.validUntil);
+    }
+
     // If discount changes, recalculate total
     if (updateQuoteDto.discountValue !== undefined) {
       const discountValue = new Decimal(updateQuoteDto.discountValue);

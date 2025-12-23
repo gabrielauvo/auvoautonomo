@@ -123,6 +123,7 @@ export class QuotesPublicService {
       totalValue: Number(quote.totalValue),
       sentAt: quote.sentAt,
       visitScheduledAt: quote.visitScheduledAt,
+      validUntil: quote.validUntil,
       createdAt: quote.createdAt,
       // Dados da empresa (prestador)
       company: {

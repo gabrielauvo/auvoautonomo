@@ -1036,6 +1036,9 @@ export default function PublicQuotePage() {
                     </Badge>
                   } />
                   <InfoField label="Data de Criação" value={formatDate(quote.createdAt)} />
+                  {quote.validUntil && (
+                    <InfoField label="Válido até" value={formatDate(quote.validUntil)} />
+                  )}
                   {quote.sentAt && (
                     <InfoField label="Enviado em" value={formatDateTime(quote.sentAt)} />
                   )}

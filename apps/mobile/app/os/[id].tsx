@@ -2051,33 +2051,39 @@ export default function WorkOrderDetailScreen() {
       {/* Timer (quando em execução) */}
       <ExecutionTimerDisplay timer={timer} />
 
-      {/* Tabs */}
+      {/* Tabs - ScrollView horizontal para caber em telas menores */}
       <View style={[styles.tabsContainer, { borderBottomColor: colors.border.light }]}>
-        {TABS.map((tab) => (
-          <TouchableOpacity
-            key={tab.key}
-            style={[
-              styles.tab,
-              activeTab === tab.key && { borderBottomColor: colors.primary[500] },
-            ]}
-            onPress={() => setActiveTab(tab.key)}
-          >
-            <Ionicons
-              name={tab.icon as any}
-              size={18}
-              color={activeTab === tab.key ? colors.primary[500] : colors.text.tertiary}
-            />
-            <Text
-              variant="caption"
-              style={{
-                marginLeft: 4,
-                color: activeTab === tab.key ? colors.primary[500] : colors.text.tertiary,
-              }}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.tabsScrollContent}
+        >
+          {TABS.map((tab) => (
+            <TouchableOpacity
+              key={tab.key}
+              style={[
+                styles.tab,
+                activeTab === tab.key && { borderBottomColor: colors.primary[500] },
+              ]}
+              onPress={() => setActiveTab(tab.key)}
             >
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <Ionicons
+                name={tab.icon as any}
+                size={18}
+                color={activeTab === tab.key ? colors.primary[500] : colors.text.tertiary}
+              />
+              <Text
+                variant="caption"
+                style={{
+                  marginLeft: 4,
+                  color: activeTab === tab.key ? colors.primary[500] : colors.text.tertiary,
+                }}
+              >
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
 
       {/* Tab Content */}
@@ -2172,15 +2178,18 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   tabsContainer: {
-    flexDirection: 'row',
     borderBottomWidth: 1,
   },
+  tabsScrollContent: {
+    flexDirection: 'row',
+    paddingHorizontal: 8,
+  },
   tab: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
+    paddingHorizontal: 12,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },

@@ -122,6 +122,11 @@ const ExecutionControls = React.memo(function ExecutionControls({
   isSyncing,
   isSharing,
   clientPhone,
+  totalValue,
+  clientId,
+  clientName,
+  workOrderId,
+  workOrderTitle,
   onStart,
   onPause,
   onResume,
@@ -129,6 +134,7 @@ const ExecutionControls = React.memo(function ExecutionControls({
   onReopen,
   onRetrySync,
   onShareWhatsApp,
+  onCreateCharge,
 }: {
   status: WorkOrderStatus;
   isExecuting: boolean;
@@ -137,6 +143,11 @@ const ExecutionControls = React.memo(function ExecutionControls({
   isSyncing?: boolean;
   isSharing?: boolean;
   clientPhone?: string;
+  totalValue?: number;
+  clientId?: string;
+  clientName?: string;
+  workOrderId?: string;
+  workOrderTitle?: string;
   onStart: () => void;
   onPause: () => void;
   onResume: () => void;
@@ -144,6 +155,7 @@ const ExecutionControls = React.memo(function ExecutionControls({
   onReopen?: () => void;
   onRetrySync?: () => void;
   onShareWhatsApp?: () => void;
+  onCreateCharge?: () => void;
 }) {
   const colors = useColors();
   const spacing = useSpacing();
@@ -153,7 +165,7 @@ const ExecutionControls = React.memo(function ExecutionControls({
     return null;
   }
 
-  // Para OS concluída, mostrar botões de WhatsApp e Reabrir
+  // Para OS concluída, mostrar botões de WhatsApp, Criar Cobrança e Reabrir
   if (status === 'DONE') {
     return (
       <View style={[styles.controlsContainer, { padding: spacing[4], backgroundColor: colors.background.primary }]}>
@@ -174,6 +186,21 @@ const ExecutionControls = React.memo(function ExecutionControls({
                 </Text>
               </View>
             )}
+          </TouchableOpacity>
+        )}
+
+        {/* Botão Criar Cobrança - só aparece se OS tem valor */}
+        {totalValue && totalValue > 0 && onCreateCharge && (
+          <TouchableOpacity
+            style={[styles.createChargeButton, { backgroundColor: colors.success[600], marginBottom: spacing[3] }]}
+            onPress={onCreateCharge}
+          >
+            <View style={styles.buttonContent}>
+              <Ionicons name="receipt-outline" size={20} color="#FFFFFF" />
+              <Text variant="body" weight="semibold" style={{ color: '#FFFFFF', marginLeft: 8 }}>
+                Criar Cobrança
+              </Text>
+            </View>
           </TouchableOpacity>
         )}
 
@@ -1815,6 +1842,21 @@ export default function WorkOrderDetailScreen() {
     }
   }, [workOrder]);
 
+  // Handler para criar cobrança a partir da OS
+  const handleCreateCharge = useCallback(() => {
+    if (!workOrder) return;
+
+    // Navegar para a tela de nova cobrança com os dados pré-preenchidos
+    const params = new URLSearchParams();
+    if (workOrder.clientId) params.append('clientId', workOrder.clientId);
+    if (workOrder.clientName) params.append('clientName', encodeURIComponent(workOrder.clientName));
+    params.append('workOrderId', workOrder.id);
+    if (workOrder.totalValue) params.append('value', workOrder.totalValue.toString());
+    if (workOrder.title) params.append('description', encodeURIComponent(`OS: ${workOrder.title}`));
+
+    router.push(`/cobrancas/nova?${params.toString()}`);
+  }, [workOrder, router]);
+
   // Handler para retry de sync de dados pendentes (respostas de checklist e anexos)
   const handleRetrySync = useCallback(async () => {
     if (isSyncing || !id) return;
@@ -2050,6 +2092,11 @@ export default function WorkOrderDetailScreen() {
         isSyncing={isSyncing}
         isSharing={isSharing}
         clientPhone={workOrder.clientPhone}
+        totalValue={workOrder.totalValue}
+        clientId={workOrder.clientId}
+        clientName={workOrder.clientName}
+        workOrderId={workOrder.id}
+        workOrderTitle={workOrder.title}
         onStart={handleStart}
         onPause={handlePause}
         onResume={handleResume}
@@ -2057,6 +2104,7 @@ export default function WorkOrderDetailScreen() {
         onReopen={handleReopen}
         onRetrySync={handleRetrySync}
         onShareWhatsApp={handleShareWhatsApp}
+        onCreateCharge={handleCreateCharge}
       />
 
       {/* Pause Reason Modal */}
@@ -2286,6 +2334,12 @@ const styles = StyleSheet.create({
   },
   whatsappButton: {
     backgroundColor: '#25D366',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  createChargeButton: {
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',

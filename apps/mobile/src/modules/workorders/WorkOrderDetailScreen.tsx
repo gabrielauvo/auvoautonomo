@@ -37,6 +37,7 @@ interface WorkOrderDetailScreenProps {
   onDelete?: () => void;
   onBack?: () => void;
   onShareWhatsApp?: (workOrder: WorkOrder) => void;
+  onCreateCharge?: (workOrder: WorkOrder) => void;
 }
 
 // =============================================================================
@@ -176,6 +177,7 @@ export const WorkOrderDetailScreen: React.FC<WorkOrderDetailScreenProps> = ({
   onDelete,
   onBack,
   onShareWhatsApp,
+  onCreateCharge,
 }) => {
   const [workOrder, setWorkOrder] = useState(initialWorkOrder);
   const [loading, setLoading] = useState<WorkOrderStatus | 'delete' | 'share' | null>(null);
@@ -468,6 +470,18 @@ export const WorkOrderDetailScreen: React.FC<WorkOrderDetailScreenProps> = ({
                 🔄 Reabrir OS
               </Text>
             )}
+          </TouchableOpacity>
+        )}
+
+        {/* Create Charge button (when DONE and has value) */}
+        {workOrder.status === 'DONE' && workOrder.totalValue && workOrder.totalValue > 0 && onCreateCharge && (
+          <TouchableOpacity
+            style={[styles.statusButton, { backgroundColor: colors.success[600] }]}
+            onPress={() => onCreateCharge(workOrder)}
+          >
+            <Text variant="body" weight="semibold" style={{ color: colors.white }}>
+              💰 Criar Cobrança
+            </Text>
           </TouchableOpacity>
         )}
 

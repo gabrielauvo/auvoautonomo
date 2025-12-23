@@ -613,16 +613,30 @@ export default function WorkOrderDetailsPage() {
               {isGeneratingLink ? 'Gerando...' : publicLinkCopied ? 'Copiado!' : 'OS Digital'}
             </Button>
 
-            {/* Botão de reabrir para OS concluída */}
+            {/* Botões para OS concluída */}
             {workOrder.status === 'DONE' && (
-              <Button
-                variant="outline"
-                onClick={handleReopenWorkOrder}
-                loading={updateStatus.isPending}
-                leftIcon={<RefreshCw className="h-4 w-4" />}
-              >
-                Reabrir OS
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  onClick={handleReopenWorkOrder}
+                  loading={updateStatus.isPending}
+                  leftIcon={<RefreshCw className="h-4 w-4" />}
+                >
+                  Reabrir OS
+                </Button>
+
+                {/* Botão Criar Cobrança - só aparece se OS tem valor */}
+                {workOrder.totalValue && workOrder.totalValue > 0 && (
+                  <Link href={`/billing/charges/new?clientId=${workOrder.clientId}&workOrderId=${workOrder.id}`}>
+                    <Button
+                      variant="default"
+                      leftIcon={<Receipt className="h-4 w-4" />}
+                    >
+                      Criar Cobrança
+                    </Button>
+                  </Link>
+                )}
+              </>
             )}
 
             {/* Botão PDF */}

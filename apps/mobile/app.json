@@ -38,15 +38,11 @@
       }
     },
     "updates": {
-      "enabled": false
+      "enabled": true,
+      "url": "https://u.expo.dev/fdf3f160-daec-4bb5-8555-d67f198d24d8"
     },
-    "plugins": [
-      "expo-font",
-      "expo-router",
-      "expo-secure-store",
-      "expo-sqlite",
-      "@react-native-community/datetimepicker",
-      "@journeyapps/react-native-quick-sqlite"
-    ]
+    "runtimeVersion": {
+      "policy": "appVersion"
+    }
   }
 }

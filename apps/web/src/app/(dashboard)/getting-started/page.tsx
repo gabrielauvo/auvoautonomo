@@ -24,6 +24,7 @@ import {
   Circle,
   ChevronRight,
   Smartphone,
+  Building2,
   Users,
   FileText,
   Receipt,
@@ -240,6 +241,15 @@ export default function GettingStartedPage() {
         },
       ],
       completed: completedItems.includes('download-app'),
+    },
+    {
+      id: 'setup-company',
+      title: 'Cadastre sua empresa',
+      description:
+        'Configure os dados da sua empresa, logo e informações de contato.',
+      icon: <Building2 className="h-5 w-5" />,
+      href: '/settings/company',
+      completed: completedItems.includes('setup-company'),
     },
     {
       id: 'add-client',

@@ -168,6 +168,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [loadUser]);
 
   /**
+   * Recarrega usuário quando a aba fica visível novamente
+   * Garante que avatar e outros dados estejam sincronizados após mudanças no mobile
+   */
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && user) {
+        // Refresh user data silently when tab becomes visible
+        authService.getProfile()
+          .then((profileData) => {
+            if (isMountedRef.current) {
+              setUser(profileData);
+            }
+          })
+          .catch(() => {
+            // Ignore errors - user might have logged out
+          });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [user]);
+
+  /**
    * Realiza login
    */
   const login = useCallback(async (credentials: LoginCredentials) => {

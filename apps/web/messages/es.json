@@ -128,7 +128,9 @@
     "security": "Seguridad",
     "expandMenu": "Expandir menú",
     "collapseMenu": "Colapsar menú",
-    "gettingStarted": "Empieza Aquí"
+    "gettingStarted": "Empieza Aquí",
+    "cadastros": "Registros",
+    "financeiro": "Financiero"
   },
   "dashboard": {
     "title": "Panel",

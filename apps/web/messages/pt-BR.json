@@ -110,7 +110,7 @@
     "catalog": "Catálogo",
     "inventory": "Estoque",
     "checklists": "Checklists",
-    "billing": "Cobrança",
+    "billing": "Cobranças",
     "charges": "Cobranças",
     "payments": "Pagamentos",
     "suppliers": "Fornecedores",
@@ -128,7 +128,9 @@
     "security": "Segurança",
     "expandMenu": "Expandir menu",
     "collapseMenu": "Recolher menu",
-    "gettingStarted": "Comece Aqui"
+    "gettingStarted": "Comece Aqui",
+    "cadastros": "Cadastros",
+    "financeiro": "Financeiro"
   },
   "dashboard": {
     "title": "Dashboard",

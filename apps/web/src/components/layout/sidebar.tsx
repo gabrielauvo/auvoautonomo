@@ -212,21 +212,6 @@ export function Sidebar({ className }: SidebarProps) {
         </div>
       </nav>
 
-      {/* Relatórios com destaque */}
-      {!collapsed && (
-        <div className="px-3 pb-2">
-          <div className="border-t border-dashed border-primary/30 pt-2">
-            <span className="text-[13px] text-primary font-medium tracking-wide flex items-center gap-1">
-              <span className="flex gap-0.5">
-                {[...Array(12)].map((_, i) => (
-                  <span key={i} className="w-1 h-1 rounded-full bg-primary/60" />
-                ))}
-              </span>
-            </span>
-          </div>
-        </div>
-      )}
-
       {/* Comece Aqui - Item fixo no rodapé */}
       <div className="px-3 pb-2">
         <Link

@@ -22,13 +22,14 @@ import {
   ScheduleDateNavigator,
   ScheduleDayView,
   ScheduleCalendarView,
+  ScheduleWeekView,
 } from '@/components/schedule';
 import { Alert } from '@/components/ui';
-import { AlertCircle, RefreshCw, List, CalendarDays } from 'lucide-react';
+import { AlertCircle, RefreshCw, List, CalendarDays, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslations } from '@/i18n';
 
-type ViewMode = 'list' | 'calendar';
+type ViewMode = 'list' | 'week' | 'calendar';
 
 export default function SchedulePage() {
   const { t } = useTranslations('schedule');
@@ -67,7 +68,7 @@ export default function SchedulePage() {
             <button
               onClick={() => setViewMode('list')}
               className={cn(
-                'flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all',
+                'flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all',
                 viewMode === 'list'
                   ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
@@ -77,9 +78,21 @@ export default function SchedulePage() {
               {t('list')}
             </button>
             <button
+              onClick={() => setViewMode('week')}
+              className={cn(
+                'flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all',
+                viewMode === 'week'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              )}
+            >
+              <Calendar className="h-4 w-4" />
+              {t('week')}
+            </button>
+            <button
               onClick={() => setViewMode('calendar')}
               className={cn(
-                'flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all',
+                'flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all',
                 viewMode === 'calendar'
                   ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
@@ -122,6 +135,11 @@ export default function SchedulePage() {
             {/* Visualização do dia */}
             <ScheduleDayView data={data} isLoading={isLoading} />
           </>
+        )}
+
+        {/* Visualização de Semana */}
+        {viewMode === 'week' && (
+          <ScheduleWeekView onDayClick={handleDayClick} />
         )}
 
         {/* Visualização de Calendário (Mensal) */}

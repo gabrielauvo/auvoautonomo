@@ -57,6 +57,8 @@ interface ChargeFormProps {
   preselectedClientId?: string;
   workOrderId?: string;
   quoteId?: string;
+  defaultValue?: number;
+  defaultDescription?: string;
   onSuccess?: (charge: Charge) => void;
   onCancel?: () => void;
 }
@@ -194,6 +196,8 @@ export function ChargeForm({
   preselectedClientId,
   workOrderId,
   quoteId,
+  defaultValue,
+  defaultDescription,
   onSuccess,
   onCancel,
 }: ChargeFormProps) {
@@ -210,10 +214,14 @@ export function ChargeForm({
   const [selectedClient, setSelectedClient] = useState<Client | null>(
     charge?.client ? (charge.client as unknown as Client) : null
   );
-  const [value, setValue] = useState(charge?.value?.toString() || '');
+  const [value, setValue] = useState(
+    charge?.value?.toString() || defaultValue?.toString() || ''
+  );
   const [dueDate, setDueDate] = useState(charge?.dueDate?.split('T')[0] || '');
   const [billingType, setBillingType] = useState<BillingType>(charge?.billingType || 'PIX');
-  const [description, setDescription] = useState(charge?.description || '');
+  const [description, setDescription] = useState(
+    charge?.description || defaultDescription || ''
+  );
   const [showDiscountOptions, setShowDiscountOptions] = useState(!!charge?.discount);
   const [discountValue, setDiscountValue] = useState(charge?.discount?.value?.toString() || '');
   const [discountType, setDiscountType] = useState<'FIXED' | 'PERCENTAGE'>(

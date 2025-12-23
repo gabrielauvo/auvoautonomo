@@ -627,7 +627,7 @@ export default function WorkOrderDetailsPage() {
 
                 {/* Botão Criar Cobrança - só aparece se OS tem valor */}
                 {workOrder.totalValue && workOrder.totalValue > 0 && (
-                  <Link href={`/billing/charges/new?clientId=${workOrder.clientId}&workOrderId=${workOrder.id}`}>
+                  <Link href={`/billing/charges/new?clientId=${workOrder.clientId}&workOrderId=${workOrder.id}&value=${workOrder.totalValue}&description=${encodeURIComponent(`OS: ${workOrder.title}`)}`}>
                     <Button
                       variant="default"
                       leftIcon={<Receipt className="h-4 w-4" />}

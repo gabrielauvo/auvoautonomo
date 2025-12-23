@@ -21,6 +21,11 @@ function NewChargeContent() {
   const clientId = searchParams.get('clientId') || undefined;
   const workOrderId = searchParams.get('workOrderId') || undefined;
   const quoteId = searchParams.get('quoteId') || undefined;
+  const valueParam = searchParams.get('value');
+  const descriptionParam = searchParams.get('description');
+
+  const defaultValue = valueParam ? parseFloat(valueParam) : undefined;
+  const defaultDescription = descriptionParam ? decodeURIComponent(descriptionParam) : undefined;
 
   return (
     <div className="space-y-6">
@@ -44,6 +49,8 @@ function NewChargeContent() {
         preselectedClientId={clientId}
         workOrderId={workOrderId}
         quoteId={quoteId}
+        defaultValue={defaultValue}
+        defaultDescription={defaultDescription}
       />
     </div>
   );

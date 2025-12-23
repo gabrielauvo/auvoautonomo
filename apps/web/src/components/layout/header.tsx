@@ -13,7 +13,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
-import { Badge, Avatar } from '@/components/ui';
+import { Badge, Avatar, ThemeToggle } from '@/components/ui';
 import { LogOut, User, Settings, ChevronDown, Bell, CreditCard, FileText, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslations } from '@/i18n';
@@ -135,7 +135,7 @@ export function Header({ className }: HeaderProps) {
     <header
       role="banner"
       className={cn(
-        'flex items-center justify-between h-16 px-6 bg-white border-b border-gray-200',
+        'flex items-center justify-between h-16 px-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700',
         className
       )}
     >
@@ -146,11 +146,14 @@ export function Header({ className }: HeaderProps) {
 
       {/* Lado direito */}
       <div className="flex items-center gap-4">
+        {/* Toggle de tema */}
+        <ThemeToggle />
+
         {/* Notificações */}
         <div className="relative" ref={notificationsRef}>
           <button
             onClick={() => setNotificationsOpen(!notificationsOpen)}
-            className="relative p-2 rounded-full hover:bg-gray-100 text-gray-500"
+            className="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
             title={tNav('notifications')}
           >
             <Bell className="h-5 w-5" />
@@ -162,10 +165,10 @@ export function Header({ className }: HeaderProps) {
 
           {/* Dropdown de notificações */}
           {notificationsOpen && (
-            <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50 animate-fade-in">
+            <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 animate-fade-in">
               {/* Header */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                <h3 className="text-sm font-semibold text-gray-900">Notificações</h3>
+              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Notificações</h3>
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllAsRead}
@@ -179,7 +182,7 @@ export function Header({ className }: HeaderProps) {
               {/* Lista de notificações */}
               <div className="max-h-80 overflow-y-auto">
                 {notifications.length === 0 ? (
-                  <div className="px-4 py-8 text-center text-gray-500">
+                  <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                     <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">Nenhuma notificação</p>
                   </div>
@@ -189,8 +192,8 @@ export function Header({ className }: HeaderProps) {
                       key={notification.id}
                       onClick={() => markAsRead(notification.id)}
                       className={cn(
-                        'flex items-start gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-0',
-                        !notification.read && 'bg-primary-50/30'
+                        'flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-50 dark:border-gray-700 last:border-0',
+                        !notification.read && 'bg-primary-50/30 dark:bg-primary-900/20'
                       )}
                     >
                       <div className="flex-shrink-0 mt-0.5">
@@ -199,14 +202,14 @@ export function Header({ className }: HeaderProps) {
                       <div className="flex-1 min-w-0">
                         <p className={cn(
                           'text-sm',
-                          notification.read ? 'text-gray-700' : 'text-gray-900 font-medium'
+                          notification.read ? 'text-gray-700 dark:text-gray-300' : 'text-gray-900 dark:text-gray-100 font-medium'
                         )}>
                           {notification.title}
                         </p>
-                        <p className="text-xs text-gray-500 truncate">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                           {notification.message}
                         </p>
-                        <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 flex items-center gap-1">
                           <Clock className="h-3 w-3" />
                           {notification.time}
                         </p>
@@ -220,7 +223,7 @@ export function Header({ className }: HeaderProps) {
               </div>
 
               {/* Footer */}
-              <div className="border-t border-gray-100 px-4 py-2">
+              <div className="border-t border-gray-100 dark:border-gray-700 px-4 py-2">
                 <a
                   href="/settings/notifications"
                   className="text-xs text-primary hover:text-primary-dark block text-center"
@@ -237,7 +240,7 @@ export function Header({ className }: HeaderProps) {
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="flex items-center gap-3 p-1.5 pr-3 rounded-full hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-3 p-1.5 pr-3 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           >
             <Avatar
               src={user?.avatarUrl || undefined}
@@ -245,7 +248,7 @@ export function Header({ className }: HeaderProps) {
               size="sm"
             />
             <div className="hidden md:block text-left">
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                 {user?.name || tCommon('loading')}
               </p>
               <div className="flex items-center gap-2">
@@ -262,18 +265,18 @@ export function Header({ className }: HeaderProps) {
 
           {/* Dropdown menu */}
           {menuOpen && (
-            <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 animate-fade-in">
+            <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50 animate-fade-in">
               {/* Info do usuário */}
-              <div className="px-4 py-3 border-b border-gray-100">
-                <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+              <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{user?.name}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
               </div>
 
               {/* Links */}
               <div className="py-1">
                 <a
                   href="/settings/profile"
-                  className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                   onClick={() => setMenuOpen(false)}
                 >
                   <User className="h-4 w-4" />
@@ -281,7 +284,7 @@ export function Header({ className }: HeaderProps) {
                 </a>
                 <a
                   href="/settings/plan"
-                  className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                   onClick={() => setMenuOpen(false)}
                 >
                   <CreditCard className="h-4 w-4" />
@@ -290,7 +293,7 @@ export function Header({ className }: HeaderProps) {
                 </a>
                 <a
                   href="/settings"
-                  className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                   onClick={() => setMenuOpen(false)}
                 >
                   <Settings className="h-4 w-4" />
@@ -299,11 +302,11 @@ export function Header({ className }: HeaderProps) {
               </div>
 
               {/* Logout */}
-              <div className="border-t border-gray-100 py-1">
+              <div className="border-t border-gray-100 dark:border-gray-700 py-1">
                 <button
                   onClick={handleLogout}
                   disabled={isLoading}
-                  className="flex items-center gap-3 w-full px-4 py-2 text-sm text-error hover:bg-error-50"
+                  className="flex items-center gap-3 w-full px-4 py-2 text-sm text-error hover:bg-error-50 dark:hover:bg-error-900/20"
                 >
                   <LogOut className="h-4 w-4" />
                   {isLoading ? `${tAuth('logout')}...` : tAuth('logout')}

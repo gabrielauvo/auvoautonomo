@@ -115,13 +115,13 @@ export function Sidebar({ className }: SidebarProps) {
       role="navigation"
       aria-label="Menu principal"
       className={cn(
-        'flex flex-col h-screen bg-white border-r border-gray-200 transition-all duration-300',
+        'flex flex-col h-screen bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 transition-all duration-300',
         collapsed ? 'w-16' : 'w-64',
         className
       )}
     >
       {/* Logo */}
-      <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
+      <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
         {!collapsed && (
           <Link href="/dashboard" className="flex items-center gap-2">
             <span className="text-2xl font-bold text-gradient-auvo">Auvo</span>
@@ -129,7 +129,7 @@ export function Sidebar({ className }: SidebarProps) {
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="p-1.5 rounded-md hover:bg-gray-100 text-gray-500"
+          className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400"
           title={collapsed ? t('expandMenu') : t('collapseMenu')}
         >
           {collapsed ? (
@@ -154,13 +154,13 @@ export function Sidebar({ className }: SidebarProps) {
                     'group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
                     active
                       ? 'bg-primary text-white shadow-auvo hover:bg-primary-600'
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100'
                   )}
                   title={collapsed ? label : undefined}
                 >
                   <span className={cn(
                     'transition-colors duration-200',
-                    active ? 'text-white' : 'text-gray-500 group-hover:text-gray-900'
+                    active ? 'text-white' : 'text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-100'
                   )}>
                     {item.icon}
                   </span>
@@ -176,7 +176,7 @@ export function Sidebar({ className }: SidebarProps) {
 
       {/* Footer */}
       {!collapsed && (
-        <div className="p-4 border-t border-gray-200">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
           <p className="text-xs text-gray-400 text-center">
             &copy; {new Date().getFullYear()} Auvo
           </p>

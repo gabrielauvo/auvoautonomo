@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { AuthProvider, QueryProvider } from '@/context';
+import { AuthProvider, QueryProvider, ThemeProvider } from '@/context';
 import { TranslationsProvider } from '@/i18n';
 import { ProgressBar } from '@/components/ui';
 
@@ -83,16 +83,38 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
+      <head>
+        {/* Script to prevent flash of wrong theme */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var theme = localStorage.getItem('auvo-theme');
+                  var resolved = theme;
+                  if (theme === 'system' || !theme) {
+                    resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                  }
+                  document.documentElement.classList.add(resolved);
+                  document.documentElement.style.colorScheme = resolved;
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className={inter.className}>
-        <ProgressBar />
-        <QueryProvider>
-          <AuthProvider>
-            <TranslationsProvider>
-              {children}
-            </TranslationsProvider>
-          </AuthProvider>
-        </QueryProvider>
+        <ThemeProvider>
+          <ProgressBar />
+          <QueryProvider>
+            <AuthProvider>
+              <TranslationsProvider>
+                {children}
+              </TranslationsProvider>
+            </AuthProvider>
+          </QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

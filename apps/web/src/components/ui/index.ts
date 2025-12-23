@@ -97,3 +97,6 @@ export { ProgressBar, GlobalLoadingSpinner, ListSkeleton, CardSkeleton, TableSke
 
 // Dynamic Modal - Code Splitting
 export { DynamicModal, DynamicDialog } from './dynamic-modal';
+
+// Theme Toggle
+export { ThemeToggle, ThemeDropdown } from './theme-toggle';

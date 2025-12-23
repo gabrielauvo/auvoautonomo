@@ -76,27 +76,40 @@ function TypeFilter({
 }) {
   return (
     <View style={styles.typeFilterContainer}>
-      {TYPE_FILTERS.map((filter) => (
-        <TouchableOpacity
-          key={filter.value}
-          style={[
-            styles.typeFilterButton,
-            { backgroundColor: colors?.gray[200] || '#F3F4F6' },
-            selected === filter.value && { backgroundColor: colors?.primary[600] || '#3B82F6' },
-          ]}
-          onPress={() => onSelect(filter.value)}
-        >
-          <Text
+      {TYPE_FILTERS.map((filter) => {
+        const isSelected = selected === filter.value;
+        return (
+          <TouchableOpacity
+            key={filter.value}
             style={[
-              styles.typeFilterText,
-              { color: colors?.text.secondary || '#6B7280' },
-              selected === filter.value && { color: colors?.white || '#FFFFFF' },
+              styles.typeFilterButton,
+              {
+                backgroundColor: isSelected
+                  ? colors?.primary[600] || '#7C3AED'
+                  : colors?.gray[100] || '#F3F4F6',
+                borderColor: isSelected
+                  ? colors?.primary[600] || '#7C3AED'
+                  : colors?.gray[200] || '#E5E7EB',
+              },
             ]}
+            onPress={() => onSelect(filter.value)}
+            activeOpacity={0.7}
           >
-            {filter.label}
-          </Text>
-        </TouchableOpacity>
-      ))}
+            <Text
+              style={[
+                styles.typeFilterText,
+                {
+                  color: isSelected
+                    ? colors?.white || '#FFFFFF'
+                    : colors?.text.secondary || '#6B7280',
+                },
+              ]}
+            >
+              {filter.label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 }
@@ -545,19 +558,12 @@ const styles = StyleSheet.create({
   typeFilterButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: '#F3F4F6',
-  },
-  typeFilterButtonSelected: {
-    backgroundColor: '#3B82F6',
+    borderRadius: 20,
+    borderWidth: 1,
   },
   typeFilterText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#6B7280',
-  },
-  typeFilterTextSelected: {
-    color: '#FFFFFF',
   },
   loadingContainer: {
     flex: 1,

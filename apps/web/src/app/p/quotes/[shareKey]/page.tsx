@@ -1302,11 +1302,11 @@ export default function PublicQuotePage() {
                 <Button
                   onClick={() => setRejectModalOpen(true)}
                   variant="outline"
-                  className="border-red-300 text-red-600 hover:bg-red-50 px-8 py-3"
+                  className="border-red-500 text-red-700 bg-red-50 hover:bg-red-100 px-8 py-3 font-medium"
                   size="lg"
                 >
                   <XCircle className="h-5 w-5 mr-2" />
-                  Recusar Orcamento
+                  Recusar Orçamento
                 </Button>
               </div>
             </CardContent>

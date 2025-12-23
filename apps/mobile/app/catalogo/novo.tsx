@@ -30,7 +30,9 @@ import { useColors, useSpacing } from '../../src/design-system/ThemeProvider';
 import { useAuth } from '../../src/services';
 import { CatalogItemRepository, CategoryRepository } from '../../src/db/repositories';
 import { CatalogItem, ProductCategory, ItemType } from '../../src/db/schema';
-import { InventoryService } from '../../src/modules/inventory';
+import { AuthService } from '../../src/services/AuthService';
+import { getApiBaseUrl } from '../../src/config/api';
+import { fetchWithTimeout } from '../../src/utils/fetch-with-timeout';
 
 // =============================================================================
 // TYPES
@@ -227,15 +229,28 @@ export default function NovoCatalogoScreen() {
           : undefined,
       });
 
-      // Se for produto e tiver quantidade inicial de estoque, criar movimentação
+      // Se for produto e tiver quantidade inicial de estoque, chamar API do backend
       if (itemType === 'PRODUCT' && initialStock && parseFloat(initialStock) > 0) {
         try {
-          InventoryService.configure(technicianId);
-          await InventoryService.adjustStock({
-            itemId: createdItem.id,
-            newQuantity: parseFloat(initialStock),
-            notes: 'Estoque inicial',
+          const token = await AuthService.getAccessToken();
+          const apiUrl = `${getApiBaseUrl()}/inventory/balances/${createdItem.id}/initial`;
+
+          const response = await fetchWithTimeout(apiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({
+              quantity: parseFloat(initialStock),
+              notes: 'Estoque inicial',
+            }),
           });
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.warn('[NovoCatalogoScreen] Erro ao definir estoque inicial:', errorData.message || response.statusText);
+          }
         } catch (stockError) {
           // Não bloqueia criação do produto se falhar estoque
           console.warn('[NovoCatalogoScreen] Não foi possível adicionar estoque inicial:', stockError);
@@ -253,7 +268,7 @@ export default function NovoCatalogoScreen() {
     }
   }, [
     validate, technicianId, categories, categoryId, name, itemType, unit,
-    basePrice, costPrice, description, sku, defaultDuration, bundleItems,
+    basePrice, costPrice, description, sku, defaultDuration, bundleItems, initialStock,
   ]);
 
   const handleAddBundleItem = (item: CatalogItem) => {

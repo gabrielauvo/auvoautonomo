@@ -127,7 +127,8 @@
     "notifications": "Notificaciones",
     "security": "Seguridad",
     "expandMenu": "Expandir menú",
-    "collapseMenu": "Colapsar menú"
+    "collapseMenu": "Colapsar menú",
+    "gettingStarted": "Empieza Aquí"
   },
   "dashboard": {
     "title": "Panel",

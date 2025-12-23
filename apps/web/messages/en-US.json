@@ -127,7 +127,8 @@
     "notifications": "Notifications",
     "security": "Security",
     "expandMenu": "Expand menu",
-    "collapseMenu": "Collapse menu"
+    "collapseMenu": "Collapse menu",
+    "gettingStarted": "Getting Started"
   },
   "dashboard": {
     "title": "Dashboard",

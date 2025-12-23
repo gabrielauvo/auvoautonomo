@@ -28,6 +28,7 @@ import {
   Building2,
   Receipt,
   Warehouse,
+  Rocket,
 } from 'lucide-react';
 
 interface NavItem {
@@ -115,13 +116,13 @@ export function Sidebar({ className }: SidebarProps) {
       role="navigation"
       aria-label="Menu principal"
       className={cn(
-        'flex flex-col h-screen bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 transition-all duration-300',
+        'flex flex-col h-screen bg-white dark:bg-black border-r border-gray-200 dark:border-neutral-800 transition-all duration-300',
         collapsed ? 'w-16' : 'w-64',
         className
       )}
     >
       {/* Logo */}
-      <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-neutral-800">
         {!collapsed && (
           <Link href="/dashboard" className="flex items-center gap-2">
             <span className="text-2xl font-bold text-gradient-auvo">Auvo</span>
@@ -129,7 +130,7 @@ export function Sidebar({ className }: SidebarProps) {
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400"
+          className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-neutral-900 text-gray-500 dark:text-gray-400"
           title={collapsed ? t('expandMenu') : t('collapseMenu')}
         >
           {collapsed ? (
@@ -154,7 +155,7 @@ export function Sidebar({ className }: SidebarProps) {
                     'group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
                     active
                       ? 'bg-primary text-white shadow-auvo hover:bg-primary-600'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-neutral-900 hover:text-gray-900 dark:hover:text-gray-100'
                   )}
                   title={collapsed ? label : undefined}
                 >
@@ -174,9 +175,33 @@ export function Sidebar({ className }: SidebarProps) {
         </ul>
       </nav>
 
+      {/* Comece Aqui - Item fixo no rodapé */}
+      <div className="px-2 pb-2">
+        <Link
+          href="/getting-started"
+          className={cn(
+            'group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
+            pathname === '/getting-started'
+              ? 'bg-gradient-to-r from-primary to-primary-600 text-white shadow-auvo'
+              : 'bg-gradient-to-r from-primary-50 to-primary-100 text-primary hover:from-primary-100 hover:to-primary-200'
+          )}
+          title={collapsed ? t('gettingStarted') : undefined}
+        >
+          <span className={cn(
+            'transition-colors duration-200',
+            pathname === '/getting-started' ? 'text-white' : 'text-primary'
+          )}>
+            <Rocket className="h-5 w-5" />
+          </span>
+          {!collapsed && (
+            <span className="font-medium">{t('gettingStarted')}</span>
+          )}
+        </Link>
+      </div>
+
       {/* Footer */}
       {!collapsed && (
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="p-4 border-t border-gray-200 dark:border-neutral-800">
           <p className="text-xs text-gray-400 text-center">
             &copy; {new Date().getFullYear()} Auvo
           </p>

@@ -36,24 +36,32 @@
   }
 
   .dark {
-    --background: 17 24 39;
+    /* Fundo principal preto puro */
+    --background: 0 0 0;
     --foreground: 243 244 246;
-    --card: 31 41 55;
+    /* Cards com fundo levemente elevado */
+    --card: 17 17 17;
     --card-foreground: 243 244 246;
-    --popover: 31 41 55;
+    --popover: 24 24 24;
     --popover-foreground: 243 244 246;
+    /* Primary roxo vibrante */
     --primary: 139 92 246;
     --primary-foreground: 255 255 255;
-    --secondary: 55 65 81;
+    /* Secondary escuro */
+    --secondary: 32 32 32;
     --secondary-foreground: 243 244 246;
-    --muted: 55 65 81;
+    /* Muted */
+    --muted: 38 38 38;
     --muted-foreground: 156 163 175;
-    --accent: 55 65 81;
+    /* Accent */
+    --accent: 32 32 32;
     --accent-foreground: 243 244 246;
+    /* Destructive */
     --destructive: 248 113 113;
     --destructive-foreground: 255 255 255;
-    --border: 75 85 99;
-    --input: 75 85 99;
+    /* Borders sutis */
+    --border: 38 38 38;
+    --input: 38 38 38;
     --ring: 139 92 246;
   }
 

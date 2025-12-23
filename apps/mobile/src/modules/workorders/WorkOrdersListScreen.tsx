@@ -22,6 +22,7 @@ import { colors, spacing, borderRadius, shadows, theme } from '../../design-syst
 import { WorkOrder, WorkOrderStatus } from '../../db/schema';
 import { workOrderService } from './WorkOrderService';
 import { WorkOrderFilter } from './WorkOrderRepository';
+import { ExecutionSessionRepository } from './execution/ExecutionSessionRepository';
 
 // =============================================================================
 // TYPES
@@ -50,11 +51,17 @@ const STATUS_FILTERS: { label: string; value: WorkOrderStatus | 'ALL' }[] = [
 // HELPERS
 // =============================================================================
 
-function getStatusColor(status: WorkOrderStatus): string {
+function getStatusColor(status: WorkOrderStatus, isPaused?: boolean): string {
+  if (status === 'IN_PROGRESS' && isPaused) {
+    return colors.orange[500]; // Cor diferente para pausada
+  }
   return theme.statusColors.workOrder[status] || colors.gray[500];
 }
 
-function getStatusLabel(status: WorkOrderStatus): string {
+function getStatusLabel(status: WorkOrderStatus, isPaused?: boolean): string {
+  if (status === 'IN_PROGRESS' && isPaused) {
+    return 'Pausada';
+  }
   const labels: Record<WorkOrderStatus, string> = {
     SCHEDULED: 'Agendada',
     IN_PROGRESS: 'Em Andamento',
@@ -129,9 +136,21 @@ const StatusFilterBar: React.FC<{
 const WorkOrderListItem: React.FC<{
   workOrder: WorkOrder;
   onPress: () => void;
-}> = ({ workOrder, onPress }) => {
+  isPaused?: boolean;
+}> = ({ workOrder, onPress, isPaused }) => {
   const scheduledDate = workOrder.scheduledDate || workOrder.scheduledStartTime;
   const time = workOrderService.formatScheduledTime(workOrder);
+
+  // Determinar variante do badge baseado no status e pausa
+  const getBadgeVariant = () => {
+    if (workOrder.status === 'IN_PROGRESS' && isPaused) {
+      return 'warning'; // Laranja para pausada
+    }
+    if (workOrder.status === 'DONE') return 'success';
+    if (workOrder.status === 'IN_PROGRESS') return 'warning';
+    if (workOrder.status === 'CANCELED') return 'error';
+    return 'default';
+  };
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
@@ -141,7 +160,7 @@ const WorkOrderListItem: React.FC<{
           <View
             style={[
               styles.statusIndicator,
-              { backgroundColor: getStatusColor(workOrder.status) },
+              { backgroundColor: getStatusColor(workOrder.status, isPaused) },
             ]}
           />
 
@@ -152,12 +171,8 @@ const WorkOrderListItem: React.FC<{
                 {workOrder.title}
               </Text>
               <Badge
-                label={getStatusLabel(workOrder.status)}
-                variant={
-                  workOrder.status === 'DONE' ? 'success' :
-                  workOrder.status === 'IN_PROGRESS' ? 'warning' :
-                  workOrder.status === 'CANCELED' ? 'error' : 'default'
-                }
+                label={getStatusLabel(workOrder.status, isPaused)}
+                variant={getBadgeVariant()}
                 size="small"
               />
             </View>
@@ -215,6 +230,7 @@ export const WorkOrdersListScreen: React.FC<WorkOrdersListScreenProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<WorkOrderStatus | 'ALL'>('ALL');
   const [offset, setOffset] = useState(0);
+  const [pausedWorkOrderIds, setPausedWorkOrderIds] = useState<Set<string>>(new Set());
 
   // Build filter
   const buildFilter = useCallback((): WorkOrderFilter => {
@@ -230,6 +246,16 @@ export const WorkOrdersListScreen: React.FC<WorkOrdersListScreenProps> = ({
 
     return filter;
   }, [selectedStatus, searchQuery]);
+
+  // Load paused work order IDs
+  const loadPausedWorkOrderIds = useCallback(async () => {
+    try {
+      const pausedIds = await ExecutionSessionRepository.getPausedWorkOrderIds();
+      setPausedWorkOrderIds(new Set(pausedIds));
+    } catch (error) {
+      console.error('Error loading paused work order IDs:', error);
+    }
+  }, []);
 
   // Load work orders
   const loadWorkOrders = useCallback(async (reset: boolean = false) => {
@@ -266,6 +292,7 @@ export const WorkOrdersListScreen: React.FC<WorkOrdersListScreenProps> = ({
   // Initial load
   useEffect(() => {
     loadWorkOrders(true);
+    loadPausedWorkOrderIds();
   }, [selectedStatus, searchQuery]);
 
   // Pull to refresh
@@ -275,7 +302,10 @@ export const WorkOrdersListScreen: React.FC<WorkOrdersListScreenProps> = ({
       if (onSync) {
         await onSync();
       }
-      await loadWorkOrders(true);
+      await Promise.all([
+        loadWorkOrders(true),
+        loadPausedWorkOrderIds(),
+      ]);
     } finally {
       setRefreshing(false);
     }
@@ -314,6 +344,7 @@ export const WorkOrdersListScreen: React.FC<WorkOrdersListScreenProps> = ({
     <WorkOrderListItem
       workOrder={item}
       onPress={() => handleWorkOrderPress(item)}
+      isPaused={pausedWorkOrderIds.has(item.id)}
     />
   );
 

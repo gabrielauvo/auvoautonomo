@@ -387,6 +387,7 @@ export const ptBR = {
     duplicateQuote: 'Duplicar',
     convertToInvoice: 'Converter em Fatura',
     collectSignature: 'Coletar Assinatura',
+    clientSignature: 'Assinatura do Cliente',
     generatePdf: 'Gerar PDF',
     deleteConfirm: 'Tem certeza que deseja excluir este orcamento?',
     deleteSuccess: 'Orcamento excluido com sucesso',

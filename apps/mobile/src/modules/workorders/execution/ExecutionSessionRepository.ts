@@ -333,6 +333,18 @@ export const ExecutionSessionRepository = {
     );
     return results[0]?.count || 0;
   },
+
+  /**
+   * Buscar IDs das work orders que estão pausadas (têm sessão ativa do tipo PAUSE)
+   */
+  async getPausedWorkOrderIds(): Promise<string[]> {
+    const results = await rawQuery<{ workOrderId: string }>(
+      `SELECT DISTINCT workOrderId FROM ${TABLE}
+       WHERE endedAt IS NULL AND sessionType = 'PAUSE'`,
+      []
+    );
+    return results.map(r => r.workOrderId);
+  },
 };
 
 export default ExecutionSessionRepository;

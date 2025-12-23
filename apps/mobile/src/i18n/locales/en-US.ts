@@ -389,6 +389,7 @@ export const enUS: Translations = {
     duplicateQuote: 'Duplicate',
     convertToInvoice: 'Convert to Invoice',
     collectSignature: 'Collect Signature',
+    clientSignature: 'Client Signature',
     generatePdf: 'Generate PDF',
     deleteConfirm: 'Are you sure you want to delete this quote?',
     deleteSuccess: 'Quote deleted successfully',

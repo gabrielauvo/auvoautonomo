@@ -8,17 +8,17 @@ import { cn } from '@/lib/utils';
  * Baseado no MaterialPro DashboardCard
  */
 const cardVariants = cva(
-  'rounded-lg bg-white dark:bg-gray-800 transition-all duration-200',
+  'rounded-lg bg-white dark:bg-neutral-900 transition-all duration-200',
   {
     variants: {
       variant: {
-        default: 'border border-gray-200 dark:border-gray-700 shadow-card',
+        default: 'border border-gray-200 dark:border-neutral-800 shadow-card',
         elevated: 'shadow-lg border-0',
-        outlined: 'border border-gray-200 dark:border-gray-700 shadow-none',
+        outlined: 'border border-gray-200 dark:border-neutral-800 shadow-none',
         ghost: 'border-0 shadow-none bg-transparent',
       },
       hover: {
-        true: 'hover:shadow-card-hover hover:border-gray-300 dark:hover:border-gray-600',
+        true: 'hover:shadow-card-hover hover:border-gray-300 dark:hover:border-neutral-700',
         lift: 'hover:shadow-lg hover:-translate-y-1',
         glow: 'hover:shadow-auvo hover:border-primary-200 dark:hover:border-primary-700',
       },
@@ -104,7 +104,7 @@ const CardFooter = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn('flex items-center pt-4 border-t border-gray-100 dark:border-gray-700', className)}
+    className={cn('flex items-center pt-4 border-t border-gray-100 dark:border-neutral-800', className)}
     {...props}
   />
 ));

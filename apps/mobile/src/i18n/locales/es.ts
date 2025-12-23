@@ -389,6 +389,7 @@ export const es: Translations = {
     duplicateQuote: 'Duplicar',
     convertToInvoice: 'Convertir en Factura',
     collectSignature: 'Recoger Firma',
+    clientSignature: 'Firma del Cliente',
     generatePdf: 'Generar PDF',
     deleteConfirm: 'Estas seguro de que deseas eliminar este presupuesto?',
     deleteSuccess: 'Presupuesto eliminado correctamente',

@@ -17,6 +17,8 @@ import {
   Alert,
   Dimensions,
   Platform,
+  ScrollView,
+  KeyboardAvoidingView,
 } from 'react-native';
 import {
   Svg,
@@ -87,6 +89,8 @@ interface SignatureCanvasProps {
   width: number;
   height: number;
   viewShotRef: React.RefObject<ViewShot>;
+  onDrawStart?: () => void;
+  onDrawEnd?: () => void;
 }
 
 const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
@@ -97,7 +101,13 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
   width,
   height,
   viewShotRef,
+  onDrawStart,
+  onDrawEnd,
 }) => {
+  const handleGestureStart = useCallback(() => {
+    onDrawStart?.();
+  }, [onDrawStart]);
+
   const handleGestureEvent = useCallback(
     (event: PanGestureHandlerGestureEvent) => {
       const { x, y } = event.nativeEvent;
@@ -136,7 +146,8 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
       onPathsChange([...paths, currentPath]);
       onCurrentPathChange(null);
     }
-  }, [currentPath, paths, onPathsChange, onCurrentPathChange]);
+    onDrawEnd?.();
+  }, [currentPath, paths, onPathsChange, onCurrentPathChange, onDrawEnd]);
 
   const pathToSvgPath = (pathData: PathData): string => {
     if (pathData.points.length === 0) return '';
@@ -157,8 +168,10 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
     <GestureHandlerRootView style={{ width, height }}>
       <PanGestureHandler
         onGestureEvent={handleGestureEvent}
+        onBegan={handleGestureStart}
         onEnded={handleGestureEnd}
         onCancelled={handleGestureEnd}
+        onFailed={handleGestureEnd}
       >
         <View style={[styles.canvas, { width, height }]}>
           {/* ViewShot para capturar a assinatura como PNG */}
@@ -231,6 +244,7 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
   const [signerDocument, setSignerDocument] = useState('');
   const [signerRole, setSignerRole] = useState<SignerRole>(defaultSignerRole);
   const [errors, setErrors] = useState<string[]>([]);
+  const [isDrawing, setIsDrawing] = useState(false);
 
   // Reset state when modal opens
   useEffect(() => {
@@ -241,8 +255,18 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
       setSignerDocument('');
       setSignerRole(defaultSignerRole);
       setErrors([]);
+      setIsDrawing(false);
     }
   }, [visible, defaultSignerName, defaultSignerRole]);
+
+  // Handlers for drawing state
+  const handleDrawStart = useCallback(() => {
+    setIsDrawing(true);
+  }, []);
+
+  const handleDrawEnd = useCallback(() => {
+    setIsDrawing(false);
+  }, []);
 
   // Clear signature
   const handleClear = useCallback(() => {
@@ -336,109 +360,124 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
           <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
             <Text style={styles.closeButtonText}>✕</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.title} numberOfLines={1}>{title}</Text>
           <View style={styles.placeholder} />
         </View>
 
-        {/* Form */}
-        <View style={styles.form}>
-          {/* Signer Name */}
-          <View style={styles.field}>
-            <Text style={styles.label}>Nome do Assinante *</Text>
-            <TextInput
-              style={styles.input}
-              value={signerName}
-              onChangeText={setSignerName}
-              placeholder="Digite o nome completo"
-              autoCapitalize="words"
-            />
-          </View>
+        <KeyboardAvoidingView
+          style={styles.keyboardView}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            scrollEnabled={!isDrawing}
+          >
+            {/* Form */}
+            <View style={styles.form}>
+              {/* Signer Name */}
+              <View style={styles.field}>
+                <Text style={styles.label}>Nome do Assinante *</Text>
+                <TextInput
+                  style={styles.input}
+                  value={signerName}
+                  onChangeText={setSignerName}
+                  placeholder="Digite o nome completo"
+                  autoCapitalize="words"
+                />
+              </View>
 
-          {/* Signer Document */}
-          <View style={styles.field}>
-            <Text style={styles.label}>
-              Documento (CPF/RG) {requireDocument ? '*' : '(opcional)'}
-            </Text>
-            <TextInput
-              style={styles.input}
-              value={signerDocument}
-              onChangeText={setSignerDocument}
-              placeholder="Digite o documento"
-              keyboardType="default"
-            />
-          </View>
+              {/* Signer Document */}
+              <View style={styles.field}>
+                <Text style={styles.label}>
+                  Documento (CPF/RG) {requireDocument ? '*' : '(opcional)'}
+                </Text>
+                <TextInput
+                  style={styles.input}
+                  value={signerDocument}
+                  onChangeText={setSignerDocument}
+                  placeholder="Digite o documento"
+                  keyboardType="default"
+                />
+              </View>
 
-          {/* Signer Role */}
-          <View style={styles.field}>
-            <Text style={styles.label}>Papel *</Text>
-            <View style={styles.roleOptions}>
-              {Object.values(SIGNER_ROLES).map((role) => (
-                <TouchableOpacity
-                  key={role}
-                  style={[
-                    styles.roleButton,
-                    signerRole === role && styles.roleButtonSelected,
-                  ]}
-                  onPress={() => setSignerRole(role)}
-                >
-                  <Text
-                    style={[
-                      styles.roleButtonText,
-                      signerRole === role && styles.roleButtonTextSelected,
-                    ]}
-                  >
-                    {role}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+              {/* Signer Role */}
+              <View style={styles.field}>
+                <Text style={styles.label}>Papel *</Text>
+                <View style={styles.roleOptions}>
+                  {Object.values(SIGNER_ROLES).map((role) => (
+                    <TouchableOpacity
+                      key={role}
+                      style={[
+                        styles.roleButton,
+                        signerRole === role && styles.roleButtonSelected,
+                      ]}
+                      onPress={() => setSignerRole(role)}
+                    >
+                      <Text
+                        style={[
+                          styles.roleButtonText,
+                          signerRole === role && styles.roleButtonTextSelected,
+                        ]}
+                      >
+                        {role}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
             </View>
-          </View>
-        </View>
 
-        {/* Errors */}
-        {errors.length > 0 && (
-          <View style={styles.errorsContainer}>
-            {errors.map((error, index) => (
-              <Text key={index} style={styles.errorText}>
-                • {error}
-              </Text>
-            ))}
-          </View>
-        )}
+            {/* Errors */}
+            {errors.length > 0 && (
+              <View style={styles.errorsContainer}>
+                {errors.map((error, index) => (
+                  <Text key={index} style={styles.errorText}>
+                    • {error}
+                  </Text>
+                ))}
+              </View>
+            )}
 
-        {/* Signature Canvas */}
-        <View style={styles.canvasContainer}>
-          <Text style={styles.canvasLabel}>Assinatura *</Text>
-          <SignatureCanvas
-            paths={paths}
-            currentPath={currentPath}
-            onPathsChange={setPaths}
-            onCurrentPathChange={setCurrentPath}
-            width={CANVAS_WIDTH}
-            height={CANVAS_HEIGHT}
-            viewShotRef={viewShotRef}
-          />
-          <TouchableOpacity onPress={handleClear} style={styles.clearButton}>
-            <Text style={styles.clearButtonText}>🗑️ Limpar</Text>
-          </TouchableOpacity>
-        </View>
+            {/* Signature Canvas */}
+            <View style={styles.canvasContainer}>
+              <Text style={styles.canvasLabel}>Assinatura *</Text>
+              <SignatureCanvas
+                paths={paths}
+                currentPath={currentPath}
+                onPathsChange={setPaths}
+                onCurrentPathChange={setCurrentPath}
+                width={CANVAS_WIDTH}
+                height={CANVAS_HEIGHT}
+                viewShotRef={viewShotRef}
+                onDrawStart={handleDrawStart}
+                onDrawEnd={handleDrawEnd}
+              />
+              <TouchableOpacity onPress={handleClear} style={styles.clearButton}>
+                <Text style={styles.clearButtonText}>🗑️ Limpar</Text>
+              </TouchableOpacity>
+            </View>
 
-        {/* Actions */}
-        <View style={styles.actions}>
-          <TouchableOpacity
-            style={[styles.button, styles.cancelButton]}
-            onPress={handleClose}
-          >
-            <Text style={styles.cancelButtonText}>Cancelar</Text>
-          </TouchableOpacity>
+            {/* Actions - dentro do ScrollView */}
+            <View style={styles.actions}>
+              <TouchableOpacity
+                style={[styles.button, styles.cancelButton]}
+                onPress={handleClose}
+              >
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.button, styles.confirmButton]}
-            onPress={handleCapture}
-          >
-            <Text style={styles.confirmButtonText}>Confirmar Assinatura</Text>
-          </TouchableOpacity>
-        </View>
+              <TouchableOpacity
+                style={[styles.button, styles.confirmButton]}
+                onPress={handleCapture}
+              >
+                <Text style={styles.confirmButtonText}>Confirmar Assinatura</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </Modal>
   );
@@ -452,6 +491,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 24,
   },
   header: {
     flexDirection: 'row',
@@ -472,9 +521,12 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   title: {
-    fontSize: 18,
+    flex: 1,
+    fontSize: 16,
     fontWeight: '700',
     color: '#333',
+    textAlign: 'center',
+    marginHorizontal: 8,
   },
   placeholder: {
     width: 40,

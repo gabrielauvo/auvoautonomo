@@ -81,14 +81,49 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(dto.password, 12); // Increased from 10 to 12 rounds for better security
 
-    // Buscar o plano PRO (todos os novos usuários começam com trial do PRO)
-    const proPlan = await this.prisma.plan.findUnique({
+    // Buscar ou criar o plano PRO (todos os novos usuários começam com trial do PRO)
+    let proPlan = await this.prisma.plan.findUnique({
       where: { type: 'PRO' },
     });
 
-    // Calcular data de fim do trial (14 dias)
-    const trialEndAt = new Date();
+    // Se o plano PRO não existir, criar
+    if (!proPlan) {
+      this.logger.warn('PRO plan not found during registration, creating it...');
+      try {
+        proPlan = await this.prisma.plan.create({
+          data: {
+            type: 'PRO',
+            name: 'Plano Profissional',
+            description: 'Acesso completo a todos os recursos',
+            price: 99.90,
+            maxClients: -1,
+            maxQuotes: -1,
+            maxWorkOrders: -1,
+            maxInvoices: -1,
+            features: [
+              'Clientes ilimitados',
+              'Orçamentos ilimitados',
+              'Ordens de serviço ilimitadas',
+              'Cobranças ilimitadas',
+              'WhatsApp integrado',
+              'Relatórios avançados',
+              'Suporte prioritário',
+            ],
+            isActive: true,
+          },
+        });
+        this.logger.log('Created PRO plan successfully during registration');
+      } catch (planError) {
+        this.logger.error('Failed to create PRO plan during registration:', planError);
+      }
+    }
+
+    // Calcular data de fim do trial (14 dias a partir de agora)
+    const now = new Date();
+    const trialEndAt = new Date(now);
     trialEndAt.setDate(trialEndAt.getDate() + TRIAL_DURATION_DAYS);
+
+    this.logger.log(`Creating user with trial ending at: ${trialEndAt.toISOString()}`);
 
     const user = await this.prisma.user.create({
       data: {
@@ -104,7 +139,7 @@ export class AuthService {
             planId: proPlan.id,
             status: SubscriptionStatus.TRIALING,
             trialEndAt,
-            currentPeriodStart: new Date(),
+            currentPeriodStart: now,
             currentPeriodEnd: trialEndAt,
           },
         } : undefined,
@@ -237,17 +272,53 @@ export class AuthService {
     // Se não existe, criar novo usuário com trial
     if (!user) {
       this.logger.log(`Creating new user from Google OAuth: ${this.maskEmail(googleUser.email)}`);
-      const proPlan = await this.prisma.plan.findUnique({
+
+      // Buscar ou criar o plano PRO
+      let proPlan = await this.prisma.plan.findUnique({
         where: { type: 'PRO' },
       });
+
+      if (!proPlan) {
+        this.logger.warn('PRO plan not found during Google OAuth, creating it...');
+        try {
+          proPlan = await this.prisma.plan.create({
+            data: {
+              type: 'PRO',
+              name: 'Plano Profissional',
+              description: 'Acesso completo a todos os recursos',
+              price: 99.90,
+              maxClients: -1,
+              maxQuotes: -1,
+              maxWorkOrders: -1,
+              maxInvoices: -1,
+              features: [
+                'Clientes ilimitados',
+                'Orçamentos ilimitados',
+                'Ordens de serviço ilimitadas',
+                'Cobranças ilimitadas',
+                'WhatsApp integrado',
+                'Relatórios avançados',
+                'Suporte prioritário',
+              ],
+              isActive: true,
+            },
+          });
+          this.logger.log('Created PRO plan successfully during Google OAuth');
+        } catch (planError) {
+          this.logger.error('Failed to create PRO plan during Google OAuth:', planError);
+        }
+      }
 
       const fullName = [googleUser.firstName, googleUser.lastName]
         .filter(Boolean)
         .join(' ');
 
-      // Calcular data de fim do trial (14 dias)
-      const trialEndAt = new Date();
+      // Calcular data de fim do trial (14 dias a partir de agora)
+      const now = new Date();
+      const trialEndAt = new Date(now);
       trialEndAt.setDate(trialEndAt.getDate() + TRIAL_DURATION_DAYS);
+
+      this.logger.log(`Creating Google user with trial ending at: ${trialEndAt.toISOString()}`);
 
       user = await this.prisma.user.create({
         data: {
@@ -263,7 +334,7 @@ export class AuthService {
               planId: proPlan.id,
               status: SubscriptionStatus.TRIALING,
               trialEndAt,
-              currentPeriodStart: new Date(),
+              currentPeriodStart: now,
               currentPeriodEnd: trialEndAt,
             },
           } : undefined,

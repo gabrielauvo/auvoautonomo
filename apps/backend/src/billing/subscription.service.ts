@@ -164,7 +164,7 @@ export class SubscriptionService {
     }
 
     // Determine subscription status
-    let subscriptionStatus = effectivePlan.subscriptionStatus;
+    let subscriptionStatus: 'FREE' | SubscriptionStatus | 'EXPIRED' = effectivePlan.subscriptionStatus;
     if (subscription?.status === SubscriptionStatus.TRIALING && trialDaysRemaining <= 0) {
       subscriptionStatus = 'EXPIRED';
     }
@@ -192,22 +192,73 @@ export class SubscriptionService {
     });
 
     if (!user) {
+      this.logger.warn(`Cannot create trial subscription: user ${userId} not found`);
       return null;
     }
 
     // Get PRO plan for trial
-    const proPlan = await this.prisma.plan.findUnique({
+    let proPlan = await this.prisma.plan.findUnique({
       where: { type: PlanType.PRO },
     });
 
+    // If PRO plan doesn't exist, try to create it
     if (!proPlan) {
-      this.logger.warn('PRO plan not found, cannot create trial subscription');
-      return null;
+      this.logger.warn('PRO plan not found, attempting to create it');
+      try {
+        proPlan = await this.prisma.plan.create({
+          data: {
+            type: PlanType.PRO,
+            name: 'Plano Profissional',
+            description: 'Acesso completo a todos os recursos',
+            price: 99.90,
+            maxClients: -1,
+            maxQuotes: -1,
+            maxWorkOrders: -1,
+            maxInvoices: -1,
+            features: [
+              'Clientes ilimitados',
+              'Orçamentos ilimitados',
+              'Ordens de serviço ilimitadas',
+              'Cobranças ilimitadas',
+              'WhatsApp integrado',
+              'Relatórios avançados',
+              'Suporte prioritário',
+            ],
+            isActive: true,
+            usageLimits: {
+              create: DEFAULT_PRO_LIMITS,
+            },
+          },
+        });
+        this.logger.log('Created PRO plan successfully');
+      } catch (planError) {
+        this.logger.error('Failed to create PRO plan:', planError);
+        return null;
+      }
     }
 
-    // Calculate trial end based on user creation date
-    const trialEndAt = new Date(user.createdAt);
-    trialEndAt.setDate(trialEndAt.getDate() + TRIAL_DURATION_DAYS);
+    // Calculate trial end: for NEW users (created recently), use 14 days from now
+    // For OLD users, use 14 days from creation date
+    const now = new Date();
+    const userAge = now.getTime() - new Date(user.createdAt).getTime();
+    const isNewUser = userAge < 60 * 1000; // Created less than 1 minute ago
+
+    let trialEndAt: Date;
+    let periodStart: Date;
+
+    if (isNewUser) {
+      // New user: trial starts now
+      trialEndAt = new Date(now);
+      trialEndAt.setDate(trialEndAt.getDate() + TRIAL_DURATION_DAYS);
+      periodStart = now;
+      this.logger.log(`New user ${userId}: trial will end ${trialEndAt.toISOString()}`);
+    } else {
+      // Existing user: trial based on creation date
+      trialEndAt = new Date(user.createdAt);
+      trialEndAt.setDate(trialEndAt.getDate() + TRIAL_DURATION_DAYS);
+      periodStart = new Date(user.createdAt);
+      this.logger.log(`Existing user ${userId}: trial based on createdAt, ends ${trialEndAt.toISOString()}`);
+    }
 
     try {
       const subscription = await this.prisma.userSubscription.create({
@@ -216,13 +267,13 @@ export class SubscriptionService {
           planId: proPlan.id,
           status: SubscriptionStatus.TRIALING,
           trialEndAt,
-          currentPeriodStart: user.createdAt,
+          currentPeriodStart: periodStart,
           currentPeriodEnd: trialEndAt,
         },
         include: { plan: true },
       });
 
-      this.logger.log(`Auto-created trial subscription for user ${userId}`);
+      this.logger.log(`Auto-created trial subscription for user ${userId}, trialEndAt: ${trialEndAt.toISOString()}`);
       return subscription;
     } catch (error) {
       this.logger.error(`Failed to create trial subscription for user ${userId}:`, error);

@@ -1,7 +1,6 @@
 import { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 
 interface PageProps {
   params: Promise<{ code: string }>;
@@ -174,13 +173,7 @@ export default async function ReferralLandingPage({ params, searchParams }: Page
           {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-2xl shadow-xl mb-6">
-              <Image
-                src="/images/logo-icon.png"
-                alt="Auvo Autônomo"
-                width={48}
-                height={48}
-                className="w-12 h-12"
-              />
+              <span className="text-4xl font-bold text-purple-600">A</span>
             </div>
             <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">
               {referralData.referrerFirstName || 'Um amigo'} te convidou!

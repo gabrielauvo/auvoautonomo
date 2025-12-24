@@ -14,6 +14,10 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { SubscriptionStatus } from '@prisma/client';
+
+// Trial duration in days
+const TRIAL_DURATION_DAYS = 14;
 
 export interface GoogleUser {
   email: string;
@@ -77,10 +81,14 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(dto.password, 12); // Increased from 10 to 12 rounds for better security
 
-    // Buscar o plano FREE
-    const freePlan = await this.prisma.plan.findUnique({
-      where: { type: 'FREE' },
+    // Buscar o plano PRO (todos os novos usuários começam com trial do PRO)
+    const proPlan = await this.prisma.plan.findUnique({
+      where: { type: 'PRO' },
     });
+
+    // Calcular data de fim do trial (14 dias)
+    const trialEndAt = new Date();
+    trialEndAt.setDate(trialEndAt.getDate() + TRIAL_DURATION_DAYS);
 
     const user = await this.prisma.user.create({
       data: {
@@ -89,7 +97,17 @@ export class AuthService {
         name: dto.name,
         companyName: dto.companyName,
         phone: dto.phone,
-        planId: freePlan?.id,
+        planId: proPlan?.id,
+        // Criar subscription de trial junto com o usuário
+        subscription: proPlan ? {
+          create: {
+            planId: proPlan.id,
+            status: SubscriptionStatus.TRIALING,
+            trialEndAt,
+            currentPeriodStart: new Date(),
+            currentPeriodEnd: trialEndAt,
+          },
+        } : undefined,
       },
       select: {
         id: true,
@@ -105,7 +123,7 @@ export class AuthService {
 
     const token = this.generateToken(user.id, user.email);
 
-    this.logger.log(`User registered successfully: ${user.id}`);
+    this.logger.log(`User registered successfully with ${TRIAL_DURATION_DAYS}-day trial: ${user.id}`);
 
     return {
       user,
@@ -216,16 +234,20 @@ export class AuthService {
       include: { plan: true },
     });
 
-    // Se não existe, criar novo usuário
+    // Se não existe, criar novo usuário com trial
     if (!user) {
       this.logger.log(`Creating new user from Google OAuth: ${this.maskEmail(googleUser.email)}`);
-      const freePlan = await this.prisma.plan.findUnique({
-        where: { type: 'FREE' },
+      const proPlan = await this.prisma.plan.findUnique({
+        where: { type: 'PRO' },
       });
 
       const fullName = [googleUser.firstName, googleUser.lastName]
         .filter(Boolean)
         .join(' ');
+
+      // Calcular data de fim do trial (14 dias)
+      const trialEndAt = new Date();
+      trialEndAt.setDate(trialEndAt.getDate() + TRIAL_DURATION_DAYS);
 
       user = await this.prisma.user.create({
         data: {
@@ -234,10 +256,22 @@ export class AuthService {
           password: '', // Google users don't need password
           googleId: googleUser.email, // Using email as googleId for simplicity
           avatarUrl: googleUser.picture,
-          planId: freePlan?.id,
+          planId: proPlan?.id,
+          // Criar subscription de trial junto com o usuário
+          subscription: proPlan ? {
+            create: {
+              planId: proPlan.id,
+              status: SubscriptionStatus.TRIALING,
+              trialEndAt,
+              currentPeriodStart: new Date(),
+              currentPeriodEnd: trialEndAt,
+            },
+          } : undefined,
         },
         include: { plan: true },
       });
+
+      this.logger.log(`Google OAuth user created with ${TRIAL_DURATION_DAYS}-day trial: ${user.id}`);
     } else {
       // Atualizar avatarUrl se não tiver
       if (!user.avatarUrl && googleUser.picture) {

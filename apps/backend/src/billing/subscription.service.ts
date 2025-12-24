@@ -169,10 +169,8 @@ export class SubscriptionService {
       this.logger.log(`Fixed trialEndAt for subscription ${subscription.id}: ${trialEndAt.toISOString()}`);
     }
 
-    const [effectivePlan, usage] = await Promise.all([
-      this.getUserEffectivePlan(userId),
-      this.getCurrentUsage(userId),
-    ]);
+    // Get usage counts
+    const usage = await this.getCurrentUsage(userId);
 
     // Calculate trial days remaining
     let trialDaysRemaining = 0;
@@ -183,17 +181,42 @@ export class SubscriptionService {
       trialDaysRemaining = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
     }
 
-    // Determine subscription status
-    let subscriptionStatus: 'FREE' | SubscriptionStatus | 'EXPIRED' = effectivePlan.subscriptionStatus;
-    if (subscription?.status === SubscriptionStatus.TRIALING && trialDaysRemaining <= 0) {
-      subscriptionStatus = 'EXPIRED';
+    // Determine subscription status directly from subscription
+    // Use subscription.status directly instead of calling getUserEffectivePlan
+    let subscriptionStatus: 'FREE' | SubscriptionStatus | 'EXPIRED';
+    let planKey: PlanType;
+    let planName: string;
+    let limits: UsageLimits;
+
+    if (subscription) {
+      // Has subscription - use its status
+      subscriptionStatus = subscription.status;
+      planKey = subscription.plan.type;
+      planName = subscription.plan.name;
+      limits = this.getLimitsFromPlan(subscription.plan);
+
+      // Check if trial expired
+      if (subscription.status === SubscriptionStatus.TRIALING && trialDaysRemaining <= 0) {
+        subscriptionStatus = 'EXPIRED';
+      }
+
+      this.logger.log(`User ${userId} billing: status=${subscriptionStatus}, planKey=${planKey}, trialDays=${trialDaysRemaining}`);
+    } else {
+      // No subscription - FREE plan
+      const freePlan = await this.getOrCreateFreePlan();
+      subscriptionStatus = 'FREE';
+      planKey = PlanType.FREE;
+      planName = freePlan.name;
+      limits = this.getLimitsFromPlan(freePlan);
+
+      this.logger.log(`User ${userId} billing: no subscription, FREE plan`);
     }
 
     return {
-      planKey: effectivePlan.planKey,
-      planName: effectivePlan.planName,
+      planKey,
+      planName,
       subscriptionStatus,
-      limits: effectivePlan.limits,
+      limits,
       usage,
       currentPeriodStart: subscription?.currentPeriodStart?.toISOString() || null,
       currentPeriodEnd: subscription?.currentPeriodEnd?.toISOString() || null,

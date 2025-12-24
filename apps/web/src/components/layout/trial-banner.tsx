@@ -30,22 +30,28 @@ export function TrialBanner({ billing, className }: TrialBannerProps) {
   const [daysRemaining, setDaysRemaining] = useState<number | null>(null);
 
   useEffect(() => {
-    if (billing?.trialEndAt) {
+    // Prioridade: usar trialDaysRemaining do backend se disponível
+    if (typeof billing?.trialDaysRemaining === 'number') {
+      setDaysRemaining(billing.trialDaysRemaining);
+    } else if (billing?.trialEndAt) {
       setDaysRemaining(calculateTrialDaysRemaining(billing.trialEndAt));
     } else if (billing?.subscriptionStatus === 'TRIALING' && user?.createdAt) {
       // Fallback: calcular baseado na data de criação + 14 dias
       const trialEnd = new Date(user.createdAt);
       trialEnd.setDate(trialEnd.getDate() + 14);
       setDaysRemaining(calculateTrialDaysRemaining(trialEnd.toISOString()));
+    } else {
+      // Se nenhum dado disponível, não mostrar
+      setDaysRemaining(null);
     }
   }, [billing, user]);
 
   // Não mostrar se:
   // - Usuário não está logado
-  // - Não está em trial (já é PRO ou expirou)
+  // - Não está em trial (já é PRO ativo ou expirou)
   // - Banner foi dispensado
-  // - Dados ainda carregando
-  if (!user || !billing) return null;
+  if (!user) return null;
+  if (!billing) return null;
   if (billing.subscriptionStatus !== 'TRIALING') return null;
   if (dismissed) return null;
   if (daysRemaining === null) return null;

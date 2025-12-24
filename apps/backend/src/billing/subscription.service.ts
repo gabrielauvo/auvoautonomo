@@ -146,7 +146,27 @@ export class SubscriptionService {
 
     // If no subscription, auto-create trial subscription
     if (!subscription) {
+      this.logger.log(`No subscription found for user ${userId}, creating trial...`);
       subscription = await this.createTrialSubscription(userId);
+    }
+
+    // If subscription exists but trialEndAt is null and status is TRIALING, fix it
+    if (subscription && subscription.status === SubscriptionStatus.TRIALING && !subscription.trialEndAt) {
+      this.logger.warn(`Subscription ${subscription.id} has TRIALING status but no trialEndAt, fixing...`);
+      const now = new Date();
+      const trialEndAt = new Date(now);
+      trialEndAt.setDate(trialEndAt.getDate() + TRIAL_DURATION_DAYS);
+
+      subscription = await this.prisma.userSubscription.update({
+        where: { id: subscription.id },
+        data: {
+          trialEndAt,
+          currentPeriodStart: now,
+          currentPeriodEnd: trialEndAt,
+        },
+        include: { plan: true },
+      });
+      this.logger.log(`Fixed trialEndAt for subscription ${subscription.id}: ${trialEndAt.toISOString()}`);
     }
 
     const [effectivePlan, usage] = await Promise.all([
@@ -237,28 +257,15 @@ export class SubscriptionService {
       }
     }
 
-    // Calculate trial end: for NEW users (created recently), use 14 days from now
-    // For OLD users, use 14 days from creation date
+    // ALWAYS give new users 14 days from NOW when auto-creating subscription
+    // This ensures users who just registered get the full trial period
     const now = new Date();
-    const userAge = now.getTime() - new Date(user.createdAt).getTime();
-    const isNewUser = userAge < 60 * 1000; // Created less than 1 minute ago
+    const trialEndAt = new Date(now);
+    trialEndAt.setDate(trialEndAt.getDate() + TRIAL_DURATION_DAYS);
+    const periodStart = now;
 
-    let trialEndAt: Date;
-    let periodStart: Date;
-
-    if (isNewUser) {
-      // New user: trial starts now
-      trialEndAt = new Date(now);
-      trialEndAt.setDate(trialEndAt.getDate() + TRIAL_DURATION_DAYS);
-      periodStart = now;
-      this.logger.log(`New user ${userId}: trial will end ${trialEndAt.toISOString()}`);
-    } else {
-      // Existing user: trial based on creation date
-      trialEndAt = new Date(user.createdAt);
-      trialEndAt.setDate(trialEndAt.getDate() + TRIAL_DURATION_DAYS);
-      periodStart = new Date(user.createdAt);
-      this.logger.log(`Existing user ${userId}: trial based on createdAt, ends ${trialEndAt.toISOString()}`);
-    }
+    this.logger.log(`Auto-creating trial for user ${userId}: starts now, ends ${trialEndAt.toISOString()}`);
+    this.logger.log(`User was created at: ${user.createdAt.toISOString()}`)
 
     try {
       const subscription = await this.prisma.userSubscription.create({

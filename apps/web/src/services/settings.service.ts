@@ -107,7 +107,7 @@ export interface UpdateCompanyDto {
 }
 
 // Plano e assinatura
-export type PlanType = 'TRIAL' | 'PRO';
+export type PlanType = 'FREE' | 'PRO';
 
 export interface PlanInfo {
   type: PlanType;
@@ -138,11 +138,11 @@ export interface PlanUsage {
 
 export interface SubscriptionInfo {
   id?: string;
-  /** Tipo do plano: TRIAL ou PRO */
-  planKey: 'TRIAL' | 'PRO';
+  /** Tipo do plano: FREE ou PRO */
+  planKey: 'FREE' | 'PRO';
   planName: string;
-  /** Status da assinatura */
-  subscriptionStatus: 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED' | 'BLOCKED' | 'EXPIRED';
+  /** Status da assinatura: TRIALING = em trial, ACTIVE = assinante pago */
+  subscriptionStatus: 'FREE' | 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED' | 'BLOCKED' | 'EXPIRED';
   /** Período de cobrança (mensal ou anual) */
   billingPeriod?: 'MONTHLY' | 'YEARLY';
   currentPeriodStart?: string | null;
@@ -337,27 +337,24 @@ export const DEFAULT_NOTIFICATION_MESSAGES: NotificationMessages = {
 // ============================================
 
 export const PLAN_FEATURES: Record<PlanType, PlanInfo> = {
-  TRIAL: {
-    type: 'TRIAL',
-    name: 'Trial (14 dias)',
+  FREE: {
+    type: 'FREE',
+    name: 'Plano Gratuito',
     price: 0,
     billingCycle: 'monthly',
     features: [
-      'Clientes ilimitados',
-      'Orçamentos ilimitados',
-      'OS ilimitadas',
-      'Cobranças ilimitadas',
-      'Templates personalizados',
-      'Relatórios avançados',
+      'Até 10 clientes',
+      'Até 10 orçamentos',
+      'Até 10 OS',
+      'Até 5 cobranças',
       'Suporte por email',
-      'Tudo liberado por 14 dias',
     ],
     limits: {
-      maxClients: -1,
-      maxQuotes: -1,
-      maxWorkOrders: -1,
-      maxPayments: -1,
-      maxAttachments: -1,
+      maxClients: 10,
+      maxQuotes: 10,
+      maxWorkOrders: 10,
+      maxPayments: 5,
+      maxAttachments: 10,
       maxUsers: 1,
     },
   },

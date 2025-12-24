@@ -116,17 +116,33 @@ export function Header({ className }: HeaderProps) {
     await logout();
   };
 
-  // Badge do plano
+  // Badge do plano - mostra status baseado no subscriptionStatus
   const getPlanBadge = () => {
-    const planKey = billing?.planKey || 'FREE';
-    const variants: Record<string, 'default' | 'secondary' | 'success'> = {
-      FREE: 'default',
-      PRO: 'success',
-      TEAM: 'secondary',
-    };
+    const status = billing?.subscriptionStatus;
+    const planKey = billing?.planKey;
+
+    // Se está em trial, mostra TRIAL
+    if (status === 'TRIALING') {
+      return (
+        <Badge variant="warning" size="sm">
+          TRIAL
+        </Badge>
+      );
+    }
+
+    // Se está ativo no PRO, mostra PRO
+    if (status === 'ACTIVE' && planKey === 'PRO') {
+      return (
+        <Badge variant="success" size="sm">
+          PRO
+        </Badge>
+      );
+    }
+
+    // Se expirou ou cancelou, mostra FREE
     return (
-      <Badge variant={variants[planKey] || 'default'} size="sm">
-        {planKey}
+      <Badge variant="default" size="sm">
+        FREE
       </Badge>
     );
   };

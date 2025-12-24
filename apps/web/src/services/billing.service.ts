@@ -27,11 +27,11 @@ export const PRO_PLAN_PRICING = {
 export type BillingPeriod = 'MONTHLY' | 'YEARLY';
 
 export interface BillingStatus {
-  /** Tipo do plano: TRIAL (14 dias grátis) ou PRO (pago) */
-  planKey: 'TRIAL' | 'PRO';
+  /** Tipo do plano: FREE (gratuito), PRO (pago/trial) */
+  planKey: 'FREE' | 'PRO';
   planName: string;
-  /** Status da assinatura */
-  subscriptionStatus: 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED' | 'BLOCKED' | 'EXPIRED';
+  /** Status da assinatura: TRIALING = em período de teste, ACTIVE = assinante */
+  subscriptionStatus: 'FREE' | 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED' | 'BLOCKED' | 'EXPIRED';
   /** Período de cobrança (mensal ou anual) */
   billingPeriod?: BillingPeriod;
   /** Data de início do período atual */

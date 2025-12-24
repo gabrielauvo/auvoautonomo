@@ -52,8 +52,9 @@ interface ChecklistItem {
   completed: boolean;
 }
 
-// Chave do localStorage para salvar progresso
-const ONBOARDING_STORAGE_KEY = 'auvo_onboarding_progress';
+// Prefixo do localStorage para salvar progresso (userId será adicionado)
+const ONBOARDING_STORAGE_PREFIX = 'auvo_onboarding_progress_';
+const ONBOARDING_BANNER_DISMISSED_PREFIX = 'auvo_onboarding_banner_dismissed_';
 
 // Componente de confete/celebração
 function Confetti({ show }: { show: boolean }) {
@@ -161,18 +162,32 @@ export default function GettingStartedPage() {
   const [showCelebration, setShowCelebration] = useState(false);
   const [animatingItem, setAnimatingItem] = useState<string | null>(null);
 
-  // Carregar progresso do localStorage
+  // Gerar chave única por usuário
+  const getStorageKey = useCallback(() => {
+    return user?.id ? `${ONBOARDING_STORAGE_PREFIX}${user.id}` : null;
+  }, [user?.id]);
+
+  // Carregar progresso do localStorage (específico por usuário)
   useEffect(() => {
-    const saved = localStorage.getItem(ONBOARDING_STORAGE_KEY);
+    const storageKey = getStorageKey();
+    if (!storageKey) {
+      setIsLoading(false);
+      return;
+    }
+
+    const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
         setCompletedItems(JSON.parse(saved));
       } catch {
         setCompletedItems([]);
       }
+    } else {
+      // Novo usuário - começar com lista vazia
+      setCompletedItems([]);
     }
     setIsLoading(false);
-  }, []);
+  }, [getStorageKey]);
 
   // Mensagens de celebração
   const celebrationMessages = [
@@ -184,15 +199,18 @@ export default function GettingStartedPage() {
     'Incrível!',
   ];
 
-  // Salvar progresso no localStorage com animação
+  // Salvar progresso no localStorage com animação (específico por usuário)
   const toggleItem = useCallback((itemId: string, itemTitle: string) => {
+    const storageKey = getStorageKey();
+    if (!storageKey) return;
+
     setCompletedItems((prev) => {
       const wasCompleted = prev.includes(itemId);
       const newItems = wasCompleted
         ? prev.filter((id) => id !== itemId)
         : [...prev, itemId];
 
-      localStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(newItems));
+      localStorage.setItem(storageKey, JSON.stringify(newItems));
 
       // Se está marcando como completo, mostrar celebração
       if (!wasCompleted) {
@@ -211,7 +229,7 @@ export default function GettingStartedPage() {
 
       return newItems;
     });
-  }, []);
+  }, [getStorageKey]);
 
   // Calcular dias desde criação da conta
   const daysSinceCreation = user?.createdAt

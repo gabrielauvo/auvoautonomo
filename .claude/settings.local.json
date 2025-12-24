@@ -322,7 +322,9 @@
       "Bash(if not exist \"c:\\\\Users\\\\Auvo\\\\Nova pasta\\\\apps\\\\web\\\\public\\\\images\" mkdir \"c:\\\\Users\\\\Auvo\\\\Nova pasta\\\\apps\\\\web\\\\public\\\\images\")",
       "Bash(npx vercel --prod --token=$VERCEL_TOKEN)",
       "Bash(npx vercel:*)",
-      "Bash(npx jest --testPathPattern=\"billing\" --no-coverage)"
+      "Bash(npx jest --testPathPattern=\"billing\" --no-coverage)",
+      "Bash(pnpm list:*)",
+      "Bash(pnpm install)"
     ]
   }
 }

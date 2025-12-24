@@ -5,16 +5,18 @@
  *
  * Exibe o progresso do usuário no onboarding em todas as páginas.
  * O usuário pode desabilitar a faixa, que fica salva no localStorage.
+ * Dados são isolados por usuário (userId incluído na chave).
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { X, Rocket, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/context/auth-context';
 
-// Chaves do localStorage
-const ONBOARDING_STORAGE_KEY = 'auvo_onboarding_progress';
-const ONBOARDING_BANNER_DISMISSED_KEY = 'auvo_onboarding_banner_dismissed';
+// Prefixos do localStorage (userId será adicionado)
+const ONBOARDING_STORAGE_PREFIX = 'auvo_onboarding_progress_';
+const ONBOARDING_BANNER_DISMISSED_PREFIX = 'auvo_onboarding_banner_dismissed_';
 
 // IDs dos itens do checklist (sincronizado com getting-started page)
 const CHECKLIST_ITEM_IDS = [
@@ -29,14 +31,32 @@ const CHECKLIST_ITEM_IDS = [
 ];
 
 export function OnboardingBanner() {
+  const { user } = useAuth();
   const [completedItems, setCompletedItems] = useState<string[]>([]);
   const [isDismissed, setIsDismissed] = useState(true); // Começa oculto até carregar
   const [isLoading, setIsLoading] = useState(true);
 
-  // Carregar estado do localStorage
+  // Gerar chaves únicas por usuário
+  const getStorageKey = useCallback(() => {
+    return user?.id ? `${ONBOARDING_STORAGE_PREFIX}${user.id}` : null;
+  }, [user?.id]);
+
+  const getDismissedKey = useCallback(() => {
+    return user?.id ? `${ONBOARDING_BANNER_DISMISSED_PREFIX}${user.id}` : null;
+  }, [user?.id]);
+
+  // Carregar estado do localStorage (específico por usuário)
   useEffect(() => {
-    const dismissed = localStorage.getItem(ONBOARDING_BANNER_DISMISSED_KEY);
-    const progress = localStorage.getItem(ONBOARDING_STORAGE_KEY);
+    const storageKey = getStorageKey();
+    const dismissedKey = getDismissedKey();
+
+    if (!storageKey || !dismissedKey) {
+      setIsLoading(false);
+      return;
+    }
+
+    const dismissed = localStorage.getItem(dismissedKey);
+    const progress = localStorage.getItem(storageKey);
 
     setIsDismissed(dismissed === 'true');
 
@@ -46,32 +66,37 @@ export function OnboardingBanner() {
       } catch {
         setCompletedItems([]);
       }
+    } else {
+      setCompletedItems([]);
     }
 
     setIsLoading(false);
 
     // Listener para atualizar quando o progresso mudar em outra aba/página
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === ONBOARDING_STORAGE_KEY && e.newValue) {
+      if (e.key === storageKey && e.newValue) {
         try {
           setCompletedItems(JSON.parse(e.newValue));
         } catch {
           // ignore
         }
       }
-      if (e.key === ONBOARDING_BANNER_DISMISSED_KEY) {
+      if (e.key === dismissedKey) {
         setIsDismissed(e.newValue === 'true');
       }
     };
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  }, [getStorageKey, getDismissedKey]);
 
-  // Dismiss banner
+  // Dismiss banner (específico por usuário)
   const handleDismiss = () => {
+    const dismissedKey = getDismissedKey();
+    if (!dismissedKey) return;
+
     setIsDismissed(true);
-    localStorage.setItem(ONBOARDING_BANNER_DISMISSED_KEY, 'true');
+    localStorage.setItem(dismissedKey, 'true');
   };
 
   const completedCount = completedItems.filter((id) =>

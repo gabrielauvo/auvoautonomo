@@ -12,26 +12,28 @@ export interface SendEmailOptions {
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
-  private resend: Resend;
+  private resend: Resend | null = null;
   private readonly fromEmail: string;
   private readonly fromName: string;
+  private readonly isConfigured: boolean;
 
   constructor(private readonly configService: ConfigService) {
     const apiKey = this.configService.get<string>('RESEND_API_KEY');
 
+    this.isConfigured = !!apiKey;
+
     if (!apiKey) {
       this.logger.warn('RESEND_API_KEY not configured. Email sending will be disabled.');
+    } else {
+      this.resend = new Resend(apiKey);
     }
 
-    this.resend = new Resend(apiKey || '');
     this.fromEmail = this.configService.get<string>('EMAIL_FROM') || 'noreply@auvoautonomo.com';
     this.fromName = this.configService.get<string>('EMAIL_FROM_NAME') || 'Auvo Autônomo';
   }
 
   async sendEmail(options: SendEmailOptions): Promise<boolean> {
-    const apiKey = this.configService.get<string>('RESEND_API_KEY');
-
-    if (!apiKey) {
+    if (!this.isConfigured || !this.resend) {
       this.logger.warn('Email not sent - RESEND_API_KEY not configured');
       // Em desenvolvimento, apenas log
       this.logger.debug(`Would send email to: ${options.to}`);

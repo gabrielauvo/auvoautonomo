@@ -119,11 +119,6 @@ export function GoogleBusinessIntegration() {
     return <Skeleton className="h-64 w-full" />;
   }
 
-  // If not configured on server, don't show this section
-  if (!isConfigured) {
-    return null;
-  }
-
   const isConnected = status?.status === 'CONNECTED';
   const isPending = status?.status === 'PENDING';
   const hasError = status?.status === 'ERROR' || status?.status === 'REVOKED';
@@ -340,6 +335,33 @@ export function GoogleBusinessIntegration() {
                   {t('reconnect')}
                 </Button>
               </div>
+            </div>
+          ) : !isConfigured ? (
+            // Not configured on server - show info message
+            <div className="space-y-4">
+              <Alert variant="warning">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 mt-0.5" />
+                  <div>
+                    <p className="font-medium">{t('googleNotConfigured')}</p>
+                    <p className="text-sm">{t('googleNotConfiguredDescription')}</p>
+                  </div>
+                </div>
+              </Alert>
+
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-medium text-gray-900 mb-2">{t('googleBenefits')}</h4>
+                <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
+                  <li>{t('googleBenefit1')}</li>
+                  <li>{t('googleBenefit2')}</li>
+                  <li>{t('googleBenefit3')}</li>
+                  <li>{t('googleBenefit4')}</li>
+                </ul>
+              </div>
+
+              <p className="text-xs text-gray-500">
+                {t('googleConfigureHint')}
+              </p>
             </div>
           ) : (
             // Disconnected state - show connection button

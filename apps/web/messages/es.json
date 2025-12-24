@@ -861,7 +861,11 @@
     "googleBenefit3": "Recibe insights automáticos",
     "googleBenefit4": "Compara rendimiento por período",
     "connectWithGoogle": "Conectar con Google",
-    "disconnectGoogle": "Desconectar Google Mi Negocio"
+    "disconnectGoogle": "Desconectar Google Mi Negocio",
+    "disconnectGoogleWarning": "Al desconectar, perderás acceso a las métricas de Google Mi Negocio. Los datos históricos se conservarán.",
+    "googleNotConfigured": "Próximamente",
+    "googleNotConfiguredDescription": "La integración con Google Mi Negocio está siendo configurada. Pronto podrás conectar tu cuenta.",
+    "googleConfigureHint": "Contacta al soporte si necesitas ayuda para habilitar esta integración."
   },
   "growth": {
     "title": "Crecimiento",

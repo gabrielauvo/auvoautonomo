@@ -942,7 +942,11 @@
     "googleBenefit3": "Receba insights automáticos",
     "googleBenefit4": "Compare performance por período",
     "connectWithGoogle": "Conectar com Google",
-    "disconnectGoogle": "Desconectar Google Meu Negócio"
+    "disconnectGoogle": "Desconectar Google Meu Negócio",
+    "disconnectGoogleWarning": "Ao desconectar, você perderá acesso às métricas do Google Meu Negócio. Os dados históricos serão mantidos.",
+    "googleNotConfigured": "Integração em breve",
+    "googleNotConfiguredDescription": "A integração com Google Meu Negócio está sendo configurada. Em breve você poderá conectar sua conta.",
+    "googleConfigureHint": "Entre em contato com o suporte se precisar de ajuda para habilitar esta integração."
   },
   "growth": {
     "title": "Crescimento",

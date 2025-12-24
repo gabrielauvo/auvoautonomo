@@ -861,7 +861,11 @@
     "googleBenefit3": "Receive automatic insights",
     "googleBenefit4": "Compare performance by period",
     "connectWithGoogle": "Connect with Google",
-    "disconnectGoogle": "Disconnect Google My Business"
+    "disconnectGoogle": "Disconnect Google My Business",
+    "disconnectGoogleWarning": "When disconnecting, you will lose access to Google My Business metrics. Historical data will be kept.",
+    "googleNotConfigured": "Coming soon",
+    "googleNotConfiguredDescription": "Google My Business integration is being configured. Soon you will be able to connect your account.",
+    "googleConfigureHint": "Contact support if you need help enabling this integration."
   },
   "growth": {
     "title": "Growth",

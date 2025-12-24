@@ -327,7 +327,32 @@
       "Bash(pnpm install)",
       "Bash(timeout /t 10)",
       "Bash(git fetch:*)",
-      "Bash(Select-String -Pattern \"email|password|reset|resend|forgot\")"
+      "Bash(Select-String -Pattern \"email|password|reset|resend|forgot\")",
+      "Bash(npx prisma migrate diff:*)",
+      "Bash(apps/backend/src/referral/ )",
+      "Bash(apps/backend/src/app.module.ts )",
+      "Bash(apps/web/src/app/\\\\\\(dashboard\\\\\\)/referral/ )",
+      "Bash(apps/web/src/app/r/ )",
+      "Bash(apps/web/src/services/referral.service.ts )",
+      "Bash(apps/web/src/services/__tests__/referral.service.test.ts )",
+      "Bash(apps/web/src/components/layout/sidebar.tsx )",
+      "Bash(apps/web/messages/pt-BR.json )",
+      "Bash(apps/web/messages/en-US.json )",
+      "Bash(apps/web/messages/es.json )",
+      "Bash(apps/mobile/src/services/ReferralService.ts )",
+      "Bash(apps/mobile/__tests__/services/ReferralService.test.ts )",
+      "Bash(apps/mobile/app/perfil/indicacoes.tsx )",
+      "Bash(apps/mobile/app/perfil/_layout.tsx )",
+      "Bash(apps/mobile/app/perfil/index.tsx )",
+      "Bash(apps/mobile/src/services/index.ts )",
+      "Bash(apps/mobile/jest.setup.js )",
+      "Bash(apps/mobile/package.json )",
+      "Bash(apps/mobile/package-lock.json)",
+      "Bash(apps/backend/prisma/schema.prisma )",
+      "Bash(apps/backend/prisma/migrations/)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: add Google Business Growth & Attribution feature\n\n## Summary\n- Complete Google Business Profile OAuth integration\n- Growth dashboard with KPIs, time series, channel breakdown\n- Attribution links for WhatsApp/Website tracking\n- Automated growth insights generation\n- Full mobile support \\(Crescimento screen\\)\n\n## Changes\n- Backend: Google OAuth, dashboard, insights, attribution links\n- Web: Growth page, integration settings, sidebar nav\n- Mobile: GrowthService, Crescimento screen\n- Tests: 73+ unit tests \\(mobile + web\\)\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfix: add Prisma schema and app.module for Google Business\n\nMissing files for the Google Business feature to work:\n- Prisma schema with GoogleIntegration, DemandEvent, AttributionLink, GrowthInsight models\n- App.module.ts importing GoogleBusinessModule\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfix: show Google Business integration card even when not configured\n\n- Always show the Google Business card in integrations page\n- Add \"coming soon\" message when Google OAuth is not configured on server\n- Add missing translations for all 3 languages\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
     ]
   }
 }

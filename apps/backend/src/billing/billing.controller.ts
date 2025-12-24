@@ -11,19 +11,27 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { IsString, IsOptional, IsEmail, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsEmail, IsBoolean, IsEnum } from 'class-validator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { SubscriptionService } from './subscription.service';
 import { PlanLimitsService } from './plan-limits.service';
-import { AsaasBillingService } from './asaas-billing.service';
+import { AsaasBillingService, AsaasCycle } from './asaas-billing.service';
+import { PaymentGatewayFactory } from './payment-gateway.factory';
 import { PrismaService } from '../prisma/prisma.service';
 import { PlanType, SubscriptionStatus, BillingPeriod, PaymentMethod } from '@prisma/client';
 import { LimitedResource } from './interfaces/billing.interfaces';
+import { PaymentCycle } from './interfaces/payment-gateway.interface';
 
 // ============================================
 // DTOs
 // ============================================
+
+/** Período de cobrança: mensal ou anual */
+enum BillingPeriodDto {
+  MONTHLY = 'MONTHLY',
+  YEARLY = 'YEARLY',
+}
 
 class CheckoutPixDto {
   @IsString()
@@ -36,6 +44,16 @@ class CheckoutPixDto {
   @IsOptional()
   @IsString()
   name?: string;
+
+  /** Período de cobrança: MONTHLY (mensal) ou YEARLY (anual) */
+  @IsOptional()
+  @IsEnum(BillingPeriodDto)
+  billingPeriod?: BillingPeriodDto;
+
+  /** País do cliente (ISO 3166-1 alpha-2). Default: BR */
+  @IsOptional()
+  @IsString()
+  country?: string;
 }
 
 class CheckoutCreditCardDto {
@@ -73,6 +91,42 @@ class CheckoutCreditCardDto {
 
   @IsString()
   ccv: string;
+
+  /** Período de cobrança: MONTHLY (mensal) ou YEARLY (anual) */
+  @IsOptional()
+  @IsEnum(BillingPeriodDto)
+  billingPeriod?: BillingPeriodDto;
+
+  /** País do cliente (ISO 3166-1 alpha-2). Default: BR */
+  @IsOptional()
+  @IsString()
+  country?: string;
+}
+
+/** DTO para Stripe Checkout (clientes internacionais) */
+class StripeCheckoutDto {
+  @IsString()
+  name: string;
+
+  @IsEmail()
+  email: string;
+
+  /** País do cliente (ISO 3166-1 alpha-2) */
+  @IsString()
+  country: string;
+
+  /** Período de cobrança: MONTHLY (mensal) ou YEARLY (anual) */
+  @IsOptional()
+  @IsEnum(BillingPeriodDto)
+  billingPeriod?: BillingPeriodDto;
+
+  /** URL de redirecionamento após sucesso */
+  @IsString()
+  successUrl: string;
+
+  /** URL de redirecionamento após cancelamento */
+  @IsString()
+  cancelUrl: string;
 }
 
 class CancelSubscriptionDto {
@@ -92,6 +146,7 @@ export class BillingController {
     private readonly subscriptionService: SubscriptionService,
     private readonly planLimitsService: PlanLimitsService,
     private readonly asaasBillingService: AsaasBillingService,
+    private readonly paymentGatewayFactory: PaymentGatewayFactory,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -265,21 +320,34 @@ export class BillingController {
       throw new BadRequestException('Plano PRO não encontrado');
     }
 
-    // Criar cobrança PIX
-    const result = await this.asaasBillingService.createPixPayment(
+    // Determinar ciclo de cobrança
+    const cycle: AsaasCycle = dto.billingPeriod === 'YEARLY' ? 'YEARLY' : 'MONTHLY';
+
+    // Calcular valor baseado no ciclo
+    // Mensal: preço cheio | Anual: desconto de ~10%
+    const monthlyPrice = Number(proPlan.price);
+    const yearlyPrice = monthlyPrice * 12 * 0.9; // 10% de desconto no anual
+    const amount = cycle === 'YEARLY' ? yearlyPrice : monthlyPrice;
+
+    // Criar assinatura recorrente via PIX
+    const result = await this.asaasBillingService.createPixSubscription(
       userId,
       customer.id,
-      Number(proPlan.price),
-      `Assinatura ${proPlan.name}`,
+      amount,
+      `Assinatura ${proPlan.name} (${cycle === 'YEARLY' ? 'Anual' : 'Mensal'})`,
+      cycle,
     );
 
     return {
       success: result.success,
+      subscriptionId: result.subscriptionId,
       paymentId: result.paymentId,
       pixQrCode: result.pixQrCode,
       pixCopyPaste: result.pixCopyPaste,
       pixExpiresAt: result.pixExpiresAt,
-      amount: Number(proPlan.price),
+      nextDueDate: result.nextDueDate,
+      amount,
+      billingPeriod: cycle,
       errorMessage: result.errorMessage,
     };
   }
@@ -382,15 +450,24 @@ export class BillingController {
       throw new BadRequestException('Plano PRO não encontrado');
     }
 
+    // Determinar ciclo de cobrança
+    const cycle: AsaasCycle = dto.billingPeriod === 'YEARLY' ? 'YEARLY' : 'MONTHLY';
+
+    // Calcular valor baseado no ciclo
+    // Mensal: preço cheio | Anual: desconto de ~10%
+    const monthlyPrice = Number(proPlan.price);
+    const yearlyPrice = monthlyPrice * 12 * 0.9; // 10% de desconto no anual
+    const amount = cycle === 'YEARLY' ? yearlyPrice : monthlyPrice;
+
     // Obter IP do cliente
     const remoteIp = req.ip || req.headers['x-forwarded-for']?.toString() || '127.0.0.1';
 
-    // Processar pagamento com cartão
-    const result = await this.asaasBillingService.createCreditCardPayment(
+    // Criar assinatura recorrente com cartão de crédito
+    const result = await this.asaasBillingService.createCreditCardSubscription(
       userId,
       customer.id,
-      Number(proPlan.price),
-      `Assinatura ${proPlan.name}`,
+      amount,
+      `Assinatura ${proPlan.name} (${cycle === 'YEARLY' ? 'Anual' : 'Mensal'})`,
       {
         holderName: dto.cardHolderName,
         number: dto.cardNumber,
@@ -407,35 +484,122 @@ export class BillingController {
         phone: dto.phone,
       },
       remoteIp,
+      cycle,
     );
-
-    // Se pagamento confirmado, atualizar para plano PRO
-    if (result.success) {
-      await this.subscriptionService.createOrUpdateSubscription(
-        userId,
-        PlanType.PRO,
-        {
-          asaasCustomerId: customer.id,
-          asaasPaymentId: result.paymentId,
-          status: SubscriptionStatus.ACTIVE,
-          billingPeriod: BillingPeriod.MONTHLY,
-          currentPeriodStart: new Date(),
-          currentPeriodEnd: this.calculatePeriodEnd(BillingPeriod.MONTHLY),
-          paymentMethod: PaymentMethod.CREDIT_CARD,
-          creditCardLastFour: result.creditCardLastFour,
-          creditCardBrand: result.creditCardBrand,
-          lastPaymentDate: new Date(),
-        },
-      );
-    }
 
     return {
       success: result.success,
+      subscriptionId: result.subscriptionId,
       paymentId: result.paymentId,
       status: result.status,
       creditCardLastFour: result.creditCardLastFour,
       creditCardBrand: result.creditCardBrand,
+      nextDueDate: result.nextDueDate,
+      amount,
+      billingPeriod: cycle,
       errorMessage: result.errorMessage,
+    };
+  }
+
+  // ============================================
+  // CHECKOUT - STRIPE (INTERNACIONAL)
+  // ============================================
+
+  /**
+   * POST /billing/checkout/stripe
+   * Cria sessão de checkout do Stripe para clientes internacionais
+   * Redireciona para página de pagamento hospedada pelo Stripe
+   */
+  @Post('checkout/stripe')
+  @HttpCode(HttpStatus.OK)
+  async checkoutStripe(
+    @CurrentUser('id') userId: string,
+    @Body() dto: StripeCheckoutDto,
+  ) {
+    // Verificar se é cliente internacional
+    const country = dto.country?.toUpperCase() || 'US';
+    if (country === 'BR') {
+      return {
+        success: false,
+        message: 'Para clientes no Brasil, use o checkout PIX ou Cartão de Crédito.',
+        redirectTo: '/billing/checkout/pix',
+      };
+    }
+
+    // Buscar usuário
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { subscription: true },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Usuário não encontrado');
+    }
+
+    // Verificar se já está no PRO ativo
+    if (user.subscription?.status === SubscriptionStatus.ACTIVE) {
+      const plan = await this.prisma.plan.findUnique({
+        where: { id: user.subscription.planId },
+      });
+      if (plan?.type === PlanType.PRO) {
+        return {
+          success: false,
+          message: 'Você já possui o plano PRO ativo',
+        };
+      }
+    }
+
+    // Criar sessão de checkout do Stripe
+    const cycle: PaymentCycle = dto.billingPeriod === 'YEARLY' ? 'YEARLY' : 'MONTHLY';
+    const result = await this.paymentGatewayFactory.createStripeCheckoutSession(
+      userId,
+      {
+        userId,
+        name: dto.name,
+        email: dto.email,
+        country,
+      },
+      cycle,
+      dto.successUrl,
+      dto.cancelUrl,
+    );
+
+    return {
+      success: result.success,
+      checkoutUrl: result.checkoutUrl,
+      subscriptionId: result.subscriptionId,
+      currency: result.currency,
+      gateway: result.gateway,
+      billingPeriod: cycle,
+      errorMessage: result.errorMessage,
+    };
+  }
+
+  /**
+   * GET /billing/gateway-info
+   * Retorna informações sobre qual gateway será usado baseado no país
+   */
+  @Get('gateway-info')
+  async getGatewayInfo(@Query('country') country: string = 'BR') {
+    const gatewayType = this.paymentGatewayFactory.getGatewayType(country);
+    const currency = this.paymentGatewayFactory.getCurrency(country);
+    const isPixAvailable = this.paymentGatewayFactory.isPixAvailable(country);
+    const monthlyPrice = this.paymentGatewayFactory.getPrice(currency, 'MONTHLY');
+    const yearlyPrice = this.paymentGatewayFactory.getPrice(currency, 'YEARLY');
+
+    return {
+      country,
+      gateway: gatewayType,
+      currency,
+      isPixAvailable,
+      pricing: {
+        monthly: monthlyPrice,
+        yearly: yearlyPrice,
+        yearlySavings: (monthlyPrice * 12) - yearlyPrice,
+      },
+      paymentMethods: isPixAvailable
+        ? ['PIX', 'CREDIT_CARD']
+        : ['CREDIT_CARD', 'STRIPE_CHECKOUT'],
     };
   }
 
@@ -472,8 +636,15 @@ export class BillingController {
       };
     }
 
-    // Cancelar assinatura
-    await this.asaasBillingService.cancelSubscription(userId);
+    // Cancelar assinatura usando o gateway apropriado
+    const result = await this.paymentGatewayFactory.cancelSubscription(userId);
+
+    if (!result.success) {
+      return {
+        success: false,
+        message: result.message || 'Erro ao cancelar assinatura',
+      };
+    }
 
     return {
       success: true,

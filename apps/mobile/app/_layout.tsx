@@ -24,6 +24,7 @@ import { I18nProvider } from '../src/i18n';
 import { DrawerProvider, TrialBanner } from '../src/components';
 import { PowerSyncProvider } from '../src/powersync';
 import { BillingService, BillingStatus } from '../src/services/BillingService';
+import { ReferralService } from '../src/services/ReferralService';
 
 function RootLayoutNav() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -31,6 +32,11 @@ function RootLayoutNav() {
   const router = useRouter();
   const [billing, setBilling] = useState<BillingStatus | null>(null);
   const [billingLoaded, setBillingLoaded] = useState(false);
+
+  // Initialize referral service on mount
+  useEffect(() => {
+    ReferralService.initialize();
+  }, []);
 
   useEffect(() => {
     if (isLoading) return;

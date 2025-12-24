@@ -87,14 +87,19 @@ export interface AsaasPixQrCodeResponse {
 export interface CheckoutResult {
   success: boolean;
   paymentId?: string;
+  subscriptionId?: string;
   status?: string;
   pixQrCode?: string;
   pixCopyPaste?: string;
   pixExpiresAt?: string;
   creditCardLastFour?: string;
   creditCardBrand?: string;
+  nextDueDate?: string;
   errorMessage?: string;
 }
+
+/** Ciclo de cobrança do Asaas */
+export type AsaasCycle = 'MONTHLY' | 'YEARLY';
 
 // ============================================
 // SERVICE
@@ -260,38 +265,44 @@ export class AsaasBillingService {
   }
 
   // ============================================
-  // PAYMENTS - PIX
+  // SUBSCRIPTIONS - RECORRÊNCIA
   // ============================================
 
   /**
-   * Cria cobrança PIX e retorna QR Code
+   * Cria assinatura recorrente via PIX
+   * Usa o endpoint /subscriptions do Asaas para cobrança automática
    */
-  async createPixPayment(
+  async createPixSubscription(
     userId: string,
     customerId: string,
     amount: number,
     description: string,
+    cycle: AsaasCycle = 'MONTHLY',
   ): Promise<CheckoutResult> {
-    this.logger.log(`Creating PIX payment for user ${userId}`);
+    this.logger.log(`Creating PIX subscription for user ${userId} (cycle: ${cycle})`);
 
     if (!this.isConfigured()) {
       // Mock para desenvolvimento
+      const nextDueDate = new Date();
+      nextDueDate.setDate(nextDueDate.getDate() + 1);
       return {
         success: true,
+        subscriptionId: `sub_mock_${Date.now()}`,
         paymentId: `pay_mock_${Date.now()}`,
         status: 'PENDING',
         pixQrCode: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
         pixCopyPaste: '00020126580014br.gov.bcb.pix0136mock-pix-code-' + Date.now(),
         pixExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        nextDueDate: nextDueDate.toISOString().split('T')[0],
       };
     }
 
     try {
-      // 1. Criar cobrança
-      const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + 1); // Vence amanhã
+      // 1. Criar assinatura recorrente
+      const nextDueDate = new Date();
+      nextDueDate.setDate(nextDueDate.getDate() + 1); // Primeira cobrança amanhã
 
-      const paymentResponse = await fetch(`${this.apiUrl}/payments`, {
+      const subscriptionResponse = await fetch(`${this.apiUrl}/subscriptions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -301,82 +312,108 @@ export class AsaasBillingService {
           customer: customerId,
           billingType: 'PIX',
           value: amount,
-          dueDate: dueDate.toISOString().split('T')[0],
+          nextDueDate: nextDueDate.toISOString().split('T')[0],
+          cycle, // MONTHLY ou YEARLY
           description,
           externalReference: userId,
         }),
       });
 
-      if (!paymentResponse.ok) {
-        const error = await paymentResponse.json();
+      if (!subscriptionResponse.ok) {
+        const error = await subscriptionResponse.json();
         throw new BadRequestException(
-          error.errors?.[0]?.description || 'Erro ao criar cobrança PIX',
+          error.errors?.[0]?.description || 'Erro ao criar assinatura PIX',
         );
       }
 
-      const payment: AsaasPaymentResponse = await paymentResponse.json();
+      const subscription: AsaasSubscriptionResponse = await subscriptionResponse.json();
+      this.logger.log(`Created Asaas subscription ${subscription.id}`);
 
-      // 2. Obter QR Code PIX
-      const qrCodeResponse = await fetch(
-        `${this.apiUrl}/payments/${payment.id}/pixQrCode`,
+      // 2. Buscar o primeiro pagamento da assinatura para obter QR Code PIX
+      const paymentsResponse = await fetch(
+        `${this.apiUrl}/subscriptions/${subscription.id}/payments?status=PENDING`,
         {
           headers: { access_token: this.apiKey },
         },
       );
 
-      if (!qrCodeResponse.ok) {
-        throw new BadRequestException('Erro ao gerar QR Code PIX');
+      let pixQrCode = '';
+      let pixCopyPaste = '';
+      let pixExpiresAt = '';
+      let paymentId = '';
+
+      if (paymentsResponse.ok) {
+        const paymentsData = await paymentsResponse.json();
+        const firstPayment = paymentsData.data?.[0];
+
+        if (firstPayment) {
+          paymentId = firstPayment.id;
+
+          // Obter QR Code PIX do primeiro pagamento
+          const qrCodeResponse = await fetch(
+            `${this.apiUrl}/payments/${firstPayment.id}/pixQrCode`,
+            {
+              headers: { access_token: this.apiKey },
+            },
+          );
+
+          if (qrCodeResponse.ok) {
+            const qrCode: AsaasPixQrCodeResponse = await qrCodeResponse.json();
+            pixQrCode = `data:image/png;base64,${qrCode.encodedImage}`;
+            pixCopyPaste = qrCode.payload;
+            pixExpiresAt = qrCode.expirationDate;
+
+            // Salvar no histórico
+            await this.savePaymentHistory(userId, {
+              asaasPaymentId: firstPayment.id,
+              amount,
+              paymentMethod: PaymentMethod.PIX,
+              status: PaymentStatus.PENDING,
+              dueDate: new Date(firstPayment.dueDate),
+              pixQrCode: qrCode.encodedImage,
+              pixCopyPaste: qrCode.payload,
+              pixExpiresAt: new Date(qrCode.expirationDate),
+            });
+          }
+        }
       }
 
-      const qrCode: AsaasPixQrCodeResponse = await qrCodeResponse.json();
-
-      // 3. Salvar no histórico
-      await this.savePaymentHistory(userId, {
-        asaasPaymentId: payment.id,
-        amount,
-        paymentMethod: PaymentMethod.PIX,
-        status: PaymentStatus.PENDING,
-        dueDate,
-        pixQrCode: qrCode.encodedImage,
-        pixCopyPaste: qrCode.payload,
-        pixExpiresAt: new Date(qrCode.expirationDate),
-      });
-
-      // 4. Atualizar subscription
+      // 3. Atualizar subscription local com ID da assinatura Asaas
       await this.prisma.userSubscription.update({
         where: { userId },
         data: {
-          asaasPaymentId: payment.id,
+          asaasSubscriptionId: subscription.id,
+          asaasPaymentId: paymentId || null,
           paymentMethod: PaymentMethod.PIX,
+          billingPeriod: cycle === 'YEARLY' ? BillingPeriod.YEARLY : BillingPeriod.MONTHLY,
         },
       });
 
       return {
         success: true,
-        paymentId: payment.id,
-        status: payment.status,
-        pixQrCode: `data:image/png;base64,${qrCode.encodedImage}`,
-        pixCopyPaste: qrCode.payload,
-        pixExpiresAt: qrCode.expirationDate,
+        subscriptionId: subscription.id,
+        paymentId: paymentId || undefined,
+        status: subscription.status,
+        pixQrCode,
+        pixCopyPaste,
+        pixExpiresAt,
+        nextDueDate: subscription.nextDueDate,
       };
     } catch (error) {
-      this.logger.error('Error creating PIX payment', error);
+      this.logger.error('Error creating PIX subscription', error);
       return {
         success: false,
         errorMessage:
-          error instanceof Error ? error.message : 'Erro ao criar PIX',
+          error instanceof Error ? error.message : 'Erro ao criar assinatura PIX',
       };
     }
   }
 
-  // ============================================
-  // PAYMENTS - CREDIT CARD
-  // ============================================
-
   /**
-   * Processa pagamento com cartão de crédito
+   * Cria assinatura recorrente via Cartão de Crédito
+   * Usa o endpoint /subscriptions do Asaas para cobrança automática
    */
-  async createCreditCardPayment(
+  async createCreditCardSubscription(
     userId: string,
     customerId: string,
     amount: number,
@@ -384,24 +421,31 @@ export class AsaasBillingService {
     creditCard: CreditCardInfo,
     holderInfo: CreditCardHolderInfo,
     remoteIp: string,
+    cycle: AsaasCycle = 'MONTHLY',
   ): Promise<CheckoutResult> {
-    this.logger.log(`Creating credit card payment for user ${userId}`);
+    this.logger.log(`Creating credit card subscription for user ${userId} (cycle: ${cycle})`);
 
     if (!this.isConfigured()) {
       // Mock para desenvolvimento
+      const nextDueDate = new Date();
+      if (cycle === 'YEARLY') {
+        nextDueDate.setFullYear(nextDueDate.getFullYear() + 1);
+      } else {
+        nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+      }
       return {
         success: true,
+        subscriptionId: `sub_mock_${Date.now()}`,
         paymentId: `pay_mock_${Date.now()}`,
-        status: 'CONFIRMED',
+        status: 'ACTIVE',
         creditCardLastFour: creditCard.number.slice(-4),
         creditCardBrand: 'VISA',
+        nextDueDate: nextDueDate.toISOString().split('T')[0],
       };
     }
 
     try {
-      const dueDate = new Date();
-
-      const response = await fetch(`${this.apiUrl}/payments`, {
+      const response = await fetch(`${this.apiUrl}/subscriptions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -411,7 +455,8 @@ export class AsaasBillingService {
           customer: customerId,
           billingType: 'CREDIT_CARD',
           value: amount,
-          dueDate: dueDate.toISOString().split('T')[0],
+          nextDueDate: new Date().toISOString().split('T')[0], // Cobrar hoje
+          cycle, // MONTHLY ou YEARLY
           description,
           externalReference: userId,
           creditCard: {
@@ -436,17 +481,8 @@ export class AsaasBillingService {
       if (!response.ok) {
         const error = await response.json();
         const errorMsg =
-          error.errors?.[0]?.description || 'Erro ao processar cartão';
-        this.logger.error('Credit card payment failed', error);
-
-        // Salvar tentativa falha
-        await this.savePaymentHistory(userId, {
-          amount,
-          paymentMethod: PaymentMethod.CREDIT_CARD,
-          status: PaymentStatus.FAILED,
-          dueDate,
-          errorMessage: errorMsg,
-        });
+          error.errors?.[0]?.description || 'Erro ao criar assinatura com cartão';
+        this.logger.error('Credit card subscription failed', error);
 
         return {
           success: false,
@@ -454,31 +490,41 @@ export class AsaasBillingService {
         };
       }
 
-      const payment: AsaasPaymentResponse = await response.json();
+      const subscription: AsaasSubscriptionResponse & {
+        creditCard?: {
+          creditCardNumber: string;
+          creditCardBrand: string;
+          creditCardToken: string;
+        };
+      } = await response.json();
 
-      // Verificar se foi aprovado
-      const isConfirmed = ['CONFIRMED', 'RECEIVED'].includes(payment.status);
+      this.logger.log(`Created Asaas subscription ${subscription.id}`);
 
-      // Salvar no histórico
-      await this.savePaymentHistory(userId, {
-        asaasPaymentId: payment.id,
-        amount,
-        paymentMethod: PaymentMethod.CREDIT_CARD,
-        status: isConfirmed ? PaymentStatus.CONFIRMED : PaymentStatus.PENDING,
-        dueDate,
-        paidAt: isConfirmed ? new Date() : undefined,
-      });
+      // Verificar se foi ativada (primeiro pagamento aprovado)
+      const isActive = subscription.status === 'ACTIVE';
 
-      // Atualizar subscription com token do cartão (para retry)
+      // Calcular próxima data de cobrança
+      const nextDueDate = new Date();
+      if (cycle === 'YEARLY') {
+        nextDueDate.setFullYear(nextDueDate.getFullYear() + 1);
+      } else {
+        nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+      }
+
+      // Atualizar subscription local
       await this.prisma.userSubscription.update({
         where: { userId },
         data: {
-          asaasPaymentId: payment.id,
+          asaasSubscriptionId: subscription.id,
           paymentMethod: PaymentMethod.CREDIT_CARD,
-          creditCardToken: payment.creditCard?.creditCardToken,
-          creditCardLastFour: payment.creditCard?.creditCardNumber?.slice(-4),
-          creditCardBrand: payment.creditCard?.creditCardBrand,
-          ...(isConfirmed && {
+          billingPeriod: cycle === 'YEARLY' ? BillingPeriod.YEARLY : BillingPeriod.MONTHLY,
+          creditCardToken: subscription.creditCard?.creditCardToken,
+          creditCardLastFour: subscription.creditCard?.creditCardNumber?.slice(-4),
+          creditCardBrand: subscription.creditCard?.creditCardBrand,
+          ...(isActive && {
+            status: SubscriptionStatus.ACTIVE,
+            currentPeriodStart: new Date(),
+            currentPeriodEnd: nextDueDate,
             lastPaymentDate: new Date(),
             overdueAt: null,
             retryCount: 0,
@@ -486,31 +532,45 @@ export class AsaasBillingService {
         },
       });
 
-      // Se confirmado, ativar assinatura
-      if (isConfirmed) {
-        await this.activateSubscription(userId);
+      // Se ativou, atualizar para plano PRO
+      if (isActive) {
+        const proPlan = await this.prisma.plan.findUnique({
+          where: { type: PlanType.PRO },
+        });
+        if (proPlan) {
+          await this.prisma.userSubscription.update({
+            where: { userId },
+            data: { planId: proPlan.id },
+          });
+        }
       }
 
       return {
-        success: isConfirmed,
-        paymentId: payment.id,
-        status: payment.status,
-        creditCardLastFour: payment.creditCard?.creditCardNumber?.slice(-4),
-        creditCardBrand: payment.creditCard?.creditCardBrand,
-        errorMessage: isConfirmed ? undefined : 'Pagamento pendente de confirmação',
+        success: isActive,
+        subscriptionId: subscription.id,
+        status: subscription.status,
+        creditCardLastFour: subscription.creditCard?.creditCardNumber?.slice(-4),
+        creditCardBrand: subscription.creditCard?.creditCardBrand,
+        nextDueDate: subscription.nextDueDate,
+        errorMessage: isActive ? undefined : 'Pagamento pendente de confirmação',
       };
     } catch (error) {
-      this.logger.error('Error creating credit card payment', error);
+      this.logger.error('Error creating credit card subscription', error);
       return {
         success: false,
         errorMessage:
-          error instanceof Error ? error.message : 'Erro ao processar cartão',
+          error instanceof Error ? error.message : 'Erro ao criar assinatura com cartão',
       };
     }
   }
 
+  // ============================================
+  // RETRY - COBRANÇA MANUAL COM CARTÃO TOKENIZADO
+  // ============================================
+
   /**
    * Retry de cobrança com cartão tokenizado
+   * Usado para tentativas de cobrança em caso de falha da recorrência
    */
   async retryCardPayment(userId: string): Promise<CheckoutResult> {
     const subscription = await this.prisma.userSubscription.findUnique({

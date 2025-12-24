@@ -114,21 +114,28 @@ export interface CheckoutCreditCardDto {
 
 export interface PixCheckoutResult {
   success: boolean;
+  subscriptionId?: string;
   paymentId?: string;
   pixQrCode?: string;
   pixCopyPaste?: string;
   pixExpiresAt?: string;
+  nextDueDate?: string;
   amount?: number;
+  billingPeriod?: BillingPeriod;
   errorMessage?: string;
   message?: string;
 }
 
 export interface CreditCardCheckoutResult {
   success: boolean;
+  subscriptionId?: string;
   paymentId?: string;
   status?: string;
   creditCardLastFour?: string;
   creditCardBrand?: string;
+  nextDueDate?: string;
+  amount?: number;
+  billingPeriod?: BillingPeriod;
   errorMessage?: string;
   message?: string;
 }

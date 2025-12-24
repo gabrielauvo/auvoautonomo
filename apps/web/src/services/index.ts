@@ -182,3 +182,72 @@ export type {
   MovementListResponse,
   InventoryDashboard,
 } from './inventory.service';
+
+// Referral (Programa de Indicação)
+export {
+  referralService,
+  getReferralDashboard,
+  getMyReferralCode,
+  setCustomCode,
+  getMyReferrals,
+  getMyRewards,
+  getStatusLabel as getReferralStatusLabel,
+  getStatusColor as getReferralStatusColor,
+  getRewardReasonLabel,
+  getPlatformLabel,
+} from './referral.service';
+export type {
+  ReferralCode,
+  ReferralClick,
+  Referral,
+  ReferralReward,
+  ReferralDashboard,
+  SetCustomCodeDto,
+} from './referral.service';
+
+// Google Business Growth
+export {
+  googleBusinessService,
+  isGoogleBusinessConfigured,
+  getGoogleIntegrationStatus,
+  getGoogleOAuthUrl,
+  getGoogleLocations,
+  selectGoogleLocation,
+  disconnectGoogle,
+  getAttributionLinks,
+  getAttributionLink,
+  createAttributionLink,
+  updateAttributionLink,
+  deleteAttributionLink,
+  getAttributionLinkStats,
+  getDashboardData,
+  getDashboardSummary,
+  triggerMetricsSync,
+  getGrowthInsights,
+  markInsightAsRead,
+  dismissInsight,
+} from './google-business.service';
+export type {
+  GoogleIntegrationStatus,
+  GoogleIntegrationStatusResponse,
+  GoogleLocation,
+  OAuthUrlResponse,
+  AttributionLinkType,
+  AttributionLink,
+  CreateAttributionLinkDto,
+  UpdateAttributionLinkDto,
+  AttributionLinkStats,
+  KpiCard,
+  DashboardSummary,
+  TimeSeriesPoint,
+  TimeSeries,
+  ChannelBreakdown,
+  ConversionFunnelStage,
+  ConversionFunnel,
+  DashboardData,
+  DashboardPeriod,
+  DashboardQueryParams,
+  GrowthInsightType,
+  GrowthInsightSeverity,
+  GrowthInsight,
+} from './google-business.service';

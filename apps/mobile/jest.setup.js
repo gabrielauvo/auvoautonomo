@@ -46,6 +46,26 @@ jest.mock('@react-native-community/netinfo', () => ({
   ),
 }));
 
+// Mock AsyncStorage
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  setItem: jest.fn(() => Promise.resolve()),
+  getItem: jest.fn(() => Promise.resolve(null)),
+  removeItem: jest.fn(() => Promise.resolve()),
+  clear: jest.fn(() => Promise.resolve()),
+  getAllKeys: jest.fn(() => Promise.resolve([])),
+  multiGet: jest.fn(() => Promise.resolve([])),
+  multiSet: jest.fn(() => Promise.resolve()),
+  multiRemove: jest.fn(() => Promise.resolve()),
+}));
+
+// Mock expo-linking
+jest.mock('expo-linking', () => ({
+  createURL: jest.fn((path) => `auvofield://${path}`),
+  parse: jest.fn((url) => ({ path: url, queryParams: {} })),
+  addEventListener: jest.fn(() => ({ remove: jest.fn() })),
+  getInitialURL: jest.fn(() => Promise.resolve(null)),
+}));
+
 // Mock expo-router
 jest.mock('expo-router', () => ({
   Stack: {

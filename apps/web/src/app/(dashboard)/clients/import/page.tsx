@@ -12,7 +12,7 @@ export default function ClientsImportPage() {
   const { billing, isLoading } = useAuth();
 
   // Com o novo modelo, tanto TRIAL quanto PRO têm acesso completo
-  const isPro = billing?.planKey === 'PRO' || billing?.planKey === 'TRIAL';
+  const isPro = billing?.planKey === 'PRO' || billing?.subscriptionStatus === 'TRIALING';
 
   if (isLoading) {
     return (

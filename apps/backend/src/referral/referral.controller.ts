@@ -15,6 +15,7 @@ import { Response, Request } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Throttle, SkipThrottle } from '@nestjs/throttler';
+import { PrismaService } from '../prisma/prisma.service';
 import { ReferralCodeService } from './services/referral-code.service';
 import { ReferralClickService } from './services/referral-click.service';
 import { ReferralAttributionService } from './services/referral-attribution.service';
@@ -36,6 +37,7 @@ export class ReferralController {
   private readonly logger = new Logger(ReferralController.name);
 
   constructor(
+    private prisma: PrismaService,
     private codeService: ReferralCodeService,
     private clickService: ReferralClickService,
     private attributionService: ReferralAttributionService,
@@ -191,6 +193,72 @@ export class ReferralController {
       fingerprintHash: dto.fingerprintHash,
       deviceIdHash: dto.deviceIdHash,
     });
+  }
+
+  /**
+   * Dashboard completo do programa de indicação (usado pelo frontend web)
+   */
+  @Get('api/referral/dashboard')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Get referral dashboard with all data' })
+  async getDashboard(@Req() req: Request) {
+    const userId = (req.user as any).id;
+
+    const [codeInfo, stats, referrals, rewards] = await Promise.all([
+      this.codeService.getOrCreateCode(userId),
+      this.rewardsService.getStats(userId),
+      this.rewardsService.getRecentReferrals(userId),
+      this.rewardsService.getRewardsHistory(userId),
+    ]);
+
+    // Get full referral code record for additional data
+    const codeRecord = await this.prisma.referralCode.findUnique({
+      where: { userId },
+    });
+
+    return {
+      code: {
+        id: codeRecord?.id || '',
+        code: codeInfo.code,
+        customCode: codeInfo.customCode,
+        status: codeRecord?.status || 'ACTIVE',
+        totalClicks: stats.totalClicks,
+        totalSignups: stats.totalSignups,
+        totalPaidConversions: stats.totalPaid,
+        createdAt: codeRecord?.createdAt?.toISOString() || new Date().toISOString(),
+      },
+      stats: {
+        totalClicks: stats.totalClicks,
+        totalSignups: stats.totalSignups,
+        totalPaidConversions: stats.totalPaid,
+        totalDaysEarned: stats.monthsEarned * 30,
+        pendingRewards: stats.pendingMonths,
+      },
+      referrals: referrals.map((r) => ({
+        id: r.id,
+        status: r.status,
+        attributionMethod: 'LINK_DIRECT',
+        platform: 'WEB',
+        referee: {
+          id: r.id,
+          name: r.name,
+          email: '',
+        },
+        createdAt: r.date.toISOString(),
+        convertedAt: r.status === 'SUBSCRIPTION_PAID' ? r.date.toISOString() : null,
+      })),
+      rewards: rewards.map((r) => ({
+        id: r.id,
+        daysAwarded: r.monthsCredited * 30,
+        reason: r.reason,
+        status: r.status,
+        referral: undefined,
+        createdAt: r.createdAt.toISOString(),
+        appliedAt: r.status === 'APPLIED' ? r.createdAt.toISOString() : null,
+      })),
+      shareUrl: codeInfo.link,
+    };
   }
 
   /**

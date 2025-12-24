@@ -60,7 +60,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { code } = await params;
   const data = await validateReferralCode(code);
 
-  const referrerName = data?.referrerName || 'Um amigo';
+  const referrerName = data?.referrerFirstName || 'Um amigo';
 
   return {
     title: `${referrerName} te convidou para o Auvo Autônomo`,
@@ -183,7 +183,7 @@ export default async function ReferralLandingPage({ params, searchParams }: Page
               />
             </div>
             <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              {referralData.referrerName} te convidou!
+              {referralData.referrerFirstName || 'Um amigo'} te convidou!
             </h1>
             <p className="text-lg text-purple-100">
               Experimente o Auvo Autônomo e gerencie seu negócio de forma profissional

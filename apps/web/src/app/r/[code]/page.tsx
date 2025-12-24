@@ -11,7 +11,7 @@ interface PageProps {
 // Validate referral code and get referrer info
 async function validateReferralCode(code: string) {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://monorepobackend-production.up.railway.app';
     const res = await fetch(`${apiUrl}/api/referral/validate/${code}`, {
       cache: 'no-store',
     });
@@ -29,7 +29,7 @@ async function validateReferralCode(code: string) {
 // Register the click
 async function registerClick(code: string, headers: Headers) {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://monorepobackend-production.up.railway.app';
     const userAgent = headers.get('user-agent') || '';
     const ip = headers.get('x-forwarded-for')?.split(',')[0] || headers.get('x-real-ip') || '';
 

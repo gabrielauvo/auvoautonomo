@@ -21,4 +21,12 @@ export class RegisterDto {
   @IsString({ message: 'Telefone deve ser um texto' })
   @IsOptional()
   phone?: string;
+
+  @IsString()
+  @IsOptional()
+  referralCode?: string;
+
+  @IsString()
+  @IsOptional()
+  clickId?: string;
 }

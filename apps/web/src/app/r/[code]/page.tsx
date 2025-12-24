@@ -109,7 +109,7 @@ export default async function ReferralLandingPage({ params, searchParams }: Page
   // Store links
   const appStoreUrl = 'https://apps.apple.com/app/auvo-autonomo/id123456789'; // TODO: Update with real ID
   const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.auvo.autonomo';
-  const webSignupUrl = `/signup?ref=${code}${clickId ? `&clickId=${clickId}` : ''}`;
+  const webSignupUrl = `/register?ref=${code}${clickId ? `&clickId=${clickId}` : ''}`;
 
   // Deep link URLs
   const deepLinkUrl = `auvoautonomo://referral?code=${code}${clickId ? `&clickId=${clickId}` : ''}`;

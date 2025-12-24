@@ -45,6 +45,8 @@ export interface RegisterData {
   password: string;
   companyName?: string;
   phone?: string;
+  referralCode?: string;
+  clickId?: string;
 }
 
 /**

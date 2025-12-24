@@ -12,7 +12,7 @@
  */
 
 import { useState, FormEvent, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/auth-context';
 import {
@@ -26,13 +26,18 @@ import {
   CardContent,
   Alert,
 } from '@/components/ui';
-import { Mail, Lock, Eye, EyeOff, User, Building, Phone } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, User, Building, Phone, Gift } from 'lucide-react';
 import { useTranslations } from '@/i18n';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { register, isAuthenticated, isLoading: authLoading, error, clearError } = useAuth();
   const { t } = useTranslations('auth');
+
+  // Captura parâmetros de referral da URL
+  const referralCode = searchParams.get('ref') || undefined;
+  const clickId = searchParams.get('clickId') || undefined;
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -122,6 +127,8 @@ export default function RegisterPage() {
         password,
         companyName: companyName.trim() || undefined,
         phone: phone.trim() || undefined,
+        referralCode,
+        clickId,
       });
     } catch (err) {
       setFormError(err instanceof Error ? err.message : t('registerError'));
@@ -159,6 +166,19 @@ export default function RegisterPage() {
 
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Banner de indicação */}
+              {referralCode && (
+                <div className="bg-gradient-to-r from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-3 flex items-center gap-3">
+                  <div className="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                    <Gift className="w-4 h-4 text-purple-600" />
+                  </div>
+                  <div className="text-sm">
+                    <p className="font-medium text-purple-900">Você foi indicado!</p>
+                    <p className="text-purple-600">Código: {referralCode}</p>
+                  </div>
+                </div>
+              )}
+
               {/* Erro */}
               {(formError || error) && (
                 <Alert variant="error">

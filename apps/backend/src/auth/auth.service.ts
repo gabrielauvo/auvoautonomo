@@ -10,6 +10,7 @@ import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
+import { ReferralAttributionService } from '../referral/services/referral-attribution.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -63,6 +64,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private emailService: EmailService,
+    private referralAttributionService: ReferralAttributionService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -159,6 +161,28 @@ export class AuthService {
     const token = this.generateToken(user.id, user.email);
 
     this.logger.log(`User registered successfully with ${TRIAL_DURATION_DAYS}-day trial: ${user.id}`);
+
+    // Processa referral se houver código ou clickId
+    if (dto.referralCode || dto.clickId) {
+      try {
+        const attributionResult = await this.referralAttributionService.attach({
+          refereeUserId: user.id,
+          refereeEmail: user.email,
+          code: dto.referralCode,
+          clickId: dto.clickId,
+          platform: 'WEB',
+        });
+
+        if (attributionResult.success) {
+          this.logger.log(`Referral attribution successful for user ${user.id}: ${attributionResult.attributionMethod}`);
+        } else {
+          this.logger.warn(`Referral attribution failed for user ${user.id}: ${attributionResult.message}`);
+        }
+      } catch (error) {
+        // Não bloqueia o registro se a atribuição falhar
+        this.logger.error(`Referral attribution error for user ${user.id}:`, error);
+      }
+    }
 
     return {
       user,

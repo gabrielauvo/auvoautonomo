@@ -326,7 +326,8 @@
       "Bash(pnpm list:*)",
       "Bash(pnpm install)",
       "Bash(timeout /t 10)",
-      "Bash(git fetch:*)"
+      "Bash(git fetch:*)",
+      "Bash(Select-String -Pattern \"email|password|reset|resend|forgot\")"
     ]
   }
 }

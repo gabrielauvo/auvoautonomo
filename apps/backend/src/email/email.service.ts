@@ -33,15 +33,18 @@ export class EmailService {
   }
 
   async sendEmail(options: SendEmailOptions): Promise<boolean> {
+    this.logger.log(`Attempting to send email to: ${options.to}, subject: ${options.subject}`);
+    this.logger.log(`Email config - isConfigured: ${this.isConfigured}, fromEmail: ${this.fromEmail}`);
+
     if (!this.isConfigured || !this.resend) {
       this.logger.warn('Email not sent - RESEND_API_KEY not configured');
-      // Em desenvolvimento, apenas log
       this.logger.debug(`Would send email to: ${options.to}`);
       this.logger.debug(`Subject: ${options.subject}`);
       return true;
     }
 
     try {
+      this.logger.log(`Calling Resend API to send email...`);
       const result = await this.resend.emails.send({
         from: `${this.fromName} <${this.fromEmail}>`,
         to: Array.isArray(options.to) ? options.to : [options.to],
@@ -50,15 +53,19 @@ export class EmailService {
         text: options.text,
       });
 
+      this.logger.log(`Resend API response: ${JSON.stringify(result)}`);
+
       if (result.error) {
         this.logger.error(`Failed to send email: ${result.error.message}`);
+        this.logger.error(`Error details: ${JSON.stringify(result.error)}`);
         return false;
       }
 
-      this.logger.log(`Email sent successfully to ${options.to}`);
+      this.logger.log(`Email sent successfully to ${options.to}, id: ${result.data?.id}`);
       return true;
     } catch (error) {
       this.logger.error(`Error sending email: ${error}`);
+      this.logger.error(`Error stack: ${error instanceof Error ? error.stack : 'N/A'}`);
       return false;
     }
   }

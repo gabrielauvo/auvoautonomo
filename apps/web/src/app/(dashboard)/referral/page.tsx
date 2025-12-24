@@ -22,6 +22,7 @@ import {
   Skeleton,
   Input,
 } from '@/components/ui';
+import { AppLayout } from '@/components/layout';
 import {
   Gift,
   Users,
@@ -129,36 +130,40 @@ export default function ReferralPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-48 w-full" />
-        <div className="grid grid-cols-4 gap-4">
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
+      <AppLayout>
+        <div className="space-y-6">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-48 w-full" />
+          <div className="grid grid-cols-4 gap-4">
+            <Skeleton className="h-24" />
+            <Skeleton className="h-24" />
+            <Skeleton className="h-24" />
+            <Skeleton className="h-24" />
+          </div>
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
   if (error || !dashboard) {
     return (
-      <Card>
-        <CardContent className="py-12 text-center">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Gift className="w-8 h-8 text-gray-400" />
-          </div>
-          <p className="text-gray-500">Erro ao carregar dados de indicação</p>
-          <Button
-            variant="outline"
-            className="mt-4"
-            onClick={() => queryClient.invalidateQueries({ queryKey: ['referral-dashboard'] })}
-          >
-            Tentar novamente
-          </Button>
-        </CardContent>
-      </Card>
+      <AppLayout>
+        <Card>
+          <CardContent className="py-12 text-center">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Gift className="w-8 h-8 text-gray-400" />
+            </div>
+            <p className="text-gray-500">Erro ao carregar dados de indicação</p>
+            <Button
+              variant="outline"
+              className="mt-4"
+              onClick={() => queryClient.invalidateQueries({ queryKey: ['referral-dashboard'] })}
+            >
+              Tentar novamente
+            </Button>
+          </CardContent>
+        </Card>
+      </AppLayout>
     );
   }
 
@@ -200,7 +205,8 @@ export default function ReferralPage() {
   const challengeText = getChallengeText();
 
   return (
-    <div className="space-y-6">
+    <AppLayout>
+      <div className="space-y-6">
       {/* Header with compelling copy */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -749,6 +755,7 @@ export default function ReferralPage() {
           </CardContent>
         </Card>
       )}
-    </div>
+      </div>
+    </AppLayout>
   );
 }

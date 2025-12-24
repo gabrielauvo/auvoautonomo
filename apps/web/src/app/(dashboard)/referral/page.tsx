@@ -91,7 +91,10 @@ export default function ReferralPage() {
   const handleShareWhatsApp = () => {
     if (!dashboard?.shareUrl) return;
 
-    const message = `Opa! Tô usando o Auvo Autônomo pra gerenciar meu negócio e tá sendo muito bom. Se quiser testar, usa meu link que você ganha um desconto: ${dashboard.shareUrl}`;
+    const message = `Opa! 👋
+Se você é autônomo e ainda organiza serviço no WhatsApp ou caderno, dá uma olhada nisso.
+Uso o Auvo Autônomo e nesse link você ganha benefício pra testar 👇
+${dashboard.shareUrl}`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };

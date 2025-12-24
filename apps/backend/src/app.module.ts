@@ -47,6 +47,8 @@ import { ExpensesModule } from './expenses/expenses.module';
 import { WorkOrderTypesModule } from './work-order-types/work-order-types.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { EmailModule } from './email/email.module';
+import { ReferralModule } from './referral/referral.module';
+import { GoogleBusinessModule } from './google-business/google-business.module';
 
 @Module({
   imports: [
@@ -115,6 +117,7 @@ import { EmailModule } from './email/email.module';
     ExpensesModule,
     WorkOrderTypesModule,
     InventoryModule,
+    GoogleBusinessModule,
   ],
   controllers: [AppController],
   providers: [

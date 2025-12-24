@@ -67,6 +67,16 @@ model User {
   workOrders                  WorkOrder[]
   workOrderTypes              WorkOrderType[]
   inventorySettings           InventorySettings?
+  // Referral Program
+  referralCode                ReferralCode?
+  referralsAsReferrer         Referral[]                   @relation("ReferralReferrer")
+  referralAsReferee           Referral?                    @relation("ReferralReferee")
+  referralRewards             ReferralReward[]
+  // Google Business Growth
+  googleIntegration           GoogleIntegration?
+  demandEvents                DemandEvent[]
+  attributionLinks            AttributionLink[]
+  growthInsights              GrowthInsight[]
 
   @@map("users")
 }
@@ -94,40 +104,51 @@ model Plan {
 }
 
 model UserSubscription {
-  id                  String                       @id @default(uuid())
-  userId              String                       @unique
-  planId              String
-  asaasCustomerId     String?
-  asaasSubscriptionId String?
-  asaasPaymentId      String?
-  status              SubscriptionStatus           @default(ACTIVE)
-  billingPeriod       BillingPeriod                @default(MONTHLY)
-  currentPeriodStart  DateTime?
-  currentPeriodEnd    DateTime?
-  trialEndAt          DateTime?
-  canceledAt          DateTime?
-  cancelAtPeriodEnd   Boolean                      @default(false)
-  paymentMethod       PaymentMethod?
-  lastPaymentDate     DateTime?
-  overdueAt           DateTime?
-  retryCount          Int                          @default(0)
-  lastRetryAt         DateTime?
-  blockedAt           DateTime?
-  blockReason         String?
-  creditCardToken     String?
-  creditCardLastFour  String?
-  creditCardBrand     String?
-  createdAt           DateTime                     @default(now())
-  updatedAt           DateTime                     @updatedAt
-  paymentHistory      SubscriptionPaymentHistory[]
-  plan                Plan                         @relation(fields: [planId], references: [id])
-  user                User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                   String                       @id @default(uuid())
+  userId               String                       @unique
+  planId               String
+  // Asaas (Brasil)
+  asaasCustomerId      String?
+  asaasSubscriptionId  String?
+  asaasPaymentId       String?
+  // Stripe (Internacional)
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  stripePaymentId      String?
+  // Status e período
+  status               SubscriptionStatus           @default(ACTIVE)
+  billingPeriod        BillingPeriod                @default(MONTHLY)
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  trialEndAt           DateTime?
+  canceledAt           DateTime?
+  cancelAtPeriodEnd    Boolean                      @default(false)
+  paymentMethod        PaymentMethod?
+  lastPaymentDate      DateTime?
+  overdueAt            DateTime?
+  retryCount           Int                          @default(0)
+  lastRetryAt          DateTime?
+  blockedAt            DateTime?
+  blockReason          String?
+  creditCardToken      String?
+  creditCardLastFour   String?
+  creditCardBrand      String?
+  // Moeda e país
+  currency             String?                      @default("BRL")
+  country              String?                      @default("BR")
+  createdAt            DateTime                     @default(now())
+  updatedAt            DateTime                     @updatedAt
+  paymentHistory       SubscriptionPaymentHistory[]
+  plan                 Plan                         @relation(fields: [planId], references: [id])
+  user                 User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([planId])
   @@index([status])
   @@index([asaasCustomerId])
   @@index([asaasSubscriptionId])
+  @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
   @@index([overdueAt])
   @@index([blockedAt])
   @@map("user_subscriptions")
@@ -1455,4 +1476,380 @@ model WorkOrderInventoryDeduction {
   @@index([workOrderId])
   @@index([deductedAt])
   @@map("work_order_inventory_deductions")
+}
+
+// =============================================================================
+// REFERRAL PROGRAM MODULE (Programa de Indicação)
+// =============================================================================
+
+// Status do código de indicação
+enum ReferralCodeStatus {
+  ACTIVE
+  SUSPENDED // Suspenso por fraude ou violação
+  INACTIVE  // Desativado pelo usuário
+}
+
+// Plataforma detectada no clique
+enum ReferralPlatform {
+  IOS
+  ANDROID
+  WEB
+  UNKNOWN
+}
+
+// Método de atribuição do indicado
+enum ReferralAttributionMethod {
+  LINK_DIRECT       // Clicou no link e se cadastrou direto
+  INSTALL_REFERRER  // Play Install Referrer API (Android)
+  FINGERPRINT       // Fingerprint match (iOS deferred)
+  MANUAL_CODE       // Usuário digitou o código manualmente
+}
+
+// Status do referral (indicação)
+enum ReferralStatus {
+  PENDING           // Clicou mas não cadastrou
+  SIGNUP_COMPLETE   // Cadastrou mas não pagou
+  SUBSCRIPTION_PAID // Pagou o plano - RECOMPENSA CREDITADA
+  CHURNED           // Cancelou assinatura
+  FRAUDULENT        // Marcado como fraude
+}
+
+// Razão da recompensa
+enum ReferralRewardReason {
+  SINGLE_REFERRAL  // +1 mês por indicado que pagou
+  MILESTONE_10     // +12 meses ao atingir 10 indicados
+  BONUS            // Bônus promocional
+  REVERSAL         // Estorno (chargeback)
+}
+
+// Status da recompensa no ledger
+enum ReferralRewardStatus {
+  PENDING   // Aguardando aplicação
+  APPLIED   // Aplicado na assinatura
+  EXPIRED   // Expirou (não usou)
+  REVERSED  // Revertido (chargeback)
+}
+
+// Código único de indicação por usuário
+model ReferralCode {
+  id          String              @id @default(uuid())
+  userId      String              @unique
+  code        String              @unique  // Código gerado (ex: "A7K2F9")
+  customCode  String?             @unique  // Código personalizado (ex: "GABRIEL")
+  status      ReferralCodeStatus  @default(ACTIVE)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clicks ReferralClick[]
+
+  @@index([code])
+  @@index([customCode])
+  @@index([status])
+  @@map("referral_codes")
+}
+
+// Registro de cliques nos links de indicação
+model ReferralClick {
+  id              String            @id @default(uuid())
+  codeId          String
+  clickId         String            @unique @default(uuid())  // ID único para tracking
+  ipHash          String            // SHA256 do IP (privacidade)
+  userAgent       String?
+  platformGuess   ReferralPlatform  @default(UNKNOWN)
+  fingerprintHash String?           // Para deferred deep link iOS
+  referer         String?           // HTTP Referer
+  expiresAt       DateTime          // Click válido por 30 dias
+  converted       Boolean           @default(false)
+  convertedAt     DateTime?
+  createdAt       DateTime          @default(now())
+
+  code     ReferralCode     @relation(fields: [codeId], references: [id], onDelete: Cascade)
+  install  ReferralInstall?
+  referral Referral?
+
+  @@index([codeId])
+  @@index([clickId])
+  @@index([fingerprintHash])
+  @@index([expiresAt])
+  @@index([createdAt])
+  @@map("referral_clicks")
+}
+
+// Registro de instalações do app (para atribuição)
+model ReferralInstall {
+  id                     String           @id @default(uuid())
+  clickId                String?          @unique
+  deviceIdHash           String           // Hash do device ID
+  platform               ReferralPlatform
+  installReferrerPayload Json?            // Payload do Play Install Referrer
+  fingerprintHash        String?          // Para match com click iOS
+  matched                Boolean          @default(false)
+  matchedAt              DateTime?
+  createdAt              DateTime         @default(now())
+
+  click ReferralClick? @relation(fields: [clickId], references: [id])
+
+  @@index([deviceIdHash])
+  @@index([fingerprintHash])
+  @@index([matched])
+  @@index([createdAt])
+  @@map("referral_installs")
+}
+
+// Vínculo entre indicador e indicado
+model Referral {
+  id                  String                    @id @default(uuid())
+  referrerUserId      String
+  refereeUserId       String                    @unique  // Cada usuário só pode ter 1 referrer
+  clickId             String?                   @unique
+  attributionMethod   ReferralAttributionMethod
+  status              ReferralStatus            @default(PENDING)
+  subscriptionPaidAt  DateTime?
+  rewardCredited      Boolean                   @default(false)
+  fraudFlags          String[]                  @default([])  // Flags de fraude detectadas
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+
+  referrerUser User           @relation("ReferralReferrer", fields: [referrerUserId], references: [id], onDelete: Cascade)
+  refereeUser  User           @relation("ReferralReferee", fields: [refereeUserId], references: [id], onDelete: Cascade)
+  click        ReferralClick? @relation(fields: [clickId], references: [id])
+  rewards      ReferralReward[]
+
+  @@index([referrerUserId])
+  @@index([refereeUserId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("referrals")
+}
+
+// Ledger de recompensas (idempotente)
+model ReferralReward {
+  id                  String               @id @default(uuid())
+  userId              String               // Quem recebe a recompensa
+  referralId          String?              // Referral que gerou (se aplicável)
+  monthsCredited      Int                  // Meses creditados
+  reason              ReferralRewardReason
+  idempotencyKey      String               @unique  // Para evitar duplicatas
+  status              ReferralRewardStatus @default(PENDING)
+  appliedAt           DateTime?
+  expiresAt           DateTime?            // Data limite para usar
+  reversedAt          DateTime?
+  reversalReason      String?
+  createdAt           DateTime             @default(now())
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  referral Referral? @relation(fields: [referralId], references: [id])
+
+  @@index([userId])
+  @@index([referralId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("referral_rewards")
+}
+
+// Audit log para decisões de atribuição (debugging e anti-fraude)
+model ReferralAuditLog {
+  id          String   @id @default(uuid())
+  action      String   // Ação realizada (click, attribution_attempt, reward_credit, fraud_flag, etc)
+  entityType  String   // Tipo de entidade (click, install, referral, reward)
+  entityId    String   // ID da entidade
+  userId      String?  // Usuário relacionado
+  decision    String   // Decisão tomada
+  reason      String?  // Razão da decisão
+  metadata    Json?    // Dados adicionais
+  ipHash      String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@index([action])
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("referral_audit_logs")
+}
+
+// =============================================================================
+// GOOGLE BUSINESS GROWTH MODULE
+// =============================================================================
+
+// Status da integração Google
+enum GoogleIntegrationStatus {
+  PENDING      // Aguardando seleção de location
+  CONNECTED    // Conectado e funcionando
+  ERROR        // Erro na última sincronização
+  DISCONNECTED // Desconectado pelo usuário
+  REVOKED      // Token revogado pelo Google
+}
+
+// Fonte do evento de demanda
+enum DemandEventSource {
+  GOOGLE_BUSINESS // Métricas do Google Business Profile
+  TRACKING_LINK   // Nossos links de tracking
+  MANUAL          // Entrada manual
+}
+
+// Tipo de ação
+enum DemandActionType {
+  CALL              // Ligação (click-to-call)
+  ROUTE             // Solicitação de rota
+  WEBSITE_CLICK     // Clique no site (Google)
+  WHATSAPP_CLICK    // Clique WhatsApp (tracking)
+  SITE_CLICK        // Clique site (tracking)
+  PROFILE_VIEW      // Visualização do perfil
+  SEARCH_IMPRESSION // Impressão na busca
+  MAPS_IMPRESSION   // Impressão no Maps
+}
+
+// Tipo de período
+enum DemandPeriodType {
+  DAY
+  WEEK
+  MONTH
+}
+
+// Tipo de link de atribuição
+enum AttributionLinkType {
+  WHATSAPP
+  WEBSITE
+}
+
+// Tipo de insight
+enum GrowthInsightType {
+  CONVERSION_DROP     // Queda de conversão
+  ACTION_SPIKE        // Pico de ações
+  LOW_CONVERSION_RATE // Taxa de conversão baixa
+  CHANNEL_COMPARISON  // Comparação de canais
+  WEEKLY_SUMMARY      // Resumo semanal
+  GOAL_ACHIEVED       // Meta atingida
+}
+
+// Severidade do insight
+enum GrowthInsightSeverity {
+  INFO
+  WARNING
+  CRITICAL
+  SUCCESS
+}
+
+// Confiança da atribuição
+enum AttributionConfidence {
+  HIGH   // UTM explícito
+  MEDIUM // Evento nas últimas 24h
+  LOW    // Evento nas últimas 72h
+  NONE   // Sem dados de atribuição
+}
+
+// Origem do orçamento
+enum QuoteOriginSource {
+  GOOGLE_BUSINESS
+  DIRECT
+  REFERRAL
+  SOCIAL_MEDIA
+  OTHER
+  UNKNOWN
+}
+
+// Integração com Google Business Profile
+model GoogleIntegration {
+  id                 String                  @id @default(uuid())
+  userId             String                  @unique
+  googleAccountId    String?
+  googleLocationId   String?
+  googleLocationName String?
+  status             GoogleIntegrationStatus @default(PENDING)
+  scopes             String[]
+  lastSyncAt         DateTime?
+  lastSyncError      String?
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+
+  user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token GoogleToken?
+
+  @@index([userId])
+  @@index([status])
+  @@map("google_integrations")
+}
+
+// Tokens OAuth do Google (criptografados)
+model GoogleToken {
+  id              String   @id @default(uuid())
+  integrationId   String   @unique
+  accessTokenEnc  String // Encrypted
+  refreshTokenEnc String // Encrypted
+  expiresAt       DateTime
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  integration GoogleIntegration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+
+  @@map("google_tokens")
+}
+
+// Eventos de demanda (métricas do Google + tracking)
+model DemandEvent {
+  id          String            @id @default(uuid())
+  userId      String
+  source      DemandEventSource
+  actionType  DemandActionType
+  occurredAt  DateTime
+  periodType  DemandPeriodType
+  periodStart DateTime
+  periodEnd   DateTime
+  value       Int               @default(1)
+  dimensions  Json?
+  rawRef      String?
+  createdAt   DateTime          @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, source, actionType, periodType, periodStart, periodEnd])
+  @@index([userId])
+  @@index([userId, occurredAt])
+  @@index([userId, actionType])
+  @@index([userId, source, occurredAt])
+  @@map("demand_events")
+}
+
+// Links de atribuição (tracking WhatsApp/Site)
+model AttributionLink {
+  id         String              @id @default(uuid())
+  userId     String
+  slug       String              @unique
+  type       AttributionLinkType
+  targetUrl  String
+  clickCount Int                 @default(0)
+  isActive   Boolean             @default(true)
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([slug])
+  @@map("attribution_links")
+}
+
+// Insights de crescimento gerados automaticamente
+model GrowthInsight {
+  id              String                @id @default(uuid())
+  userId          String
+  type            GrowthInsightType
+  severity        GrowthInsightSeverity
+  title           String
+  description     String
+  recommendations Json // Array de strings
+  metrics         Json? // Dados numéricos do insight
+  isRead          Boolean               @default(false)
+  isDismissed     Boolean               @default(false)
+  expiresAt       DateTime?
+  createdAt       DateTime              @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+  @@map("growth_insights")
 }

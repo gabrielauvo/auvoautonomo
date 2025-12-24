@@ -132,7 +132,8 @@
     "gettingStarted": "Comece Aqui",
     "cadastros": "Cadastros",
     "financeiro": "Financeiro",
-    "referral": "Indique e Ganhe"
+    "referral": "Indique e Ganhe",
+    "googleBusinessManage": "Gestão Google"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -974,7 +975,9 @@
     "overallRate": "Taxa geral",
     "actionsOverTime": "Ações ao Longo do Tempo",
     "noTimeSeriesData": "Sem dados temporais",
-    "noTimeSeriesDataDescription": "Ainda não há dados para o período selecionado."
+    "noTimeSeriesDataDescription": "Ainda não há dados para o período selecionado.",
+    "manageBusiness": "Gerenciar Negócio",
+    "manageBusinessDescription": "Responda avaliações, publique posts, gerencie fotos e atualize informações"
   },
   "plan": {
     "title": "Plano",
@@ -1053,6 +1056,140 @@
     "date": "Data inválida",
     "number": "Deve ser um número",
     "positive": "Deve ser um valor positivo"
+  },
+  "googleBusiness": {
+    "manageTitle": "Gerenciar Google Meu Negócio",
+    "manageSubtitle": "Gerencie avaliações, posts, fotos e informações do seu negócio",
+    "connectFirst": "Conecte sua conta primeiro",
+    "connectFirstDescription": "Para gerenciar seu Google Meu Negócio, você precisa primeiro conectar sua conta nas configurações de integrações.",
+    "goToIntegrations": "Ir para Integrações",
+    "backToGrowth": "Voltar",
+    "tabs": {
+      "reviews": "Avaliações",
+      "posts": "Posts",
+      "media": "Fotos",
+      "questions": "Perguntas",
+      "businessInfo": "Informações"
+    },
+    "reviews": {
+      "total": "avaliações",
+      "empty": "Nenhuma avaliação",
+      "emptyDescription": "Ainda não há avaliações para exibir.",
+      "yourReply": "Sua resposta",
+      "reply": "Responder",
+      "replyPlaceholder": "Escreva sua resposta para esta avaliação...",
+      "sendReply": "Enviar Resposta",
+      "confirmDeleteReply": "Tem certeza que deseja excluir sua resposta?",
+      "loadMore": "Carregar mais avaliações"
+    },
+    "posts": {
+      "total": "posts",
+      "empty": "Nenhum post",
+      "emptyDescription": "Crie seu primeiro post para divulgar seu negócio.",
+      "createFirst": "Criar Primeiro Post",
+      "newPost": "Novo Post",
+      "editPost": "Editar Post",
+      "type": "Tipo de Post",
+      "types": {
+        "standard": "Atualização",
+        "event": "Evento",
+        "offer": "Oferta"
+      },
+      "content": "Conteúdo",
+      "contentPlaceholder": "Escreva o conteúdo do seu post...",
+      "imageUrl": "URL da Imagem",
+      "eventTitle": "Título do Evento",
+      "eventTitlePlaceholder": "Nome do seu evento",
+      "startDate": "Data de Início",
+      "endDate": "Data de Término",
+      "couponCode": "Código do Cupom",
+      "couponCodePlaceholder": "Ex: PROMO20",
+      "termsConditions": "Termos e Condições",
+      "termsConditionsPlaceholder": "Condições da oferta...",
+      "ctaType": "Botão de Ação",
+      "ctaUrl": "Link do Botão",
+      "cta": {
+        "learnMore": "Saiba Mais",
+        "book": "Reservar",
+        "order": "Pedir",
+        "shop": "Comprar",
+        "signUp": "Cadastrar",
+        "call": "Ligar"
+      },
+      "publish": "Publicar",
+      "confirmDelete": "Tem certeza que deseja excluir este post?",
+      "loadMore": "Carregar mais posts"
+    },
+    "media": {
+      "total": "fotos",
+      "empty": "Nenhuma foto",
+      "emptyDescription": "Adicione fotos para mostrar seu negócio aos clientes.",
+      "uploadFirst": "Enviar Primeira Foto",
+      "upload": "Enviar Foto",
+      "imageUrl": "URL da Imagem",
+      "imageUrlHint": "A imagem deve estar hospedada em um servidor público acessível.",
+      "category": "Categoria",
+      "categories": {
+        "additional": "Adicional",
+        "cover": "Capa",
+        "profile": "Perfil",
+        "logo": "Logo",
+        "exterior": "Exterior",
+        "interior": "Interior",
+        "product": "Produto",
+        "atWork": "Trabalho",
+        "foodAndDrink": "Comida e Bebida",
+        "teams": "Equipe"
+      },
+      "description": "Descrição",
+      "descriptionPlaceholder": "Descrição da imagem (opcional)",
+      "uploadButton": "Enviar",
+      "preview": "Visualizar Imagem",
+      "confirmDelete": "Tem certeza que deseja excluir esta foto?",
+      "loadMore": "Carregar mais fotos"
+    },
+    "questions": {
+      "total": "perguntas",
+      "empty": "Nenhuma pergunta",
+      "emptyDescription": "Ainda não há perguntas de clientes para responder.",
+      "answers": "Respostas",
+      "owner": "Proprietário",
+      "answered": "Respondida",
+      "pending": "Aguardando",
+      "pendingAnswers": "aguardando resposta",
+      "answer": "Responder",
+      "addAnotherAnswer": "Adicionar Resposta",
+      "answerPlaceholder": "Escreva sua resposta para esta pergunta...",
+      "sendAnswer": "Enviar Resposta",
+      "confirmDeleteAnswer": "Tem certeza que deseja excluir sua resposta?",
+      "loadMore": "Carregar mais perguntas"
+    },
+    "businessInfo": {
+      "basicInfo": "Informações Básicas",
+      "name": "Nome do Negócio",
+      "address": "Endereço",
+      "editInGoogle": "Para alterar nome ou endereço, acesse diretamente o Google Meu Negócio.",
+      "saved": "Alterações salvas com sucesso!",
+      "description": "Descrição",
+      "descriptionPlaceholder": "Descreva seu negócio...",
+      "phone": "Telefone",
+      "phonePlaceholder": "(00) 00000-0000",
+      "website": "Website",
+      "websitePlaceholder": "https://seusite.com.br",
+      "hours": "Horário de Funcionamento",
+      "saveHours": "Salvar Horários",
+      "open": "Aberto",
+      "closed": "Fechado",
+      "days": {
+        "monday": "Segunda",
+        "tuesday": "Terça",
+        "wednesday": "Quarta",
+        "thursday": "Quinta",
+        "friday": "Sexta",
+        "saturday": "Sábado",
+        "sunday": "Domingo"
+      }
+    }
   },
   "inventory": {
     "title": "Estoque",

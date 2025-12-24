@@ -8,6 +8,8 @@ import { AttributionLinksController, TrackingRedirectController } from './attrib
 import { GrowthDashboardService } from './growth-dashboard.service';
 import { GrowthDashboardController } from './growth-dashboard.controller';
 import { GrowthInsightsService } from './growth-insights.service';
+import { GoogleManagementService } from './google-management.service';
+import { GoogleManagementController } from './google-management.controller';
 
 @Module({
   imports: [ConfigModule],
@@ -16,6 +18,7 @@ import { GrowthInsightsService } from './growth-insights.service';
     AttributionLinksController,
     TrackingRedirectController,
     GrowthDashboardController,
+    GoogleManagementController,
   ],
   providers: [
     GoogleOAuthService,
@@ -23,6 +26,7 @@ import { GrowthInsightsService } from './growth-insights.service';
     AttributionLinksService,
     GrowthDashboardService,
     GrowthInsightsService,
+    GoogleManagementService,
   ],
   exports: [
     GoogleOAuthService,
@@ -30,6 +34,7 @@ import { GrowthInsightsService } from './growth-insights.service';
     AttributionLinksService,
     GrowthDashboardService,
     GrowthInsightsService,
+    GoogleManagementService,
   ],
 })
 export class GoogleBusinessModule {}

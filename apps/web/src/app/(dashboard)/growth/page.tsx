@@ -45,6 +45,7 @@ import {
   X,
   Check,
   Plug,
+  Briefcase,
 } from 'lucide-react';
 import {
   useGrowthDashboard,
@@ -507,6 +508,11 @@ function GrowthDashboardContent() {
             >
               {t('sync')}
             </Button>
+            <Link href="/google-business">
+              <Button variant="primary" leftIcon={<Briefcase className="h-4 w-4" />}>
+                {t('manageBusiness')}
+              </Button>
+            </Link>
             <Link href="/settings/integrations">
               <Button variant="ghost" leftIcon={<Settings className="h-4 w-4" />}>
                 {t('settings')}

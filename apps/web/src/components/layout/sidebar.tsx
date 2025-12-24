@@ -25,12 +25,15 @@ import {
   Package,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Building2,
   Receipt,
   Warehouse,
   Rocket,
   Gift,
   TrendingUp,
+  FolderOpen,
+  Wallet,
 } from 'lucide-react';
 
 // Mapeamento de ícones por labelKey
@@ -38,10 +41,12 @@ const iconMap: Record<string, React.ReactNode> = {
   dashboard: <LayoutDashboard className="h-5 w-5" />,
   schedule: <Calendar className="h-5 w-5" />,
   workOrders: <Wrench className="h-5 w-5" />,
+  cadastros: <FolderOpen className="h-5 w-5" />,
   clients: <Users className="h-5 w-5" />,
   catalog: <Package className="h-5 w-5" />,
   inventory: <Warehouse className="h-5 w-5" />,
   suppliers: <Building2 className="h-5 w-5" />,
+  financeiro: <Wallet className="h-5 w-5" />,
   quotes: <FileText className="h-5 w-5" />,
   expenses: <Receipt className="h-5 w-5" />,
   billing: <CreditCard className="h-5 w-5" />,
@@ -102,6 +107,7 @@ interface SidebarProps {
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const { t } = useTranslations('navigation');
 
   const isActive = (href: string) => {
@@ -114,6 +120,19 @@ export function Sidebar({ className }: SidebarProps) {
   // Verifica se algum item do grupo está ativo
   const isGroupActive = (group: NavGroup) => {
     return group.items.some((item) => isActive(item.href));
+  };
+
+  // Toggle do grupo dropdown
+  const toggleGroup = (groupKey: string) => {
+    setExpandedGroups((prev) => ({
+      ...prev,
+      [groupKey]: !prev[groupKey],
+    }));
+  };
+
+  // Verifica se o grupo está expandido (ou se tem item ativo)
+  const isGroupExpanded = (group: NavGroup) => {
+    return expandedGroups[group.labelKey] ?? isGroupActive(group);
   };
 
   // Renderiza um item de navegação (simples ou subitem)
@@ -183,29 +202,59 @@ export function Sidebar({ className }: SidebarProps) {
         <ul className="space-y-1 px-2">
           {menuStructure.map((item) => {
             if (isNavGroup(item)) {
-              // Renderiza grupo com subitens
+              // Renderiza grupo como dropdown
               const groupActive = isGroupActive(item);
+              const expanded = isGroupExpanded(item);
+              const groupIcon = iconMap[item.labelKey];
+
               return (
                 <li key={item.labelKey}>
-                  {/* Label do grupo */}
+                  {/* Botão do dropdown */}
+                  <button
+                    onClick={() => toggleGroup(item.labelKey)}
+                    className={cn(
+                      'w-full group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
+                      groupActive
+                        ? 'text-gray-900 bg-gray-50'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    )}
+                    title={collapsed ? t(item.labelKey) : undefined}
+                  >
+                    <span className={cn(
+                      'transition-colors duration-200 flex-shrink-0',
+                      groupActive ? 'text-primary' : 'text-gray-500 group-hover:text-gray-900'
+                    )}>
+                      {groupIcon}
+                    </span>
+                    {!collapsed && (
+                      <>
+                        <span className="font-medium flex-1 text-left">{t(item.labelKey)}</span>
+                        <ChevronDown
+                          className={cn(
+                            'h-4 w-4 transition-transform duration-200',
+                            expanded ? 'rotate-180' : ''
+                          )}
+                        />
+                      </>
+                    )}
+                  </button>
+                  {/* Subitens com animação */}
                   {!collapsed && (
-                    <div className="px-3 pt-4 pb-2 first:pt-0">
-                      <span className={cn(
-                        'text-xs font-semibold uppercase tracking-wider',
-                        groupActive ? 'text-gray-900' : 'text-gray-400'
-                      )}>
-                        {t(item.labelKey)}
-                      </span>
+                    <div
+                      className={cn(
+                        'overflow-hidden transition-all duration-200',
+                        expanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                      )}
+                    >
+                      <ul className="space-y-1 mt-1 ml-4 pl-3 border-l-2 border-gray-200">
+                        {item.items.map((subItem) => (
+                          <li key={subItem.href}>
+                            {renderNavItem(subItem, true)}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   )}
-                  {/* Subitens */}
-                  <ul className="space-y-1">
-                    {item.items.map((subItem) => (
-                      <li key={subItem.href}>
-                        {renderNavItem(subItem, true)}
-                      </li>
-                    ))}
-                  </ul>
                 </li>
               );
             } else {

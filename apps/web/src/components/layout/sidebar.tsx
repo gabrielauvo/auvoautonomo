@@ -29,6 +29,8 @@ import {
   Receipt,
   Warehouse,
   Rocket,
+  Gift,
+  TrendingUp,
 } from 'lucide-react';
 
 // Mapeamento de ícones por labelKey
@@ -43,6 +45,7 @@ const iconMap: Record<string, React.ReactNode> = {
   quotes: <FileText className="h-5 w-5" />,
   expenses: <Receipt className="h-5 w-5" />,
   billing: <CreditCard className="h-5 w-5" />,
+  growth: <TrendingUp className="h-5 w-5" />,
   reports: <BarChart3 className="h-5 w-5" />,
 };
 
@@ -88,6 +91,7 @@ const menuStructure: MenuItem[] = [
       { labelKey: 'billing', href: '/billing/charges' },
     ],
   },
+  { labelKey: 'growth', href: '/growth' },
   { labelKey: 'reports', href: '/reports' },
 ];
 
@@ -215,6 +219,30 @@ export function Sidebar({ className }: SidebarProps) {
           })}
         </ul>
       </nav>
+
+      {/* Indique e Ganhe */}
+      <div className="px-2 pb-2">
+        <Link
+          href="/referral"
+          className={cn(
+            'group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
+            pathname === '/referral'
+              ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg'
+              : 'bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 hover:from-amber-100 hover:to-orange-100 border border-amber-200'
+          )}
+          title={collapsed ? t('referral') : undefined}
+        >
+          <span className={cn(
+            'transition-colors duration-200 flex-shrink-0',
+            pathname === '/referral' ? 'text-white' : 'text-amber-600'
+          )}>
+            <Gift className="h-5 w-5" />
+          </span>
+          {!collapsed && (
+            <span className="font-medium">{t('referral')}</span>
+          )}
+        </Link>
+      </div>
 
       {/* Comece Aqui - Item fixo no rodapé */}
       <div className="px-2 pb-2">

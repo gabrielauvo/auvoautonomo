@@ -33,3 +33,26 @@ export {
 export { DeviceContactsService } from './DeviceContactsService';
 export type { CreateContactInput, ContactCreationResult } from './DeviceContactsService';
 export { normalizePhone, areNamesSimilar } from './DeviceContactsService';
+
+// Referral
+export { ReferralService } from './ReferralService';
+
+// Growth (Google Business)
+export { GrowthService } from './GrowthService';
+export type {
+  GoogleIntegrationStatus,
+  GoogleIntegrationStatusResponse,
+  KpiCard,
+  DashboardSummary,
+  TimeSeriesPoint,
+  TimeSeries,
+  ChannelBreakdown,
+  ConversionFunnelStage,
+  ConversionFunnel,
+  DashboardData,
+  DashboardPeriod as GrowthDashboardPeriod,
+  DashboardQueryParams,
+  GrowthInsightType,
+  GrowthInsightSeverity,
+  GrowthInsight,
+} from './GrowthService';

@@ -40,6 +40,7 @@ import {
   useDisconnectAsaas,
 } from '@/hooks/use-integrations';
 import { AsaasEnvironment } from '@/services/integrations.service';
+import { GoogleBusinessIntegration } from '@/components/settings/google-business-integration';
 
 export default function IntegrationsSettingsPage() {
   const { t } = useTranslations('integrations');
@@ -303,6 +304,9 @@ export default function IntegrationsSettingsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Google Business Integration */}
+      <GoogleBusinessIntegration />
 
       {/* Disconnect confirmation modal */}
       {showDisconnectConfirm && (

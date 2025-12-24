@@ -294,15 +294,6 @@ export default async function ReferralLandingPage({ params, searchParams }: Page
             <p className="text-purple-200 text-sm mb-2">Código de indicação:</p>
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
               <span className="font-mono font-bold text-white text-lg tracking-wider">{code}</span>
-              <button
-                onClick={() => navigator.clipboard?.writeText(code)}
-                className="text-purple-200 hover:text-white transition-colors"
-                title="Copiar código"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-              </button>
             </div>
             <p className="text-purple-300 text-xs mt-2">
               Use este código ao criar sua conta para ativar o benefício

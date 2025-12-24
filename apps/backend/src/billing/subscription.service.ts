@@ -1,6 +1,9 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PlanType, SubscriptionStatus, BillingPeriod, PaymentMethod } from '@prisma/client';
+
+// Trial duration in days
+const TRIAL_DURATION_DAYS = 14;
 import {
   EffectivePlan,
   UsageLimits,
@@ -132,29 +135,99 @@ export class SubscriptionService {
 
   /**
    * Get full billing status including plan, limits, and usage
+   * If user doesn't have a subscription, creates a trial subscription automatically
    */
   async getBillingStatus(userId: string): Promise<BillingStatusResponse> {
+    // Check if subscription exists
+    let subscription = await this.prisma.userSubscription.findUnique({
+      where: { userId },
+      include: { plan: true },
+    });
+
+    // If no subscription, auto-create trial subscription
+    if (!subscription) {
+      subscription = await this.createTrialSubscription(userId);
+    }
+
     const [effectivePlan, usage] = await Promise.all([
       this.getUserEffectivePlan(userId),
       this.getCurrentUsage(userId),
     ]);
 
-    // Get subscription details for dates
-    const subscription = await this.prisma.userSubscription.findUnique({
-      where: { userId },
-    });
+    // Calculate trial days remaining
+    let trialDaysRemaining = 0;
+    if (subscription?.trialEndAt) {
+      const now = new Date();
+      const trialEnd = new Date(subscription.trialEndAt);
+      const diffTime = trialEnd.getTime() - now.getTime();
+      trialDaysRemaining = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+    }
+
+    // Determine subscription status
+    let subscriptionStatus = effectivePlan.subscriptionStatus;
+    if (subscription?.status === SubscriptionStatus.TRIALING && trialDaysRemaining <= 0) {
+      subscriptionStatus = 'EXPIRED';
+    }
 
     return {
       planKey: effectivePlan.planKey,
       planName: effectivePlan.planName,
-      subscriptionStatus: effectivePlan.subscriptionStatus,
+      subscriptionStatus,
       limits: effectivePlan.limits,
       usage,
       currentPeriodStart: subscription?.currentPeriodStart?.toISOString() || null,
       currentPeriodEnd: subscription?.currentPeriodEnd?.toISOString() || null,
       trialEndAt: subscription?.trialEndAt?.toISOString() || null,
+      trialDaysRemaining,
       cancelAtPeriodEnd: subscription?.cancelAtPeriodEnd || false,
     };
+  }
+
+  /**
+   * Create trial subscription for existing users without one
+   */
+  private async createTrialSubscription(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return null;
+    }
+
+    // Get PRO plan for trial
+    const proPlan = await this.prisma.plan.findUnique({
+      where: { type: PlanType.PRO },
+    });
+
+    if (!proPlan) {
+      this.logger.warn('PRO plan not found, cannot create trial subscription');
+      return null;
+    }
+
+    // Calculate trial end based on user creation date
+    const trialEndAt = new Date(user.createdAt);
+    trialEndAt.setDate(trialEndAt.getDate() + TRIAL_DURATION_DAYS);
+
+    try {
+      const subscription = await this.prisma.userSubscription.create({
+        data: {
+          userId,
+          planId: proPlan.id,
+          status: SubscriptionStatus.TRIALING,
+          trialEndAt,
+          currentPeriodStart: user.createdAt,
+          currentPeriodEnd: trialEndAt,
+        },
+        include: { plan: true },
+      });
+
+      this.logger.log(`Auto-created trial subscription for user ${userId}`);
+      return subscription;
+    } catch (error) {
+      this.logger.error(`Failed to create trial subscription for user ${userId}:`, error);
+      return null;
+    }
   }
 
   /**

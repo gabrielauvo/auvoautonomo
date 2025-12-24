@@ -53,12 +53,13 @@ export interface EffectivePlan {
 export interface BillingStatusResponse {
   planKey: PlanType;
   planName: string;
-  subscriptionStatus: 'FREE' | SubscriptionStatus;
+  subscriptionStatus: 'FREE' | SubscriptionStatus | 'EXPIRED';
   limits: UsageLimits;
   usage: CurrentUsage;
   currentPeriodStart?: string | null;
   currentPeriodEnd?: string | null;
   trialEndAt?: string | null;
+  trialDaysRemaining?: number;
   cancelAtPeriodEnd?: boolean;
 }
 

@@ -224,8 +224,8 @@ export function SupplierForm({ supplier, onSuccess, onCancel }: SupplierFormProp
         setLimitError({
           error: 'LIMIT_REACHED',
           resource: 'SUPPLIER',
-          plan: billing?.planKey || 'FREE',
-          max: billing?.limits?.maxSuppliers || 10,
+          plan: billing?.planKey || 'TRIAL',
+          max: -1,
           current: 0,
         });
         setShowUpsellModal(true);

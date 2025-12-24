@@ -103,7 +103,7 @@ function FinanceReportContent() {
   const { billing } = useAuth();
   const { t } = useTranslations('reports');
 
-  const isPro = billing?.planKey !== 'FREE';
+  const isPro = true;
 
   const { data, isLoading, error, refetch } = useFinanceReport(filters, isPro);
 

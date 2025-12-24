@@ -233,13 +233,13 @@ export function ClientForm({ client, onSuccess, onCancel }: ClientFormProps) {
       const errorMessage = error.message || '';
 
       if (errorMessage.includes('LIMIT_REACHED') || errorMessage.includes('limite')) {
-        // Tenta extrair dados do erro
+        // Tenta extrair dados do erro (mantido por compatibilidade, mas novo modelo não tem limites)
         setLimitError({
           error: 'LIMIT_REACHED',
           resource: 'CLIENT',
-          plan: billing?.planKey || 'FREE',
-          max: billing?.limits?.maxClients || 10,
-          current: billing?.usage?.clientsCount || 0,
+          plan: billing?.planKey || 'TRIAL',
+          max: -1,
+          current: 0,
         });
         setShowUpsellModal(true);
       } else {

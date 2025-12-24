@@ -1,73 +1,51 @@
 /**
- * Billing Service - Serviço de Planos e Limites
+ * Billing Service - Serviço de Planos e Assinaturas
  *
  * Gerencia:
- * - Status do plano atual
- * - Quota e uso
- * - Informações de billing
+ * - Status do plano atual (Trial ou PRO)
+ * - Período de teste de 14 dias
  * - Checkout PIX e Cartão de Crédito
+ * - Preços: R$ 99,90/mês ou R$ 89,90/mês (anual)
  */
 
 import api, { getErrorMessage } from './api';
 
+/** Duração do trial em dias */
+export const TRIAL_DURATION_DAYS = 14;
+
+/** Preços do plano PRO */
+export const PRO_PLAN_PRICING = {
+  MONTHLY: 99.90,
+  YEARLY: 89.90, // por mês
+  YEARLY_TOTAL: 1078.80, // total anual
+  YEARLY_SAVINGS: 119.00, // economia vs mensal
+};
+
 /**
  * Tipos de dados de billing
  */
-export interface UsageLimits {
-  maxClients: number;
-  maxQuotes: number;
-  maxWorkOrders: number;
-  maxPayments: number;
-  maxSuppliers: number;
-  maxExpenses: number;
-  maxNotificationsPerMonth: number;
-  enableAdvancedAutomations: boolean;
-  enableAdvancedAnalytics: boolean;
-  enableClientPortal: boolean;
-  enablePdfExport: boolean;
-  enableDigitalSignature: boolean;
-  enableWhatsApp: boolean;
-}
-
-export interface CurrentUsage {
-  clientsCount: number;
-  quotesCount: number;
-  workOrdersCount: number;
-  paymentsCount: number;
-  notificationsSentThisMonth: number;
-}
+export type BillingPeriod = 'MONTHLY' | 'YEARLY';
 
 export interface BillingStatus {
-  planKey: 'FREE' | 'PRO' | 'TEAM';
+  /** Tipo do plano: TRIAL (14 dias grátis) ou PRO (pago) */
+  planKey: 'TRIAL' | 'PRO';
   planName: string;
-  subscriptionStatus?: 'FREE' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED' | 'TRIALING';
-  status?: 'FREE' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED' | 'TRIALING';
-  limits?: Partial<UsageLimits>;
-  usage?: Partial<CurrentUsage>;
-  features?: {
-    advancedReports?: boolean;
-    exportPdf?: boolean;
-    whatsapp?: boolean;
-  };
+  /** Status da assinatura */
+  subscriptionStatus: 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED' | 'BLOCKED' | 'EXPIRED';
+  /** Período de cobrança (mensal ou anual) */
+  billingPeriod?: BillingPeriod;
+  /** Data de início do período atual */
   currentPeriodStart?: string | null;
+  /** Data de fim do período atual */
   currentPeriodEnd?: string | null;
+  /** Data de fim do trial (apenas para TRIALING) */
   trialEndAt?: string | null;
+  /** Dias restantes do trial */
+  trialDaysRemaining?: number;
+  /** Se vai cancelar no fim do período */
   cancelAtPeriodEnd?: boolean;
-}
-
-export interface QuotaInfo {
-  remaining: number;
-  max: number;
-  current: number;
-  unlimited: boolean;
-}
-
-export interface AllQuotas {
-  clients: QuotaInfo;
-  quotes: QuotaInfo;
-  workOrders: QuotaInfo;
-  payments: QuotaInfo;
-  notifications: QuotaInfo;
+  /** Data de criação da conta */
+  createdAt?: string;
 }
 
 /**
@@ -83,34 +61,23 @@ export async function getBillingStatus(): Promise<BillingStatus> {
 }
 
 /**
- * Obtém quota de um recurso específico
+ * Calcula dias restantes do trial
  */
-export async function getQuota(resource?: string): Promise<QuotaInfo | AllQuotas> {
-  try {
-    const url = resource ? `/billing/quota?resource=${resource}` : '/billing/quota';
-    const response = await api.get(url);
-    return response.data;
-  } catch (error) {
-    throw new Error(getErrorMessage(error));
-  }
+export function calculateTrialDaysRemaining(trialEndAt: string | null | undefined): number {
+  if (!trialEndAt) return 0;
+  const now = new Date();
+  const endDate = new Date(trialEndAt);
+  const diffTime = endDate.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return Math.max(0, diffDays);
 }
 
 /**
- * Verifica se um limite está disponível
+ * Verifica se o trial expirou
  */
-export async function checkLimit(resource: string): Promise<{
-  allowed: boolean;
-  resource: string;
-  plan: string;
-  max: number;
-  current: number;
-}> {
-  try {
-    const response = await api.get(`/billing/check-limit/${resource}`);
-    return response.data;
-  } catch (error) {
-    throw new Error(getErrorMessage(error));
-  }
+export function isTrialExpired(trialEndAt: string | null | undefined): boolean {
+  if (!trialEndAt) return false;
+  return new Date(trialEndAt) < new Date();
 }
 
 // ============================================
@@ -121,6 +88,8 @@ export interface CheckoutPixDto {
   cpfCnpj: string;
   phone?: string;
   name?: string;
+  /** Período de cobrança */
+  billingPeriod: BillingPeriod;
 }
 
 export interface CheckoutCreditCardDto {
@@ -138,6 +107,9 @@ export interface CheckoutCreditCardDto {
   expiryMonth: string;
   expiryYear: string;
   ccv: string;
+
+  /** Período de cobrança */
+  billingPeriod: BillingPeriod;
 }
 
 export interface PixCheckoutResult {
@@ -233,13 +205,16 @@ export async function reactivateSubscription(): Promise<{ success: boolean; mess
 
 export const billingService = {
   getBillingStatus,
-  getQuota,
-  checkLimit,
+  calculateTrialDaysRemaining,
+  isTrialExpired,
   checkoutPix,
   checkPixStatus,
   checkoutCreditCard,
   cancelSubscription,
   reactivateSubscription,
+  // Constantes
+  TRIAL_DURATION_DAYS,
+  PRO_PLAN_PRICING,
 };
 
 export default billingService;

@@ -95,17 +95,30 @@ export interface ApiError {
 // BILLING TYPES
 // =============================================================================
 
-export type PlanType = 'FREE' | 'STARTER' | 'PRO' | 'ENTERPRISE';
-export type SubscriptionStatus = 'ACTIVE' | 'PAST_DUE' | 'CANCELED' | 'BLOCKED' | 'TRIAL';
+export type PlanType = 'TRIAL' | 'PRO';
+export type SubscriptionStatus = 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED' | 'BLOCKED' | 'EXPIRED';
+export type BillingPeriod = 'MONTHLY' | 'YEARLY';
 export type PaymentMethod = 'PIX' | 'CREDIT_CARD' | 'BOLETO';
 export type PaymentStatus = 'PENDING' | 'CONFIRMED' | 'FAILED' | 'REFUNDED';
+
+/** Duração do trial em dias */
+export const TRIAL_DURATION_DAYS = 14;
+
+/** Preços do plano PRO */
+export const PRO_PLAN_PRICING = {
+  MONTHLY: 99.90,
+  YEARLY: 89.90, // por mês (total 1078.80/ano)
+  YEARLY_TOTAL: 1078.80,
+  YEARLY_SAVINGS: 119.00, // economia anual vs mensal
+};
 
 export interface Plan {
   id: string;
   type: PlanType;
   name: string;
   description?: string;
-  price: number;
+  monthlyPrice: number;
+  yearlyPrice: number;
   features: string[];
 }
 

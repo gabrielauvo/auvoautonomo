@@ -55,7 +55,7 @@ export default function ReportsOverviewPage() {
   const { billing } = useAuth();
   const { t } = useTranslations('reports');
 
-  const isPro = billing?.planKey !== 'FREE';
+  const isPro = true;
 
   const { data: analytics, isLoading, error, refetch } = useAnalyticsOverview({
     startDate: filters.startDate,

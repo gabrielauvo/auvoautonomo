@@ -53,7 +53,7 @@ const SOURCE_OPTIONS = [
 ] as const;
 
 export default function MovementsPage() {
-  const t = useTranslations('inventory');
+  const { t } = useTranslations('inventory');
 
   // Filters
   const [type, setType] = useState<string>('');

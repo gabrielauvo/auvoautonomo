@@ -613,9 +613,9 @@ export function QuoteForm({ quote, onSuccess, onCancel, preselectedClientId }: Q
         isOpen={showUpsellModal}
         onClose={() => setShowUpsellModal(false)}
         resource="QUOTE"
-        currentPlan={billing?.planKey || 'FREE'}
-        max={billing?.limits?.maxQuotes || 20}
-        current={billing?.usage?.quotesCount || 0}
+        currentPlan={billing?.planKey || 'TRIAL'}
+        max={-1}
+        current={0}
       />
     </>
   );

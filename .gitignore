@@ -82,3 +82,6 @@ secrets.tfvars
 
 # Windows NUL files (erros)
 nul
+
+.vercel
+.env*.local

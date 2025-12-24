@@ -2,13 +2,18 @@ import {
   Injectable,
   ConflictException,
   UnauthorizedException,
+  BadRequestException,
   Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
+import { EmailService } from '../email/email.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 export interface GoogleUser {
   email: string;
@@ -53,6 +58,7 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private emailService: EmailService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -254,5 +260,105 @@ export class AuthService {
       user: userWithoutPassword,
       token,
     };
+  }
+
+  /**
+   * Solicita redefinição de senha
+   * Por segurança, sempre retorna sucesso mesmo se o email não existir
+   */
+  async forgotPassword(dto: ForgotPasswordDto): Promise<{ success: boolean }> {
+    this.logger.log(`Password reset requested for: ${this.maskEmail(dto.email)}`);
+
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
+
+    // Se usuário não existe, retorna sucesso silenciosamente (segurança)
+    if (!user) {
+      this.logger.warn(`Password reset: email not found (silent success)`);
+      return { success: true };
+    }
+
+    // Se usuário foi criado via Google, não pode resetar senha
+    if (user.googleId && !user.password) {
+      this.logger.warn(`Password reset: Google OAuth user (silent success)`);
+      return { success: true };
+    }
+
+    // Gerar token seguro
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(resetToken)
+      .digest('hex');
+
+    // Token expira em 1 hora
+    const expires = new Date(Date.now() + 60 * 60 * 1000);
+
+    // Salvar token hasheado no banco
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordResetToken: hashedToken,
+        passwordResetExpires: expires,
+      },
+    });
+
+    // Enviar email
+    const emailSent = await this.emailService.sendPasswordResetEmail(
+      user.email,
+      resetToken, // Enviamos o token original, não o hasheado
+    );
+
+    if (!emailSent) {
+      this.logger.error(`Failed to send password reset email to ${this.maskEmail(dto.email)}`);
+    } else {
+      this.logger.log(`Password reset email sent to ${this.maskEmail(dto.email)}`);
+    }
+
+    return { success: true };
+  }
+
+  /**
+   * Redefine a senha usando o token
+   */
+  async resetPassword(dto: ResetPasswordDto): Promise<{ success: boolean }> {
+    // Hash do token recebido para comparar com o banco
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(dto.token)
+      .digest('hex');
+
+    // Buscar usuário com token válido e não expirado
+    const user = await this.prisma.user.findFirst({
+      where: {
+        passwordResetToken: hashedToken,
+        passwordResetExpires: {
+          gt: new Date(),
+        },
+      },
+    });
+
+    if (!user) {
+      this.logger.warn('Password reset: invalid or expired token');
+      throw new BadRequestException('Token inválido ou expirado');
+    }
+
+    // Hash da nova senha
+    const hashedPassword = await bcrypt.hash(dto.password, 12);
+
+    // Atualizar senha e limpar tokens
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        passwordResetToken: null,
+        passwordResetExpires: null,
+      },
+    });
+
+    this.logger.log(`Password reset successful for user: ${user.id}`);
+
+    return { success: true };
   }
 }

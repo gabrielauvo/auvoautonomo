@@ -105,7 +105,7 @@ function SalesReportContent() {
   const filters = useReportFilters(searchParams);
   const { billing } = useAuth();
 
-  const isPro = billing?.planKey !== 'FREE';
+  const isPro = true;
 
   const { data, isLoading, error, refetch } = useSalesReport(filters, isPro);
 

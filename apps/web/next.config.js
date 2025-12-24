@@ -1,3 +1,5 @@
+const { withSentryConfig } = require('@sentry/nextjs');
+
 /** @type {import('next').NextConfig} */
 
 /**
@@ -17,6 +19,7 @@
  */
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 const railwayUrl = 'https://monorepobackend-production.up.railway.app';
+const sentryUrl = '*.ingest.us.sentry.io';
 
 const ContentSecurityPolicy = `
   default-src 'self';
@@ -24,7 +27,7 @@ const ContentSecurityPolicy = `
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
   img-src 'self' blob: data: https: http://localhost:3001 ${apiUrl} ${railwayUrl} *.railway.app;
   font-src 'self' data: https://fonts.gstatic.com;
-  connect-src 'self' ${apiUrl} ${railwayUrl} https://wa.me;
+  connect-src 'self' ${apiUrl} ${railwayUrl} https://wa.me ${sentryUrl};
   frame-src 'none';
   frame-ancestors 'none';
   base-uri 'self';
@@ -197,5 +200,26 @@ const nextConfig = {
   poweredByHeader: false,
 };
 
-module.exports = nextConfig;
+// Sentry configuration
+const sentryWebpackPluginOptions = {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+
+  // Suppress logs during build
+  silent: !process.env.CI,
+
+  // Upload source maps for better error tracking
+  widenClientFileUpload: true,
+
+  // Hide source maps from users
+  hideSourceMaps: true,
+
+  // Disable Sentry's telemetry
+  disableLogger: true,
+
+  // Automatically tree-shake Sentry logger in production
+  automaticVercelMonitors: true,
+};
+
+module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);
 // Trigger rebuild sáb, 20 de dez de 2025 18:38:20

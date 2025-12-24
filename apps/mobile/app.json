@@ -4,6 +4,7 @@
     "slug": "auvo-field",
     "owner": "auvo",
     "version": "1.0.0",
+    "sdkVersion": "52.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -11,7 +12,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#2563EB"
+      "backgroundColor": "#7C3AED"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -23,7 +24,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#2563EB"
+        "backgroundColor": "#7C3AED"
       },
       "package": "com.auvo.field.preview"
     },
@@ -32,6 +33,15 @@
       "bundler": "metro"
     },
     "scheme": "auvofield",
+    "plugins": [
+      [
+        "@sentry/react-native/expo",
+        {
+          "organization": "autonomos",
+          "project": "react-native"
+        }
+      ]
+    ],
     "extra": {
       "eas": {
         "projectId": "fdf3f160-daec-4bb5-8555-d67f198d24d8"
@@ -41,8 +51,6 @@
       "enabled": true,
       "url": "https://u.expo.dev/fdf3f160-daec-4bb5-8555-d67f198d24d8"
     },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    }
+    "runtimeVersion": "1.0.0"
   }
 }

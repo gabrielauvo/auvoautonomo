@@ -266,8 +266,8 @@ export function ExpenseForm({ expense, onSuccess, onCancel }: ExpenseFormProps) 
         setLimitError({
           error: 'LIMIT_REACHED',
           resource: 'EXPENSE',
-          plan: billing?.planKey || 'FREE',
-          max: billing?.limits?.maxExpenses || 20,
+          plan: billing?.planKey || 'TRIAL',
+          max: -1,
           current: 0,
         });
         setShowUpsellModal(true);

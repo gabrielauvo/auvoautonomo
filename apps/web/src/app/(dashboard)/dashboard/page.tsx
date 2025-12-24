@@ -134,29 +134,8 @@ function DashboardContent() {
           </Alert>
         )}
 
-        {/* Alerta de limite (se FREE) */}
-        {billing?.planKey === 'FREE' && billing.usage && (
-          <Card className="border-warning-200 bg-warning-50">
-            <CardContent className="py-4">
-              <div className="flex items-start gap-4">
-                <AlertCircle className="h-5 w-5 text-warning mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-warning-800">
-                    {t('freePlan')}
-                  </p>
-                  <p className="text-xs text-warning-700 mt-1">
-                    {t('usageMessage', { current: billing.usage?.clientsCount ?? 0, max: billing.limits?.maxClients ?? 0 })}
-                    {' '}
-                    <a href="/settings/plan" className="underline font-medium">
-                      {t('upgradeLink')}
-                    </a>
-                    {' '}{t('unlimitedFeatures')}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* Alerta removido - Novo modelo de billing não tem limite */}
+        {/* O TrialBanner no layout já mostra os dias restantes do trial */}
 
         {/* Cards de estatísticas - Linha 1: Financeiro */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

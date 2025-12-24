@@ -144,10 +144,9 @@ function SuppliersListContent() {
   const startIndex = (currentPage - 1) * PAGE_SIZE;
   const paginatedSuppliers = suppliers?.slice(startIndex, startIndex + PAGE_SIZE) || [];
 
-  // Verifica se está no limite
-  const isAtLimit = billing?.planKey === 'FREE' &&
-    billing?.limits &&
-    (suppliers?.length ?? 0) >= (billing.limits.maxSuppliers ?? Infinity);
+  // Com o novo modelo de billing, não há limite de fornecedores
+  // Trial e PRO têm tudo liberado
+  const isAtLimit = false;
 
   // Handler para novo fornecedor
   const handleNewSupplier = useCallback(() => {
@@ -431,9 +430,9 @@ function SuppliersListContent() {
           isOpen={showUpsellModal}
           onClose={() => setShowUpsellModal(false)}
           resource="SUPPLIER"
-          currentPlan={billing?.planKey || 'FREE'}
-          max={billing?.limits?.maxSuppliers || 10}
-          current={suppliers?.length || 0}
+          currentPlan={billing?.planKey || 'TRIAL'}
+          max={-1}
+          current={0}
         />
 
         {/* Modal de confirmação de exclusão */}

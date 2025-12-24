@@ -107,7 +107,7 @@ export interface UpdateCompanyDto {
 }
 
 // Plano e assinatura
-export type PlanType = 'FREE' | 'PRO' | 'TEAM';
+export type PlanType = 'TRIAL' | 'PRO';
 
 export interface PlanInfo {
   type: PlanType;
@@ -137,13 +137,22 @@ export interface PlanUsage {
 }
 
 export interface SubscriptionInfo {
-  id: string;
-  plan: PlanInfo;
-  usage: PlanUsage;
-  status: 'active' | 'canceled' | 'past_due' | 'trialing';
-  currentPeriodStart: string;
-  currentPeriodEnd: string;
-  cancelAtPeriodEnd: boolean;
+  id?: string;
+  /** Tipo do plano: TRIAL ou PRO */
+  planKey: 'TRIAL' | 'PRO';
+  planName: string;
+  /** Status da assinatura */
+  subscriptionStatus: 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED' | 'BLOCKED' | 'EXPIRED';
+  /** Período de cobrança (mensal ou anual) */
+  billingPeriod?: 'MONTHLY' | 'YEARLY';
+  currentPeriodStart?: string | null;
+  currentPeriodEnd?: string | null;
+  /** Data de fim do trial */
+  trialEndAt?: string | null;
+  /** Dias restantes do trial */
+  trialDaysRemaining?: number;
+  cancelAtPeriodEnd?: boolean;
+  createdAt?: string;
 }
 
 export interface UpgradeResult {
@@ -328,31 +337,10 @@ export const DEFAULT_NOTIFICATION_MESSAGES: NotificationMessages = {
 // ============================================
 
 export const PLAN_FEATURES: Record<PlanType, PlanInfo> = {
-  FREE: {
-    type: 'FREE',
-    name: 'Gratuito',
+  TRIAL: {
+    type: 'TRIAL',
+    name: 'Trial (14 dias)',
     price: 0,
-    billingCycle: 'monthly',
-    features: [
-      'Até 20 clientes',
-      'Até 20 orçamentos/mês',
-      'Até 20 OS/mês',
-      'Até 20 cobranças/mês',
-      'Suporte por email',
-    ],
-    limits: {
-      maxClients: 20,
-      maxQuotes: 20,
-      maxWorkOrders: 20,
-      maxPayments: 20,
-      maxAttachments: 50,
-      maxUsers: 1,
-    },
-  },
-  PRO: {
-    type: 'PRO',
-    name: 'Profissional',
-    price: 49.9,
     billingCycle: 'monthly',
     features: [
       'Clientes ilimitados',
@@ -361,30 +349,8 @@ export const PLAN_FEATURES: Record<PlanType, PlanInfo> = {
       'Cobranças ilimitadas',
       'Templates personalizados',
       'Relatórios avançados',
-      'Suporte prioritário',
-      'Sem marca d\'água',
-    ],
-    limits: {
-      maxClients: -1, // -1 = ilimitado
-      maxQuotes: -1,
-      maxWorkOrders: -1,
-      maxPayments: -1,
-      maxAttachments: -1,
-      maxUsers: 1,
-    },
-  },
-  TEAM: {
-    type: 'TEAM',
-    name: 'Equipe',
-    price: 99.9,
-    billingCycle: 'monthly',
-    features: [
-      'Tudo do PRO',
-      'Até 5 usuários',
-      'Gestão de equipe',
-      'Permissões avançadas',
-      'API de integração',
-      'Suporte dedicado',
+      'Suporte por email',
+      'Tudo liberado por 14 dias',
     ],
     limits: {
       maxClients: -1,
@@ -392,7 +358,33 @@ export const PLAN_FEATURES: Record<PlanType, PlanInfo> = {
       maxWorkOrders: -1,
       maxPayments: -1,
       maxAttachments: -1,
-      maxUsers: 5,
+      maxUsers: 1,
+    },
+  },
+  PRO: {
+    type: 'PRO',
+    name: 'Plano PRO',
+    price: 99.9,
+    billingCycle: 'monthly',
+    features: [
+      'Clientes ilimitados',
+      'Orçamentos ilimitados',
+      'OS ilimitadas',
+      'Cobranças ilimitadas',
+      'Templates personalizados',
+      'Relatórios avançados',
+      'Exportação em PDF',
+      'Integração com WhatsApp',
+      'Suporte prioritário',
+      'Sem marca d\'água',
+    ],
+    limits: {
+      maxClients: -1,
+      maxQuotes: -1,
+      maxWorkOrders: -1,
+      maxPayments: -1,
+      maxAttachments: -1,
+      maxUsers: 1,
     },
   },
 };

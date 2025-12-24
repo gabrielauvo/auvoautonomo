@@ -842,9 +842,9 @@ export function WorkOrderForm({ workOrder, onSuccess, onCancel, preselectedClien
         isOpen={showUpsellModal}
         onClose={() => setShowUpsellModal(false)}
         resource="WORK_ORDER"
-        currentPlan={billing?.planKey || 'FREE'}
-        max={billing?.limits?.maxWorkOrders || 50}
-        current={billing?.usage?.workOrdersCount || 0}
+        currentPlan={billing?.planKey || 'TRIAL'}
+        max={-1}
+        current={0}
       />
     </>
   );

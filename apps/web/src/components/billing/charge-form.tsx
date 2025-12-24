@@ -642,9 +642,9 @@ export function ChargeForm({
         isOpen={showUpsellModal}
         onClose={() => setShowUpsellModal(false)}
         resource="PAYMENT"
-        currentPlan={billing?.planKey || 'FREE'}
-        max={billing?.limits?.maxPayments || 20}
-        current={billing?.usage?.paymentsCount || 0}
+        currentPlan={billing?.planKey || 'TRIAL'}
+        max={-1}
+        current={0}
       />
     </>
   );

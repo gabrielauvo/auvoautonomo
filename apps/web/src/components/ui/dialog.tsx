@@ -1,16 +1,15 @@
 'use client';
 
 /**
- * Dialog Component - Alias for Modal
- * Re-exports Modal as Dialog for compatibility
+ * Dialog Component - shadcn/ui compatible Dialog
+ * Wraps Modal with open/onOpenChange interface for compatibility
  */
 
-export { Modal as Dialog, ModalFooter as DialogFooter } from './modal';
-
-// Additional Dialog components for shadcn/ui compatibility
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { Modal, ModalFooter } from './modal';
+
+export { ModalFooter as DialogFooter } from './modal';
 
 interface DialogProps {
   open?: boolean;
@@ -18,7 +17,10 @@ interface DialogProps {
   children: React.ReactNode;
 }
 
-export function DialogRoot({ open, onOpenChange, children }: DialogProps) {
+/**
+ * Dialog component with shadcn/ui compatible interface
+ */
+export function Dialog({ open, onOpenChange, children }: DialogProps) {
   return (
     <Modal isOpen={open ?? false} onClose={() => onOpenChange?.(false)}>
       {children}
@@ -70,4 +72,3 @@ export function DialogDescription({
   return <p className={cn('text-sm text-gray-500', className)}>{children}</p>;
 }
 
-export { ModalFooter as DialogFooterAlt };

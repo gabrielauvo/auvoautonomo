@@ -17,13 +17,22 @@ export {
 } from './auth.service';
 export type { User, LoginCredentials, LoginResponse, RegisterData } from './auth.service';
 
-export { billingService, getBillingStatus, getQuota, checkLimit } from './billing.service';
+export {
+  billingService,
+  getBillingStatus,
+  calculateTrialDaysRemaining,
+  isTrialExpired,
+  TRIAL_DURATION_DAYS,
+  PRO_PLAN_PRICING,
+} from './billing.service';
 export type {
-  UsageLimits,
-  CurrentUsage,
   BillingStatus,
-  QuotaInfo,
-  AllQuotas,
+  BillingPeriod,
+  CheckoutPixDto,
+  CheckoutCreditCardDto,
+  PixCheckoutResult,
+  CreditCardCheckoutResult,
+  PixStatusResult,
 } from './billing.service';
 
 export { analyticsService, getOverview, getRevenueByPeriod, getQuoteConversion } from './analytics.service';

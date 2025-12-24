@@ -151,11 +151,9 @@ function ClientsListContent() {
   const startIndex = (currentPage - 1) * PAGE_SIZE;
   const paginatedClients = clients?.slice(startIndex, startIndex + PAGE_SIZE) || [];
 
-  // Verifica se está no limite
-  const isAtLimit = billing?.planKey === 'FREE' &&
-    billing?.usage &&
-    billing?.limits &&
-    (billing.usage.clientsCount ?? 0) >= (billing.limits.maxClients ?? Infinity);
+  // Com o novo modelo de billing, não há limite de clientes
+  // Trial e PRO têm tudo liberado
+  const isAtLimit = false;
 
   // Handler para novo cliente
   const handleNewClient = useCallback(() => {
@@ -459,9 +457,9 @@ function ClientsListContent() {
           isOpen={showUpsellModal}
           onClose={() => setShowUpsellModal(false)}
           resource="CLIENT"
-          currentPlan={billing?.planKey || 'FREE'}
-          max={billing?.limits?.maxClients || 10}
-          current={billing?.usage?.clientsCount || 0}
+          currentPlan={billing?.planKey || 'TRIAL'}
+          max={-1}
+          current={0}
         />
 
         {/* Modal de confirmação de exclusão */}

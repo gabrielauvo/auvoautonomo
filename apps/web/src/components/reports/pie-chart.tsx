@@ -145,8 +145,8 @@ export function PieChart({
                 borderRadius: '8px',
                 boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
               }}
-              formatter={(value: number | undefined) => [
-                formatValue(value ?? 0),
+              formatter={(value) => [
+                formatValue(typeof value === 'number' ? value : 0),
                 'Valor',
               ]}
               labelStyle={{ fontWeight: 600, marginBottom: 4 }}

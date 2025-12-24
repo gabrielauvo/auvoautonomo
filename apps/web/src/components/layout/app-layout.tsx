@@ -7,6 +7,7 @@
  * - SkipLink para acessibilidade
  * - Sidebar (menu lateral) com role="navigation"
  * - Header (barra superior) com role="banner"
+ * - Trial Banner (faixa de período de teste)
  * - Onboarding Banner (faixa de progresso)
  * - Área de conteúdo com role="main" e id para skip link
  */
@@ -15,7 +16,9 @@ import { ProtectedRoute } from '@/components/auth';
 import { Sidebar } from './sidebar';
 import { Header } from './header';
 import { OnboardingBanner } from './onboarding-banner';
+import { TrialBanner } from './trial-banner';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/context/auth-context';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -23,6 +26,8 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children, className }: AppLayoutProps) {
+  const { billing } = useAuth();
+
   return (
     <ProtectedRoute>
       <div className="flex h-screen bg-background overflow-hidden">
@@ -31,6 +36,9 @@ export function AppLayout({ children, className }: AppLayoutProps) {
 
         {/* Main content */}
         <div className="flex flex-col flex-1 overflow-hidden">
+          {/* Trial Banner - Aviso de período de teste */}
+          <TrialBanner billing={billing} />
+
           {/* Header */}
           <Header />
 

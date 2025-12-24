@@ -51,6 +51,7 @@ interface QuoteData {
   totalValue: number;
   sentAt: string | null;
   visitScheduledAt: string | null;
+  validUntil: string | null;
   createdAt: string;
   company: {
     name: string;

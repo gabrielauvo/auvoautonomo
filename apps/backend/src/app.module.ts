@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_FILTER } from '@nestjs/core';
+import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
@@ -45,9 +46,11 @@ import { ExpenseCategoriesModule } from './expense-categories/expense-categories
 import { ExpensesModule } from './expenses/expenses.module';
 import { WorkOrderTypesModule } from './work-order-types/work-order-types.module';
 import { InventoryModule } from './inventory/inventory.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
+    SentryModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),
     // Rate limiting global - Proteção contra ataques DDoS e brute force
     // Os limites são aplicados por IP e podem ser customizados por rota usando @Throttle()
@@ -72,6 +75,7 @@ import { InventoryModule } from './inventory/inventory.module';
     ]),
     PrismaModule,
     EncryptionModule,
+    EmailModule, // Global module for email sending
     BillingModule, // Global module - must be before modules that use PlanLimitsService
     AuthModule,
     PlansModule,
@@ -115,6 +119,11 @@ import { InventoryModule } from './inventory/inventory.module';
   controllers: [AppController],
   providers: [
     AppService,
+    // Sentry global exception filter - captures all unhandled exceptions
+    {
+      provide: APP_FILTER,
+      useClass: SentryGlobalFilter,
+    },
     // Aplicar ThrottlerGuard globalmente a todas as rotas
     // Controllers específicos podem sobrescrever com @Throttle() ou @SkipThrottle()
     {

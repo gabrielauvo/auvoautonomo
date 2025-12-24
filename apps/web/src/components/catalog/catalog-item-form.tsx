@@ -35,7 +35,7 @@ import {
   UpdateItemDto,
   BundleItem,
 } from '@/services/catalog.service';
-import { setInitialStock } from '@/services/inventory.service';
+import { setInitialStock as setInitialStockApi } from '@/services/inventory.service';
 import {
   Save,
   X,
@@ -224,7 +224,7 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
         // Se for produto e tiver quantidade inicial de estoque, definir estoque inicial
         if (type === 'PRODUCT' && initialStock && parseFloat(initialStock) > 0) {
           try {
-            await setInitialStock(
+            await setInitialStockApi(
               result.id,
               parseFloat(initialStock),
               'Estoque inicial',

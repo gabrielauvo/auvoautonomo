@@ -44,24 +44,8 @@ const getMockData = () => {
     billing: {
       planKey: 'PRO',
       planName: 'Plano PRO',
-      status: 'ACTIVE',
-      limits: {
-        maxClients: -1,
-        maxQuotes: -1,
-        maxWorkOrders: -1,
-        maxPayments: -1,
-      },
-      usage: {
-        clientsCount: 45,
-        quotesCount: 120,
-        workOrdersCount: 89,
-        paymentsCount: 156,
-      },
-      features: {
-        advancedReports: true,
-        exportPdf: true,
-        whatsapp: true,
-      },
+      subscriptionStatus: 'ACTIVE',
+      billingPeriod: 'MONTHLY',
     } as BillingStatus,
   };
 };

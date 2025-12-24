@@ -5,6 +5,30 @@ if (!globalThis.crypto) {
   globalThis.crypto = webcrypto as Crypto;
 }
 
+// Sentry must be initialized before importing other modules
+import * as Sentry from '@sentry/nestjs';
+import { nodeProfilingIntegration } from '@sentry/profiling-node';
+
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || 'development',
+
+    // Performance Monitoring
+    tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+
+    // Profiling
+    profilesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+
+    integrations: [
+      nodeProfilingIntegration(),
+    ],
+
+    // Debug mode in development
+    debug: process.env.NODE_ENV !== 'production',
+  });
+}
+
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
@@ -170,10 +194,12 @@ async function bootstrap() {
   // Trata erros não capturados
   process.on('unhandledRejection', (reason, promise) => {
     logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    Sentry.captureException(reason);
   });
 
   process.on('uncaughtException', (error) => {
     logger.error('Uncaught Exception:', error);
+    Sentry.captureException(error);
     shutdown('uncaughtException');
   });
 }

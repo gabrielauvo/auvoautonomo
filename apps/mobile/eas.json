@@ -45,7 +45,8 @@
       "env": {
         "EXPO_PUBLIC_ENV": "preview",
         "EXPO_PUBLIC_API_URL": "https://monorepobackend-production.up.railway.app",
-        "EAS_NO_VCS": "1"
+        "EAS_NO_VCS": "1",
+        "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
       },
       "ios": {
         "resourceClass": "m-medium"
@@ -54,7 +55,10 @@
         "buildType": "apk",
         "resourceClass": "medium"
       },
-      "node": "18.18.0"
+      "node": "18.18.0",
+      "cache": {
+        "key": "sdk52-v1"
+      }
     },
     "preview-aab": {
       "extends": "preview",

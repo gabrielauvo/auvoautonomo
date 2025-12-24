@@ -656,7 +656,7 @@ export default function TemplatesSettingsPage() {
               )}
 
               {/* Version info */}
-              {acceptanceTerms?.version > 0 && acceptanceTerms?.featureAvailable && (
+              {(acceptanceTerms?.version ?? 0) > 0 && acceptanceTerms?.featureAvailable && (
                 <div className="flex items-center gap-6 text-sm text-gray-500 pt-4 border-t">
                   <span>
                     <strong>{t('acceptanceTermsVersion')}:</strong> {acceptanceTerms.version}

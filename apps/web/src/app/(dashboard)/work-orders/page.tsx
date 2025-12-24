@@ -140,10 +140,9 @@ function WorkOrdersContent() {
     setCurrentPage(1);
   }, []);
 
-  // Dados de billing
-  const maxWorkOrders = billing?.limits?.maxWorkOrders || 50;
-  const currentWorkOrders = billing?.usage?.workOrdersCount || 0;
-  const isAtLimit = currentWorkOrders >= maxWorkOrders;
+  // Com o novo modelo de billing, não há limite de OS
+  // Trial e PRO têm tudo liberado
+  const isAtLimit = false;
 
   return (
     <div className="space-y-6">
@@ -165,10 +164,7 @@ function WorkOrdersContent() {
         </Link>
       </div>
 
-      {/* Banner de limite */}
-      {billing?.planKey === 'FREE' && (
-        <PlanLimitBanner resource="workOrders" />
-      )}
+      {/* Banner de limite removido - novo modelo sem limites */}
 
       {/* Filtros */}
       <Card>

@@ -11,8 +11,8 @@ export default function ClientsImportPage() {
   const router = useRouter();
   const { billing, isLoading } = useAuth();
 
-  // Check if user has PRO or TEAM plan
-  const isPro = billing?.planKey === 'PRO' || billing?.planKey === 'TEAM';
+  // Com o novo modelo, tanto TRIAL quanto PRO têm acesso completo
+  const isPro = billing?.planKey === 'PRO' || billing?.planKey === 'TRIAL';
 
   if (isLoading) {
     return (

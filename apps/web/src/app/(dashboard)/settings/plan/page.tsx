@@ -1,12 +1,11 @@
 'use client';
 
 /**
- * Plan Settings Page
+ * Plan Settings Page - Página de Assinatura
  *
- * Gerenciamento de plano e assinatura:
- * - Plano atual e uso
- * - Comparação de planos (apenas FREE e PRO)
- * - Upgrade via checkout inline (PIX ou Cartão)
+ * Modelo simplificado:
+ * - 14 dias de trial com tudo liberado
+ * - Plano PRO: R$ 99,90/mês ou R$ 89,90/mês (anual)
  */
 
 import { useState } from 'react';
@@ -15,10 +14,10 @@ import {
   CreditCard,
   Check,
   Sparkles,
-  Users,
-  AlertCircle,
+  Clock,
   Calendar,
-  Zap,
+  AlertCircle,
+  Crown,
 } from 'lucide-react';
 import {
   Card,
@@ -30,60 +29,33 @@ import {
   Alert,
   Skeleton,
 } from '@/components/ui';
-import { PlanUsageBar } from '@/components/settings';
 import { CheckoutModal } from '@/components/billing';
 import {
   useSubscription,
   useCancelSubscription,
 } from '@/hooks/use-settings';
-import {
-  formatPlanPrice,
-} from '@/services/settings.service';
 import { cn } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
+import {
+  PRO_PLAN_PRICING,
+  TRIAL_DURATION_DAYS,
+  calculateTrialDaysRemaining,
+  BillingPeriod,
+} from '@/services/billing.service';
 
-// Configuração de planos (apenas FREE e PRO)
-const PLANS = {
-  FREE: {
-    type: 'FREE' as const,
-    name: 'Gratuito',
-    price: 0,
-    features: [
-      'Até 10 clientes',
-      'Até 10 orçamentos',
-      'Até 10 OS',
-      'Até 5 cobranças',
-    ],
-    limits: {
-      maxClients: 10,
-      maxQuotes: 10,
-      maxWorkOrders: 10,
-      maxPayments: 5,
-    },
-  },
-  PRO: {
-    type: 'PRO' as const,
-    name: 'Profissional',
-    price: 39.90,
-    features: [
-      'Clientes ilimitados',
-      'Orçamentos ilimitados',
-      'OS ilimitadas',
-      'Cobranças ilimitadas',
-      'Templates personalizados',
-      'Relatórios avançados',
-      'Suporte prioritário',
-    ],
-    limits: {
-      maxClients: -1,
-      maxQuotes: -1,
-      maxWorkOrders: -1,
-      maxPayments: -1,
-    },
-  },
-};
-
-type PlanType = 'FREE' | 'PRO';
+// Features do plano PRO
+const PRO_FEATURES = [
+  'Clientes ilimitados',
+  'Orçamentos ilimitados',
+  'Ordens de serviço ilimitadas',
+  'Cobranças ilimitadas',
+  'Catálogo de produtos e serviços',
+  'Gestão de despesas',
+  'Relatórios avançados',
+  'Exportação em PDF',
+  'Integração com WhatsApp',
+  'Suporte prioritário',
+];
 
 export default function PlanSettingsPage() {
   const { t } = useTranslations('plan');
@@ -92,18 +64,32 @@ export default function PlanSettingsPage() {
   const queryClient = useQueryClient();
 
   const [showCheckout, setShowCheckout] = useState(false);
+  const [selectedPeriod, setSelectedPeriod] = useState<BillingPeriod>('YEARLY');
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
-  const currentPlan = (subscription?.plan?.type as PlanType) || 'FREE';
-  const isFreePlan = currentPlan === 'FREE';
+  // Status da assinatura
+  const status = subscription?.subscriptionStatus || 'TRIALING';
+  const isTrialing = status === 'TRIALING';
+  const isActive = status === 'ACTIVE';
+  const isExpired = status === 'EXPIRED' || status === 'CANCELED';
 
-  const handleUpgradeClick = () => {
+  // Dias restantes do trial
+  const trialDaysRemaining = subscription?.trialEndAt
+    ? calculateTrialDaysRemaining(subscription.trialEndAt)
+    : subscription?.trialDaysRemaining || 0;
+
+  // Preço baseado no período selecionado
+  const selectedPrice = selectedPeriod === 'YEARLY'
+    ? PRO_PLAN_PRICING.YEARLY
+    : PRO_PLAN_PRICING.MONTHLY;
+
+  const handleUpgradeClick = (period: BillingPeriod) => {
+    setSelectedPeriod(period);
     setShowCheckout(true);
   };
 
   const handleCheckoutSuccess = () => {
     setShowCheckout(false);
-    // Recarregar dados da assinatura
     refetch();
     queryClient.invalidateQueries({ queryKey: ['subscription'] });
     queryClient.invalidateQueries({ queryKey: ['billing'] });
@@ -123,29 +109,23 @@ export default function PlanSettingsPage() {
     return (
       <div className="space-y-6">
         <Skeleton className="h-48 w-full" />
-        <Skeleton className="h-64 w-full" />
         <Skeleton className="h-96 w-full" />
       </div>
     );
   }
 
-  const usage = subscription?.usage || {
-    clientsCount: 0,
-    quotesCount: 0,
-    workOrdersCount: 0,
-    paymentsCount: 0,
-  };
-
-  const limits = PLANS[currentPlan].limits;
-
   return (
-    <div className="space-y-6">
-      {/* Plano atual */}
+    <div className="space-y-6 max-w-4xl mx-auto">
+      {/* Status atual */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5" />
-            {t('currentPlan')}
+            {isActive ? (
+              <Crown className="h-5 w-5 text-primary" />
+            ) : (
+              <Clock className="h-5 w-5" />
+            )}
+            {isActive ? 'Plano PRO' : 'Período de Teste'}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -153,38 +133,46 @@ export default function PlanSettingsPage() {
             <div className="flex items-center gap-4">
               <div
                 className={cn(
-                  'p-3 rounded-lg',
-                  isFreePlan ? 'bg-gray-100' : 'bg-primary-100'
+                  'p-3 rounded-xl',
+                  isActive ? 'bg-primary-100' : 'bg-gray-100'
                 )}
               >
-                {isFreePlan ? (
-                  <Users className="h-8 w-8 text-gray-600" />
+                {isActive ? (
+                  <Crown className="h-8 w-8 text-primary" />
                 ) : (
-                  <Sparkles className="h-8 w-8 text-primary" />
+                  <Clock className="h-8 w-8 text-gray-600" />
                 )}
               </div>
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-xl font-bold text-gray-900">
-                    {t('planLabel')} {PLANS[currentPlan].name}
+                    {isActive ? 'Assinatura Ativa' : isExpired ? 'Trial Expirado' : 'Período de Teste'}
                   </h3>
-                  <Badge variant={isFreePlan ? 'gray' : 'primary'}>
-                    {currentPlan}
+                  <Badge variant={isActive ? 'primary' : isExpired ? 'error' : 'warning'}>
+                    {isActive ? 'PRO' : isExpired ? 'EXPIRADO' : `${trialDaysRemaining} dias restantes`}
                   </Badge>
                 </div>
-                <p className="text-gray-500">
-                  {formatPlanPrice(PLANS[currentPlan].price)}
-                  {!isFreePlan && t('perMonth')}
+                <p className="text-gray-500 mt-1">
+                  {isActive ? (
+                    <>
+                      R$ {selectedPrice.toFixed(2).replace('.', ',')}/mês
+                      {subscription?.billingPeriod === 'YEARLY' && ' (plano anual)'}
+                    </>
+                  ) : isExpired ? (
+                    'Assine para continuar usando o Auvo'
+                  ) : (
+                    `${TRIAL_DURATION_DAYS} dias grátis com acesso completo`
+                  )}
                 </p>
               </div>
             </div>
 
-            {!isFreePlan && subscription && (
+            {isActive && subscription && (
               <div className="text-sm text-gray-500">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
                   <span>
-                    {t('nextBilling')}{' '}
+                    Próxima cobrança:{' '}
                     {subscription.currentPeriodEnd
                       ? new Date(subscription.currentPeriodEnd).toLocaleDateString('pt-BR')
                       : '-'}
@@ -192,14 +180,34 @@ export default function PlanSettingsPage() {
                 </div>
                 {subscription.cancelAtPeriodEnd && (
                   <p className="text-warning mt-1">
-                    {t('subscriptionWillBeCanceled')}
+                    Assinatura será cancelada no fim do período
                   </p>
                 )}
               </div>
             )}
           </div>
 
-          {!isFreePlan && !subscription?.cancelAtPeriodEnd && (
+          {/* Alerta para trial expirando */}
+          {isTrialing && trialDaysRemaining <= 3 && (
+            <Alert variant="warning" className="mt-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 mt-0.5" />
+                <div>
+                  <p className="font-medium">
+                    {trialDaysRemaining === 0
+                      ? 'Seu período de teste termina hoje!'
+                      : `Seu período de teste termina em ${trialDaysRemaining} dia${trialDaysRemaining > 1 ? 's' : ''}!`}
+                  </p>
+                  <p className="text-sm mt-1">
+                    Assine agora para não perder acesso às funcionalidades.
+                  </p>
+                </div>
+              </div>
+            </Alert>
+          )}
+
+          {/* Botão de cancelar para assinantes */}
+          {isActive && !subscription?.cancelAtPeriodEnd && (
             <div className="mt-4 pt-4 border-t flex justify-end">
               <Button
                 variant="ghost"
@@ -207,153 +215,155 @@ export default function PlanSettingsPage() {
                 className="text-error"
                 onClick={() => setShowCancelConfirm(true)}
               >
-                {t('cancelSubscription')}
+                Cancelar assinatura
               </Button>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Uso atual */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('planUsage')}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <PlanUsageBar
-              label={t('clients')}
-              current={usage.clientsCount}
-              max={limits.maxClients}
-            />
-            <PlanUsageBar
-              label={t('quotes')}
-              current={usage.quotesCount}
-              max={limits.maxQuotes}
-            />
-            <PlanUsageBar
-              label={t('workOrders')}
-              current={usage.workOrdersCount}
-              max={limits.maxWorkOrders}
-            />
-            <PlanUsageBar
-              label={t('charges')}
-              current={usage.paymentsCount}
-              max={limits.maxPayments}
-            />
-          </div>
-
-          {isFreePlan && (
-            <Alert variant="warning" className="mt-4">
-              <div className="flex items-start gap-3">
-                <Zap className="h-5 w-5 mt-0.5" />
-                <div>
-                  <p className="font-medium">{t('unlockUnlimited')}</p>
-                  <p className="text-sm mt-1">
-                    {t('unlockUnlimitedDescription')}
+      {/* Planos e preços */}
+      {(!isActive || subscription?.cancelAtPeriodEnd) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Escolha seu plano</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Plano Mensal */}
+              <div
+                className={cn(
+                  'relative border rounded-xl p-6 transition-all cursor-pointer',
+                  selectedPeriod === 'MONTHLY'
+                    ? 'border-primary ring-2 ring-primary ring-offset-2'
+                    : 'hover:border-gray-300'
+                )}
+                onClick={() => setSelectedPeriod('MONTHLY')}
+              >
+                <div className="text-center mb-6">
+                  <h3 className="text-lg font-bold text-gray-900">Mensal</h3>
+                  <div className="mt-2">
+                    <span className="text-4xl font-bold text-gray-900">
+                      R$ {PRO_PLAN_PRICING.MONTHLY.toFixed(2).replace('.', ',')}
+                    </span>
+                    <span className="text-gray-500">/mês</span>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Cobrado mensalmente
                   </p>
                 </div>
+
+                <Button
+                  className="w-full"
+                  variant={selectedPeriod === 'MONTHLY' ? 'default' : 'outline'}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleUpgradeClick('MONTHLY');
+                  }}
+                  leftIcon={<CreditCard className="h-4 w-4" />}
+                >
+                  Assinar mensal
+                </Button>
               </div>
-            </Alert>
-          )}
-        </CardContent>
-      </Card>
 
-      {/* Comparação de planos - apenas FREE e PRO */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('comparePlans')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-            {(Object.entries(PLANS) as [PlanType, typeof PLANS.FREE][]).map(
-              ([planKey, plan]) => {
-                const isCurrentPlan = planKey === currentPlan;
-                const isPopular = planKey === 'PRO';
+              {/* Plano Anual */}
+              <div
+                className={cn(
+                  'relative border rounded-xl p-6 transition-all cursor-pointer',
+                  selectedPeriod === 'YEARLY'
+                    ? 'border-primary ring-2 ring-primary ring-offset-2'
+                    : 'hover:border-gray-300'
+                )}
+                onClick={() => setSelectedPeriod('YEARLY')}
+              >
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <Badge variant="primary" className="shadow">
+                    Mais popular
+                  </Badge>
+                </div>
 
-                return (
-                  <div
-                    key={planKey}
-                    className={cn(
-                      'relative border rounded-xl p-6 transition-all',
-                      isCurrentPlan && 'border-primary ring-2 ring-primary ring-offset-2',
-                      !isCurrentPlan && 'hover:border-gray-300'
-                    )}
-                  >
-                    {isPopular && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                        <Badge variant="primary" className="shadow">
-                          {t('mostPopular')}
-                        </Badge>
-                      </div>
-                    )}
-
-                    <div className="text-center mb-6">
-                      <h3 className="text-lg font-bold text-gray-900">{plan.name}</h3>
-                      <div className="mt-2">
-                        <span className="text-4xl font-bold text-gray-900">
-                          {plan.price === 0 ? 'Grátis' : `R$ ${plan.price.toFixed(2).replace('.', ',')}`}
-                        </span>
-                        {plan.price > 0 && (
-                          <span className="text-gray-500">{t('perMonth')}</span>
-                        )}
-                      </div>
-                    </div>
-
-                    <ul className="space-y-3 mb-6">
-                      {plan.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-sm">
-                          <Check className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                          <span className="text-gray-600">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-
-                    {isCurrentPlan ? (
-                      <Button variant="outline" className="w-full" disabled>
-                        {t('currentPlanButton')}
-                      </Button>
-                    ) : planKey === 'FREE' && currentPlan === 'PRO' ? (
-                      <Button
-                        variant="ghost"
-                        className="w-full text-error hover:text-error"
-                        onClick={() => setShowCancelConfirm(true)}
-                      >
-                        {t('downgrade')}
-                      </Button>
-                    ) : planKey === 'FREE' ? (
-                      <Button variant="ghost" className="w-full" disabled>
-                        {t('available')}
-                      </Button>
-                    ) : (
-                      <Button
-                        className="w-full"
-                        variant="default"
-                        onClick={handleUpgradeClick}
-                        leftIcon={<Sparkles className="h-4 w-4" />}
-                      >
-                        {t('upgrade')}
-                      </Button>
-                    )}
+                <div className="text-center mb-6">
+                  <h3 className="text-lg font-bold text-gray-900">Anual</h3>
+                  <div className="mt-2">
+                    <span className="text-4xl font-bold text-gray-900">
+                      R$ {PRO_PLAN_PRICING.YEARLY.toFixed(2).replace('.', ',')}
+                    </span>
+                    <span className="text-gray-500">/mês</span>
                   </div>
-                );
-              }
-            )}
-          </div>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Total de R$ {PRO_PLAN_PRICING.YEARLY_TOTAL.toFixed(2).replace('.', ',')}/ano
+                  </p>
+                  <Badge variant="success" className="mt-2">
+                    Economia de R$ {PRO_PLAN_PRICING.YEARLY_SAVINGS.toFixed(2).replace('.', ',')}
+                  </Badge>
+                </div>
 
-          <p className="text-xs text-center text-gray-500 mt-6">
-            Pagamento seguro via PIX ou Cartão de Crédito
-          </p>
-        </CardContent>
-      </Card>
+                <Button
+                  className="w-full"
+                  variant={selectedPeriod === 'YEARLY' ? 'default' : 'outline'}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleUpgradeClick('YEARLY');
+                  }}
+                  leftIcon={<Sparkles className="h-4 w-4" />}
+                >
+                  Assinar anual
+                </Button>
+              </div>
+            </div>
+
+            {/* Features incluídas */}
+            <div className="mt-8 pt-6 border-t">
+              <h4 className="text-sm font-semibold text-gray-900 mb-4">
+                Tudo incluído no plano PRO:
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {PRO_FEATURES.map((feature, idx) => (
+                  <div key={idx} className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-success flex-shrink-0" />
+                    <span className="text-gray-600">{feature}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <p className="text-xs text-center text-gray-500 mt-6">
+              Pagamento seguro via PIX ou Cartão de Crédito. Cancele quando quiser.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Features do plano ativo */}
+      {isActive && !subscription?.cancelAtPeriodEnd && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Check className="h-5 w-5 text-success" />
+              Recursos incluídos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {PRO_FEATURES.map((feature, idx) => (
+                <div key={idx} className="flex items-center gap-2 text-sm">
+                  <Check className="h-4 w-4 text-success flex-shrink-0" />
+                  <span className="text-gray-600">{feature}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Modal de Checkout */}
       <CheckoutModal
         isOpen={showCheckout}
         onClose={() => setShowCheckout(false)}
         onSuccess={handleCheckoutSuccess}
-        planName="Profissional"
-        planPrice={PLANS.PRO.price}
+        planName="PRO"
+        planPrice={selectedPeriod === 'YEARLY' ? PRO_PLAN_PRICING.YEARLY_TOTAL : PRO_PLAN_PRICING.MONTHLY}
+        billingPeriod={selectedPeriod}
       />
 
       {/* Modal de cancelamento */}
@@ -361,16 +371,17 @@ export default function PlanSettingsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <Card className="max-w-md w-full">
             <CardHeader>
-              <CardTitle className="text-error">{t('cancelSubscription')}</CardTitle>
+              <CardTitle className="text-error">Cancelar assinatura</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <Alert variant="warning">
                 <div className="flex items-start gap-2">
                   <AlertCircle className="h-4 w-4 mt-0.5" />
                   <div className="text-sm">
-                    <p className="font-medium">{t('attention')}</p>
+                    <p className="font-medium">Atenção</p>
                     <p>
-                      {t('cancelWarning')}
+                      Ao cancelar, você perderá acesso aos recursos PRO ao final do período atual.
+                      Seus dados serão mantidos por 30 dias.
                     </p>
                   </div>
                 </div>
@@ -381,14 +392,14 @@ export default function PlanSettingsPage() {
                   variant="ghost"
                   onClick={() => setShowCancelConfirm(false)}
                 >
-                  {t('keepSubscription')}
+                  Manter assinatura
                 </Button>
                 <Button
                   variant="error"
                   onClick={handleCancelSubscription}
                   loading={cancelSubscription.isPending}
                 >
-                  {t('confirmCancellation')}
+                  Confirmar cancelamento
                 </Button>
               </div>
             </CardContent>

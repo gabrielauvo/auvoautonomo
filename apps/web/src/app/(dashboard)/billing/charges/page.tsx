@@ -175,10 +175,9 @@ function ChargesContent() {
     setCurrentPage(1);
   }, []);
 
-  // Dados de billing
-  const maxPayments = billing?.limits?.maxPayments || 20;
-  const currentPayments = billing?.usage?.paymentsCount || 0;
-  const isAtLimit = currentPayments >= maxPayments;
+  // Com o novo modelo de billing, não há limite de cobranças
+  // Trial e PRO têm tudo liberado
+  const isAtLimit = false;
 
   const charges = chargesResponse?.data || [];
   const totalPages = chargesResponse?.totalPages || 1;
@@ -203,10 +202,7 @@ function ChargesContent() {
         </Link>
       </div>
 
-      {/* Banner de limite */}
-      {billing?.planKey === 'FREE' && (
-        <PlanLimitBanner resource="payments" />
-      )}
+      {/* Banner de limite removido - novo modelo sem limites */}
 
       {/* Filtros */}
       <Card>

@@ -33,6 +33,8 @@ import {
   type CheckoutPixDto,
   type CheckoutCreditCardDto,
   type PixCheckoutResult,
+  type BillingPeriod,
+  PRO_PLAN_PRICING,
 } from '@/services/billing.service';
 import { cn } from '@/lib/utils';
 import { QRCodeSVG } from 'qrcode.react';
@@ -43,6 +45,7 @@ interface CheckoutModalProps {
   onSuccess: () => void;
   planName: string;
   planPrice: number;
+  billingPeriod?: BillingPeriod;
 }
 
 type PaymentMethod = 'pix' | 'credit-card';
@@ -53,6 +56,7 @@ export function CheckoutModal({
   onSuccess,
   planName,
   planPrice,
+  billingPeriod = 'MONTHLY',
 }: CheckoutModalProps) {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('pix');
   const [isLoading, setIsLoading] = useState(false);
@@ -64,7 +68,7 @@ export function CheckoutModal({
   const [pixPolling, setPixPolling] = useState(false);
 
   // Form state - PIX
-  const [pixForm, setPixForm] = useState<CheckoutPixDto>({
+  const [pixForm, setPixForm] = useState<Omit<CheckoutPixDto, 'billingPeriod'>>({
     cpfCnpj: '',
     phone: '',
     name: '',
@@ -130,7 +134,7 @@ export function CheckoutModal({
     setError(null);
 
     try {
-      const result = await checkoutPix(pixForm);
+      const result = await checkoutPix({ ...pixForm, billingPeriod });
 
       if (result.success) {
         setPixResult(result);
@@ -158,6 +162,7 @@ export function CheckoutModal({
         expiryMonth: expiryMonthRef.current,
         expiryYear: expiryYearRef.current,
         ccv: ccvRef.current,
+        billingPeriod,
       };
 
       const result = await checkoutCreditCard(payload);
@@ -257,10 +262,17 @@ export function CheckoutModal({
         <CardContent className="space-y-6">
           {/* Preço */}
           <div className="text-center py-4 bg-primary-50 rounded-lg">
-            <p className="text-sm text-gray-600">Valor mensal</p>
+            <p className="text-sm text-gray-600">
+              {billingPeriod === 'YEARLY' ? 'Plano Anual' : 'Plano Mensal'}
+            </p>
             <p className="text-3xl font-bold text-primary">
               R$ {planPrice.toFixed(2).replace('.', ',')}
             </p>
+            {billingPeriod === 'YEARLY' && (
+              <p className="text-xs text-gray-500 mt-1">
+                (equivale a R$ {PRO_PLAN_PRICING.YEARLY.toFixed(2).replace('.', ',')}/mês)
+              </p>
+            )}
           </div>
 
           {/* Seleção de método */}

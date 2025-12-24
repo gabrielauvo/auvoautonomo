@@ -10,20 +10,27 @@ import 'react-native-get-random-values';
 // Required for PowerSync async iterator support
 import '@azure/core-asynciterator-polyfill';
 
-import { useEffect } from 'react';
+// Initialize Sentry for error monitoring
+import { initSentry } from '../src/config/sentry';
+initSentry();
+
+import { useEffect, useState } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider, useAuth } from '../src/services/AuthProvider';
 import { ThemeProvider } from '../src/design-system/ThemeProvider';
 import { I18nProvider } from '../src/i18n';
-import { DrawerProvider } from '../src/components';
+import { DrawerProvider, TrialBanner } from '../src/components';
 import { PowerSyncProvider } from '../src/powersync';
+import { BillingService, BillingStatus } from '../src/services/BillingService';
 
 function RootLayoutNav() {
   const { isAuthenticated, isLoading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const [billing, setBilling] = useState<BillingStatus | null>(null);
+  const [billingLoaded, setBillingLoaded] = useState(false);
 
   useEffect(() => {
     if (isLoading) return;
@@ -39,6 +46,38 @@ function RootLayoutNav() {
     }
   }, [isAuthenticated, isLoading, segments]);
 
+  // Fetch billing status when authenticated
+  useEffect(() => {
+    if (!isAuthenticated || isLoading) {
+      setBilling(null);
+      setBillingLoaded(false);
+      return;
+    }
+
+    let mounted = true;
+
+    const fetchBilling = async () => {
+      try {
+        const status = await BillingService.getBillingStatus();
+        if (mounted) {
+          setBilling(status);
+          setBillingLoaded(true);
+        }
+      } catch (error) {
+        console.warn('[RootLayout] Error fetching billing:', error);
+        if (mounted) {
+          setBillingLoaded(true);
+        }
+      }
+    };
+
+    fetchBilling();
+
+    return () => {
+      mounted = false;
+    };
+  }, [isAuthenticated, isLoading]);
+
   if (isLoading) {
     return (
       <View style={styles.loading}>
@@ -47,9 +86,14 @@ function RootLayoutNav() {
     );
   }
 
+  // Check if we're in auth screens (don't show trial banner on login/register)
+  const inAuthGroup = segments[0] === '(auth)';
+  const showTrialBanner = isAuthenticated && !inAuthGroup && billingLoaded;
+
   return (
-    <>
+    <View style={styles.container}>
       <StatusBar style="dark" />
+      {showTrialBanner && <TrialBanner billing={billing} />}
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(main)" />
@@ -58,7 +102,7 @@ function RootLayoutNav() {
         <Stack.Screen name="os" />
         <Stack.Screen name="orcamentos" />
       </Stack>
-    </>
+    </View>
   );
 }
 
@@ -79,6 +123,10 @@ export default function RootLayout() {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   loading: {
     flex: 1,
     justifyContent: 'center',

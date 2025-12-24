@@ -118,6 +118,7 @@ import { GoogleBusinessModule } from './google-business/google-business.module';
     WorkOrderTypesModule,
     InventoryModule,
     GoogleBusinessModule,
+    ReferralModule,
   ],
   controllers: [AppController],
   providers: [

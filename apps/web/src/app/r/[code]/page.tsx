@@ -237,7 +237,7 @@ export default async function ReferralLandingPage({ params, searchParams }: Page
                   </svg>
                 </div>
                 <div>
-                  <p className="font-semibold text-green-800">7 dias grátis</p>
+                  <p className="font-semibold text-green-800">14 dias grátis</p>
                   <p className="text-sm text-green-600">Teste todas as funcionalidades sem compromisso</p>
                 </div>
               </div>

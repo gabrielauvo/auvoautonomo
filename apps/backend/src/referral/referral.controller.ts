@@ -147,6 +147,35 @@ export class ReferralController {
   }
 
   /**
+   * Registra clique no link de referral (usado pela landing page)
+   */
+  @Post('api/referral/click')
+  @SkipThrottle()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Register referral link click' })
+  async registerClick(
+    @Body() body: { code: string; userAgent?: string; ipAddress?: string; referrer?: string },
+  ) {
+    const result = await this.clickService.registerClick(
+      body.code,
+      body.ipAddress || '',
+      body.userAgent,
+      body.referrer,
+    );
+
+    if (!result) {
+      return { success: false, message: 'Invalid referral code' };
+    }
+
+    return {
+      success: true,
+      clickId: result.clickId,
+      platform: result.platform,
+      referrerName: result.referrerName,
+    };
+  }
+
+  /**
    * Vincula usuário a um referrer
    */
   @Post('api/referral/attach')

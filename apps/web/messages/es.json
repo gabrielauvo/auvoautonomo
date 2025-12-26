@@ -340,7 +340,15 @@
     "description": "Descripción",
     "type": "Tipo",
     "dueDate": "Vencimiento",
-    "value": "Valor"
+    "value": "Valor",
+    "clientsSelected": "{count} cliente(s) seleccionado(s)",
+    "clearSelection": "Limpiar selección",
+    "deleteSelected": "Eliminar seleccionados",
+    "deleteClientsTitle": "¿Eliminar {count} cliente(s)?",
+    "deleteClientsWarning": "Esta acción no se puede deshacer.",
+    "attentionLabel": "Atención",
+    "deleteClientsOrphans": "Todos los datos asociados a estos clientes (presupuestos, OT, cobros) permanecerán en el sistema pero quedarán huérfanos.",
+    "clients": "clientes"
   },
   "quotes": {
     "title": "Presupuestos",
@@ -782,7 +790,9 @@
     "pendingExpenses": "Pendiente",
     "overdueExpenses": "Vencido",
     "totalExpenses": "Total de Gastos",
-    "items": "elementos"
+    "items": "elementos",
+    "profitLoss": "Ganancia/Pérdida",
+    "profitLossDescription": "Ingresos vs gastos y análisis de rentabilidad"
   },
   "settings": {
     "title": "Configuración",
@@ -1088,5 +1098,190 @@
     "date": "Fecha inválida",
     "number": "Debe ser un número",
     "positive": "Debe ser un valor positivo"
+  },
+  "inventory": {
+    "title": "Inventario",
+    "description": "Control de inventario de productos",
+    "settings": {
+      "title": "Configuración de Inventario",
+      "description": "Configure cómo funciona el control de inventario en su empresa",
+      "enabled": "Control de inventario activado",
+      "enabledDescription": "Cuando está activado, el sistema rastrea los saldos de productos",
+      "deductOnStatus": "Descontar stock cuando la OT alcance el estado",
+      "deductOnStatusDescription": "El stock se descontará automáticamente cuando la orden de trabajo alcance este estado",
+      "allowNegativeStock": "Permitir stock negativo",
+      "allowNegativeStockDescription": "Si está desactivado, el sistema alertará cuando el stock sea insuficiente",
+      "deductOnlyOnce": "Descontar solo una vez por OT",
+      "deductOnlyOnceDescription": "Previene que la misma OT descuente stock múltiples veces",
+      "featureDisabled": "Esta funcionalidad no está disponible en tu plan actual",
+      "saved": "Configuración de inventario guardada correctamente"
+    },
+    "balances": {
+      "title": "Saldos de Stock",
+      "description": "Visualiza y ajusta el saldo de cada producto",
+      "product": "Producto",
+      "sku": "SKU",
+      "unit": "Unidad",
+      "quantity": "Cantidad",
+      "actions": "Acciones",
+      "adjust": "Ajustar",
+      "noProducts": "Ningún producto registrado",
+      "totalSkus": "Total de SKUs con stock",
+      "totalQuantity": "Cantidad total en stock"
+    },
+    "movements": {
+      "title": "Movimientos",
+      "description": "Historial de entradas y salidas de stock",
+      "type": "Tipo",
+      "source": "Origen",
+      "quantity": "Cantidad",
+      "balanceAfter": "Saldo Después",
+      "notes": "Notas",
+      "date": "Fecha",
+      "noMovements": "Ningún movimiento encontrado",
+      "types": {
+        "ADJUSTMENT_IN": "Entrada Manual",
+        "ADJUSTMENT_OUT": "Salida Manual",
+        "WORK_ORDER_OUT": "Descuento por OT",
+        "INITIAL": "Saldo Inicial"
+      },
+      "sources": {
+        "MANUAL": "Manual",
+        "WORK_ORDER": "Orden de Trabajo",
+        "IMPORT": "Importación",
+        "SYSTEM": "Sistema"
+      }
+    },
+    "adjust": {
+      "title": "Ajustar Stock",
+      "currentBalance": "Saldo actual",
+      "newBalance": "Nuevo saldo",
+      "notes": "Notas (opcional)",
+      "notesPlaceholder": "Ej: Compra de 10 unidades, Corrección de inventario",
+      "entry": "Entrada",
+      "exit": "Salida",
+      "quantity": "Cantidad",
+      "success": "Stock ajustado correctamente",
+      "insufficientStock": "Stock insuficiente para esta operación"
+    },
+    "dashboard": {
+      "title": "Resumen del Inventario",
+      "totalSkus": "SKUs con Stock",
+      "totalQuantity": "Cantidad Total",
+      "lowStock": "Stock Bajo",
+      "outOfStock": "Sin Stock",
+      "recentMovements": "Movimientos Recientes",
+      "viewAll": "Ver todos"
+    },
+    "inventoryControl": "Control de Inventario",
+    "inventoryDisabled": "Control de Inventario Desactivado",
+    "inventoryDisabledDescription": "Active el control de inventario en la configuración para comenzar a rastrear sus productos.",
+    "configureInventory": "Configurar Inventario",
+    "configurations": "Configuraciones",
+    "searchProduct": "Buscar producto...",
+    "noProductFound": "Ningún producto encontrado",
+    "balanceAfter": "Saldo",
+    "status": {
+      "SCHEDULED": "Programada",
+      "IN_PROGRESS": "En Progreso",
+      "DONE": "Terminada",
+      "CANCELED": "Cancelada"
+    }
+  },
+  "referral": {
+    "title": "Invita y gana meses gratis",
+    "subtitle": "Cada amigo que se suscriba = 30 días gratis para ti. Así de simple.",
+    "perReferralBadge": "+30 días por invitación",
+    "exclusiveCode": "Tu código exclusivo",
+    "customizeCode": "Personalizar código",
+    "shareLink": "Tu enlace para compartir",
+    "copyLink": "Copiar enlace",
+    "copied": "¡Copiado!",
+    "linkCopied": "¡Enlace copiado! Ahora solo envíalo a tus amigos 📋",
+    "codeActivated": "¡Listo! Tu código exclusivo fue activado 🎉",
+    "errorSettingCode": "Error al definir código personalizado",
+    "enterValidCode": "Ingresa un código válido",
+    "sendWhatsApp": "Enviar por WhatsApp",
+    "whatsappMessageReady": "Mensaje listo para enviar a tus contactos",
+    "qrCode": "Código QR",
+    "stats": {
+      "clicks": "Clics en el enlace",
+      "clicksEmpty": "Comparte para ver clics",
+      "clicksLabel": "Personas interesadas",
+      "signups": "Registros",
+      "signupsEmpty": "Esperando registros",
+      "signupsLabel": "Amigos probando",
+      "subscriptions": "Suscripciones",
+      "subscriptionsEmpty": "Esperando conversiones",
+      "subscriptionsLabel": "Que generaron recompensa",
+      "earned": "Ganaste",
+      "earnedEmpty": "¡Sigue invitando!",
+      "earnedLabel": "¡De suscripción gratis!",
+      "days": "días"
+    },
+    "challenge": {
+      "title": "Desafío: 1 Año Gratis",
+      "titleCompleted": "🏆 ¡Desafío Completado!",
+      "titleAlmostThere": "🔥 ¡Solo faltan {remaining}!",
+      "subtitle": "¡Invita a 10 amigos y gana 12 meses extras de suscripción!",
+      "subtitleCompleted": "¡Eres un verdadero embajador de Auvo!",
+      "subtitleAlmostThere": "¡Ya casi lo logras! Sigue invitando para ganar 12 meses gratis.",
+      "subtitleProgress": "¡{remaining} invitaciones más y ganas 12 meses extras!",
+      "badgeCompleted": "¡Conquistado!",
+      "badgeAlmostThere": "¡Casi listo!",
+      "progressLabel": "{count} invitación convertida",
+      "progressLabelPlural": "{count} invitaciones convertidas",
+      "goalLabel": "Meta: 10 invitaciones = 12 meses",
+      "goalCompleted": "🎉 ¡12 meses conquistados!"
+    },
+    "howItWorks": {
+      "title": "Cómo ganar meses gratis",
+      "step1Title": "Envía tu enlace",
+      "step1Description": "Envíalo por WhatsApp, Instagram o donde prefieras",
+      "step2Title": "Tu amigo prueba gratis",
+      "step2Description": "Crea una cuenta y empieza a usar Auvo",
+      "step3Title": "¡Ambos ganan!",
+      "step3Description": "Cuando se suscriba, tú ganas 30 días gratis"
+    },
+    "referralsList": {
+      "title": "Tus invitaciones",
+      "empty": "Sin invitaciones aún",
+      "emptyDescription": "Envía tu enlace por WhatsApp y ve tus invitaciones aquí",
+      "referNow": "Invitar ahora",
+      "moreReferrals": "+{count} otras invitaciones"
+    },
+    "rewardsList": {
+      "title": "Tus recompensas",
+      "empty": "Esperando conversiones",
+      "emptyDescription": "Cuando tus amigos se suscriban, verás tus recompensas aquí",
+      "daysLabel": "días"
+    },
+    "emptyState": {
+      "title": "¡Tu primera invitación te espera!",
+      "description": "¿Conoces a alguien que trabaje como autónomo? Envía tu enlace ahora y ambos ganan cuando se suscriba."
+    },
+    "tip": {
+      "title": "Consejo: ¡cuanto más invites, más ganas!",
+      "description": "Cada amigo que se suscriba añade 30 días a tu suscripción. ¡Sin límite!",
+      "action": "Invitar más"
+    },
+    "status": {
+      "LINK_CLICKED": "Hizo clic en el enlace",
+      "SIGNUP_COMPLETE": "Registro completo",
+      "SUBSCRIPTION_PAID": "Se suscribió"
+    },
+    "rewardReason": {
+      "REFERRAL_SIGNUP": "Invitación registrada",
+      "REFERRAL_CONVERSION": "Invitación convertida",
+      "MILESTONE_10": "Bono: 10 invitaciones",
+      "REVERSAL": "Reversión"
+    },
+    "platform": {
+      "WEB": "Web",
+      "IOS": "iOS",
+      "ANDROID": "Android"
+    },
+    "errorLoading": "Error al cargar datos de invitación",
+    "tryAgain": "Intentar de nuevo"
   }
 }

@@ -340,7 +340,15 @@
     "description": "Descrição",
     "type": "Tipo",
     "dueDate": "Vencimento",
-    "value": "Valor"
+    "value": "Valor",
+    "clientsSelected": "{count} cliente(s) selecionado(s)",
+    "clearSelection": "Limpar seleção",
+    "deleteSelected": "Excluir selecionados",
+    "deleteClientsTitle": "Excluir {count} cliente(s)?",
+    "deleteClientsWarning": "Esta ação não pode ser desfeita.",
+    "attentionLabel": "Atenção",
+    "deleteClientsOrphans": "Todos os dados associados a estes clientes (orçamentos, OS, cobranças) permanecerão no sistema, mas ficarão órfãos.",
+    "clients": "clientes"
   },
   "quotes": {
     "title": "Orçamentos",
@@ -793,7 +801,9 @@
     "pendingExpenses": "Pendente",
     "overdueExpenses": "Vencido",
     "totalExpenses": "Total de Despesas",
-    "items": "itens"
+    "items": "itens",
+    "profitLoss": "Lucro/Prejuízo",
+    "profitLossDescription": "Receitas vs despesas e análise de lucratividade"
   },
   "settings": {
     "title": "Configurações",
@@ -1241,13 +1251,118 @@
       "totalQuantity": "Quantidade Total",
       "lowStock": "Estoque Baixo",
       "outOfStock": "Sem Estoque",
-      "recentMovements": "Movimentações Recentes"
+      "recentMovements": "Movimentações Recentes",
+      "viewAll": "Ver todas"
     },
+    "inventoryControl": "Controle de Estoque",
+    "inventoryDisabled": "Controle de Estoque Desativado",
+    "inventoryDisabledDescription": "Ative o controle de estoque nas configurações para começar a rastrear seus produtos.",
+    "configureInventory": "Configurar Estoque",
+    "configurations": "Configurações",
+    "searchProduct": "Buscar produto...",
+    "noProductFound": "Nenhum produto encontrado",
+    "balanceAfter": "Saldo",
     "status": {
       "SCHEDULED": "Agendada",
       "IN_PROGRESS": "Em Andamento",
       "DONE": "Concluída",
       "CANCELED": "Cancelada"
     }
+  },
+  "referral": {
+    "title": "Indique e ganhe meses grátis",
+    "subtitle": "Cada amigo que assinar = 30 dias grátis pra você. Simples assim.",
+    "perReferralBadge": "+30 dias por indicação",
+    "exclusiveCode": "Seu código exclusivo",
+    "customizeCode": "Personalizar código",
+    "shareLink": "Seu link para compartilhar",
+    "copyLink": "Copiar link",
+    "copied": "Copiado!",
+    "linkCopied": "Link copiado! Agora é só enviar para seus amigos 📋",
+    "codeActivated": "Pronto! Seu código exclusivo foi ativado 🎉",
+    "errorSettingCode": "Erro ao definir código personalizado",
+    "enterValidCode": "Digite um código válido",
+    "sendWhatsApp": "Enviar pelo WhatsApp",
+    "whatsappMessageReady": "Mensagem pronta para enviar aos seus contatos",
+    "qrCode": "QR Code",
+    "stats": {
+      "clicks": "Cliques no link",
+      "clicksEmpty": "Compartilhe para ver cliques",
+      "clicksLabel": "Pessoas interessadas",
+      "signups": "Cadastros",
+      "signupsEmpty": "Aguardando cadastros",
+      "signupsLabel": "Amigos testando",
+      "subscriptions": "Assinaturas",
+      "subscriptionsEmpty": "Aguardando conversões",
+      "subscriptionsLabel": "Que geraram recompensa",
+      "earned": "Você ganhou",
+      "earnedEmpty": "Continue indicando!",
+      "earnedLabel": "De assinatura grátis!",
+      "days": "dias"
+    },
+    "challenge": {
+      "title": "Desafio: 1 Ano Grátis",
+      "titleCompleted": "🏆 Desafio Concluído!",
+      "titleAlmostThere": "🔥 Faltam só {remaining}!",
+      "subtitle": "Indique 10 amigos e ganhe 12 meses extras de assinatura!",
+      "subtitleCompleted": "Você é um verdadeiro embaixador do Auvo!",
+      "subtitleAlmostThere": "Você está quase lá! Continue indicando para ganhar 12 meses grátis.",
+      "subtitleProgress": "Mais {remaining} indicações e você ganha 12 meses extras!",
+      "badgeCompleted": "Conquistado!",
+      "badgeAlmostThere": "Quase lá!",
+      "progressLabel": "{count} indicação convertida",
+      "progressLabelPlural": "{count} indicações convertidas",
+      "goalLabel": "Meta: 10 indicações = 12 meses",
+      "goalCompleted": "🎉 12 meses conquistados!"
+    },
+    "howItWorks": {
+      "title": "Como ganhar meses grátis",
+      "step1Title": "Envie seu link",
+      "step1Description": "Mande pelo WhatsApp, Instagram ou onde preferir",
+      "step2Title": "Seu amigo testa grátis",
+      "step2Description": "Ele cria a conta e começa a usar o Auvo",
+      "step3Title": "Vocês ganham!",
+      "step3Description": "Quando ele assinar, você ganha 30 dias grátis"
+    },
+    "referralsList": {
+      "title": "Suas indicações",
+      "empty": "Nenhuma indicação ainda",
+      "emptyDescription": "Envie seu link pelo WhatsApp e veja suas indicações aqui",
+      "referNow": "Indicar agora",
+      "moreReferrals": "+{count} outras indicações"
+    },
+    "rewardsList": {
+      "title": "Suas recompensas",
+      "empty": "Aguardando conversões",
+      "emptyDescription": "Quando seus amigos assinarem, você verá suas recompensas aqui",
+      "daysLabel": "dias"
+    },
+    "emptyState": {
+      "title": "Sua primeira indicação está esperando!",
+      "description": "Conhece alguém que trabalha como autônomo? Mande seu link agora e vocês dois ganham quando ele assinar."
+    },
+    "tip": {
+      "title": "Dica: quanto mais indicar, mais você ganha!",
+      "description": "Cada amigo que assinar adiciona 30 dias à sua assinatura. Sem limite!",
+      "action": "Indicar mais"
+    },
+    "status": {
+      "LINK_CLICKED": "Clicou no link",
+      "SIGNUP_COMPLETE": "Cadastro completo",
+      "SUBSCRIPTION_PAID": "Assinou"
+    },
+    "rewardReason": {
+      "REFERRAL_SIGNUP": "Indicação cadastrada",
+      "REFERRAL_CONVERSION": "Indicação convertida",
+      "MILESTONE_10": "Bônus: 10 indicações",
+      "REVERSAL": "Estorno"
+    },
+    "platform": {
+      "WEB": "Web",
+      "IOS": "iOS",
+      "ANDROID": "Android"
+    },
+    "errorLoading": "Erro ao carregar dados de indicação",
+    "tryAgain": "Tentar novamente"
   }
 }

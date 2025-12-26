@@ -340,7 +340,15 @@
     "description": "Description",
     "type": "Type",
     "dueDate": "Due Date",
-    "value": "Value"
+    "value": "Value",
+    "clientsSelected": "{count} client(s) selected",
+    "clearSelection": "Clear selection",
+    "deleteSelected": "Delete selected",
+    "deleteClientsTitle": "Delete {count} client(s)?",
+    "deleteClientsWarning": "This action cannot be undone.",
+    "attentionLabel": "Attention",
+    "deleteClientsOrphans": "All data associated with these clients (quotes, work orders, charges) will remain in the system but will become orphaned.",
+    "clients": "clients"
   },
   "quotes": {
     "title": "Quotes",
@@ -782,7 +790,9 @@
     "pendingExpenses": "Pending",
     "overdueExpenses": "Overdue",
     "totalExpenses": "Total Expenses",
-    "items": "items"
+    "items": "items",
+    "profitLoss": "Profit/Loss",
+    "profitLossDescription": "Revenue vs expenses and profitability analysis"
   },
   "settings": {
     "title": "Settings",
@@ -1088,5 +1098,190 @@
     "date": "Invalid date",
     "number": "Must be a number",
     "positive": "Must be a positive value"
+  },
+  "inventory": {
+    "title": "Inventory",
+    "description": "Product inventory control",
+    "settings": {
+      "title": "Inventory Settings",
+      "description": "Configure how inventory control works in your company",
+      "enabled": "Inventory control enabled",
+      "enabledDescription": "When enabled, the system tracks product balances",
+      "deductOnStatus": "Deduct stock when WO reaches status",
+      "deductOnStatusDescription": "Stock will be deducted automatically when the work order reaches this status",
+      "allowNegativeStock": "Allow negative stock",
+      "allowNegativeStockDescription": "If disabled, the system will alert when stock is insufficient",
+      "deductOnlyOnce": "Deduct only once per WO",
+      "deductOnlyOnceDescription": "Prevents the same WO from deducting stock multiple times",
+      "featureDisabled": "This feature is not available in your current plan",
+      "saved": "Inventory settings saved successfully"
+    },
+    "balances": {
+      "title": "Stock Balances",
+      "description": "View and adjust the balance of each product",
+      "product": "Product",
+      "sku": "SKU",
+      "unit": "Unit",
+      "quantity": "Quantity",
+      "actions": "Actions",
+      "adjust": "Adjust",
+      "noProducts": "No products registered",
+      "totalSkus": "Total SKUs with stock",
+      "totalQuantity": "Total quantity in stock"
+    },
+    "movements": {
+      "title": "Movements",
+      "description": "History of stock entries and exits",
+      "type": "Type",
+      "source": "Source",
+      "quantity": "Quantity",
+      "balanceAfter": "Balance After",
+      "notes": "Notes",
+      "date": "Date",
+      "noMovements": "No movements found",
+      "types": {
+        "ADJUSTMENT_IN": "Manual Entry",
+        "ADJUSTMENT_OUT": "Manual Exit",
+        "WORK_ORDER_OUT": "WO Deduction",
+        "INITIAL": "Initial Balance"
+      },
+      "sources": {
+        "MANUAL": "Manual",
+        "WORK_ORDER": "Work Order",
+        "IMPORT": "Import",
+        "SYSTEM": "System"
+      }
+    },
+    "adjust": {
+      "title": "Adjust Stock",
+      "currentBalance": "Current balance",
+      "newBalance": "New balance",
+      "notes": "Notes (optional)",
+      "notesPlaceholder": "Ex: Purchased 10 units, Inventory correction",
+      "entry": "Entry",
+      "exit": "Exit",
+      "quantity": "Quantity",
+      "success": "Stock adjusted successfully",
+      "insufficientStock": "Insufficient stock for this operation"
+    },
+    "dashboard": {
+      "title": "Inventory Summary",
+      "totalSkus": "SKUs with Stock",
+      "totalQuantity": "Total Quantity",
+      "lowStock": "Low Stock",
+      "outOfStock": "Out of Stock",
+      "recentMovements": "Recent Movements",
+      "viewAll": "View all"
+    },
+    "inventoryControl": "Inventory Control",
+    "inventoryDisabled": "Inventory Control Disabled",
+    "inventoryDisabledDescription": "Enable inventory control in settings to start tracking your products.",
+    "configureInventory": "Configure Inventory",
+    "configurations": "Settings",
+    "searchProduct": "Search product...",
+    "noProductFound": "No product found",
+    "balanceAfter": "Balance",
+    "status": {
+      "SCHEDULED": "Scheduled",
+      "IN_PROGRESS": "In Progress",
+      "DONE": "Done",
+      "CANCELED": "Canceled"
+    }
+  },
+  "referral": {
+    "title": "Refer & Earn Free Months",
+    "subtitle": "Each friend who subscribes = 30 free days for you. That simple.",
+    "perReferralBadge": "+30 days per referral",
+    "exclusiveCode": "Your exclusive code",
+    "customizeCode": "Customize code",
+    "shareLink": "Your share link",
+    "copyLink": "Copy link",
+    "copied": "Copied!",
+    "linkCopied": "Link copied! Now just send it to your friends 📋",
+    "codeActivated": "Done! Your exclusive code has been activated 🎉",
+    "errorSettingCode": "Error setting custom code",
+    "enterValidCode": "Enter a valid code",
+    "sendWhatsApp": "Send via WhatsApp",
+    "whatsappMessageReady": "Message ready to send to your contacts",
+    "qrCode": "QR Code",
+    "stats": {
+      "clicks": "Link clicks",
+      "clicksEmpty": "Share to see clicks",
+      "clicksLabel": "Interested people",
+      "signups": "Sign-ups",
+      "signupsEmpty": "Waiting for sign-ups",
+      "signupsLabel": "Friends testing",
+      "subscriptions": "Subscriptions",
+      "subscriptionsEmpty": "Waiting for conversions",
+      "subscriptionsLabel": "That generated rewards",
+      "earned": "You earned",
+      "earnedEmpty": "Keep referring!",
+      "earnedLabel": "Of free subscription!",
+      "days": "days"
+    },
+    "challenge": {
+      "title": "Challenge: 1 Free Year",
+      "titleCompleted": "🏆 Challenge Completed!",
+      "titleAlmostThere": "🔥 Only {remaining} left!",
+      "subtitle": "Refer 10 friends and earn 12 extra months of subscription!",
+      "subtitleCompleted": "You're a true Auvo ambassador!",
+      "subtitleAlmostThere": "You're almost there! Keep referring to get 12 free months.",
+      "subtitleProgress": "{remaining} more referrals and you get 12 extra months!",
+      "badgeCompleted": "Achieved!",
+      "badgeAlmostThere": "Almost there!",
+      "progressLabel": "{count} referral converted",
+      "progressLabelPlural": "{count} referrals converted",
+      "goalLabel": "Goal: 10 referrals = 12 months",
+      "goalCompleted": "🎉 12 months earned!"
+    },
+    "howItWorks": {
+      "title": "How to earn free months",
+      "step1Title": "Send your link",
+      "step1Description": "Send via WhatsApp, Instagram or wherever you prefer",
+      "step2Title": "Your friend tries for free",
+      "step2Description": "They create an account and start using Auvo",
+      "step3Title": "You both win!",
+      "step3Description": "When they subscribe, you get 30 free days"
+    },
+    "referralsList": {
+      "title": "Your referrals",
+      "empty": "No referrals yet",
+      "emptyDescription": "Send your link via WhatsApp and see your referrals here",
+      "referNow": "Refer now",
+      "moreReferrals": "+{count} more referrals"
+    },
+    "rewardsList": {
+      "title": "Your rewards",
+      "empty": "Waiting for conversions",
+      "emptyDescription": "When your friends subscribe, you'll see your rewards here",
+      "daysLabel": "days"
+    },
+    "emptyState": {
+      "title": "Your first referral is waiting!",
+      "description": "Know someone who works as a freelancer? Send your link now and you both win when they subscribe."
+    },
+    "tip": {
+      "title": "Tip: the more you refer, the more you earn!",
+      "description": "Each friend who subscribes adds 30 days to your subscription. No limit!",
+      "action": "Refer more"
+    },
+    "status": {
+      "LINK_CLICKED": "Clicked link",
+      "SIGNUP_COMPLETE": "Sign-up complete",
+      "SUBSCRIPTION_PAID": "Subscribed"
+    },
+    "rewardReason": {
+      "REFERRAL_SIGNUP": "Referral signed up",
+      "REFERRAL_CONVERSION": "Referral converted",
+      "MILESTONE_10": "Bonus: 10 referrals",
+      "REVERSAL": "Reversal"
+    },
+    "platform": {
+      "WEB": "Web",
+      "IOS": "iOS",
+      "ANDROID": "Android"
+    },
+    "errorLoading": "Error loading referral data",
+    "tryAgain": "Try again"
   }
 }

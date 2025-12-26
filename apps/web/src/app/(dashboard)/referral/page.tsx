@@ -3,13 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { useTranslations } from '@/i18n';
 import {
   getReferralDashboard,
   setCustomCode,
-  getReferralStatusLabel,
-  getReferralStatusColor,
-  getRewardReasonLabel,
-  getPlatformLabel,
   type ReferralDashboard,
 } from '@/services';
 import {
@@ -30,19 +27,12 @@ import {
   Trophy,
   Copy,
   Check,
-  Share2,
   Smartphone,
   Monitor,
-  Clock,
-  Sparkles,
   Edit2,
   X,
   Loader2,
-  Link as LinkIcon,
   QrCode,
-  TrendingUp,
-  Calendar,
-  ChevronRight,
   MessageCircle,
   Zap,
   Target,
@@ -52,11 +42,11 @@ import {
 import { cn } from '@/lib/utils';
 
 export default function ReferralPage() {
+  const { t } = useTranslations('referral');
   const queryClient = useQueryClient();
   const [copied, setCopied] = useState(false);
   const [isEditingCode, setIsEditingCode] = useState(false);
   const [customCodeInput, setCustomCodeInput] = useState('');
-  const [showQRCode, setShowQRCode] = useState(false);
 
   const { data: dashboard, isLoading, error } = useQuery<ReferralDashboard>({
     queryKey: ['referral-dashboard'],
@@ -68,10 +58,10 @@ export default function ReferralPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['referral-dashboard'] });
       setIsEditingCode(false);
-      toast.success('Pronto! Seu código exclusivo foi ativado 🎉');
+      toast.success(t('codeActivated'));
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Erro ao definir código personalizado');
+      toast.error(error.message || t('errorSettingCode'));
     },
   });
 
@@ -81,10 +71,10 @@ export default function ReferralPage() {
     try {
       await navigator.clipboard.writeText(dashboard.shareUrl);
       setCopied(true);
-      toast.success('Link copiado! Agora é só enviar para seus amigos 📋');
+      toast.success(t('linkCopied'));
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error('Erro ao copiar link');
+      toast.error(t('errorLoading'));
     }
   };
 
@@ -119,10 +109,19 @@ ${dashboard.shareUrl}`;
 
   const handleSaveCustomCode = () => {
     if (!customCodeInput.trim()) {
-      toast.error('Digite um código válido');
+      toast.error(t('enterValidCode'));
       return;
     }
     customCodeMutation.mutate(customCodeInput.trim().toUpperCase());
+  };
+
+  // Helper functions to get translated labels
+  const getReferralStatusLabel = (status: string): string => {
+    return t(`status.${status}` as never) || status;
+  };
+
+  const getRewardReasonLabel = (reason: string): string => {
+    return t(`rewardReason.${reason}` as never) || reason;
   };
 
   useEffect(() => {
@@ -156,13 +155,13 @@ ${dashboard.shareUrl}`;
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Gift className="w-8 h-8 text-gray-400" />
             </div>
-            <p className="text-gray-500">Erro ao carregar dados de indicação</p>
+            <p className="text-gray-500">{t('errorLoading')}</p>
             <Button
               variant="outline"
               className="mt-4"
               onClick={() => queryClient.invalidateQueries({ queryKey: ['referral-dashboard'] })}
             >
-              Tentar novamente
+              {t('tryAgain')}
             </Button>
           </CardContent>
         </Card>
@@ -179,28 +178,28 @@ ${dashboard.shareUrl}`;
   const getChallengeText = () => {
     if (hasReachedMilestone) {
       return {
-        title: '🏆 Desafio Concluído!',
-        subtitle: 'Você é um verdadeiro embaixador do Auvo!',
-        badge: 'Conquistado!',
+        title: t('challenge.titleCompleted'),
+        subtitle: t('challenge.subtitleCompleted'),
+        badge: t('challenge.badgeCompleted'),
       };
     }
     if (progressToMilestone === 0) {
       return {
-        title: 'Desafio: 1 Ano Grátis',
-        subtitle: 'Indique 10 amigos e ganhe 12 meses extras de assinatura!',
+        title: t('challenge.title'),
+        subtitle: t('challenge.subtitle'),
         badge: null,
       };
     }
     if (remainingToMilestone <= 3) {
       return {
-        title: `🔥 Faltam só ${remainingToMilestone}!`,
-        subtitle: 'Você está quase lá! Continue indicando para ganhar 12 meses grátis.',
-        badge: 'Quase lá!',
+        title: t('challenge.titleAlmostThere', { remaining: remainingToMilestone }),
+        subtitle: t('challenge.subtitleAlmostThere'),
+        badge: t('challenge.badgeAlmostThere'),
       };
     }
     return {
-      title: 'Desafio: 1 Ano Grátis',
-      subtitle: `Mais ${remainingToMilestone} indicações e você ganha 12 meses extras!`,
+      title: t('challenge.title'),
+      subtitle: t('challenge.subtitleProgress', { remaining: remainingToMilestone }),
       badge: null,
     };
   };
@@ -214,16 +213,16 @@ ${dashboard.shareUrl}`;
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            Indique e ganhe meses grátis
+            {t('title')}
           </h1>
           <p className="text-gray-500 mt-1">
-            Cada amigo que assinar = 30 dias grátis pra você. Simples assim.
+            {t('subtitle')}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="primary" className="text-sm px-3 py-1.5 animate-pulse">
             <Gift className="w-4 h-4 mr-1.5" />
-            +30 dias por indicação
+            {t('perReferralBadge')}
           </Badge>
         </div>
       </div>
@@ -235,7 +234,7 @@ ${dashboard.shareUrl}`;
             {/* Left side - Code and Link */}
             <div className="flex-1 space-y-4">
               <div>
-                <p className="text-primary-100 text-sm font-medium mb-1">Seu código exclusivo</p>
+                <p className="text-primary-100 text-sm font-medium mb-1">{t('exclusiveCode')}</p>
                 <div className="flex items-center gap-3">
                   {isEditingCode ? (
                     <div className="flex items-center gap-2">
@@ -281,7 +280,7 @@ ${dashboard.shareUrl}`;
                         variant="ghost"
                         className="text-white hover:bg-white/20"
                         onClick={() => setIsEditingCode(true)}
-                        title="Personalizar código"
+                        title={t('customizeCode')}
                       >
                         <Edit2 className="w-4 h-4" />
                       </Button>
@@ -291,7 +290,7 @@ ${dashboard.shareUrl}`;
               </div>
 
               <div>
-                <p className="text-primary-100 text-sm font-medium mb-2">Seu link para compartilhar</p>
+                <p className="text-primary-100 text-sm font-medium mb-2">{t('shareLink')}</p>
                 <div className="flex items-center gap-2 flex-wrap">
                   <div className="flex-1 min-w-0 bg-white/10 rounded-lg px-4 py-2.5 font-mono text-sm truncate">
                     {shareUrl}
@@ -302,7 +301,7 @@ ${dashboard.shareUrl}`;
                     onClick={handleCopyLink}
                   >
                     {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                    {copied ? 'Copiado!' : 'Copiar link'}
+                    {copied ? t('copied') : t('copyLink')}
                   </Button>
                 </div>
               </div>
@@ -315,10 +314,10 @@ ${dashboard.shareUrl}`;
                   onClick={handleShareWhatsApp}
                 >
                   <MessageCircle className="w-5 h-5 mr-2" />
-                  Enviar pelo WhatsApp
+                  {t('sendWhatsApp')}
                 </Button>
                 <p className="text-primary-200 text-xs mt-2">
-                  Mensagem pronta para enviar aos seus contatos
+                  {t('whatsappMessageReady')}
                 </p>
               </div>
             </div>
@@ -326,7 +325,7 @@ ${dashboard.shareUrl}`;
             {/* Right side - QR Code placeholder */}
             <div className="hidden lg:flex flex-col items-center justify-center bg-white/10 rounded-xl p-6 min-w-[140px]">
               <QrCode className="w-16 h-16 text-white/80 mb-2" />
-              <span className="text-xs text-primary-100">QR Code</span>
+              <span className="text-xs text-primary-100">{t('qrCode')}</span>
             </div>
           </div>
         </div>
@@ -338,10 +337,10 @@ ${dashboard.shareUrl}`;
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 mb-1">Cliques no link</p>
+                <p className="text-sm text-gray-500 mb-1">{t('stats.clicks')}</p>
                 <p className="text-2xl font-bold text-gray-900">{stats.totalClicks}</p>
                 <p className="text-xs text-gray-400 mt-1">
-                  {stats.totalClicks === 0 ? 'Compartilhe para ver cliques' : 'Pessoas interessadas'}
+                  {stats.totalClicks === 0 ? t('stats.clicksEmpty') : t('stats.clicksLabel')}
                 </p>
               </div>
               <div className="p-3 bg-blue-50 rounded-xl group-hover:scale-110 transition-transform">
@@ -355,10 +354,10 @@ ${dashboard.shareUrl}`;
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 mb-1">Cadastros</p>
+                <p className="text-sm text-gray-500 mb-1">{t('stats.signups')}</p>
                 <p className="text-2xl font-bold text-gray-900">{stats.totalSignups}</p>
                 <p className="text-xs text-gray-400 mt-1">
-                  {stats.totalSignups === 0 ? 'Aguardando cadastros' : 'Amigos testando'}
+                  {stats.totalSignups === 0 ? t('stats.signupsEmpty') : t('stats.signupsLabel')}
                 </p>
               </div>
               <div className="p-3 bg-purple-50 rounded-xl group-hover:scale-110 transition-transform">
@@ -372,10 +371,10 @@ ${dashboard.shareUrl}`;
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 mb-1">Assinaturas</p>
+                <p className="text-sm text-gray-500 mb-1">{t('stats.subscriptions')}</p>
                 <p className="text-2xl font-bold text-gray-900">{stats.totalPaidConversions}</p>
                 <p className="text-xs text-gray-400 mt-1">
-                  {stats.totalPaidConversions === 0 ? 'Aguardando conversões' : 'Que geraram recompensa'}
+                  {stats.totalPaidConversions === 0 ? t('stats.subscriptionsEmpty') : t('stats.subscriptionsLabel')}
                 </p>
               </div>
               <div className="p-3 bg-green-50 rounded-xl group-hover:scale-110 transition-transform">
@@ -389,10 +388,10 @@ ${dashboard.shareUrl}`;
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-green-700 mb-1">Você ganhou</p>
-                <p className="text-2xl font-bold text-green-600">+{stats.totalDaysEarned} dias</p>
+                <p className="text-sm text-green-700 mb-1">{t('stats.earned')}</p>
+                <p className="text-2xl font-bold text-green-600">+{stats.totalDaysEarned} {t('stats.days')}</p>
                 <p className="text-xs text-green-600/70 mt-1">
-                  {stats.totalDaysEarned === 0 ? 'Continue indicando!' : 'De assinatura grátis!'}
+                  {stats.totalDaysEarned === 0 ? t('stats.earnedEmpty') : t('stats.earnedLabel')}
                 </p>
               </div>
               <div className="p-3 bg-green-100 rounded-xl group-hover:scale-110 transition-transform">
@@ -482,13 +481,16 @@ ${dashboard.shareUrl}`;
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">
-                {progressToMilestone} {progressToMilestone === 1 ? 'indicação' : 'indicações'} convertidas
+                {progressToMilestone === 1
+                  ? t('challenge.progressLabel', { count: progressToMilestone })
+                  : t('challenge.progressLabelPlural', { count: progressToMilestone })
+                }
               </span>
               <span className={cn(
                 "font-medium",
                 hasReachedMilestone ? "text-green-600" : "text-amber-600"
               )}>
-                {hasReachedMilestone ? '🎉 12 meses conquistados!' : `Meta: 10 indicações = 12 meses`}
+                {hasReachedMilestone ? t('challenge.goalCompleted') : t('challenge.goalLabel')}
               </span>
             </div>
           </div>
@@ -500,7 +502,7 @@ ${dashboard.shareUrl}`;
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Zap className="w-4 h-4 text-primary" />
-            Como ganhar meses grátis
+            {t('howItWorks.title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -510,9 +512,9 @@ ${dashboard.shareUrl}`;
                 1
               </div>
               <div>
-                <p className="font-semibold text-gray-900">Envie seu link</p>
+                <p className="font-semibold text-gray-900">{t('howItWorks.step1Title')}</p>
                 <p className="text-sm text-gray-500 mt-1">
-                  Mande pelo WhatsApp, Instagram ou onde preferir
+                  {t('howItWorks.step1Description')}
                 </p>
               </div>
             </div>
@@ -521,9 +523,9 @@ ${dashboard.shareUrl}`;
                 2
               </div>
               <div>
-                <p className="font-semibold text-gray-900">Seu amigo testa grátis</p>
+                <p className="font-semibold text-gray-900">{t('howItWorks.step2Title')}</p>
                 <p className="text-sm text-gray-500 mt-1">
-                  Ele cria a conta e começa a usar o Auvo
+                  {t('howItWorks.step2Description')}
                 </p>
               </div>
             </div>
@@ -532,9 +534,9 @@ ${dashboard.shareUrl}`;
                 <Gift className="w-5 h-5" />
               </div>
               <div>
-                <p className="font-semibold text-gray-900">Vocês ganham!</p>
+                <p className="font-semibold text-gray-900">{t('howItWorks.step3Title')}</p>
                 <p className="text-sm text-gray-500 mt-1">
-                  Quando ele assinar, você ganha <strong>30 dias grátis</strong>
+                  {t('howItWorks.step3Description')}
                 </p>
               </div>
             </div>
@@ -547,7 +549,7 @@ ${dashboard.shareUrl}`;
         {/* Referrals List */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">Suas indicações</CardTitle>
+            <CardTitle className="text-base">{t('referralsList.title')}</CardTitle>
             {referrals.length > 0 && (
               <Badge variant="secondary">{referrals.length}</Badge>
             )}
@@ -558,9 +560,9 @@ ${dashboard.shareUrl}`;
                 <div className="w-14 h-14 bg-gradient-to-br from-blue-50 to-purple-50 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Users className="w-7 h-7 text-blue-400" />
                 </div>
-                <p className="font-medium text-gray-700">Nenhuma indicação ainda</p>
+                <p className="font-medium text-gray-700">{t('referralsList.empty')}</p>
                 <p className="text-sm text-gray-500 mt-1 max-w-[200px] mx-auto">
-                  Envie seu link pelo WhatsApp e veja suas indicações aqui
+                  {t('referralsList.emptyDescription')}
                 </p>
                 <Button
                   variant="outline"
@@ -569,7 +571,7 @@ ${dashboard.shareUrl}`;
                   onClick={handleShareWhatsApp}
                 >
                   <MessageCircle className="w-4 h-4 mr-2" />
-                  Indicar agora
+                  {t('referralsList.referNow')}
                 </Button>
               </div>
             ) : (
@@ -616,7 +618,7 @@ ${dashboard.shareUrl}`;
                 ))}
                 {referrals.length > 5 && (
                   <p className="text-center text-sm text-gray-500 pt-2">
-                    +{referrals.length - 5} outras indicações
+                    {t('referralsList.moreReferrals', { count: referrals.length - 5 })}
                   </p>
                 )}
               </div>
@@ -627,11 +629,11 @@ ${dashboard.shareUrl}`;
         {/* Rewards List */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">Suas recompensas</CardTitle>
+            <CardTitle className="text-base">{t('rewardsList.title')}</CardTitle>
             {rewards.length > 0 && (
               <Badge variant="success" className="animate-pulse">
                 <Gift className="w-3 h-3 mr-1" />
-                +{stats.totalDaysEarned} dias
+                +{stats.totalDaysEarned} {t('rewardsList.daysLabel')}
               </Badge>
             )}
           </CardHeader>
@@ -641,9 +643,9 @@ ${dashboard.shareUrl}`;
                 <div className="w-14 h-14 bg-gradient-to-br from-green-50 to-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Gift className="w-7 h-7 text-green-400" />
                 </div>
-                <p className="font-medium text-gray-700">Aguardando conversões</p>
+                <p className="font-medium text-gray-700">{t('rewardsList.empty')}</p>
                 <p className="text-sm text-gray-500 mt-1 max-w-[220px] mx-auto">
-                  Quando seus amigos assinarem, você verá suas recompensas aqui
+                  {t('rewardsList.emptyDescription')}
                 </p>
               </div>
             ) : (
@@ -685,7 +687,7 @@ ${dashboard.shareUrl}`;
                         ? "text-red-600 bg-red-50"
                         : "text-green-600 bg-green-50"
                     )}>
-                      {reward.reason === 'REVERSAL' ? '-' : '+'}{reward.daysAwarded} dias
+                      {reward.reason === 'REVERSAL' ? '-' : '+'}{reward.daysAwarded} {t('rewardsList.daysLabel')}
                     </span>
                   </div>
                 ))}
@@ -704,10 +706,10 @@ ${dashboard.shareUrl}`;
               <Gift className="w-10 h-10 text-primary" />
             </div>
             <h3 className="font-bold text-xl text-gray-900 mb-2">
-              Sua primeira indicação está esperando!
+              {t('emptyState.title')}
             </h3>
             <p className="text-gray-600 mb-6 max-w-md mx-auto">
-              Conhece alguém que trabalha como autônomo? Mande seu link agora e vocês dois ganham quando ele assinar.
+              {t('emptyState.description')}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Button
@@ -716,7 +718,7 @@ ${dashboard.shareUrl}`;
                 onClick={handleShareWhatsApp}
               >
                 <MessageCircle className="w-5 h-5 mr-2" />
-                Enviar pelo WhatsApp
+                {t('sendWhatsApp')}
               </Button>
               <Button
                 variant="outline"
@@ -724,7 +726,7 @@ ${dashboard.shareUrl}`;
                 onClick={handleCopyLink}
               >
                 <Copy className="w-4 h-4 mr-2" />
-                Copiar link
+                {t('copyLink')}
               </Button>
             </div>
           </CardContent>
@@ -740,9 +742,9 @@ ${dashboard.shareUrl}`;
                 <Star className="w-5 h-5 text-blue-600" />
               </div>
               <div className="flex-1">
-                <p className="font-medium text-blue-900">Dica: quanto mais indicar, mais você ganha!</p>
+                <p className="font-medium text-blue-900">{t('tip.title')}</p>
                 <p className="text-sm text-blue-700">
-                  Cada amigo que assinar adiciona 30 dias à sua assinatura. Sem limite!
+                  {t('tip.description')}
                 </p>
               </div>
               <Button
@@ -751,7 +753,7 @@ ${dashboard.shareUrl}`;
                 className="text-blue-600 hover:text-blue-700 hover:bg-blue-100 shrink-0"
                 onClick={handleShareWhatsApp}
               >
-                Indicar mais
+                {t('tip.action')}
                 <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
             </div>

@@ -5,6 +5,21 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { KbEmbeddingService } from '../services/kb-embedding.service';
+import { KbEmbeddingCacheService } from '../services/kb-embedding-cache.service';
+
+const mockCacheService = {
+  get: jest.fn().mockResolvedValue(null),
+  set: jest.fn().mockResolvedValue(undefined),
+  getMany: jest.fn().mockResolvedValue(new Map()),
+  setMany: jest.fn().mockResolvedValue(undefined),
+  getStats: jest.fn().mockResolvedValue({
+    totalEntries: 0,
+    totalHits: 0,
+    oldestEntry: null,
+    newestEntry: null,
+  }),
+  isEnabled: jest.fn().mockReturnValue(true),
+};
 
 describe('KbEmbeddingService', () => {
   let service: KbEmbeddingService;
@@ -18,10 +33,13 @@ describe('KbEmbeddingService', () => {
   };
 
   beforeEach(async () => {
+    jest.clearAllMocks();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         KbEmbeddingService,
         { provide: ConfigService, useValue: mockConfigService },
+        { provide: KbEmbeddingCacheService, useValue: mockCacheService },
       ],
     }).compile();
 
@@ -76,6 +94,20 @@ describe('KbEmbeddingService', () => {
 
       // Unit vector magnitude should be approximately 1
       expect(magnitude).toBeCloseTo(1, 5);
+    });
+
+    it('should return cached embedding when available', async () => {
+      const cachedEmbedding = {
+        embedding: new Array(1536).fill(0.1),
+        model: 'cached-model',
+        fromCache: true,
+      };
+      mockCacheService.get.mockResolvedValueOnce(cachedEmbedding);
+
+      const result = await service.embed('test query');
+
+      expect(result.fromCache).toBe(true);
+      expect(result.embedding).toEqual(cachedEmbedding.embedding);
     });
   });
 
@@ -141,6 +173,19 @@ describe('KbEmbeddingService', () => {
       expect(similarity).toBeGreaterThan(0);
     });
   });
+
+  describe('getCacheStats', () => {
+    it('should return cache statistics', async () => {
+      const stats = await service.getCacheStats();
+
+      expect(stats).toEqual({
+        totalEntries: 0,
+        totalHits: 0,
+        oldestEntry: null,
+        newestEntry: null,
+      });
+    });
+  });
 });
 
 describe('KbEmbeddingService (with OpenAI)', () => {
@@ -155,10 +200,13 @@ describe('KbEmbeddingService (with OpenAI)', () => {
   };
 
   beforeEach(async () => {
+    jest.clearAllMocks();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         KbEmbeddingService,
         { provide: ConfigService, useValue: mockConfigServiceWithApiKey },
+        { provide: KbEmbeddingCacheService, useValue: mockCacheService },
       ],
     }).compile();
 

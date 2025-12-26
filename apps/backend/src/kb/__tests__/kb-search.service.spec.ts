@@ -6,6 +6,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { KbSearchService } from '../services/kb-search.service';
 import { KbEmbeddingService } from '../services/kb-embedding.service';
 import { KbVectorStore } from '../services/kb-vector-store.service';
+import { KbRerankerService } from '../services/kb-reranker.service';
 
 describe('KbSearchService', () => {
   let service: KbSearchService;
@@ -13,34 +14,48 @@ describe('KbSearchService', () => {
   const mockEmbedding = new Array(1536).fill(0.1);
 
   const mockEmbeddingService = {
-    embed: jest.fn().mockResolvedValue({ embedding: mockEmbedding, model: 'test' }),
+    embed: jest.fn().mockResolvedValue({ embedding: mockEmbedding, model: 'test', fromCache: false }),
     embedBatch: jest.fn(),
     cosineSimilarity: jest.fn(),
+    getCacheStats: jest.fn().mockResolvedValue({
+      totalEntries: 0,
+      totalHits: 0,
+      oldestEntry: null,
+      newestEntry: null,
+    }),
   };
 
   const mockVectorStore = {
     searchChunks: jest.fn().mockResolvedValue([]),
     searchFaqs: jest.fn().mockResolvedValue([]),
+    isPgVectorEnabled: jest.fn().mockReturnValue(false),
     getStats: jest.fn().mockResolvedValue({
       totalDocuments: 10,
       totalChunks: 50,
       totalFaqs: 20,
       bySource: { DOCS: 5, FAQ: 5 },
+      pgvectorEnabled: false,
     }),
   };
 
+  const mockRerankerService = {
+    isAvailable: jest.fn().mockReturnValue(false),
+    rerank: jest.fn(),
+  };
+
   beforeEach(async () => {
+    jest.clearAllMocks();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         KbSearchService,
         { provide: KbEmbeddingService, useValue: mockEmbeddingService },
         { provide: KbVectorStore, useValue: mockVectorStore },
+        { provide: KbRerankerService, useValue: mockRerankerService },
       ],
     }).compile();
 
     service = module.get<KbSearchService>(KbSearchService);
-
-    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
@@ -139,9 +154,10 @@ describe('KbSearchService', () => {
 
       const results = await service.searchFaq('how to do something');
 
+      // Note: searchFaq multiplies topK by 2 for potential reranking
       expect(mockVectorStore.searchFaqs).toHaveBeenCalledWith(
         mockEmbedding,
-        expect.objectContaining({ topK: 3, minScore: 0.6 }),
+        expect.objectContaining({ topK: 6, minScore: 0.5 }),
       );
       expect(results.length).toBe(1);
     });

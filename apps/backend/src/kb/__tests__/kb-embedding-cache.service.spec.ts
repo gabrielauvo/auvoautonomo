@@ -22,19 +22,31 @@ describe('KbEmbeddingCacheService', () => {
     $transaction: jest.fn(),
   };
 
+  const defaultConfig: Record<string, unknown> = {
+    KB_CACHE_TTL_MS: 3600000, // 1 hour
+    KB_CACHE_MAX_SIZE: 1000,
+    KB_CACHE_ENABLED: true,
+  };
+
   const mockConfigService = {
-    get: jest.fn((key: string) => {
-      const config: Record<string, unknown> = {
-        KB_CACHE_TTL_MS: 3600000, // 1 hour
-        KB_CACHE_MAX_SIZE: 1000,
-        KB_CACHE_ENABLED: true,
-      };
-      return config[key];
-    }),
+    get: jest.fn((key: string) => defaultConfig[key]),
   };
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    // Reset config service to default behavior
+    mockConfigService.get.mockImplementation((key: string) => defaultConfig[key]);
+    // Reset all prisma mocks to default resolved values
+    mockPrismaService.kbEmbeddingCache.findUnique.mockResolvedValue(null);
+    mockPrismaService.kbEmbeddingCache.findMany.mockResolvedValue([]);
+    mockPrismaService.kbEmbeddingCache.findFirst.mockResolvedValue(null);
+    mockPrismaService.kbEmbeddingCache.upsert.mockResolvedValue({ id: 'cache-1' });
+    mockPrismaService.kbEmbeddingCache.update.mockResolvedValue({});
+    mockPrismaService.kbEmbeddingCache.delete.mockResolvedValue({});
+    mockPrismaService.kbEmbeddingCache.deleteMany.mockResolvedValue({ count: 0 });
+    mockPrismaService.kbEmbeddingCache.count.mockResolvedValue(0);
+    mockPrismaService.kbEmbeddingCache.aggregate.mockResolvedValue({ _sum: { hitCount: 0 } });
+    mockPrismaService.$transaction.mockImplementation((operations) => Promise.all(operations));
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [

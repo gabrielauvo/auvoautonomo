@@ -8,7 +8,7 @@
 
 import React, { useMemo, useEffect, useState, useCallback } from 'react';
 import { ChevronDown, Check, Search, Globe, Clock, DollarSign } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useTranslations } from '@/i18n';
 import { cn } from '@/lib/utils';
 import { useCompanySettings, type CountryInfo, type CurrencyInfo, type TimezoneInfo } from '@/context';
 

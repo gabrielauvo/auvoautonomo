@@ -33,7 +33,7 @@ export function CountrySelect({
   className,
   autoFillCurrencyAndTimezone = true,
 }: CountrySelectProps) {
-  const t = useTranslations('settings');
+  const { t } = useTranslations('settings');
   const { countries, loadTimezones } = useCompanySettings();
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -196,7 +196,7 @@ export function CurrencySelect({
   disabled = false,
   className,
 }: CurrencySelectProps) {
-  const t = useTranslations('settings');
+  const { t } = useTranslations('settings');
   const { currencies } = useCompanySettings();
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -356,7 +356,7 @@ export function TimezoneSelect({
   disabled = false,
   className,
 }: TimezoneSelectProps) {
-  const t = useTranslations('settings');
+  const { t } = useTranslations('settings');
   const { timezones } = useCompanySettings();
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -510,8 +510,8 @@ export function RegionalSettingsForm({
   showLabels = true,
   compact = false,
 }: RegionalSettingsFormProps) {
-  const t = useTranslations('settings');
-  const tCommon = useTranslations('common');
+  const { t } = useTranslations('settings');
+  const { t: tCommon } = useTranslations('common');
   const {
     settings,
     isLoading,

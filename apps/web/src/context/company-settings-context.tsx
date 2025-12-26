@@ -155,7 +155,7 @@ export interface CurrencyInfo {
  */
 interface CompanySettingsContextType {
   // Settings
-  settings: RegionalSettings | null;
+  settings: RegionalSettings;
   isLoading: boolean;
   error: string | null;
 
@@ -210,7 +210,8 @@ export function CompanySettingsProvider({
 }) {
   const { isAuthenticated, user } = useAuth();
 
-  const [settings, setSettings] = useState<RegionalSettings | null>(null);
+  // Initialize with default settings to prevent null currency issues during render
+  const [settings, setSettings] = useState<RegionalSettings>(DEFAULT_SETTINGS);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [countries, setCountries] = useState<CountryInfo[]>([]);
@@ -401,19 +402,19 @@ export function CompanySettingsProvider({
 
   // Load timezones when country changes
   useEffect(() => {
-    if (settings?.country) {
+    if (settings.country) {
       loadTimezones(settings.country);
     }
-  }, [settings?.country, loadTimezones]);
+  }, [settings.country, loadTimezones]);
 
   /**
    * Get current locale based on country
    */
   const locale = useMemo(() => {
-    return settings?.country
+    return settings.country
       ? getLocaleForCountry(settings.country)
       : 'pt-BR';
-  }, [settings?.country]);
+  }, [settings.country]);
 
   /**
    * Format currency with company or record currency
@@ -421,13 +422,13 @@ export function CompanySettingsProvider({
   const formatCurrency = useCallback(
     (value: number, recordCurrency?: string) => {
       // Ensure we have a valid currency code (3-letter ISO 4217)
-      let currency = recordCurrency || settings?.currency || 'BRL';
+      let currency = recordCurrency || settings.currency || 'BRL';
       if (typeof currency !== 'string' || !/^[A-Z]{3}$/.test(currency)) {
         currency = 'BRL';
       }
       return formatCurrencyUtil(value, currency, locale);
     },
-    [settings?.currency, locale],
+    [settings.currency, locale],
   );
 
   /**
@@ -435,10 +436,10 @@ export function CompanySettingsProvider({
    */
   const formatDate = useCallback(
     (date: Date | string) => {
-      const timezone = settings?.timezone || 'America/Sao_Paulo';
+      const timezone = settings.timezone || 'America/Sao_Paulo';
       return formatShortDate(date, timezone, locale);
     },
-    [settings?.timezone, locale],
+    [settings.timezone, locale],
   );
 
   /**
@@ -446,10 +447,10 @@ export function CompanySettingsProvider({
    */
   const formatDateTimeStr = useCallback(
     (date: Date | string) => {
-      const timezone = settings?.timezone || 'America/Sao_Paulo';
+      const timezone = settings.timezone || 'America/Sao_Paulo';
       return formatDateTime(date, timezone, locale);
     },
-    [settings?.timezone, locale],
+    [settings.timezone, locale],
   );
 
   /**
@@ -457,10 +458,10 @@ export function CompanySettingsProvider({
    */
   const formatTimeStr = useCallback(
     (date: Date | string) => {
-      const timezone = settings?.timezone || 'America/Sao_Paulo';
+      const timezone = settings.timezone || 'America/Sao_Paulo';
       return formatTime(date, timezone, locale);
     },
-    [settings?.timezone, locale],
+    [settings.timezone, locale],
   );
 
   const value = useMemo(
@@ -530,7 +531,7 @@ export function useFormatting() {
     formatDate,
     formatDateTime: formatDateTimeStr,
     formatTime: formatTimeStr,
-    currency: settings?.currency || 'BRL',
-    timezone: settings?.timezone || 'America/Sao_Paulo',
+    currency: settings.currency || 'BRL',
+    timezone: settings.timezone || 'America/Sao_Paulo',
   };
 }

@@ -2,6 +2,10 @@
  * Plan Management Screen
  *
  * Tela de gestão do plano - upgrade, downgrade e cancelamento
+ *
+ * Modelo de Planos:
+ * - TRIAL: 14 dias grátis com tudo liberado
+ * - PRO: R$ 99,90/mês ou R$ 89,90/mês (anual)
  */
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -24,35 +28,40 @@ import { router } from 'expo-router';
 import { Text, Card, Button, Badge } from '../../src/design-system';
 import { useColors, useSpacing } from '../../src/design-system/ThemeProvider';
 import { AuthService } from '../../src/services/AuthService';
+import {
+  PRO_PLAN_PRICING,
+  TRIAL_DURATION_DAYS,
+  calculateTrialDaysRemaining,
+  BillingPeriod,
+} from '../../src/services/BillingService';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PLAN_CARD_WIDTH = SCREEN_WIDTH * 0.75;
 
-interface PlanInfo {
-  type: string;
-  name: string;
-  price: number;
-  features?: string[];
+interface SubscriptionData {
+  planKey: 'FREE' | 'PRO';
+  planName: string;
+  subscriptionStatus: 'FREE' | 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED' | 'BLOCKED' | 'EXPIRED';
+  billingPeriod?: BillingPeriod;
+  currentPeriodStart?: string | null;
+  currentPeriodEnd?: string | null;
+  trialEndAt?: string | null;
+  trialDaysRemaining?: number;
+  cancelAtPeriodEnd?: boolean;
+  createdAt?: string;
+  usage?: {
+    clients: number;
+    quotes: number;
+    workOrders: number;
+    payments: number;
+  };
   limits?: {
     maxClients: number | null;
     maxQuotes: number | null;
     maxWorkOrders: number | null;
     maxInvoices: number | null;
   };
-}
-
-interface SubscriptionData {
-  plan: PlanInfo;
-  usage: {
-    clients: number;
-    quotes: number;
-    workOrders: number;
-    payments: number;
-  };
-  status: string;
-  currentPeriodEnd: string | null;
-  cancelAtPeriodEnd: boolean;
   paymentMethod?: string;
   creditCardLastFour?: string;
   creditCardBrand?: string;
@@ -76,10 +85,10 @@ export default function PlanoScreen() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
-  const [availablePlans, setAvailablePlans] = useState<PlanInfo[]>([]);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'pix' | 'credit_card'>('pix');
+  const [selectedBillingPeriod, setSelectedBillingPeriod] = useState<BillingPeriod>('YEARLY');
 
   // PIX state
   const [pixQrCode, setPixQrCode] = useState<string | null>(null);
@@ -104,22 +113,13 @@ export default function PlanoScreen() {
       const token = await AuthService.getAccessToken();
       if (!token) return;
 
-      // Load subscription
-      const subRes = await fetch(`${API_URL}/billing/subscription`, {
+      // Load billing plan status
+      const subRes = await fetch(`${API_URL}/billing/plan`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (subRes.ok) {
         const subData = await subRes.json();
         setSubscription(subData);
-      }
-
-      // Load available plans
-      const plansRes = await fetch(`${API_URL}/billing/plans`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (plansRes.ok) {
-        const plansData = await plansRes.json();
-        setAvailablePlans(plansData);
       }
     } catch (error) {
       console.error('[Plano] Error loading data:', error);
@@ -152,6 +152,7 @@ export default function PlanoScreen() {
         body: JSON.stringify({
           cpfCnpj: cpfCnpj.replace(/\D/g, ''),
           phone: phone.replace(/\D/g, ''),
+          billingPeriod: selectedBillingPeriod,
         }),
       });
 
@@ -220,6 +221,7 @@ export default function PlanoScreen() {
           expiryMonth,
           expiryYear: `20${expiryYear}`,
           ccv: cardCvv,
+          billingPeriod: selectedBillingPeriod,
         }),
       });
 
@@ -336,8 +338,21 @@ export default function PlanoScreen() {
     );
   }
 
-  const isPro = subscription?.plan?.type === 'PRO';
-  const proPlan = availablePlans.find((p) => p.type === 'PRO');
+  // Status calculations
+  const status = subscription?.subscriptionStatus || 'TRIALING';
+  const isTrialing = status === 'TRIALING';
+  const isPro = status === 'ACTIVE';
+  const isExpired = status === 'EXPIRED' || status === 'CANCELED';
+
+  // Trial days remaining
+  const trialDaysRemaining = subscription?.trialEndAt
+    ? calculateTrialDaysRemaining(subscription.trialEndAt)
+    : subscription?.trialDaysRemaining || 0;
+
+  // Price based on selected billing period
+  const selectedPrice = selectedBillingPeriod === 'YEARLY'
+    ? PRO_PLAN_PRICING.YEARLY
+    : PRO_PLAN_PRICING.MONTHLY;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background.secondary }]}>
@@ -360,33 +375,47 @@ export default function PlanoScreen() {
         {/* Current Plan Card */}
         <Card style={[styles.currentPlanCard, { marginHorizontal: spacing[4], marginTop: spacing[4] }]}>
           <View style={styles.planHeader}>
-            <View style={[styles.planIconContainer, { backgroundColor: isPro ? colors.primary[100] : colors.warning[100] }]}>
+            <View style={[styles.planIconContainer, { backgroundColor: isPro ? colors.primary[100] : isTrialing ? colors.warning[100] : colors.gray[100] }]}>
               <Ionicons
-                name={isPro ? 'star' : 'star-outline'}
+                name={isPro ? 'star' : isTrialing ? 'time-outline' : 'star-outline'}
                 size={28}
-                color={isPro ? colors.primary[500] : colors.warning[500]}
+                color={isPro ? colors.primary[500] : isTrialing ? colors.warning[500] : colors.gray[500]}
               />
             </View>
             <View style={styles.planInfo}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <Text variant="h4" weight="bold">
-                  Plano {subscription?.plan?.name || 'Gratuito'}
+                  {isPro ? 'Plano Profissional' : isTrialing ? 'Período de Teste' : 'Trial Expirado'}
                 </Text>
-                <Badge variant={isPro ? 'primary' : 'warning'} size="sm">
-                  {isPro ? 'PRO' : 'FREE'}
+                <Badge variant={isPro ? 'primary' : isTrialing ? 'warning' : 'error'} size="sm">
+                  {isPro ? 'PRO' : isTrialing ? `${trialDaysRemaining} dias` : 'Expirado'}
                 </Badge>
               </View>
-              {isPro && (
-                <Text variant="body" color="secondary">
-                  R$ {subscription?.plan?.price?.toFixed(2).replace('.', ',')}/mês
-                </Text>
-              )}
+              <Text variant="body" color="secondary">
+                {isPro
+                  ? `R$ ${selectedPrice.toFixed(2).replace('.', ',')}/mês`
+                  : isTrialing
+                    ? `${TRIAL_DURATION_DAYS} dias grátis com tudo liberado`
+                    : 'Assine para continuar usando'}
+              </Text>
             </View>
           </View>
 
-          {/* Status */}
+          {/* Trial Alert */}
+          {isTrialing && trialDaysRemaining <= 3 && (
+            <View style={[styles.statusBadge, { backgroundColor: colors.warning[50], marginTop: spacing[3] }]}>
+              <Ionicons name="warning" size={18} color={colors.warning[500]} />
+              <Text variant="caption" weight="medium" style={{ color: colors.warning[700], marginLeft: 6, flex: 1 }}>
+                {trialDaysRemaining === 0
+                  ? 'Seu trial termina hoje! Assine agora.'
+                  : `Seu trial termina em ${trialDaysRemaining} dias. Assine agora para não perder acesso.`}
+              </Text>
+            </View>
+          )}
+
+          {/* Status for Active Subscription */}
           {isPro && subscription?.currentPeriodEnd && (
-            <View style={[styles.statusBadge, { backgroundColor: colors.success[50] }]}>
+            <View style={[styles.statusBadge, { backgroundColor: colors.success[50], marginTop: spacing[3] }]}>
               <Ionicons name="checkmark-circle" size={18} color={colors.success[500]} />
               <Text variant="caption" weight="medium" style={{ color: colors.success[700], marginLeft: 6 }}>
                 Próxima cobrança: {new Date(subscription.currentPeriodEnd).toLocaleDateString('pt-BR')}
@@ -410,23 +439,21 @@ export default function PlanoScreen() {
           )}
         </Card>
 
-        {/* Usage Section */}
-        {subscription?.usage && (
+        {/* Usage Section - Show for trialing and active users */}
+        {(isTrialing || isPro) && (
           <View style={{ marginTop: spacing[4], paddingHorizontal: spacing[4] }}>
             <Text variant="body" weight="semibold" style={{ marginBottom: spacing[3] }}>
               Uso do Plano
             </Text>
             <Card>
               {[
-                { label: 'Clientes', value: subscription.usage.clients, limit: subscription.plan?.limits?.maxClients },
-                { label: 'Orçamentos', value: subscription.usage.quotes, limit: subscription.plan?.limits?.maxQuotes },
-                { label: 'Ordens de Serviço', value: subscription.usage.workOrders, limit: subscription.plan?.limits?.maxWorkOrders },
-                { label: 'Cobranças', value: subscription.usage.payments, limit: subscription.plan?.limits?.maxInvoices },
+                { label: 'Clientes', value: subscription?.usage?.clients || 0, limit: (isTrialing || isPro) ? null : subscription?.limits?.maxClients },
+                { label: 'Orçamentos', value: subscription?.usage?.quotes || 0, limit: (isTrialing || isPro) ? null : subscription?.limits?.maxQuotes },
+                { label: 'Ordens de Serviço', value: subscription?.usage?.workOrders || 0, limit: (isTrialing || isPro) ? null : subscription?.limits?.maxWorkOrders },
+                { label: 'Cobranças', value: subscription?.usage?.payments || 0, limit: (isTrialing || isPro) ? null : subscription?.limits?.maxInvoices },
               ].map((item, index) => {
                 const limitText = formatLimit(item.limit);
                 const isUnlimited = limitText === 'Ilimitado';
-                const percentage = isUnlimited ? 0 : (item.value / (item.limit || 1)) * 100;
-                const isNearLimit = !isUnlimited && percentage >= 80;
 
                 return (
                   <View key={item.label} style={[styles.usageRow, index > 0 && { marginTop: spacing[3] }]}>
@@ -434,23 +461,10 @@ export default function PlanoScreen() {
                       <Text variant="body" color="secondary">
                         {item.label}
                       </Text>
-                      <Text variant="body" weight="semibold" style={{ color: isNearLimit ? colors.warning[600] : colors.text.primary }}>
-                        {item.value} / {limitText}
+                      <Text variant="body" weight="semibold" style={{ color: colors.text.primary }}>
+                        / {limitText}
                       </Text>
                     </View>
-                    {!isUnlimited && (
-                      <View style={[styles.progressBar, { backgroundColor: colors.gray[200] }]}>
-                        <View
-                          style={[
-                            styles.progressFill,
-                            {
-                              width: `${Math.min(percentage, 100)}%`,
-                              backgroundColor: isNearLimit ? colors.warning[500] : colors.primary[500],
-                            },
-                          ]}
-                        />
-                      </View>
-                    )}
                   </View>
                 );
               })}
@@ -544,15 +558,74 @@ export default function PlanoScreen() {
               )}
             </View>
 
-            {/* Pro Plan Card */}
+            {/* Pro Plan Card - Monthly */}
             <View
               style={[
                 styles.comparePlanCard,
                 {
                   width: PLAN_CARD_WIDTH,
                   backgroundColor: colors.background.primary,
-                  borderColor: isPro ? colors.primary[500] : colors.primary[300],
-                  borderWidth: isPro ? 2 : 1,
+                  borderColor: selectedBillingPeriod === 'MONTHLY' ? colors.primary[500] : colors.border.light,
+                  borderWidth: selectedBillingPeriod === 'MONTHLY' ? 2 : 1,
+                },
+              ]}
+            >
+              <View style={styles.comparePlanHeader}>
+                <Ionicons name="calendar-outline" size={32} color={colors.primary[500]} />
+                <Text variant="h5" weight="bold" style={{ marginTop: spacing[2] }}>
+                  Mensal
+                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'baseline', marginTop: spacing[1] }}>
+                  <Text variant="h3" weight="bold" style={{ color: colors.primary[600] }}>
+                    R$ {PRO_PLAN_PRICING.MONTHLY.toFixed(2).replace('.', ',')}
+                  </Text>
+                  <Text variant="caption" color="secondary">/mês</Text>
+                </View>
+                <Text variant="caption" color="tertiary" style={{ marginTop: spacing[1] }}>
+                  Cobrado mensalmente
+                </Text>
+              </View>
+
+              <View style={styles.comparePlanFeatures}>
+                {PLAN_FEATURES.map((feature) => (
+                  <View key={feature.key} style={styles.featureRow}>
+                    <Ionicons name="checkmark-circle" size={18} color={colors.success[500]} />
+                    <Text variant="caption" style={{ marginLeft: 8, flex: 1 }}>
+                      {feature.label}
+                    </Text>
+                    {feature.proLimit === null && (
+                      <Text variant="caption" weight="medium" style={{ color: colors.primary[600] }}>
+                        Ilimitado
+                      </Text>
+                    )}
+                  </View>
+                ))}
+              </View>
+
+              {!isPro && (
+                <Button
+                  variant={selectedBillingPeriod === 'MONTHLY' ? 'primary' : 'outline'}
+                  size="sm"
+                  onPress={() => {
+                    setSelectedBillingPeriod('MONTHLY');
+                    handleUpgrade();
+                  }}
+                  style={{ marginTop: spacing[4] }}
+                >
+                  Assinar Mensal
+                </Button>
+              )}
+            </View>
+
+            {/* Pro Plan Card - Yearly */}
+            <View
+              style={[
+                styles.comparePlanCard,
+                {
+                  width: PLAN_CARD_WIDTH,
+                  backgroundColor: colors.background.primary,
+                  borderColor: isPro || selectedBillingPeriod === 'YEARLY' ? colors.primary[500] : colors.primary[300],
+                  borderWidth: isPro || selectedBillingPeriod === 'YEARLY' ? 2 : 1,
                 },
               ]}
             >
@@ -566,13 +639,21 @@ export default function PlanoScreen() {
               <View style={styles.comparePlanHeader}>
                 <Ionicons name="star" size={32} color={colors.primary[500]} />
                 <Text variant="h5" weight="bold" style={{ marginTop: spacing[2] }}>
-                  Profissional
+                  Anual
                 </Text>
                 <View style={{ flexDirection: 'row', alignItems: 'baseline', marginTop: spacing[1] }}>
                   <Text variant="h3" weight="bold" style={{ color: colors.primary[600] }}>
-                    R$ {proPlan?.price?.toFixed(2).replace('.', ',')}
+                    R$ {PRO_PLAN_PRICING.YEARLY.toFixed(2).replace('.', ',')}
                   </Text>
                   <Text variant="caption" color="secondary">/mês</Text>
+                </View>
+                <Text variant="caption" color="tertiary" style={{ marginTop: spacing[1] }}>
+                  R$ {PRO_PLAN_PRICING.YEARLY_TOTAL.toFixed(2).replace('.', ',')} por ano
+                </Text>
+                <View style={{ marginTop: spacing[2] }}>
+                  <Badge variant="success" size="sm">
+                    {`Economize R$ ${PRO_PLAN_PRICING.YEARLY_SAVINGS.toFixed(2).replace('.', ',')}`}
+                  </Badge>
                 </View>
               </View>
 
@@ -594,12 +675,15 @@ export default function PlanoScreen() {
 
               {!isPro && (
                 <Button
-                  variant="primary"
+                  variant={selectedBillingPeriod === 'YEARLY' ? 'primary' : 'outline'}
                   size="sm"
-                  onPress={handleUpgrade}
+                  onPress={() => {
+                    setSelectedBillingPeriod('YEARLY');
+                    handleUpgrade();
+                  }}
                   style={{ marginTop: spacing[4] }}
                 >
-                  Fazer Upgrade
+                  Assinar Anual
                 </Button>
               )}
             </View>
@@ -690,7 +774,7 @@ export default function PlanoScreen() {
                     <TouchableOpacity
                       style={[
                         styles.paymentMethodOption,
-                        { borderColor: paymentMethod === 'pix' ? colors.primary[500] : colors.border.medium },
+                        { borderColor: paymentMethod === 'pix' ? colors.primary[500] : colors.border.default },
                         paymentMethod === 'pix' && { backgroundColor: colors.primary[50] },
                       ]}
                       onPress={() => setPaymentMethod('pix')}
@@ -702,7 +786,7 @@ export default function PlanoScreen() {
                       />
                       <Text
                         variant="body"
-                        weight={paymentMethod === 'pix' ? 'semibold' : 'regular'}
+                        weight={paymentMethod === 'pix' ? 'semibold' : 'normal'}
                         style={{ color: paymentMethod === 'pix' ? colors.primary[600] : colors.text.secondary }}
                       >
                         PIX
@@ -712,7 +796,7 @@ export default function PlanoScreen() {
                     <TouchableOpacity
                       style={[
                         styles.paymentMethodOption,
-                        { borderColor: paymentMethod === 'credit_card' ? colors.primary[500] : colors.border.medium },
+                        { borderColor: paymentMethod === 'credit_card' ? colors.primary[500] : colors.border.default },
                         paymentMethod === 'credit_card' && { backgroundColor: colors.primary[50] },
                       ]}
                       onPress={() => setPaymentMethod('credit_card')}
@@ -724,7 +808,7 @@ export default function PlanoScreen() {
                       />
                       <Text
                         variant="body"
-                        weight={paymentMethod === 'credit_card' ? 'semibold' : 'regular'}
+                        weight={paymentMethod === 'credit_card' ? 'semibold' : 'normal'}
                         style={{ color: paymentMethod === 'credit_card' ? colors.primary[600] : colors.text.secondary }}
                       >
                         Cartão
@@ -742,7 +826,7 @@ export default function PlanoScreen() {
                       <Text variant="caption" weight="medium" color="secondary">
                         CPF/CNPJ *
                       </Text>
-                      <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
+                      <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                         <TextInput
                           style={[styles.input, { color: colors.text.primary }]}
                           placeholder="000.000.000-00"
@@ -759,7 +843,7 @@ export default function PlanoScreen() {
                       <Text variant="caption" weight="medium" color="secondary">
                         Telefone
                       </Text>
-                      <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
+                      <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                         <TextInput
                           style={[styles.input, { color: colors.text.primary }]}
                           placeholder="(00) 00000-0000"
@@ -784,7 +868,7 @@ export default function PlanoScreen() {
                         <Text variant="caption" weight="medium" color="secondary">
                           Nome no Cartão *
                         </Text>
-                        <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
+                        <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                           <TextInput
                             style={[styles.input, { color: colors.text.primary }]}
                             placeholder="Nome como está no cartão"
@@ -800,7 +884,7 @@ export default function PlanoScreen() {
                         <Text variant="caption" weight="medium" color="secondary">
                           Número do Cartão *
                         </Text>
-                        <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
+                        <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                           <TextInput
                             style={[styles.input, { color: colors.text.primary }]}
                             placeholder="0000 0000 0000 0000"
@@ -818,7 +902,7 @@ export default function PlanoScreen() {
                           <Text variant="caption" weight="medium" color="secondary">
                             Validade *
                           </Text>
-                          <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
+                          <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                             <TextInput
                               style={[styles.input, { color: colors.text.primary }]}
                               placeholder="MM/AA"
@@ -834,7 +918,7 @@ export default function PlanoScreen() {
                           <Text variant="caption" weight="medium" color="secondary">
                             CVV *
                           </Text>
-                          <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
+                          <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                             <TextInput
                               style={[styles.input, { color: colors.text.primary }]}
                               placeholder="000"
@@ -854,7 +938,7 @@ export default function PlanoScreen() {
                           <Text variant="caption" weight="medium" color="secondary">
                             CEP *
                           </Text>
-                          <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
+                          <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                             <TextInput
                               style={[styles.input, { color: colors.text.primary }]}
                               placeholder="00000-000"
@@ -870,7 +954,7 @@ export default function PlanoScreen() {
                           <Text variant="caption" weight="medium" color="secondary">
                             Número *
                           </Text>
-                          <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
+                          <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                             <TextInput
                               style={[styles.input, { color: colors.text.primary }]}
                               placeholder="Nº"
@@ -885,15 +969,79 @@ export default function PlanoScreen() {
                     </Card>
                   )}
 
+                  {/* Billing Period Selection */}
+                  <Card style={{ marginTop: spacing[4] }}>
+                    <Text variant="body" weight="semibold" style={{ marginBottom: spacing[3] }}>
+                      Período de Cobrança
+                    </Text>
+                    <View style={{ flexDirection: 'row', gap: spacing[3] }}>
+                      <TouchableOpacity
+                        style={[
+                          styles.billingPeriodOption,
+                          {
+                            flex: 1,
+                            borderColor: selectedBillingPeriod === 'MONTHLY' ? colors.primary[500] : colors.border.default,
+                            backgroundColor: selectedBillingPeriod === 'MONTHLY' ? colors.primary[50] : 'transparent',
+                          },
+                        ]}
+                        onPress={() => setSelectedBillingPeriod('MONTHLY')}
+                      >
+                        <Text
+                          variant="body"
+                          weight={selectedBillingPeriod === 'MONTHLY' ? 'semibold' : 'normal'}
+                          style={{ color: selectedBillingPeriod === 'MONTHLY' ? colors.primary[600] : colors.text.secondary }}
+                        >
+                          Mensal
+                        </Text>
+                        <Text variant="caption" color="tertiary">
+                          R$ {PRO_PLAN_PRICING.MONTHLY.toFixed(2).replace('.', ',')}/mês
+                        </Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[
+                          styles.billingPeriodOption,
+                          {
+                            flex: 1,
+                            borderColor: selectedBillingPeriod === 'YEARLY' ? colors.primary[500] : colors.border.default,
+                            backgroundColor: selectedBillingPeriod === 'YEARLY' ? colors.primary[50] : 'transparent',
+                          },
+                        ]}
+                        onPress={() => setSelectedBillingPeriod('YEARLY')}
+                      >
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                          <Text
+                            variant="body"
+                            weight={selectedBillingPeriod === 'YEARLY' ? 'semibold' : 'normal'}
+                            style={{ color: selectedBillingPeriod === 'YEARLY' ? colors.primary[600] : colors.text.secondary }}
+                          >
+                            Anual
+                          </Text>
+                          <Badge variant="success" size="sm">-10%</Badge>
+                        </View>
+                        <Text variant="caption" color="tertiary">
+                          R$ {PRO_PLAN_PRICING.YEARLY.toFixed(2).replace('.', ',')}/mês
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </Card>
+
                   {/* Price Summary */}
                   <Card style={{ marginTop: spacing[4] }}>
                     <View style={styles.priceSummary}>
                       <Text variant="body" color="secondary">
-                        Plano Profissional
+                        Plano Profissional ({selectedBillingPeriod === 'YEARLY' ? 'Anual' : 'Mensal'})
                       </Text>
-                      <Text variant="h4" weight="bold" style={{ color: colors.primary[600] }}>
-                        R$ {proPlan?.price?.toFixed(2).replace('.', ',')}/mês
-                      </Text>
+                      <View style={{ alignItems: 'flex-end' }}>
+                        <Text variant="h4" weight="bold" style={{ color: colors.primary[600] }}>
+                          R$ {selectedBillingPeriod === 'YEARLY' ? PRO_PLAN_PRICING.YEARLY.toFixed(2).replace('.', ',') : PRO_PLAN_PRICING.MONTHLY.toFixed(2).replace('.', ',')}/mês
+                        </Text>
+                        {selectedBillingPeriod === 'YEARLY' && (
+                          <Text variant="caption" color="tertiary">
+                            Total: R$ {PRO_PLAN_PRICING.YEARLY_TOTAL.toFixed(2).replace('.', ',')} por ano
+                          </Text>
+                        )}
+                      </View>
                     </View>
                   </Card>
 
@@ -1093,5 +1241,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 16,
     width: '100%',
+  },
+  billingPeriodOption: {
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 2,
+    alignItems: 'center',
   },
 });

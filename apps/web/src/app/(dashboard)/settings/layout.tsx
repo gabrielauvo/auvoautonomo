@@ -23,85 +23,94 @@ import {
 import { AppLayout } from '@/components/layout';
 import { Card } from '@/components/ui';
 import { cn } from '@/lib/utils';
+import { useTranslations } from '@/i18n';
 
 interface SettingsLayoutProps {
   children: React.ReactNode;
 }
 
-const SETTINGS_NAV = [
+interface NavItem {
+  href: string;
+  labelKey: string;
+  descriptionKey: string;
+  icon: typeof User;
+}
+
+const SETTINGS_NAV: NavItem[] = [
   {
     href: '/settings/account',
-    label: 'Conta',
+    labelKey: 'account',
+    descriptionKey: 'accountDescription',
     icon: User,
-    description: 'Nome, email e preferências',
   },
   {
     href: '/settings/company',
-    label: 'Empresa',
+    labelKey: 'company',
+    descriptionKey: 'companyDescription',
     icon: Building2,
-    description: 'Dados e identidade visual',
   },
   {
     href: '/settings/plan',
-    label: 'Plano',
+    labelKey: 'plan',
+    descriptionKey: 'planDescription',
     icon: CreditCard,
-    description: 'Assinatura e limites',
   },
   {
     href: '/settings/templates',
-    label: 'Templates',
+    labelKey: 'templates',
+    descriptionKey: 'templatesDescription',
     icon: FileText,
-    description: 'Personalizar documentos',
   },
   {
     href: '/checklists',
-    label: 'Checklists',
+    labelKey: 'checklists',
+    descriptionKey: 'checklistsDescription',
     icon: ClipboardCheck,
-    description: 'Templates de checklists',
   },
   {
     href: '/settings/integrations',
-    label: 'Integrações',
+    labelKey: 'integrations',
+    descriptionKey: 'integrationsDescription',
     icon: Plug,
-    description: 'Asaas e outros serviços',
   },
   {
     href: '/settings/inventory',
-    label: 'Estoque',
+    labelKey: 'inventory',
+    descriptionKey: 'inventoryDescription',
     icon: Warehouse,
-    description: 'Controle de estoque',
   },
   {
     href: '/expense-categories',
-    label: 'Categorias de Despesas',
+    labelKey: 'expenseCategories',
+    descriptionKey: 'expenseCategoriesDescription',
     icon: Folder,
-    description: 'Organizar despesas',
   },
   {
     href: '/settings/notifications',
-    label: 'Notificações',
+    labelKey: 'notifications',
+    descriptionKey: 'notificationsDescription',
     icon: Bell,
-    description: 'Alertas e mensagens',
   },
   {
     href: '/settings/security',
-    label: 'Segurança',
+    labelKey: 'security',
+    descriptionKey: 'securityDescription',
     icon: Shield,
-    description: 'Senha e sessões',
   },
 ];
 
 export default function SettingsLayout({ children }: SettingsLayoutProps) {
   const pathname = usePathname();
+  const { t } = useTranslations('settings');
 
   return (
     <AppLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="page-header">
-          <h1 className="page-title">Configurações</h1>
+          <h1 className="page-title">{t('title')}</h1>
           <p className="page-subtitle">
-            Gerencie sua conta, empresa e preferências
+            {t('subtitle')}
           </p>
         </div>
 
@@ -136,10 +145,10 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
                           isActive ? 'text-primary' : 'text-gray-700'
                         )}
                       >
-                        {item.label}
+                        {t(item.labelKey)}
                       </p>
                       <p className="text-xs text-gray-500 truncate hidden sm:block lg:hidden xl:block">
-                        {item.description}
+                        {t(item.descriptionKey)}
                       </p>
                     </div>
                   </Link>

@@ -11,6 +11,8 @@ import { ReactNode, memo, useMemo } from 'react';
 import { Card, CardContent, Skeleton } from '@/components/ui';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslations } from '@/i18n';
+import { useFormatting } from '@/context/company-settings-context';
 
 interface KpiCardProps {
   title: string;
@@ -25,39 +27,40 @@ interface KpiCardProps {
   className?: string;
 }
 
-/**
- * Formata valor baseado no tipo
- */
-function formatValue(value: number | string, format?: KpiCardProps['format']): string {
-  if (typeof value === 'string') return value;
-
-  switch (format) {
-    case 'currency':
-      return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-      }).format(value);
-    case 'percent':
-      return `${value.toFixed(1)}%`;
-    case 'number':
-    default:
-      return new Intl.NumberFormat('pt-BR').format(value);
-  }
-}
-
 export const KpiCard = memo(function KpiCard({
   title,
   value,
   change,
-  changeLabel = 'vs. anterior',
+  changeLabel,
   format,
   icon,
   iconBgColor = 'bg-primary-50',
   loading = false,
   className,
 }: KpiCardProps) {
+  const { t } = useTranslations('reports');
+  const { formatCurrency } = useFormatting();
+
+  // Formata valor baseado no tipo
+  const formatValue = (val: number | string, fmt?: KpiCardProps['format']): string => {
+    if (typeof val === 'string') return val;
+
+    switch (fmt) {
+      case 'currency':
+        return formatCurrency(val);
+      case 'percent':
+        return `${val.toFixed(1)}%`;
+      case 'number':
+      default:
+        return new Intl.NumberFormat().format(val);
+    }
+  };
+
   // Memoiza formatação do valor para evitar cálculos desnecessários
-  const formattedValue = useMemo(() => formatValue(value, format), [value, format]);
+  const formattedValue = useMemo(() => formatValue(value, format), [value, format, formatCurrency]);
+
+  // Default changeLabel
+  const displayChangeLabel = changeLabel ?? t('vsPrevious');
 
   // Memoiza estados derivados
   const changeStatus = useMemo(() => ({
@@ -109,7 +112,7 @@ export const KpiCard = memo(function KpiCard({
                 >
                   {change > 0 ? '+' : ''}{change.toFixed(1)}%
                 </span>
-                <span className="text-xs text-gray-400">{changeLabel}</span>
+                <span className="text-xs text-gray-400">{displayChangeLabel}</span>
               </div>
             )}
           </div>

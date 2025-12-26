@@ -830,7 +830,10 @@
     "totalExpenses": "Total de Gastos",
     "items": "elementos",
     "profitLoss": "Ganancia/Pérdida",
-    "profitLossDescription": "Ingresos vs gastos y análisis de rentabilidad"
+    "profitLossDescription": "Ingresos vs gastos y análisis de rentabilidad",
+    "refresh": "Actualizar",
+    "to": "hasta",
+    "vsPrevious": "vs. anterior"
   },
   "settings": {
     "title": "Configuración",

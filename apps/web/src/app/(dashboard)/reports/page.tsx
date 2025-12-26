@@ -11,6 +11,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations } from '@/i18n';
 import { useAuth } from '@/context/auth-context';
+import { useFormatting } from '@/context/company-settings-context';
 import { useAnalyticsOverview, useRevenueByPeriod } from '@/hooks/use-analytics';
 import { useExpenseSummary } from '@/hooks/use-expenses';
 import { useReportFilters } from '@/hooks/use-reports';
@@ -37,23 +38,12 @@ import {
   MinusCircle,
 } from 'lucide-react';
 
-/**
- * Formatar valor em moeda
- */
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
 export default function ReportsOverviewPage() {
   const searchParams = useSearchParams();
   const filters = useReportFilters(searchParams);
   const { billing } = useAuth();
   const { t } = useTranslations('reports');
+  const { formatCurrency } = useFormatting();
 
   const isPro = true;
 
@@ -410,8 +400,8 @@ export default function ReportsOverviewPage() {
                   <Receipt className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900">Lucro/Prejuízo</p>
-                  <p className="text-xs text-gray-500">Receitas vs despesas e análise de lucratividade</p>
+                  <p className="font-medium text-gray-900">{t('profitLoss')}</p>
+                  <p className="text-xs text-gray-500">{t('profitLossDescription')}</p>
                 </div>
               </div>
               <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-primary transition-colors" />

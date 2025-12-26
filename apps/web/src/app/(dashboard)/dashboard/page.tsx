@@ -15,6 +15,7 @@ import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from '@/i18n';
 import { useAuth } from '@/context/auth-context';
+import { useFormatting } from '@/context/company-settings-context';
 import { useAnalyticsOverview, useRevenueByPeriod } from '@/hooks/use-analytics';
 import { useExpenseSummary } from '@/hooks/use-expenses';
 import { useReportFilters } from '@/hooks/use-reports';
@@ -52,16 +53,6 @@ import {
 } from 'lucide-react';
 
 /**
- * Formatar valor em moeda
- */
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
-}
-
-/**
  * Dashboard Content - Componente interno que usa useSearchParams
  */
 function DashboardContent() {
@@ -69,6 +60,7 @@ function DashboardContent() {
   const searchParams = useSearchParams();
   const filters = useReportFilters(searchParams);
   const { user, billing } = useAuth();
+  const { formatCurrency } = useFormatting();
 
   const { data: analytics, isLoading, error, refetch } = useAnalyticsOverview({
     startDate: filters.startDate,

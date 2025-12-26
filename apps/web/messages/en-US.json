@@ -830,7 +830,10 @@
     "totalExpenses": "Total Expenses",
     "items": "items",
     "profitLoss": "Profit/Loss",
-    "profitLossDescription": "Revenue vs expenses and profitability analysis"
+    "profitLossDescription": "Revenue vs expenses and profitability analysis",
+    "refresh": "Refresh",
+    "to": "to",
+    "vsPrevious": "vs. previous"
   },
   "settings": {
     "title": "Settings",

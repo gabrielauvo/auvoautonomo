@@ -61,7 +61,7 @@ function getDeviceIcon(device: string) {
 }
 
 // Helper para formatar data - now uses translation function
-function formatLastActive(dateString: string, t: (key: string, params?: Record<string, unknown>) => string, locale: string): string {
+function formatLastActive(dateString: string, t: (key: string, params?: Record<string, string | number>) => string, locale: string): string {
   const date = new Date(dateString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -480,7 +480,7 @@ interface SessionItemProps {
   isCurrent: boolean;
   onRevoke: () => void;
   isRevoking: boolean;
-  t: (key: string, params?: Record<string, unknown>) => string;
+  t: (key: string, params?: Record<string, string | number>) => string;
   locale: string;
 }
 

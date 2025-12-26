@@ -7,11 +7,12 @@
  * Sincroniza com URL query params
  */
 
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Button, Input } from '@/components/ui';
 import { Calendar, RefreshCw, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslations } from '@/i18n';
 import type { ReportPeriod } from '@/types/reports';
 
 interface ReportFilterBarProps {
@@ -22,17 +23,6 @@ interface ReportFilterBarProps {
   className?: string;
 }
 
-const PERIOD_OPTIONS: { value: ReportPeriod; label: string }[] = [
-  { value: 'today', label: 'Hoje' },
-  { value: 'yesterday', label: 'Ontem' },
-  { value: 'last7days', label: '7 dias' },
-  { value: 'last30days', label: '30 dias' },
-  { value: 'thisMonth', label: 'Este mês' },
-  { value: 'lastMonth', label: 'Mês anterior' },
-  { value: 'thisYear', label: 'Este ano' },
-  { value: 'custom', label: 'Personalizado' },
-];
-
 export function ReportFilterBar({
   onExport,
   onRefresh,
@@ -40,9 +30,21 @@ export function ReportFilterBar({
   isLoading = false,
   className,
 }: ReportFilterBarProps) {
+  const { t } = useTranslations('reports');
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  const PERIOD_OPTIONS: { value: ReportPeriod; label: string }[] = useMemo(() => [
+    { value: 'today', label: t('today') },
+    { value: 'yesterday', label: t('yesterday') },
+    { value: 'last7days', label: t('last7Days') },
+    { value: 'last30days', label: t('last30Days') },
+    { value: 'thisMonth', label: t('thisMonth') },
+    { value: 'lastMonth', label: t('lastMonth') },
+    { value: 'thisYear', label: t('thisYear') },
+    { value: 'custom', label: t('custom') },
+  ], [t]);
 
   const currentPeriod = (searchParams.get('period') as ReportPeriod) || 'last30days';
   const startDate = searchParams.get('startDate') || '';
@@ -89,7 +91,7 @@ export function ReportFilterBar({
         {/* Period Selector */}
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4 text-gray-500" />
-          <span className="text-sm font-medium text-gray-700">Período:</span>
+          <span className="text-sm font-medium text-gray-700">{t('period')}:</span>
         </div>
 
         <div className="flex flex-wrap gap-1">
@@ -118,7 +120,7 @@ export function ReportFilterBar({
               onChange={handleStartDateChange}
               className="w-36 h-8 text-sm"
             />
-            <span className="text-gray-400">até</span>
+            <span className="text-gray-400">{t('to')}</span>
             <Input
               type="date"
               value={endDate}
@@ -138,7 +140,7 @@ export function ReportFilterBar({
               disabled={isLoading}
               leftIcon={<RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />}
             >
-              Atualizar
+              {t('refresh')}
             </Button>
           )}
 

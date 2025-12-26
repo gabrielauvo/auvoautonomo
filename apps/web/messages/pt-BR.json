@@ -841,7 +841,10 @@
     "totalExpenses": "Total de Despesas",
     "items": "itens",
     "profitLoss": "Lucro/Prejuízo",
-    "profitLossDescription": "Receitas vs despesas e análise de lucratividade"
+    "profitLossDescription": "Receitas vs despesas e análise de lucratividade",
+    "refresh": "Atualizar",
+    "to": "até",
+    "vsPrevious": "vs. anterior"
   },
   "settings": {
     "title": "Configurações",

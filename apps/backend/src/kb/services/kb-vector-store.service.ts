@@ -180,50 +180,66 @@ export class KbVectorStore implements OnModuleInit {
     minScore: number,
     sources?: string[],
   ): Promise<KbSearchResult[]> {
-    // Build source filter
-    const sourceFilter = sources?.length
-      ? { source: { in: sources } }
-      : {};
+    // First, get all active documents with optional source filter
+    const documentFilter: { isActive: boolean; source?: { in: string[] } } = {
+      isActive: true,
+    };
+    if (sources?.length) {
+      documentFilter.source = { in: sources };
+    }
 
-    // Fetch all active chunks (with limit for performance)
-    const chunks = await this.prisma.kbChunk.findMany({
-      where: {
-        document: {
-          isActive: { equals: true },
-          ...sourceFilter,
-        },
-      },
-      include: {
-        document: {
+    const documents = await this.prisma.kbDocument.findMany({
+      where: documentFilter,
+      select: {
+        id: true,
+        source: true,
+        sourceId: true,
+        title: true,
+        chunks: {
           select: {
             id: true,
-            source: true,
-            sourceId: true,
-            title: true,
+            content: true,
+            embedding: true,
+            metadata: true,
           },
         },
       },
-      take: 1000, // Limit to prevent memory issues
+      take: 100, // Limit documents to prevent memory issues
     });
 
-    // Calculate similarities
-    const results: Array<{ chunk: typeof chunks[0]; score: number }> = [];
+    // Calculate similarities across all chunks
+    const results: Array<{
+      id: string;
+      content: string;
+      score: number;
+      source: string;
+      sourceId: string;
+      title: string;
+      metadata: unknown;
+    }> = [];
 
-    for (const chunk of chunks) {
-      if (!chunk.embedding || chunk.embedding.length === 0) {
-        continue;
-      }
+    for (const doc of documents) {
+      for (const chunk of doc.chunks) {
+        if (!chunk.embedding || chunk.embedding.length === 0) {
+          continue;
+        }
 
-      const score = this.embeddingService.cosineSimilarity(
-        queryEmbedding,
-        chunk.embedding,
-      );
+        const score = this.embeddingService.cosineSimilarity(
+          queryEmbedding,
+          chunk.embedding,
+        );
 
-      if (score >= minScore) {
-        results.push({
-          chunk,
-          score,
-        });
+        if (score >= minScore) {
+          results.push({
+            id: chunk.id,
+            content: chunk.content,
+            score,
+            source: doc.source,
+            sourceId: doc.sourceId,
+            title: doc.title,
+            metadata: chunk.metadata,
+          });
+        }
       }
     }
 
@@ -232,13 +248,13 @@ export class KbVectorStore implements OnModuleInit {
     const topResults = results.slice(0, topK);
 
     return topResults.map((r) => ({
-      id: r.chunk.id,
-      content: r.chunk.content,
+      id: r.id,
+      content: r.content,
       score: r.score,
-      source: r.chunk.document.source as 'DOCS' | 'FAQ' | 'HELP_CENTER' | 'CUSTOM',
-      sourceRef: r.chunk.document.sourceId,
-      title: r.chunk.document.title,
-      metadata: r.chunk.metadata as Record<string, unknown> | undefined,
+      source: r.source as 'DOCS' | 'FAQ' | 'HELP_CENTER' | 'CUSTOM',
+      sourceRef: r.sourceId,
+      title: r.title,
+      metadata: r.metadata as Record<string, unknown> | undefined,
     }));
   }
 

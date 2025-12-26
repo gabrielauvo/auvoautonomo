@@ -12,6 +12,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/auth-context';
 import { AppLayout } from '@/components/layout';
+import { useTranslations } from '@/i18n';
 import {
   Card,
   CardHeader,
@@ -100,10 +101,12 @@ function Confetti({ show }: { show: boolean }) {
 function CelebrationToast({
   show,
   message,
+  keepItUpText,
   onClose
 }: {
   show: boolean;
   message: string;
+  keepItUpText: string;
   onClose: () => void;
 }) {
   useEffect(() => {
@@ -123,7 +126,7 @@ function CelebrationToast({
         </div>
         <div>
           <p className="font-semibold">{message}</p>
-          <p className="text-sm text-white/80">Continue assim!</p>
+          <p className="text-sm text-white/80">{keepItUpText}</p>
         </div>
         <div className="flex gap-1 ml-2">
           <Star className="h-4 w-4 text-yellow-300 animate-pulse" />
@@ -155,6 +158,7 @@ function CelebrationToast({
 
 export default function GettingStartedPage() {
   const { user } = useAuth();
+  const { t } = useTranslations('gettingStarted');
   const [completedItems, setCompletedItems] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -189,14 +193,14 @@ export default function GettingStartedPage() {
     setIsLoading(false);
   }, [getStorageKey]);
 
-  // Mensagens de celebração
+  // Mensagens de celebração (from translations)
   const celebrationMessages = [
-    'Excelente trabalho!',
-    'Muito bem!',
-    'Você está arrasando!',
-    'Fantástico!',
-    'Parabéns!',
-    'Incrível!',
+    t('celebration.messages.0'),
+    t('celebration.messages.1'),
+    t('celebration.messages.2'),
+    t('celebration.messages.3'),
+    t('celebration.messages.4'),
+    t('celebration.messages.5'),
   ];
 
   // Salvar progresso no localStorage com animação (específico por usuário)
@@ -243,9 +247,8 @@ export default function GettingStartedPage() {
   const checklistItems: ChecklistItem[] = [
     {
       id: 'download-app',
-      title: 'Baixe o aplicativo',
-      description:
-        'Acesse suas informações de qualquer lugar com o app Auvo Field.',
+      title: t('items.downloadApp.title'),
+      description: t('items.downloadApp.description'),
       icon: <Smartphone className="h-5 w-5" />,
       externalLinks: [
         {
@@ -263,62 +266,56 @@ export default function GettingStartedPage() {
     },
     {
       id: 'setup-company',
-      title: 'Cadastre sua empresa',
-      description:
-        'Configure os dados da sua empresa, logo e informações de contato.',
+      title: t('items.setupCompany.title'),
+      description: t('items.setupCompany.description'),
       icon: <Building2 className="h-5 w-5" />,
       href: '/settings/company',
       completed: completedItems.includes('setup-company'),
     },
     {
       id: 'add-client',
-      title: 'Cadastre um cliente',
-      description:
-        'Adicione seu primeiro cliente para gerenciar casos e cobranças.',
+      title: t('items.addClient.title'),
+      description: t('items.addClient.description'),
       icon: <Users className="h-5 w-5" />,
       href: '/clients/new',
       completed: completedItems.includes('add-client'),
     },
     {
       id: 'create-quote',
-      title: 'Cadastre um orçamento',
-      description:
-        'Crie orçamentos profissionais e envie para aprovação dos clientes.',
+      title: t('items.createQuote.title'),
+      description: t('items.createQuote.description'),
       icon: <FileText className="h-5 w-5" />,
       href: '/quotes/new',
       completed: completedItems.includes('create-quote'),
     },
     {
       id: 'create-work-order',
-      title: 'Cadastre uma ordem de serviço',
-      description:
-        'Crie ordens de serviço para organizar e acompanhar seus trabalhos.',
+      title: t('items.createWorkOrder.title'),
+      description: t('items.createWorkOrder.description'),
       icon: <Wrench className="h-5 w-5" />,
       href: '/work-orders/new',
       completed: completedItems.includes('create-work-order'),
     },
     {
       id: 'create-charge',
-      title: 'Cadastre uma cobrança',
-      description: 'Registre cobranças e acompanhe os pagamentos dos clientes.',
+      title: t('items.createCharge.title'),
+      description: t('items.createCharge.description'),
       icon: <Receipt className="h-5 w-5" />,
       href: '/billing/charges/new',
       completed: completedItems.includes('create-charge'),
     },
     {
       id: 'add-expense',
-      title: 'Cadastre uma despesa',
-      description:
-        'Controle suas despesas e tenha visão completa do financeiro.',
+      title: t('items.addExpense.title'),
+      description: t('items.addExpense.description'),
       icon: <Wallet className="h-5 w-5" />,
       href: '/billing/expenses/new',
       completed: completedItems.includes('add-expense'),
     },
     {
       id: 'setup-asaas',
-      title: 'Emita cobranças com o Asaas',
-      description:
-        'Integre com o Asaas para emitir boletos, Pix e cartão automaticamente.',
+      title: t('items.setupAsaas.title'),
+      description: t('items.setupAsaas.description'),
       icon: <CreditCard className="h-5 w-5" />,
       href: '/settings/integrations',
       completed: completedItems.includes('setup-asaas'),
@@ -351,6 +348,7 @@ export default function GettingStartedPage() {
       <CelebrationToast
         show={showCelebration}
         message={celebrationMessage}
+        keepItUpText={t('celebration.keepItUp')}
         onClose={() => setShowCelebration(false)}
       />
 
@@ -358,10 +356,10 @@ export default function GettingStartedPage() {
       {/* Header */}
       <div>
         <h1 className="text-xl font-semibold text-gray-900">
-          Comece Aqui
+          {t('title')}
         </h1>
         <p className="text-sm text-gray-500 mt-1">
-          Complete as etapas abaixo para aproveitar ao máximo o sistema.
+          {t('subtitle')}
         </p>
       </div>
 
@@ -370,16 +368,16 @@ export default function GettingStartedPage() {
         <CardContent className="py-5">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="text-sm font-medium text-gray-900">Seu progresso</h3>
+              <h3 className="text-sm font-medium text-gray-900">{t('progress.title')}</h3>
               <p className="text-sm text-gray-500">
-                {completedCount} de {checklistItems.length} etapas concluídas
+                {t('progress.stepsCompleted', { completed: completedCount, total: checklistItems.length })}
               </p>
             </div>
             {daysRemaining > 0 && (
               <div className="text-right">
                 <div className="flex items-center gap-1.5 text-sm text-gray-500">
                   <Calendar className="h-4 w-4" />
-                  <span>{daysRemaining} dias restantes</span>
+                  <span>{t('progress.daysRemaining', { days: daysRemaining })}</span>
                 </div>
               </div>
             )}
@@ -397,7 +395,7 @@ export default function GettingStartedPage() {
       {/* Checklist */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle>Checklist de configuração</CardTitle>
+          <CardTitle>{t('checklist.title')}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y divide-gray-100">
@@ -472,7 +470,7 @@ export default function GettingStartedPage() {
                       {item.href && (
                         <Link href={item.href}>
                           <Button size="sm" variant="outline">
-                            Começar
+                            {t('checklist.startButton')}
                             <ChevronRight className="h-4 w-4 ml-1" />
                           </Button>
                         </Link>
@@ -509,7 +507,7 @@ export default function GettingStartedPage() {
       {/* Resources Section */}
       <div>
         <h2 className="font-medium text-gray-900 mb-4">
-          Explore mais
+          {t('resources.title')}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Central de Ajuda */}
@@ -519,10 +517,10 @@ export default function GettingStartedPage() {
                 <HelpCircle className="h-6 w-6 text-blue-600" />
               </div>
               <h3 className="font-medium text-gray-900 mb-1">
-                Central de Ajuda
+                {t('resources.helpCenter.title')}
               </h3>
               <p className="text-sm text-gray-500 mb-3">
-                Encontre tutoriais, guias e respostas para suas dúvidas.
+                {t('resources.helpCenter.description')}
               </p>
               <a
                 href="https://ajuda.auvo.com.br"
@@ -530,7 +528,7 @@ export default function GettingStartedPage() {
                 rel="noopener noreferrer"
                 className="text-sm text-primary font-medium hover:underline inline-flex items-center gap-1"
               >
-                Acessar
+                {t('resources.helpCenter.action')}
                 <ExternalLink className="h-4 w-4" />
               </a>
             </CardContent>
@@ -543,10 +541,10 @@ export default function GettingStartedPage() {
                 <MessageCircle className="h-6 w-6 text-green-600" />
               </div>
               <h3 className="font-medium text-gray-900 mb-1">
-                Suporte Online
+                {t('resources.support.title')}
               </h3>
               <p className="text-sm text-gray-500 mb-3">
-                Fale com nossa equipe para tirar dúvidas ou resolver problemas.
+                {t('resources.support.description')}
               </p>
               <a
                 href="https://wa.me/5511999999999"
@@ -554,7 +552,7 @@ export default function GettingStartedPage() {
                 rel="noopener noreferrer"
                 className="text-sm text-primary font-medium hover:underline inline-flex items-center gap-1"
               >
-                Iniciar conversa
+                {t('resources.support.action')}
                 <ExternalLink className="h-4 w-4" />
               </a>
             </CardContent>
@@ -567,10 +565,10 @@ export default function GettingStartedPage() {
                 <PlayCircle className="h-6 w-6 text-purple-600" />
               </div>
               <h3 className="font-medium text-gray-900 mb-1">
-                Aprenda o Básico
+                {t('resources.tutorial.title')}
               </h3>
               <p className="text-sm text-gray-500 mb-3">
-                Assista ao vídeo tutorial e aprenda a usar o sistema.
+                {t('resources.tutorial.description')}
               </p>
               <a
                 href="https://youtube.com/watch?v=tutorial"
@@ -578,7 +576,7 @@ export default function GettingStartedPage() {
                 rel="noopener noreferrer"
                 className="text-sm text-primary font-medium hover:underline inline-flex items-center gap-1"
               >
-                Assistir vídeo
+                {t('resources.tutorial.action')}
                 <ExternalLink className="h-4 w-4" />
               </a>
             </CardContent>
@@ -599,15 +597,15 @@ export default function GettingStartedPage() {
               ))}
             </div>
             <h3 className="text-base font-semibold text-green-900 mb-1">
-              Parabéns! Você completou todas as etapas!
+              {t('completion.title')}
             </h3>
             <p className="text-sm text-green-700 mb-4">
-              Agora você está pronto para aproveitar ao máximo o Auvo.
+              {t('completion.subtitle')}
             </p>
             <Link href="/dashboard">
               <Button className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700">
                 <Sparkles className="h-4 w-4 mr-2" />
-                Ir para o Dashboard
+                {t('completion.button')}
               </Button>
             </Link>
           </CardContent>

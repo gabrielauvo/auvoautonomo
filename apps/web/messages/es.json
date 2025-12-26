@@ -1297,5 +1297,103 @@
     },
     "errorLoading": "Error al cargar datos de invitación",
     "tryAgain": "Intentar de nuevo"
+  },
+  "gettingStarted": {
+    "title": "Comenzar",
+    "subtitle": "Completa los pasos a continuación para aprovechar al máximo el sistema.",
+    "progress": {
+      "title": "Tu progreso",
+      "stepsCompleted": "{completed} de {total} pasos completados",
+      "daysRemaining": "{days} días restantes"
+    },
+    "checklist": {
+      "title": "Lista de configuración",
+      "startButton": "Comenzar"
+    },
+    "items": {
+      "downloadApp": {
+        "title": "Descarga la aplicación",
+        "description": "Accede a tu información desde cualquier lugar con la app Auvo Field."
+      },
+      "setupCompany": {
+        "title": "Configura tu empresa",
+        "description": "Configura los datos de tu empresa, logo e información de contacto."
+      },
+      "addClient": {
+        "title": "Agrega un cliente",
+        "description": "Agrega tu primer cliente para gestionar casos y cobros."
+      },
+      "createQuote": {
+        "title": "Crea un presupuesto",
+        "description": "Crea presupuestos profesionales y envíalos para aprobación de clientes."
+      },
+      "createWorkOrder": {
+        "title": "Crea una orden de trabajo",
+        "description": "Crea órdenes de trabajo para organizar y dar seguimiento a tus trabajos."
+      },
+      "createCharge": {
+        "title": "Crea un cobro",
+        "description": "Registra cobros y da seguimiento a los pagos de clientes."
+      },
+      "addExpense": {
+        "title": "Agrega un gasto",
+        "description": "Controla tus gastos y ten una visión completa de tus finanzas."
+      },
+      "setupAsaas": {
+        "title": "Emite cobros con Asaas",
+        "description": "Integra con Asaas para emitir facturas, Pix y tarjeta automáticamente."
+      }
+    },
+    "resources": {
+      "title": "Explora más",
+      "helpCenter": {
+        "title": "Centro de Ayuda",
+        "description": "Encuentra tutoriales, guías y respuestas a tus preguntas.",
+        "action": "Acceder"
+      },
+      "support": {
+        "title": "Soporte Online",
+        "description": "Habla con nuestro equipo para resolver dudas o problemas.",
+        "action": "Iniciar conversación"
+      },
+      "tutorial": {
+        "title": "Aprende lo Básico",
+        "description": "Mira el video tutorial y aprende a usar el sistema.",
+        "action": "Ver video"
+      }
+    },
+    "completion": {
+      "title": "¡Felicitaciones! ¡Completaste todos los pasos!",
+      "subtitle": "Ahora estás listo para aprovechar al máximo Auvo.",
+      "button": "Ir al Dashboard"
+    },
+    "celebration": {
+      "keepItUp": "¡Sigue así!",
+      "messages": [
+        "¡Excelente trabajo!",
+        "¡Muy bien!",
+        "¡Lo estás haciendo genial!",
+        "¡Fantástico!",
+        "¡Felicitaciones!",
+        "¡Increíble!"
+      ]
+    }
+  },
+  "onboarding": {
+    "banner": {
+      "title": "Completa tu onboarding",
+      "steps": "{completed} de {total} pasos",
+      "continue": "Continuar",
+      "dismiss": "Cerrar banner de onboarding"
+    }
+  },
+  "trialBanner": {
+    "endsToday": "¡Tu período de prueba termina hoy!",
+    "endsTomorrow": "¡Tu período de prueba termina mañana!",
+    "endsIn": "Tu período de prueba termina en {days} días",
+    "subscribe": "Suscríbete por solo",
+    "yearlyPlan": "en el plan anual",
+    "subscribeNow": "Suscribirse ahora",
+    "close": "Cerrar banner"
   }
 }

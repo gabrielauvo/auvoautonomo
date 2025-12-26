@@ -1297,5 +1297,103 @@
     },
     "errorLoading": "Error loading referral data",
     "tryAgain": "Try again"
+  },
+  "gettingStarted": {
+    "title": "Getting Started",
+    "subtitle": "Complete the steps below to get the most out of the system.",
+    "progress": {
+      "title": "Your progress",
+      "stepsCompleted": "{completed} of {total} steps completed",
+      "daysRemaining": "{days} days remaining"
+    },
+    "checklist": {
+      "title": "Setup checklist",
+      "startButton": "Start"
+    },
+    "items": {
+      "downloadApp": {
+        "title": "Download the app",
+        "description": "Access your information from anywhere with the Auvo Field app."
+      },
+      "setupCompany": {
+        "title": "Set up your company",
+        "description": "Configure your company data, logo, and contact information."
+      },
+      "addClient": {
+        "title": "Add a client",
+        "description": "Add your first client to manage cases and billing."
+      },
+      "createQuote": {
+        "title": "Create a quote",
+        "description": "Create professional quotes and send them for client approval."
+      },
+      "createWorkOrder": {
+        "title": "Create a work order",
+        "description": "Create work orders to organize and track your jobs."
+      },
+      "createCharge": {
+        "title": "Create a charge",
+        "description": "Register charges and track client payments."
+      },
+      "addExpense": {
+        "title": "Add an expense",
+        "description": "Track your expenses and get a complete view of your finances."
+      },
+      "setupAsaas": {
+        "title": "Issue charges with Asaas",
+        "description": "Integrate with Asaas to issue invoices, Pix, and credit card payments automatically."
+      }
+    },
+    "resources": {
+      "title": "Explore more",
+      "helpCenter": {
+        "title": "Help Center",
+        "description": "Find tutorials, guides, and answers to your questions.",
+        "action": "Access"
+      },
+      "support": {
+        "title": "Online Support",
+        "description": "Talk to our team to answer questions or solve problems.",
+        "action": "Start conversation"
+      },
+      "tutorial": {
+        "title": "Learn the Basics",
+        "description": "Watch the video tutorial and learn how to use the system.",
+        "action": "Watch video"
+      }
+    },
+    "completion": {
+      "title": "Congratulations! You've completed all steps!",
+      "subtitle": "Now you're ready to make the most of Auvo.",
+      "button": "Go to Dashboard"
+    },
+    "celebration": {
+      "keepItUp": "Keep it up!",
+      "messages": [
+        "Excellent work!",
+        "Well done!",
+        "You're doing great!",
+        "Fantastic!",
+        "Congratulations!",
+        "Amazing!"
+      ]
+    }
+  },
+  "onboarding": {
+    "banner": {
+      "title": "Complete your onboarding",
+      "steps": "{completed} of {total} steps",
+      "continue": "Continue",
+      "dismiss": "Close onboarding banner"
+    }
+  },
+  "trialBanner": {
+    "endsToday": "Your trial period ends today!",
+    "endsTomorrow": "Your trial period ends tomorrow!",
+    "endsIn": "Your trial period ends in {days} days",
+    "subscribe": "Subscribe for only",
+    "yearlyPlan": "on the yearly plan",
+    "subscribeNow": "Subscribe now",
+    "close": "Close banner"
   }
 }

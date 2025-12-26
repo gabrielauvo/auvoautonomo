@@ -13,6 +13,7 @@ import { Clock, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { useAuth } from '@/context/auth-context';
 import { cn } from '@/lib/utils';
+import { useTranslations } from '@/i18n';
 import {
   BillingStatus,
   calculateTrialDaysRemaining,
@@ -26,6 +27,7 @@ interface TrialBannerProps {
 
 export function TrialBanner({ billing, className }: TrialBannerProps) {
   const { user } = useAuth();
+  const { t } = useTranslations('trialBanner');
   const [dismissed, setDismissed] = useState(false);
   const [daysRemaining, setDaysRemaining] = useState<number | null>(null);
 
@@ -75,22 +77,21 @@ export function TrialBanner({ billing, className }: TrialBannerProps) {
 
         <span>
           {daysRemaining === 0 ? (
-            'Seu período de teste termina hoje!'
+            t('endsToday')
           ) : daysRemaining === 1 ? (
-            'Seu período de teste termina amanhã!'
+            t('endsTomorrow')
           ) : (
             <>
-              Seu período de teste termina em{' '}
-              <strong>{daysRemaining} dias</strong>
+              {t('endsIn', { days: daysRemaining })}
             </>
           )}
           {' • '}
           <span className="hidden sm:inline">
-            Assine por apenas{' '}
+            {t('subscribe')}{' '}
             <strong>
               R$ {PRO_PLAN_PRICING.YEARLY.toFixed(2).replace('.', ',')}/mês
             </strong>{' '}
-            no plano anual
+            {t('yearlyPlan')}
           </span>
         </span>
 
@@ -106,7 +107,7 @@ export function TrialBanner({ billing, className }: TrialBannerProps) {
             )}
             leftIcon={<Sparkles className="h-3 w-3" />}
           >
-            Assinar agora
+            {t('subscribeNow')}
           </Button>
         </Link>
 
@@ -118,7 +119,7 @@ export function TrialBanner({ billing, className }: TrialBannerProps) {
             isWarning && 'hover:bg-warning-900/10',
             !isUrgent && !isWarning && 'hover:bg-white/10'
           )}
-          aria-label="Fechar banner"
+          aria-label={t('close')}
         >
           <X className="h-4 w-4" />
         </button>

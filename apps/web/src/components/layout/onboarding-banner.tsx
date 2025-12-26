@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { X, Rocket, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
+import { useTranslations } from '@/i18n';
 
 // Prefixos do localStorage (userId será adicionado)
 const ONBOARDING_STORAGE_PREFIX = 'auvo_onboarding_progress_';
@@ -32,6 +33,7 @@ const CHECKLIST_ITEM_IDS = [
 
 export function OnboardingBanner() {
   const { user } = useAuth();
+  const { t } = useTranslations('onboarding');
   const [completedItems, setCompletedItems] = useState<string[]>([]);
   const [isDismissed, setIsDismissed] = useState(true); // Começa oculto até carregar
   const [isLoading, setIsLoading] = useState(true);
@@ -129,10 +131,10 @@ export function OnboardingBanner() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-gray-900">
-                  Complete seu onboarding
+                  {t('banner.title')}
                 </span>
                 <span className="text-xs text-gray-500">
-                  {completedCount} de {totalCount} etapas
+                  {t('banner.steps', { completed: completedCount, total: totalCount })}
                 </span>
               </div>
 
@@ -147,7 +149,7 @@ export function OnboardingBanner() {
 
             {/* CTA */}
             <div className="flex-shrink-0 flex items-center gap-1 text-sm text-primary font-medium group-hover:text-primary-700">
-              <span className="hidden sm:inline">Continuar</span>
+              <span className="hidden sm:inline">{t('banner.continue')}</span>
               <ChevronRight className="h-4 w-4" />
             </div>
           </Link>
@@ -159,7 +161,7 @@ export function OnboardingBanner() {
               handleDismiss();
             }}
             className="flex-shrink-0 p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-primary-200/50 transition-colors"
-            aria-label="Fechar banner de onboarding"
+            aria-label={t('banner.dismiss')}
           >
             <X className="h-4 w-4" />
           </button>

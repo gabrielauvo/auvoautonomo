@@ -43,18 +43,18 @@ import {
   BillingPeriod,
 } from '@/services/billing.service';
 
-// Features do plano PRO
-const PRO_FEATURES = [
-  'Clientes ilimitados',
-  'Orçamentos ilimitados',
-  'Ordens de serviço ilimitadas',
-  'Cobranças ilimitadas',
-  'Catálogo de produtos e serviços',
-  'Gestão de despesas',
-  'Relatórios avançados',
-  'Exportação em PDF',
-  'Integração com WhatsApp',
-  'Suporte prioritário',
+// Feature keys for PRO plan
+const PRO_FEATURE_KEYS = [
+  'features.unlimitedClients',
+  'features.unlimitedQuotes',
+  'features.unlimitedWorkOrders',
+  'features.unlimitedCharges',
+  'features.productCatalog',
+  'features.expenseManagement',
+  'features.advancedReports',
+  'features.pdfExport',
+  'features.whatsappIntegration',
+  'features.prioritySupport',
 ];
 
 export default function PlanSettingsPage() {
@@ -125,7 +125,7 @@ export default function PlanSettingsPage() {
             ) : (
               <Clock className="h-5 w-5" />
             )}
-            {isActive ? 'Plano PRO' : 'Período de Teste'}
+            {isActive ? t('proPlan') : t('trialPeriod')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -146,22 +146,22 @@ export default function PlanSettingsPage() {
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-xl font-bold text-gray-900">
-                    {isActive ? 'Assinatura Ativa' : isExpired ? 'Trial Expirado' : 'Período de Teste'}
+                    {isActive ? t('activeSubscription') : isExpired ? t('trialExpired') : t('trialPeriod')}
                   </h3>
                   <Badge variant={isActive ? 'primary' : isExpired ? 'error' : 'warning'}>
-                    {isActive ? 'PRO' : isExpired ? 'EXPIRADO' : `${trialDaysRemaining} dias restantes`}
+                    {isActive ? 'PRO' : isExpired ? t('expired') : t('daysRemaining', { days: trialDaysRemaining })}
                   </Badge>
                 </div>
                 <p className="text-gray-500 mt-1">
                   {isActive ? (
                     <>
-                      R$ {selectedPrice.toFixed(2).replace('.', ',')}/mês
-                      {subscription?.billingPeriod === 'YEARLY' && ' (plano anual)'}
+                      R$ {selectedPrice.toFixed(2).replace('.', ',')}{t('perMonth')}
+                      {subscription?.billingPeriod === 'YEARLY' && ` (${t('yearlyPlan')})`}
                     </>
                   ) : isExpired ? (
-                    'Assine para continuar usando o Auvo'
+                    t('subscribeToUse')
                   ) : (
-                    `${TRIAL_DURATION_DAYS} dias grátis com acesso completo`
+                    t('freeTrialDays', { days: TRIAL_DURATION_DAYS })
                   )}
                 </p>
               </div>
@@ -172,15 +172,15 @@ export default function PlanSettingsPage() {
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
                   <span>
-                    Próxima cobrança:{' '}
+                    {t('nextBilling')}:{' '}
                     {subscription.currentPeriodEnd
-                      ? new Date(subscription.currentPeriodEnd).toLocaleDateString('pt-BR')
+                      ? new Date(subscription.currentPeriodEnd).toLocaleDateString()
                       : '-'}
                   </span>
                 </div>
                 {subscription.cancelAtPeriodEnd && (
                   <p className="text-warning mt-1">
-                    Assinatura será cancelada no fim do período
+                    {t('subscriptionWillBeCanceled')}
                   </p>
                 )}
               </div>
@@ -195,11 +195,11 @@ export default function PlanSettingsPage() {
                 <div>
                   <p className="font-medium">
                     {trialDaysRemaining === 0
-                      ? 'Seu período de teste termina hoje!'
-                      : `Seu período de teste termina em ${trialDaysRemaining} dia${trialDaysRemaining > 1 ? 's' : ''}!`}
+                      ? t('trialEndsToday')
+                      : t('trialEndsSoon', { days: trialDaysRemaining })}
                   </p>
                   <p className="text-sm mt-1">
-                    Assine agora para não perder acesso às funcionalidades.
+                    {t('subscribeNow')}
                   </p>
                 </div>
               </div>
@@ -215,7 +215,7 @@ export default function PlanSettingsPage() {
                 className="text-error"
                 onClick={() => setShowCancelConfirm(true)}
               >
-                Cancelar assinatura
+                {t('cancelSubscription')}
               </Button>
             </div>
           )}
@@ -226,7 +226,7 @@ export default function PlanSettingsPage() {
       {(!isActive || subscription?.cancelAtPeriodEnd) && (
         <Card>
           <CardHeader>
-            <CardTitle>Escolha seu plano</CardTitle>
+            <CardTitle>{t('choosePlan')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -241,15 +241,15 @@ export default function PlanSettingsPage() {
                 onClick={() => setSelectedPeriod('MONTHLY')}
               >
                 <div className="text-center mb-6">
-                  <h3 className="text-lg font-bold text-gray-900">Mensal</h3>
+                  <h3 className="text-lg font-bold text-gray-900">{t('monthly')}</h3>
                   <div className="mt-2">
                     <span className="text-4xl font-bold text-gray-900">
                       R$ {PRO_PLAN_PRICING.MONTHLY.toFixed(2).replace('.', ',')}
                     </span>
-                    <span className="text-gray-500">/mês</span>
+                    <span className="text-gray-500">{t('perMonth')}</span>
                   </div>
                   <p className="text-sm text-gray-500 mt-1">
-                    Cobrado mensalmente
+                    {t('billedMonthly')}
                   </p>
                 </div>
 
@@ -262,7 +262,7 @@ export default function PlanSettingsPage() {
                   }}
                   leftIcon={<CreditCard className="h-4 w-4" />}
                 >
-                  Assinar mensal
+                  {t('subscribeMonthly')}
                 </Button>
               </div>
 
@@ -278,23 +278,23 @@ export default function PlanSettingsPage() {
               >
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   <Badge variant="primary" className="shadow">
-                    Mais popular
+                    {t('mostPopular')}
                   </Badge>
                 </div>
 
                 <div className="text-center mb-6">
-                  <h3 className="text-lg font-bold text-gray-900">Anual</h3>
+                  <h3 className="text-lg font-bold text-gray-900">{t('yearly')}</h3>
                   <div className="mt-2">
                     <span className="text-4xl font-bold text-gray-900">
                       R$ {PRO_PLAN_PRICING.YEARLY.toFixed(2).replace('.', ',')}
                     </span>
-                    <span className="text-gray-500">/mês</span>
+                    <span className="text-gray-500">{t('perMonth')}</span>
                   </div>
                   <p className="text-sm text-gray-500 mt-1">
-                    Total de R$ {PRO_PLAN_PRICING.YEARLY_TOTAL.toFixed(2).replace('.', ',')}/ano
+                    {t('totalPerYear', { amount: `R$ ${PRO_PLAN_PRICING.YEARLY_TOTAL.toFixed(2).replace('.', ',')}` })}
                   </p>
                   <Badge variant="success" className="mt-2">
-                    Economia de R$ {PRO_PLAN_PRICING.YEARLY_SAVINGS.toFixed(2).replace('.', ',')}
+                    {t('savings', { amount: `R$ ${PRO_PLAN_PRICING.YEARLY_SAVINGS.toFixed(2).replace('.', ',')}` })}
                   </Badge>
                 </div>
 
@@ -307,7 +307,7 @@ export default function PlanSettingsPage() {
                   }}
                   leftIcon={<Sparkles className="h-4 w-4" />}
                 >
-                  Assinar anual
+                  {t('subscribeYearly')}
                 </Button>
               </div>
             </div>
@@ -315,20 +315,20 @@ export default function PlanSettingsPage() {
             {/* Features incluídas */}
             <div className="mt-8 pt-6 border-t">
               <h4 className="text-sm font-semibold text-gray-900 mb-4">
-                Tudo incluído no plano PRO:
+                {t('includedInPro')}
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {PRO_FEATURES.map((feature, idx) => (
+                {PRO_FEATURE_KEYS.map((featureKey, idx) => (
                   <div key={idx} className="flex items-center gap-2 text-sm">
                     <Check className="h-4 w-4 text-success flex-shrink-0" />
-                    <span className="text-gray-600">{feature}</span>
+                    <span className="text-gray-600">{t(featureKey)}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             <p className="text-xs text-center text-gray-500 mt-6">
-              Pagamento seguro via PIX ou Cartão de Crédito. Cancele quando quiser.
+              {t('securePayment')}
             </p>
           </CardContent>
         </Card>
@@ -340,15 +340,15 @@ export default function PlanSettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Check className="h-5 w-5 text-success" />
-              Recursos incluídos
+              {t('includedFeatures')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {PRO_FEATURES.map((feature, idx) => (
+              {PRO_FEATURE_KEYS.map((featureKey, idx) => (
                 <div key={idx} className="flex items-center gap-2 text-sm">
                   <Check className="h-4 w-4 text-success flex-shrink-0" />
-                  <span className="text-gray-600">{feature}</span>
+                  <span className="text-gray-600">{t(featureKey)}</span>
                 </div>
               ))}
             </div>
@@ -371,17 +371,16 @@ export default function PlanSettingsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <Card className="max-w-md w-full">
             <CardHeader>
-              <CardTitle className="text-error">Cancelar assinatura</CardTitle>
+              <CardTitle className="text-error">{t('cancelSubscriptionTitle')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <Alert variant="warning">
                 <div className="flex items-start gap-2">
                   <AlertCircle className="h-4 w-4 mt-0.5" />
                   <div className="text-sm">
-                    <p className="font-medium">Atenção</p>
+                    <p className="font-medium">{t('cancelAttention')}</p>
                     <p>
-                      Ao cancelar, você perderá acesso aos recursos PRO ao final do período atual.
-                      Seus dados serão mantidos por 30 dias.
+                      {t('cancelAttentionMessage')}
                     </p>
                   </div>
                 </div>
@@ -392,14 +391,14 @@ export default function PlanSettingsPage() {
                   variant="ghost"
                   onClick={() => setShowCancelConfirm(false)}
                 >
-                  Manter assinatura
+                  {t('keepSubscription')}
                 </Button>
                 <Button
                   variant="error"
                   onClick={handleCancelSubscription}
                   loading={cancelSubscription.isPending}
                 >
-                  Confirmar cancelamento
+                  {t('confirmCancellation')}
                 </Button>
               </div>
             </CardContent>

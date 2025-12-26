@@ -313,14 +313,14 @@ export default function CompanySettingsPage() {
                 />
                 {cnpjLookup.isPending && (
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">
-                    Buscando dados...
+                    {t('searchingData')}
                   </span>
                 )}
               </div>
               {cnpjSuccess && (
                 <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
                   <CheckCircle2 className="h-3 w-3" />
-                  Dados preenchidos automaticamente
+                  {t('dataAutoFilled')}
                 </p>
               )}
             </FormField>
@@ -462,7 +462,7 @@ export default function CompanySettingsPage() {
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <QrCode className="h-5 w-5" />
-                Recebimento via Pix
+                {t('pixReceiving')}
               </div>
               <button
                 type="button"
@@ -472,12 +472,12 @@ export default function CompanySettingsPage() {
                 {pixKeyEnabled ? (
                   <>
                     <ToggleRight className="h-6 w-6 text-green-500" />
-                    <span className="text-green-600">Ativado</span>
+                    <span className="text-green-600">{t('enabled')}</span>
                   </>
                 ) : (
                   <>
                     <ToggleLeft className="h-6 w-6 text-gray-400" />
-                    <span className="text-gray-500">Desativado</span>
+                    <span className="text-gray-500">{t('disabled')}</span>
                   </>
                 )}
               </button>
@@ -485,18 +485,18 @@ export default function CompanySettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-gray-500">
-              Configure sua chave Pix para exibir nas mensagens de cobrança e no PDF.
+              {t('pixConfigDescription')}
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField label="Tipo da chave">
+              <FormField label={t('pixKeyType')}>
                 <select
                   value={pixKeyType}
                   onChange={(e) => setPixKeyType(e.target.value as PixKeyType | '')}
                   className="w-full h-10 px-3 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   disabled={!pixKeyEnabled}
                 >
-                  <option value="">Selecione o tipo</option>
+                  <option value="">{t('selectType')}</option>
                   {PIX_KEY_TYPES.map((type) => (
                     <option key={type.value} value={type.value}>
                       {type.label}
@@ -505,7 +505,7 @@ export default function CompanySettingsPage() {
                 </select>
               </FormField>
 
-              <FormField label="Chave Pix">
+              <FormField label={t('pixKey')}>
                 <div className="relative">
                   <Input
                     value={pixKey}
@@ -516,7 +516,7 @@ export default function CompanySettingsPage() {
                       pixKeyType === 'EMAIL' ? 'email@exemplo.com' :
                       pixKeyType === 'PHONE' ? '+55 11 99999-9999' :
                       pixKeyType === 'RANDOM' ? 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx' :
-                      'Digite sua chave Pix'
+                      t('enterPixKey')
                     }
                     disabled={!pixKeyEnabled}
                     className="pr-10"
@@ -526,7 +526,7 @@ export default function CompanySettingsPage() {
                       type="button"
                       onClick={handleCopyPixKey}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                      title="Copiar chave"
+                      title={t('copyKey')}
                     >
                       {pixKeyCopied ? (
                         <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -539,15 +539,15 @@ export default function CompanySettingsPage() {
               </FormField>
             </div>
 
-            <FormField label="Nome do favorecido (opcional)">
+            <FormField label={t('pixOwnerName')}>
               <Input
                 value={pixKeyOwnerName}
                 onChange={(e) => setPixKeyOwnerName(e.target.value)}
-                placeholder="Nome que aparece no Pix"
+                placeholder={t('pixOwnerNamePlaceholder')}
                 disabled={!pixKeyEnabled}
               />
               <p className="text-xs text-gray-400 mt-1">
-                Exibido nas mensagens e PDF para identificar o recebedor.
+                {t('pixOwnerNameDescription')}
               </p>
             </FormField>
 
@@ -556,9 +556,9 @@ export default function CompanySettingsPage() {
                 <div className="flex items-start gap-2">
                   <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5" />
                   <div className="text-sm text-green-800">
-                    <strong>Chave Pix configurada!</strong>
+                    <strong>{t('pixKeyConfigured')}</strong>
                     <p className="mt-1">
-                      Sua chave será exibida nas mensagens de WhatsApp e no PDF de cobrança.
+                      {t('pixKeyConfiguredDescription')}
                     </p>
                   </div>
                 </div>

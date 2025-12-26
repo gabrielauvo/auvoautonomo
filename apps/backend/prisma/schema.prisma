@@ -38,6 +38,8 @@ model User {
   aiConversations             AiConversation[]
   aiToolIdempotency           AiToolIdempotency[]
   asaasIntegration            AsaasIntegration?
+  stripeIntegration           StripeIntegration?
+  mercadoPagoIntegration      MercadoPagoIntegration?
   createdAttachments          Attachment[]                 @relation("AttachmentCreator")
   attachments                 Attachment[]                 @relation("UserAttachments")
   bundleItems                 BundleItem[]
@@ -713,6 +715,43 @@ model AsaasIntegration {
 
   @@index([userId])
   @@map("asaas_integrations")
+}
+
+model StripeIntegration {
+  id                  String            @id @default(uuid())
+  userId              String            @unique
+  secretKeyEncrypted  String            // Secret key (sk_live_xxx ou sk_test_xxx)
+  publishableKey      String?           // Public key (pk_live_xxx ou pk_test_xxx)
+  webhookSecret       String?           // Webhook secret (whsec_xxx)
+  environment         StripeEnvironment @default(TEST)
+  accountName         String?           // Nome da conta Stripe
+  accountEmail        String?           // Email da conta Stripe
+  isActive            Boolean           @default(true)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  user                User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("stripe_integrations")
+}
+
+model MercadoPagoIntegration {
+  id                   String                 @id @default(uuid())
+  userId               String                 @unique
+  accessTokenEncrypted String                 // Access token
+  publicKey            String?                // Public key
+  webhookSecret        String?                // Webhook secret
+  environment          MercadoPagoEnvironment @default(SANDBOX)
+  accountName          String?                // Nome da conta
+  accountEmail         String?                // Email da conta
+  country              String?                @default("AR") // País: AR, CL, CO, PE, UY
+  isActive             Boolean                @default(true)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  user                 User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("mercadopago_integrations")
 }
 
 model ClientPayment {
@@ -1600,6 +1639,16 @@ enum InvoiceStatus {
 }
 
 enum AsaasEnvironment {
+  SANDBOX
+  PRODUCTION
+}
+
+enum StripeEnvironment {
+  TEST
+  LIVE
+}
+
+enum MercadoPagoEnvironment {
   SANDBOX
   PRODUCTION
 }

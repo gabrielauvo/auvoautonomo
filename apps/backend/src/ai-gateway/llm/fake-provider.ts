@@ -57,9 +57,9 @@ export class FakeLLMProvider implements ILLMProvider {
 
   private createPatterns(): FakeResponsePattern[] {
     return [
-      // Customer creation flow
+      // Customer creation flow - expanded patterns
       {
-        pattern: /criar\s+(cliente|customer)/i,
+        pattern: /(?:criar|cadastrar|novo|adicionar)\s*(?:um\s+)?(?:cliente|customer)/i,
         response: (match, messages) => {
           // Check if we have name in the message
           const nameMatch = messages.match(/nome[:\s]+([^\n,]+)/i);
@@ -101,7 +101,7 @@ export class FakeLLMProvider implements ILLMProvider {
 
       // Customer search
       {
-        pattern: /(?:buscar|listar|pesquisar|procurar)\s+(?:clientes?|customers?)/i,
+        pattern: /(?:buscar|listar|pesquisar|procurar|ver|mostrar)\s*(?:os\s+)?(?:clientes?|customers?)/i,
         response: () => ({
           content: JSON.stringify({
             type: 'CALL_TOOL',
@@ -112,9 +112,9 @@ export class FakeLLMProvider implements ILLMProvider {
         }),
       },
 
-      // Work order creation
+      // Work order creation - expanded patterns
       {
-        pattern: /criar\s+(?:ordem\s+de\s+servi[çc]o|os|work\s*order)/i,
+        pattern: /(?:criar|cadastrar|nova?|abrir|adicionar)\s*(?:uma?\s+)?(?:ordem\s+de\s+servi[çc]o|os|work\s*order)/i,
         response: (match, messages) => {
           const customerIdMatch = messages.match(/cliente[:\s]+([a-f0-9-]{36})/i);
           const titleMatch = messages.match(/t[íi]tulo[:\s]+([^\n]+)/i);
@@ -136,7 +136,7 @@ export class FakeLLMProvider implements ILLMProvider {
 
       // Billing preview
       {
-        pattern: /(?:cobrar|cobrança|pagamento|boleto|pix)/i,
+        pattern: /(?:cobrar|cobran[çc]a|pagamento|boleto|pix|gerar\s+cobran)/i,
         response: (match, messages) => {
           const customerIdMatch = messages.match(/cliente[:\s]+([a-f0-9-]{36})/i);
           const valueMatch = messages.match(/(?:valor|value)[:\s]+R?\$?\s*([0-9,.]+)/i);
@@ -173,9 +173,9 @@ export class FakeLLMProvider implements ILLMProvider {
         },
       },
 
-      // Quote creation
+      // Quote creation - EXPANDED patterns to catch more variations
       {
-        pattern: /criar\s+(?:or[çc]amento|quote)/i,
+        pattern: /(?:criar|fazer|gerar|cadastrar|novo|montar|adicionar)\s*(?:um\s+)?(?:or[çc]amento|quote)/i,
         response: (match, messages) => {
           const customerIdMatch = messages.match(/cliente[:\s]+([a-f0-9-]{36})/i);
           const titleMatch = messages.match(/t[íi]tulo[:\s]+([^\n]+)/i);
@@ -193,6 +193,60 @@ export class FakeLLMProvider implements ILLMProvider {
 
           return this.createPlanResponse('quotes.create', collectedFields, missingFields);
         },
+      },
+
+      // Quote intention - when user just mentions "orçamento" or asks for help
+      {
+        pattern: /(?:quero|preciso|gostaria|ajud[ae]|me\s+ajud[ae]|como).*(?:or[çc]amento|quote)/i,
+        response: () => {
+          const missingFields = ['customerId', 'title', 'items'];
+          return this.createPlanResponse('quotes.create', {}, missingFields);
+        },
+      },
+
+      // Just "orçamento" or "quote" alone
+      {
+        pattern: /^(?:or[çc]amento|quote)s?$/i,
+        response: () => {
+          const missingFields = ['customerId', 'title', 'items'];
+          return this.createPlanResponse('quotes.create', {}, missingFields);
+        },
+      },
+
+      // Work order intention
+      {
+        pattern: /(?:quero|preciso|gostaria|ajud[ae]|me\s+ajud[ae]|como).*(?:ordem\s+de\s+servi[çc]o|os)/i,
+        response: () => {
+          const missingFields = ['customerId', 'title', 'items'];
+          return this.createPlanResponse('workOrders.create', {}, missingFields);
+        },
+      },
+
+      // Client intention
+      {
+        pattern: /(?:quero|preciso|gostaria|ajud[ae]|me\s+ajud[ae]|como).*(?:cliente|customer)/i,
+        response: () => {
+          const missingFields = ['name'];
+          return this.createPlanResponse('customers.create', {}, missingFields);
+        },
+      },
+
+      // General help request - provide options
+      {
+        pattern: /(?:ajuda|help|o\s+que|como|quero|preciso)/i,
+        response: () => ({
+          content: JSON.stringify({
+            type: 'ASK_USER',
+            question: 'Posso ajudar você com:\n\n' +
+              '1️⃣ **Clientes** - criar, buscar ou atualizar clientes\n' +
+              '2️⃣ **Orçamentos** - criar orçamentos para seus clientes\n' +
+              '3️⃣ **Ordens de Serviço** - criar e gerenciar OS\n' +
+              '4️⃣ **Cobranças** - gerar PIX, boleto ou cartão\n\n' +
+              'O que você gostaria de fazer?',
+            options: ['Criar cliente', 'Criar orçamento', 'Criar OS', 'Gerar cobrança'],
+          }),
+          usage: { inputTokens: 20, outputTokens: 80, totalTokens: 100 },
+        }),
       },
     ];
   }

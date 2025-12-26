@@ -16,14 +16,17 @@ describe('KbVectorStore', () => {
       findMany: jest.fn(),
       createMany: jest.fn(),
       deleteMany: jest.fn(),
+      count: jest.fn(),
     },
     kbFaq: {
       findMany: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      count: jest.fn(),
     },
     kbDocument: {
       findUnique: jest.fn(),
+      findMany: jest.fn(),
       upsert: jest.fn(),
       deleteMany: jest.fn(),
       count: jest.fn(),
@@ -97,38 +100,31 @@ describe('KbVectorStore', () => {
       });
 
       it('should search chunks using in-memory similarity', async () => {
-        const mockChunks = [
+        const mockDocuments = [
           {
-            id: 'chunk-1',
-            content: 'Test content 1',
-            documentId: 'doc-1',
-            chunkIndex: 0,
-            embedding: new Array(1536).fill(0.1),
-            metadata: {},
-            document: {
-              id: 'doc-1',
-              source: 'DOCS',
-              sourceId: 'test.md',
-              title: 'Test Doc',
-            },
-          },
-          {
-            id: 'chunk-2',
-            content: 'Test content 2',
-            documentId: 'doc-1',
-            chunkIndex: 1,
-            embedding: new Array(1536).fill(0.2),
-            metadata: {},
-            document: {
-              id: 'doc-1',
-              source: 'DOCS',
-              sourceId: 'test.md',
-              title: 'Test Doc',
-            },
+            id: 'doc-1',
+            source: 'DOCS',
+            sourceId: 'test.md',
+            title: 'Test Doc',
+            isActive: true,
+            chunks: [
+              {
+                id: 'chunk-1',
+                content: 'Test content 1',
+                embedding: new Array(1536).fill(0.1),
+                metadata: {},
+              },
+              {
+                id: 'chunk-2',
+                content: 'Test content 2',
+                embedding: new Array(1536).fill(0.2),
+                metadata: {},
+              },
+            ],
           },
         ];
 
-        mockPrismaService.kbChunk.findMany.mockResolvedValue(mockChunks);
+        mockPrismaService.kbDocument.findMany.mockResolvedValue(mockDocuments);
         mockEmbeddingService.cosineSimilarity
           .mockReturnValueOnce(0.9)
           .mockReturnValueOnce(0.7);
@@ -142,38 +138,31 @@ describe('KbVectorStore', () => {
       });
 
       it('should filter by minimum score', async () => {
-        const mockChunks = [
+        const mockDocuments = [
           {
-            id: 'chunk-1',
-            content: 'High score content',
-            documentId: 'doc-1',
-            chunkIndex: 0,
-            embedding: new Array(1536).fill(0.1),
-            metadata: {},
-            document: {
-              id: 'doc-1',
-              source: 'DOCS',
-              sourceId: 'test.md',
-              title: 'Test Doc',
-            },
-          },
-          {
-            id: 'chunk-2',
-            content: 'Low score content',
-            documentId: 'doc-1',
-            chunkIndex: 1,
-            embedding: new Array(1536).fill(0.2),
-            metadata: {},
-            document: {
-              id: 'doc-1',
-              source: 'DOCS',
-              sourceId: 'test.md',
-              title: 'Test Doc',
-            },
+            id: 'doc-1',
+            source: 'DOCS',
+            sourceId: 'test.md',
+            title: 'Test Doc',
+            isActive: true,
+            chunks: [
+              {
+                id: 'chunk-1',
+                content: 'High score content',
+                embedding: new Array(1536).fill(0.1),
+                metadata: {},
+              },
+              {
+                id: 'chunk-2',
+                content: 'Low score content',
+                embedding: new Array(1536).fill(0.2),
+                metadata: {},
+              },
+            ],
           },
         ];
 
-        mockPrismaService.kbChunk.findMany.mockResolvedValue(mockChunks);
+        mockPrismaService.kbDocument.findMany.mockResolvedValue(mockDocuments);
         mockEmbeddingService.cosineSimilarity
           .mockReturnValueOnce(0.8)
           .mockReturnValueOnce(0.3);
@@ -185,22 +174,23 @@ describe('KbVectorStore', () => {
       });
 
       it('should limit results to topK', async () => {
-        const mockChunks = Array.from({ length: 10 }, (_, i) => ({
-          id: `chunk-${i}`,
-          content: `Content ${i}`,
-          documentId: 'doc-1',
-          chunkIndex: i,
-          embedding: new Array(1536).fill(0.1),
-          metadata: {},
-          document: {
+        const mockDocuments = [
+          {
             id: 'doc-1',
             source: 'DOCS',
             sourceId: 'test.md',
             title: 'Test Doc',
+            isActive: true,
+            chunks: Array.from({ length: 10 }, (_, i) => ({
+              id: `chunk-${i}`,
+              content: `Content ${i}`,
+              embedding: new Array(1536).fill(0.1),
+              metadata: {},
+            })),
           },
-        }));
+        ];
 
-        mockPrismaService.kbChunk.findMany.mockResolvedValue(mockChunks);
+        mockPrismaService.kbDocument.findMany.mockResolvedValue(mockDocuments);
         mockEmbeddingService.cosineSimilarity.mockReturnValue(0.7);
 
         const results = await service.searchChunks(mockEmbedding, { topK: 3 });
@@ -209,38 +199,31 @@ describe('KbVectorStore', () => {
       });
 
       it('should skip chunks without embeddings', async () => {
-        const mockChunks = [
+        const mockDocuments = [
           {
-            id: 'chunk-1',
-            content: 'Has embedding',
-            documentId: 'doc-1',
-            chunkIndex: 0,
-            embedding: new Array(1536).fill(0.1),
-            metadata: {},
-            document: {
-              id: 'doc-1',
-              source: 'DOCS',
-              sourceId: 'test.md',
-              title: 'Test Doc',
-            },
-          },
-          {
-            id: 'chunk-2',
-            content: 'No embedding',
-            documentId: 'doc-1',
-            chunkIndex: 1,
-            embedding: [],
-            metadata: {},
-            document: {
-              id: 'doc-1',
-              source: 'DOCS',
-              sourceId: 'test.md',
-              title: 'Test Doc',
-            },
+            id: 'doc-1',
+            source: 'DOCS',
+            sourceId: 'test.md',
+            title: 'Test Doc',
+            isActive: true,
+            chunks: [
+              {
+                id: 'chunk-1',
+                content: 'Has embedding',
+                embedding: new Array(1536).fill(0.1),
+                metadata: {},
+              },
+              {
+                id: 'chunk-2',
+                content: 'No embedding',
+                embedding: [],
+                metadata: {},
+              },
+            ],
           },
         ];
 
-        mockPrismaService.kbChunk.findMany.mockResolvedValue(mockChunks);
+        mockPrismaService.kbDocument.findMany.mockResolvedValue(mockDocuments);
         mockEmbeddingService.cosineSimilarity.mockReturnValue(0.8);
 
         const results = await service.searchChunks(mockEmbedding, { minScore: 0.5 });
@@ -250,16 +233,14 @@ describe('KbVectorStore', () => {
       });
 
       it('should filter by source', async () => {
-        mockPrismaService.kbChunk.findMany.mockResolvedValue([]);
+        mockPrismaService.kbDocument.findMany.mockResolvedValue([]);
 
         await service.searchChunks(mockEmbedding, { sources: ['DOCS', 'FAQ'] });
 
-        expect(mockPrismaService.kbChunk.findMany).toHaveBeenCalledWith(
+        expect(mockPrismaService.kbDocument.findMany).toHaveBeenCalledWith(
           expect.objectContaining({
             where: expect.objectContaining({
-              document: expect.objectContaining({
-                source: { in: ['DOCS', 'FAQ'] },
-              }),
+              source: { in: ['DOCS', 'FAQ'] },
             }),
           }),
         );

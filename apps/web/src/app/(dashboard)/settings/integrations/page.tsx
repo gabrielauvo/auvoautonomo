@@ -19,11 +19,8 @@ import {
   EyeOff,
   ExternalLink,
   AlertCircle,
-  Loader2,
   Unplug,
   AlertTriangle,
-  CreditCard,
-  Globe,
 } from 'lucide-react';
 import {
   Card,
@@ -42,8 +39,18 @@ import {
   useAsaasStatus,
   useConnectAsaas,
   useDisconnectAsaas,
+  useStripeStatus,
+  useConnectStripe,
+  useDisconnectStripe,
+  useMercadoPagoStatus,
+  useConnectMercadoPago,
+  useDisconnectMercadoPago,
 } from '@/hooks/use-integrations';
-import { AsaasEnvironment } from '@/services/integrations.service';
+import {
+  AsaasEnvironment,
+  StripeEnvironment,
+  MercadoPagoEnvironment,
+} from '@/services/integrations.service';
 
 // Stripe Icon SVG Component
 const StripeIcon = ({ className }: { className?: string }) => (
@@ -61,58 +68,176 @@ const MercadoPagoIcon = ({ className }: { className?: string }) => (
 
 export default function IntegrationsSettingsPage() {
   const { t } = useTranslations('integrations');
-  const { data: asaasStatus, isLoading } = useAsaasStatus();
+
+  // Asaas hooks
+  const { data: asaasStatus, isLoading: asaasLoading } = useAsaasStatus();
   const connectAsaas = useConnectAsaas();
   const disconnectAsaas = useDisconnectAsaas();
 
-  // Form state
-  const [apiKey, setApiKey] = useState('');
-  const [environment, setEnvironment] = useState<AsaasEnvironment>('SANDBOX');
-  const [showApiKey, setShowApiKey] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Stripe hooks
+  const { data: stripeStatus, isLoading: stripeLoading } = useStripeStatus();
+  const connectStripe = useConnectStripe();
+  const disconnectStripe = useDisconnectStripe();
 
-  // Disconnect confirmation
-  const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
+  // Mercado Pago hooks
+  const { data: mercadoPagoStatus, isLoading: mercadoPagoLoading } = useMercadoPagoStatus();
+  const connectMercadoPago = useConnectMercadoPago();
+  const disconnectMercadoPago = useDisconnectMercadoPago();
 
-  const handleConnect = async () => {
-    setError(null);
+  // Asaas form state
+  const [asaasApiKey, setAsaasApiKey] = useState('');
+  const [asaasEnvironment, setAsaasEnvironment] = useState<AsaasEnvironment>('SANDBOX');
+  const [showAsaasApiKey, setShowAsaasApiKey] = useState(false);
+  const [asaasError, setAsaasError] = useState<string | null>(null);
+  const [showAsaasDisconnect, setShowAsaasDisconnect] = useState(false);
 
-    if (!apiKey.trim()) {
-      setError(t('apiKeyRequired'));
+  // Stripe form state
+  const [stripeSecretKey, setStripeSecretKey] = useState('');
+  const [stripePublishableKey, setStripePublishableKey] = useState('');
+  const [stripeEnvironment, setStripeEnvironment] = useState<StripeEnvironment>('TEST');
+  const [showStripeSecretKey, setShowStripeSecretKey] = useState(false);
+  const [stripeError, setStripeError] = useState<string | null>(null);
+  const [showStripeDisconnect, setShowStripeDisconnect] = useState(false);
+
+  // Mercado Pago form state
+  const [mpAccessToken, setMpAccessToken] = useState('');
+  const [mpPublicKey, setMpPublicKey] = useState('');
+  const [mpEnvironment, setMpEnvironment] = useState<MercadoPagoEnvironment>('SANDBOX');
+  const [mpCountry, setMpCountry] = useState('AR');
+  const [showMpAccessToken, setShowMpAccessToken] = useState(false);
+  const [mpError, setMpError] = useState<string | null>(null);
+  const [showMpDisconnect, setShowMpDisconnect] = useState(false);
+
+  // Asaas handlers
+  const handleAsaasConnect = async () => {
+    setAsaasError(null);
+    if (!asaasApiKey.trim()) {
+      setAsaasError(t('apiKeyRequired'));
       return;
     }
-
-    if (apiKey.length < 20) {
-      setError(t('apiKeyInvalid'));
+    if (asaasApiKey.length < 20) {
+      setAsaasError(t('apiKeyInvalid'));
       return;
     }
-
     try {
-      await connectAsaas.mutateAsync({ apiKey, environment });
-      setApiKey('');
+      await connectAsaas.mutateAsync({ apiKey: asaasApiKey, environment: asaasEnvironment });
+      setAsaasApiKey('');
     } catch (err) {
-      // Error already handled by mutation
+      // Error handled by mutation
     }
   };
 
-  const handleDisconnect = async () => {
+  const handleAsaasDisconnect = async () => {
     try {
       await disconnectAsaas.mutateAsync();
-      setShowDisconnectConfirm(false);
+      setShowAsaasDisconnect(false);
     } catch (err) {
-      // Error already handled by mutation
+      // Error handled by mutation
     }
   };
+
+  // Stripe handlers
+  const handleStripeConnect = async () => {
+    setStripeError(null);
+    if (!stripeSecretKey.trim()) {
+      setStripeError(t('secretKeyRequired'));
+      return;
+    }
+    const isTestKey = stripeSecretKey.startsWith('sk_test_');
+    const isLiveKey = stripeSecretKey.startsWith('sk_live_');
+    if (!isTestKey && !isLiveKey) {
+      setStripeError(t('stripeKeyInvalid'));
+      return;
+    }
+    if (stripeEnvironment === 'TEST' && !isTestKey) {
+      setStripeError(t('stripeTestKeyRequired'));
+      return;
+    }
+    if (stripeEnvironment === 'LIVE' && !isLiveKey) {
+      setStripeError(t('stripeLiveKeyRequired'));
+      return;
+    }
+    try {
+      await connectStripe.mutateAsync({
+        secretKey: stripeSecretKey,
+        publishableKey: stripePublishableKey || undefined,
+        environment: stripeEnvironment,
+      });
+      setStripeSecretKey('');
+      setStripePublishableKey('');
+    } catch (err) {
+      // Error handled by mutation
+    }
+  };
+
+  const handleStripeDisconnect = async () => {
+    try {
+      await disconnectStripe.mutateAsync();
+      setShowStripeDisconnect(false);
+    } catch (err) {
+      // Error handled by mutation
+    }
+  };
+
+  // Mercado Pago handlers
+  const handleMpConnect = async () => {
+    setMpError(null);
+    if (!mpAccessToken.trim()) {
+      setMpError(t('accessTokenRequired'));
+      return;
+    }
+    const isTestToken = mpAccessToken.startsWith('TEST-');
+    const isProdToken = mpAccessToken.startsWith('APP_USR-');
+    if (!isTestToken && !isProdToken) {
+      setMpError(t('mpTokenInvalid'));
+      return;
+    }
+    if (mpEnvironment === 'SANDBOX' && !isTestToken) {
+      setMpError(t('mpTestTokenRequired'));
+      return;
+    }
+    if (mpEnvironment === 'PRODUCTION' && !isProdToken) {
+      setMpError(t('mpProdTokenRequired'));
+      return;
+    }
+    try {
+      await connectMercadoPago.mutateAsync({
+        accessToken: mpAccessToken,
+        publicKey: mpPublicKey || undefined,
+        environment: mpEnvironment,
+        country: mpCountry,
+      });
+      setMpAccessToken('');
+      setMpPublicKey('');
+    } catch (err) {
+      // Error handled by mutation
+    }
+  };
+
+  const handleMpDisconnect = async () => {
+    try {
+      await disconnectMercadoPago.mutateAsync();
+      setShowMpDisconnect(false);
+    } catch (err) {
+      // Error handled by mutation
+    }
+  };
+
+  const isLoading = asaasLoading || stripeLoading || mercadoPagoLoading;
 
   if (isLoading) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-64 w-full" />
       </div>
     );
   }
 
-  const isConnected = asaasStatus?.connected && asaasStatus?.isActive;
+  const isAsaasConnected = asaasStatus?.connected && asaasStatus?.isActive;
+  const isStripeConnected = stripeStatus?.connected && stripeStatus?.isActive;
+  const isMpConnected = mercadoPagoStatus?.connected && mercadoPagoStatus?.isActive;
 
   return (
     <div className="space-y-6">
@@ -122,22 +247,16 @@ export default function IntegrationsSettingsPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-green-100 rounded-lg">
-                <svg
-                  className="h-6 w-6 text-green-600"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
+                <svg className="h-6 w-6 text-green-600" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
                 </svg>
               </div>
               <div>
                 <CardTitle>Asaas</CardTitle>
-                <p className="text-sm text-gray-500">
-                  {t('asaasDescription')}
-                </p>
+                <p className="text-sm text-gray-500">{t('asaasDescription')}</p>
               </div>
             </div>
-            {isConnected ? (
+            {isAsaasConnected ? (
               <Badge variant="success" className="flex items-center gap-1">
                 <Check className="h-3 w-3" />
                 {t('connected')}
@@ -151,71 +270,42 @@ export default function IntegrationsSettingsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {isConnected ? (
-            // Connected state
+          {isAsaasConnected ? (
             <div className="space-y-4">
               <Alert variant="success">
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 mt-0.5" />
                   <div>
                     <p className="font-medium">{t('integrationActive')}</p>
-                    <p className="text-sm">
-                      {t('integrationActiveDescription')}
-                    </p>
+                    <p className="text-sm">{t('integrationActiveDescription')}</p>
                   </div>
                 </div>
               </Alert>
-
               <div className="p-4 bg-gray-50 rounded-lg space-y-3">
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-500">{t('environment')}</span>
-                  <Badge
-                    variant={asaasStatus.environment === 'PRODUCTION' ? 'success' : 'warning'}
-                  >
+                  <Badge variant={asaasStatus.environment === 'PRODUCTION' ? 'success' : 'warning'}>
                     {asaasStatus.environment === 'PRODUCTION' ? t('production') : t('sandbox')}
                   </Badge>
                 </div>
-
                 {asaasStatus.accountInfo && (
                   <>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-500">{t('name')}</span>
-                      <span className="text-sm font-medium">
-                        {asaasStatus.accountInfo.name}
-                      </span>
+                      <span className="text-sm font-medium">{asaasStatus.accountInfo.name}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-500">{t('email')}</span>
-                      <span className="text-sm font-medium">
-                        {asaasStatus.accountInfo.email}
-                      </span>
+                      <span className="text-sm font-medium">{asaasStatus.accountInfo.email}</span>
                     </div>
-                    {asaasStatus.accountInfo.cpfCnpj && (
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-500">{t('cpfCnpj')}</span>
-                        <span className="text-sm font-medium">
-                          {asaasStatus.accountInfo.cpfCnpj}
-                        </span>
-                      </div>
-                    )}
                   </>
                 )}
-
-                {asaasStatus.connectedAt && (
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">{t('connectedAt')}</span>
-                    <span className="text-sm font-medium">
-                      {new Date(asaasStatus.connectedAt).toLocaleDateString('pt-BR')}
-                    </span>
-                  </div>
-                )}
               </div>
-
               <div className="flex justify-end">
                 <Button
                   variant="outline"
                   className="text-error border-error hover:bg-error/5"
-                  onClick={() => setShowDisconnectConfirm(true)}
+                  onClick={() => setShowAsaasDisconnect(true)}
                   leftIcon={<Unplug className="h-4 w-4" />}
                 >
                   {t('disconnect')}
@@ -223,106 +313,55 @@ export default function IntegrationsSettingsPage() {
               </div>
             </div>
           ) : (
-            // Disconnected state - show connection form
             <div className="space-y-4">
               <Alert>
                 <div className="flex items-start gap-2">
                   <AlertCircle className="h-4 w-4 mt-0.5" />
                   <div>
                     <p className="font-medium">{t('configureIntegration')}</p>
-                    <p className="text-sm">
-                      {t('configureIntegrationDescription')}
-                    </p>
+                    <p className="text-sm">{t('configureIntegrationDescription')}</p>
                   </div>
                 </div>
               </Alert>
-
               <div className="p-4 bg-blue-50 rounded-lg">
                 <h4 className="font-medium text-blue-900 mb-2">{t('howToGetApiKey')}</h4>
                 <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
-                  <li>
-                    {t('step1')}{' '}
-                    <a
-                      href="https://www.asaas.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline inline-flex items-center gap-1"
-                    >
-                      asaas.com
-                      <ExternalLink className="h-3 w-3" />
-                    </a>{' '}
-                    {t('step1Continue')}
-                  </li>
+                  <li>{t('step1')} <a href="https://www.asaas.com" target="_blank" rel="noopener noreferrer" className="underline inline-flex items-center gap-1">asaas.com<ExternalLink className="h-3 w-3" /></a> {t('step1Continue')}</li>
                   <li>{t('step2')}</li>
                   <li>{t('step3')}</li>
                   <li>{t('step4')}</li>
                 </ol>
               </div>
-
               <FormField label={t('environment')}>
-                <Select
-                  value={environment}
-                  onChange={(e) => setEnvironment(e.target.value as AsaasEnvironment)}
-                >
+                <Select value={asaasEnvironment} onChange={(e) => setAsaasEnvironment(e.target.value as AsaasEnvironment)}>
                   <option value="SANDBOX">{t('sandbox')}</option>
                   <option value="PRODUCTION">{t('production')}</option>
                 </Select>
-                <p className="text-xs text-gray-500 mt-1">
-                  {t('sandboxDescription')}
-                </p>
               </FormField>
-
               <FormField label={t('apiKey')}>
                 <div className="relative">
                   <Input
-                    type={showApiKey ? 'text' : 'password'}
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
+                    type={showAsaasApiKey ? 'text' : 'password'}
+                    value={asaasApiKey}
+                    onChange={(e) => setAsaasApiKey(e.target.value)}
                     placeholder="$aact_YourApiKeyHere..."
                     className="pr-10"
                   />
-                  <button
-                    type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    onClick={() => setShowApiKey(!showApiKey)}
-                  >
-                    {showApiKey ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
+                  <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" onClick={() => setShowAsaasApiKey(!showAsaasApiKey)}>
+                    {showAsaasApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  {t('apiKeyStorageInfo')}
-                </p>
               </FormField>
-
-              {error && (
-                <Alert variant="error">
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4" />
-                    {error}
-                  </div>
-                </Alert>
-              )}
-
+              {asaasError && <Alert variant="error"><AlertCircle className="h-4 w-4" />{asaasError}</Alert>}
               <div className="flex justify-end">
-                <Button
-                  onClick={handleConnect}
-                  loading={connectAsaas.isPending}
-                  disabled={!apiKey.trim()}
-                  leftIcon={<Plug className="h-4 w-4" />}
-                >
-                  {t('connect')}
-                </Button>
+                <Button onClick={handleAsaasConnect} loading={connectAsaas.isPending} disabled={!asaasApiKey.trim()} leftIcon={<Plug className="h-4 w-4" />}>{t('connect')}</Button>
               </div>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Stripe Integration - International Customers */}
+      {/* Stripe Integration */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -332,70 +371,131 @@ export default function IntegrationsSettingsPage() {
               </div>
               <div>
                 <CardTitle>Stripe</CardTitle>
-                <p className="text-sm text-gray-500">
-                  {t('stripeDescription')}
-                </p>
+                <p className="text-sm text-gray-500">{t('stripeDescription')}</p>
               </div>
             </div>
-            <Badge variant="default" className="flex items-center gap-1">
-              <X className="h-3 w-3" />
-              {t('notConfigured')}
-            </Badge>
+            {isStripeConnected ? (
+              <Badge variant="success" className="flex items-center gap-1">
+                <Check className="h-3 w-3" />
+                {t('connected')}
+              </Badge>
+            ) : (
+              <Badge variant="default" className="flex items-center gap-1">
+                <X className="h-3 w-3" />
+                {t('disconnected')}
+              </Badge>
+            )}
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <Alert>
-              <div className="flex items-start gap-2">
-                <Globe className="h-4 w-4 mt-0.5" />
-                <div>
-                  <p className="font-medium">{t('adminConfiguredIntegration')}</p>
-                  <p className="text-sm">
-                    {t('stripeAdminDescription')}
-                  </p>
+          {isStripeConnected ? (
+            <div className="space-y-4">
+              <Alert variant="success">
+                <div className="flex items-start gap-2">
+                  <Check className="h-4 w-4 mt-0.5" />
+                  <div>
+                    <p className="font-medium">{t('integrationActive')}</p>
+                    <p className="text-sm">{t('stripeActiveDescription')}</p>
+                  </div>
                 </div>
-              </div>
-            </Alert>
-
-            <div className="p-4 bg-gray-50 rounded-lg space-y-3">
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-500">{t('status')}</span>
-                <Badge variant="default">
-                  {t('notConfigured')}
-                </Badge>
-              </div>
-
-              <div className="flex justify-between items-start">
-                <span className="text-sm text-gray-500">{t('supportedCountries')}</span>
-                <div className="text-right">
-                  <span className="text-sm font-medium">
-                    {t('stripeSupportedCountries')}
-                  </span>
+              </Alert>
+              <div className="p-4 bg-gray-50 rounded-lg space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-500">{t('environment')}</span>
+                  <Badge variant={stripeStatus.environment === 'LIVE' ? 'success' : 'warning'}>
+                    {stripeStatus.environment === 'LIVE' ? t('live') : t('test')}
+                  </Badge>
                 </div>
+                {stripeStatus.accountInfo && (
+                  <>
+                    {stripeStatus.accountInfo.name && (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-500">{t('name')}</span>
+                        <span className="text-sm font-medium">{stripeStatus.accountInfo.name}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500">{t('email')}</span>
+                      <span className="text-sm font-medium">{stripeStatus.accountInfo.email}</span>
+                    </div>
+                    {stripeStatus.accountInfo.country && (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-500">{t('country')}</span>
+                        <span className="text-sm font-medium">{stripeStatus.accountInfo.country}</span>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
-
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-500">{t('paymentMethods')}</span>
-                <span className="text-sm font-medium">
-                  {t('stripePaymentMethods')}
-                </span>
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  className="text-error border-error hover:bg-error/5"
+                  onClick={() => setShowStripeDisconnect(true)}
+                  leftIcon={<Unplug className="h-4 w-4" />}
+                >
+                  {t('disconnect')}
+                </Button>
               </div>
             </div>
-
-            <div className="flex justify-end">
-              <Button
-                variant="outline"
-                leftIcon={<ExternalLink className="h-4 w-4" />}
-                onClick={() => window.open('https://dashboard.stripe.com', '_blank')}
-              >
-                {t('stripeDashboard')}
-              </Button>
+          ) : (
+            <div className="space-y-4">
+              <Alert>
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 mt-0.5" />
+                  <div>
+                    <p className="font-medium">{t('configureStripeIntegration')}</p>
+                    <p className="text-sm">{t('configureStripeDescription')}</p>
+                  </div>
+                </div>
+              </Alert>
+              <div className="p-4 bg-indigo-50 rounded-lg">
+                <h4 className="font-medium text-indigo-900 mb-2">{t('howToGetStripeKey')}</h4>
+                <ol className="text-sm text-indigo-800 space-y-1 list-decimal list-inside">
+                  <li>{t('stripeStep1')} <a href="https://dashboard.stripe.com" target="_blank" rel="noopener noreferrer" className="underline inline-flex items-center gap-1">dashboard.stripe.com<ExternalLink className="h-3 w-3" /></a></li>
+                  <li>{t('stripeStep2')}</li>
+                  <li>{t('stripeStep3')}</li>
+                  <li>{t('stripeStep4')}</li>
+                </ol>
+              </div>
+              <FormField label={t('environment')}>
+                <Select value={stripeEnvironment} onChange={(e) => setStripeEnvironment(e.target.value as StripeEnvironment)}>
+                  <option value="TEST">{t('test')}</option>
+                  <option value="LIVE">{t('live')}</option>
+                </Select>
+              </FormField>
+              <FormField label={t('secretKey')} required>
+                <div className="relative">
+                  <Input
+                    type={showStripeSecretKey ? 'text' : 'password'}
+                    value={stripeSecretKey}
+                    onChange={(e) => setStripeSecretKey(e.target.value)}
+                    placeholder="sk_test_xxx ou sk_live_xxx"
+                    className="pr-10"
+                  />
+                  <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" onClick={() => setShowStripeSecretKey(!showStripeSecretKey)}>
+                    {showStripeSecretKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </FormField>
+              <FormField label={t('publishableKey')}>
+                <Input
+                  value={stripePublishableKey}
+                  onChange={(e) => setStripePublishableKey(e.target.value)}
+                  placeholder="pk_test_xxx ou pk_live_xxx"
+                />
+                <p className="text-xs text-gray-500 mt-1">{t('publishableKeyOptional')}</p>
+              </FormField>
+              {stripeError && <Alert variant="error"><AlertCircle className="h-4 w-4" />{stripeError}</Alert>}
+              <div className="flex justify-end">
+                <Button onClick={handleStripeConnect} loading={connectStripe.isPending} disabled={!stripeSecretKey.trim()} leftIcon={<Plug className="h-4 w-4" />}>{t('connect')}</Button>
+              </div>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Mercado Pago Integration - LATAM */}
+      {/* Mercado Pago Integration */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -405,71 +505,145 @@ export default function IntegrationsSettingsPage() {
               </div>
               <div>
                 <CardTitle>Mercado Pago</CardTitle>
-                <p className="text-sm text-gray-500">
-                  {t('mercadoPagoDescription')}
-                </p>
+                <p className="text-sm text-gray-500">{t('mercadoPagoDescription')}</p>
               </div>
             </div>
-            <Badge variant="default" className="flex items-center gap-1">
-              <X className="h-3 w-3" />
-              {t('notConfigured')}
-            </Badge>
+            {isMpConnected ? (
+              <Badge variant="success" className="flex items-center gap-1">
+                <Check className="h-3 w-3" />
+                {t('connected')}
+              </Badge>
+            ) : (
+              <Badge variant="default" className="flex items-center gap-1">
+                <X className="h-3 w-3" />
+                {t('disconnected')}
+              </Badge>
+            )}
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <Alert>
-              <div className="flex items-start gap-2">
-                <Globe className="h-4 w-4 mt-0.5" />
-                <div>
-                  <p className="font-medium">{t('adminConfiguredIntegration')}</p>
-                  <p className="text-sm">
-                    {t('mercadoPagoAdminDescription')}
-                  </p>
+          {isMpConnected ? (
+            <div className="space-y-4">
+              <Alert variant="success">
+                <div className="flex items-start gap-2">
+                  <Check className="h-4 w-4 mt-0.5" />
+                  <div>
+                    <p className="font-medium">{t('integrationActive')}</p>
+                    <p className="text-sm">{t('mpActiveDescription')}</p>
+                  </div>
                 </div>
-              </div>
-            </Alert>
-
-            <div className="p-4 bg-gray-50 rounded-lg space-y-3">
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-500">{t('status')}</span>
-                <Badge variant="default">
-                  {t('notConfigured')}
-                </Badge>
-              </div>
-
-              <div className="flex justify-between items-start">
-                <span className="text-sm text-gray-500">{t('supportedCountries')}</span>
-                <div className="text-right">
-                  <span className="text-sm font-medium">
-                    {t('mercadoPagoSupportedCountries')}
-                  </span>
+              </Alert>
+              <div className="p-4 bg-gray-50 rounded-lg space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-500">{t('environment')}</span>
+                  <Badge variant={mercadoPagoStatus.environment === 'PRODUCTION' ? 'success' : 'warning'}>
+                    {mercadoPagoStatus.environment === 'PRODUCTION' ? t('production') : t('sandbox')}
+                  </Badge>
                 </div>
+                {mercadoPagoStatus.country && (
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-500">{t('country')}</span>
+                    <span className="text-sm font-medium">{mercadoPagoStatus.country}</span>
+                  </div>
+                )}
+                {mercadoPagoStatus.accountInfo && (
+                  <>
+                    {mercadoPagoStatus.accountInfo.name && (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-500">{t('name')}</span>
+                        <span className="text-sm font-medium">{mercadoPagoStatus.accountInfo.name}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500">{t('email')}</span>
+                      <span className="text-sm font-medium">{mercadoPagoStatus.accountInfo.email}</span>
+                    </div>
+                  </>
+                )}
               </div>
-
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-500">{t('paymentMethods')}</span>
-                <span className="text-sm font-medium">
-                  {t('mercadoPagoPaymentMethods')}
-                </span>
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  className="text-error border-error hover:bg-error/5"
+                  onClick={() => setShowMpDisconnect(true)}
+                  leftIcon={<Unplug className="h-4 w-4" />}
+                >
+                  {t('disconnect')}
+                </Button>
               </div>
             </div>
-
-            <div className="flex justify-end">
-              <Button
-                variant="outline"
-                leftIcon={<ExternalLink className="h-4 w-4" />}
-                onClick={() => window.open('https://www.mercadopago.com.ar/developers/panel', '_blank')}
-              >
-                {t('mercadoPagoDashboard')}
-              </Button>
+          ) : (
+            <div className="space-y-4">
+              <Alert>
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 mt-0.5" />
+                  <div>
+                    <p className="font-medium">{t('configureMpIntegration')}</p>
+                    <p className="text-sm">{t('configureMpDescription')}</p>
+                  </div>
+                </div>
+              </Alert>
+              <div className="p-4 bg-sky-50 rounded-lg">
+                <h4 className="font-medium text-sky-900 mb-2">{t('howToGetMpToken')}</h4>
+                <ol className="text-sm text-sky-800 space-y-1 list-decimal list-inside">
+                  <li>{t('mpStep1')} <a href="https://www.mercadopago.com/developers/panel" target="_blank" rel="noopener noreferrer" className="underline inline-flex items-center gap-1">developers.mercadopago.com<ExternalLink className="h-3 w-3" /></a></li>
+                  <li>{t('mpStep2')}</li>
+                  <li>{t('mpStep3')}</li>
+                  <li>{t('mpStep4')}</li>
+                </ol>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField label={t('environment')}>
+                  <Select value={mpEnvironment} onChange={(e) => setMpEnvironment(e.target.value as MercadoPagoEnvironment)}>
+                    <option value="SANDBOX">{t('sandbox')}</option>
+                    <option value="PRODUCTION">{t('production')}</option>
+                  </Select>
+                </FormField>
+                <FormField label={t('country')}>
+                  <Select value={mpCountry} onChange={(e) => setMpCountry(e.target.value)}>
+                    <option value="AR">Argentina</option>
+                    <option value="BR">Brasil</option>
+                    <option value="CL">Chile</option>
+                    <option value="CO">Colombia</option>
+                    <option value="MX">Mexico</option>
+                    <option value="PE">Peru</option>
+                    <option value="UY">Uruguay</option>
+                  </Select>
+                </FormField>
+              </div>
+              <FormField label={t('accessToken')} required>
+                <div className="relative">
+                  <Input
+                    type={showMpAccessToken ? 'text' : 'password'}
+                    value={mpAccessToken}
+                    onChange={(e) => setMpAccessToken(e.target.value)}
+                    placeholder="TEST-xxx ou APP_USR-xxx"
+                    className="pr-10"
+                  />
+                  <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" onClick={() => setShowMpAccessToken(!showMpAccessToken)}>
+                    {showMpAccessToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </FormField>
+              <FormField label={t('publicKey')}>
+                <Input
+                  value={mpPublicKey}
+                  onChange={(e) => setMpPublicKey(e.target.value)}
+                  placeholder="TEST-xxx ou APP_USR-xxx"
+                />
+                <p className="text-xs text-gray-500 mt-1">{t('publicKeyOptional')}</p>
+              </FormField>
+              {mpError && <Alert variant="error"><AlertCircle className="h-4 w-4" />{mpError}</Alert>}
+              <div className="flex justify-end">
+                <Button onClick={handleMpConnect} loading={connectMercadoPago.isPending} disabled={!mpAccessToken.trim()} leftIcon={<Plug className="h-4 w-4" />}>{t('connect')}</Button>
+              </div>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Disconnect confirmation modal */}
-      {showDisconnectConfirm && (
+      {/* Asaas Disconnect Modal */}
+      {showAsaasDisconnect && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <Card className="max-w-md w-full">
             <CardHeader>
@@ -484,28 +658,71 @@ export default function IntegrationsSettingsPage() {
                   <AlertTriangle className="h-4 w-4 mt-0.5" />
                   <div className="text-sm">
                     <p className="font-medium">{t('warning')}</p>
-                    <p>
-                      {t('disconnectWarning')}
-                    </p>
+                    <p>{t('disconnectWarning')}</p>
                   </div>
                 </div>
               </Alert>
-
               <div className="flex justify-end gap-3">
-                <Button
-                  variant="ghost"
-                  onClick={() => setShowDisconnectConfirm(false)}
-                >
-                  {t('cancel')}
-                </Button>
-                <Button
-                  variant="error"
-                  onClick={handleDisconnect}
-                  loading={disconnectAsaas.isPending}
-                  leftIcon={<Unplug className="h-4 w-4" />}
-                >
-                  {t('disconnect')}
-                </Button>
+                <Button variant="ghost" onClick={() => setShowAsaasDisconnect(false)}>{t('cancel')}</Button>
+                <Button variant="error" onClick={handleAsaasDisconnect} loading={disconnectAsaas.isPending} leftIcon={<Unplug className="h-4 w-4" />}>{t('disconnect')}</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Stripe Disconnect Modal */}
+      {showStripeDisconnect && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <Card className="max-w-md w-full">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-error">
+                <Unplug className="h-5 w-5" />
+                {t('disconnectStripe')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Alert variant="warning">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-medium">{t('warning')}</p>
+                    <p>{t('stripeDisconnectWarning')}</p>
+                  </div>
+                </div>
+              </Alert>
+              <div className="flex justify-end gap-3">
+                <Button variant="ghost" onClick={() => setShowStripeDisconnect(false)}>{t('cancel')}</Button>
+                <Button variant="error" onClick={handleStripeDisconnect} loading={disconnectStripe.isPending} leftIcon={<Unplug className="h-4 w-4" />}>{t('disconnect')}</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Mercado Pago Disconnect Modal */}
+      {showMpDisconnect && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <Card className="max-w-md w-full">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-error">
+                <Unplug className="h-5 w-5" />
+                {t('disconnectMercadoPago')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Alert variant="warning">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-medium">{t('warning')}</p>
+                    <p>{t('mpDisconnectWarning')}</p>
+                  </div>
+                </div>
+              </Alert>
+              <div className="flex justify-end gap-3">
+                <Button variant="ghost" onClick={() => setShowMpDisconnect(false)}>{t('cancel')}</Button>
+                <Button variant="error" onClick={handleMpDisconnect} loading={disconnectMercadoPago.isPending} leftIcon={<Unplug className="h-4 w-4" />}>{t('disconnect')}</Button>
               </div>
             </CardContent>
           </Card>

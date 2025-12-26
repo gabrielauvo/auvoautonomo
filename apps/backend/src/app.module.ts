@@ -19,6 +19,8 @@ import { ChecklistInstancesModule } from './checklist-instances/checklist-instan
 import { WorkOrderChecklistsModule } from './work-order-checklists/work-order-checklists.module';
 import { EncryptionModule } from './common/encryption/encryption.module';
 import { AsaasIntegrationModule } from './asaas-integration/asaas-integration.module';
+import { StripeIntegrationModule } from './stripe-integration/stripe-integration.module';
+import { MercadoPagoIntegrationModule } from './mercadopago-integration/mercadopago-integration.module';
 import { ClientPaymentsModule } from './client-payments/client-payments.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { FinancialDashboardModule } from './financial-dashboard/financial-dashboard.module';
@@ -93,6 +95,8 @@ import { RegionalModule } from './regional/regional.module';
     ChecklistInstancesModule,
     WorkOrderChecklistsModule,
     AsaasIntegrationModule,
+    StripeIntegrationModule,
+    MercadoPagoIntegrationModule,
     ClientPaymentsModule,
     WebhooksModule,
     FinancialDashboardModule,

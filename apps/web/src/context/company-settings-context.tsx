@@ -275,6 +275,35 @@ export function CompanySettingsProvider({
   }, []);
 
   /**
+   * Convert timezone string to TimezoneInfo object
+   */
+  const timezoneStringToInfo = useCallback((tz: string): TimezoneInfo => {
+    // Get current offset for timezone
+    let offset = '';
+    try {
+      const now = new Date();
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: tz,
+        timeZoneName: 'shortOffset',
+      });
+      const parts = formatter.formatToParts(now);
+      const tzPart = parts.find(p => p.type === 'timeZoneName');
+      offset = tzPart?.value || '';
+    } catch {
+      offset = '';
+    }
+
+    // Create friendly name from IANA timezone
+    const name = tz.split('/').pop()?.replace(/_/g, ' ') || tz;
+
+    return {
+      id: tz,
+      name,
+      offset,
+    };
+  }, []);
+
+  /**
    * Load timezones for a specific country
    */
   const loadTimezones = useCallback(async (countryCode: string) => {
@@ -284,13 +313,15 @@ export function CompanySettingsProvider({
       );
       if (response.ok) {
         const data = await response.json();
-        setTimezones(data.timezones || []);
+        const tzStrings: string[] = data.timezones || [];
+        const tzInfos = tzStrings.map(timezoneStringToInfo);
+        setTimezones(tzInfos);
       }
     } catch (err) {
       console.error('Failed to fetch timezones:', err);
       setTimezones([]);
     }
-  }, []);
+  }, [timezoneStringToInfo]);
 
   /**
    * Update settings

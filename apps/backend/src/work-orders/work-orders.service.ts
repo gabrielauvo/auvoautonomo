@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PlanLimitsService } from '../billing/plan-limits.service';
+import { RegionalService } from '../regional/regional.service';
 import { CreateWorkOrderDto } from './dto/create-work-order.dto';
 import { UpdateWorkOrderDto } from './dto/update-work-order.dto';
 import { AddEquipmentDto } from './dto/add-equipment.dto';
@@ -30,6 +31,7 @@ export class WorkOrdersService {
     private planLimitsService: PlanLimitsService,
     private domainEventsService: DomainEventsService,
     private inventoryService: InventoryService,
+    private regionalService: RegionalService,
   ) {}
 
   async create(userId: string, createWorkOrderDto: CreateWorkOrderDto) {
@@ -115,12 +117,16 @@ export class WorkOrdersService {
       }
     }
 
+    // Get the company's configured currency
+    const currency = await this.regionalService.getCompanyCurrency(userId);
+
     // Prepare data
     const data: any = {
       userId,
       clientId: createWorkOrderDto.clientId,
       title: createWorkOrderDto.title,
       status: 'SCHEDULED',
+      currency,
     };
 
     if (createWorkOrderDto.quoteId) data.quoteId = createWorkOrderDto.quoteId;
@@ -165,6 +171,7 @@ export class WorkOrdersService {
           unitPrice: qi.unitPrice,
           discountValue: qi.discountValue,
           totalPrice: qi.totalPrice,
+          currency,
         })),
       };
     }
@@ -654,6 +661,9 @@ export class WorkOrdersService {
       );
     }
 
+    // Get the company's configured currency
+    const currency = await this.regionalService.getCompanyCurrency(userId);
+
     let name: string;
     let type: ItemType;
     let unit: string;
@@ -713,6 +723,7 @@ export class WorkOrdersService {
         unitPrice,
         discountValue,
         totalPrice,
+        currency,
       },
     });
 

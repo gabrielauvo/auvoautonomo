@@ -8,6 +8,7 @@
 
 import { useState } from 'react';
 import { Modal, Button, Input, Textarea, FormField, Alert } from '@/components/ui';
+import { useFormatting } from '@/context';
 import { DollarSign, Calendar, FileText, AlertCircle } from 'lucide-react';
 import { ManualPaymentDto } from '@/services/charges.service';
 
@@ -17,14 +18,6 @@ interface ManualPaymentModalProps {
   onConfirm: (data: ManualPaymentDto) => Promise<void>;
   isLoading: boolean;
   chargeValue: number;
-}
-
-// Formatar valor em moeda
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
 }
 
 // Opções de forma de pagamento
@@ -44,6 +37,7 @@ export function ManualPaymentModal({
   isLoading,
   chargeValue,
 }: ManualPaymentModalProps) {
+  const { formatCurrency } = useFormatting();
   const [paymentDate, setPaymentDate] = useState(
     new Date().toISOString().split('T')[0]
   );

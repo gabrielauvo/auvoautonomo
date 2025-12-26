@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PlanLimitsService } from '../billing/plan-limits.service';
+import { RegionalService } from '../regional/regional.service';
 import { AsaasHttpClient, AsaasCustomer, AsaasPayment } from '../common/asaas/asaas-http.client';
 import { AsaasIntegrationService } from '../asaas-integration/asaas-integration.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
@@ -25,6 +26,7 @@ export class ClientPaymentsService {
     private readonly notificationsService: NotificationsService,
     private readonly planLimitsService: PlanLimitsService,
     private readonly domainEventsService: DomainEventsService,
+    private readonly regionalService: RegionalService,
   ) {}
 
   /**
@@ -109,6 +111,9 @@ export class ClientPaymentsService {
       }
     }
 
+    // Get the company's configured currency
+    const currency = await this.regionalService.getCompanyCurrency(userId);
+
     // Try to get Asaas integration, but allow local payments if not available
     let asaasIntegrationData: { apiKey: string; environment: any } | null = null;
 
@@ -183,6 +188,7 @@ export class ClientPaymentsService {
         asaasInvoiceUrl,
         asaasQrCodeUrl,
         asaasPixCode,
+        currency,
       },
       include: {
         client: true,

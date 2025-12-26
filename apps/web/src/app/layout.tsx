@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { AuthProvider, QueryProvider, ThemeProvider } from '@/context';
+import { AuthProvider, QueryProvider, ThemeProvider, CompanySettingsProvider } from '@/context';
 import { TranslationsProvider } from '@/i18n';
 import { ProgressBar } from '@/components/ui';
 
@@ -90,9 +90,11 @@ export default function RootLayout({
           <ProgressBar />
           <QueryProvider>
             <AuthProvider>
-              <TranslationsProvider>
-                {children}
-              </TranslationsProvider>
+              <CompanySettingsProvider>
+                <TranslationsProvider>
+                  {children}
+                </TranslationsProvider>
+              </CompanySettingsProvider>
             </AuthProvider>
           </QueryProvider>
         </ThemeProvider>

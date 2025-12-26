@@ -5,9 +5,10 @@ import { PublicPaymentController } from './public-payment.controller';
 import { AsaasHttpClient } from '../common/asaas/asaas-http.client';
 import { AsaasIntegrationModule } from '../asaas-integration/asaas-integration.module';
 import { DomainEventsModule } from '../domain-events/domain-events.module';
+import { RegionalModule } from '../regional/regional.module';
 
 @Module({
-  imports: [AsaasIntegrationModule, DomainEventsModule],
+  imports: [AsaasIntegrationModule, DomainEventsModule, RegionalModule],
   controllers: [ClientPaymentsController, PublicPaymentController],
   providers: [ClientPaymentsService, AsaasHttpClient],
   exports: [ClientPaymentsService],

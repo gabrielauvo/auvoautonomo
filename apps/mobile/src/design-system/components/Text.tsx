@@ -19,6 +19,8 @@ type TextVariant =
   | 'h3'
   | 'h4'
   | 'h5'
+  | 'h6'
+  | 'subtitle'
   | 'body'
   | 'bodySmall'
   | 'caption'
@@ -63,6 +65,16 @@ const variantStyles = {
     fontSize: typography.fontSize.lg,
     fontWeight: typography.fontWeight.medium,
     lineHeight: typography.fontSize.lg * typography.lineHeight.normal,
+  },
+  h6: {
+    fontSize: typography.fontSize.base,
+    fontWeight: typography.fontWeight.semibold,
+    lineHeight: typography.fontSize.base * typography.lineHeight.normal,
+  },
+  subtitle: {
+    fontSize: typography.fontSize.base,
+    fontWeight: typography.fontWeight.medium,
+    lineHeight: typography.fontSize.base * typography.lineHeight.normal,
   },
   body: {
     fontSize: typography.fontSize.base,

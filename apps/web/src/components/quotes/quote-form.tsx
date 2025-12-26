@@ -28,6 +28,7 @@ import {
 import { UpsellModal } from '@/components/billing';
 import { QuoteItemsTable, CatalogSelectModal } from '@/components/quotes';
 import { useAuth } from '@/context/auth-context';
+import { useFormatting } from '@/context';
 import { useSearchClients } from '@/hooks/use-clients';
 import {
   useCreateQuote,
@@ -82,13 +83,6 @@ interface LocalItem {
   itemId?: string; // ID do catálogo (se veio do catálogo)
 }
 
-// Formatar valor em moeda
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
-}
 
 // Componente de seleção de cliente
 function ClientSelector({
@@ -195,6 +189,7 @@ function ClientSelector({
 export function QuoteForm({ quote, onSuccess, onCancel, preselectedClientId }: QuoteFormProps) {
   const router = useRouter();
   const { billing } = useAuth();
+  const { formatCurrency } = useFormatting();
   const createQuote = useCreateQuote();
   const updateQuote = useUpdateQuote();
   const addQuoteItem = useAddQuoteItem();

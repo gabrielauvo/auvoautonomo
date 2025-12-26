@@ -578,29 +578,128 @@ export class BillingController {
   /**
    * GET /billing/gateway-info
    * Retorna informações sobre qual gateway será usado baseado no país
+   * Inclui métodos de pagamento locais (OXXO para México, SEPA para Europa, etc.)
    */
   @Get('gateway-info')
   async getGatewayInfo(@Query('country') country: string = 'BR') {
-    const gatewayType = this.paymentGatewayFactory.getGatewayType(country);
-    const currency = this.paymentGatewayFactory.getCurrency(country);
+    const info = this.paymentGatewayFactory.getPaymentMethodsInfo(country);
     const isPixAvailable = this.paymentGatewayFactory.isPixAvailable(country);
-    const monthlyPrice = this.paymentGatewayFactory.getPrice(currency, 'MONTHLY');
-    const yearlyPrice = this.paymentGatewayFactory.getPrice(currency, 'YEARLY');
 
     return {
-      country,
-      gateway: gatewayType,
-      currency,
+      country: country.toUpperCase(),
+      gateway: info.gateway,
+      currency: info.currency,
       isPixAvailable,
       pricing: {
-        monthly: monthlyPrice,
-        yearly: yearlyPrice,
-        yearlySavings: (monthlyPrice * 12) - yearlyPrice,
+        monthly: info.monthlyPrice,
+        yearly: info.yearlyPrice,
+        yearlySavings: (info.monthlyPrice * 12) - info.yearlyPrice,
+        // Formatar para exibição
+        monthlyFormatted: this.formatCurrency(info.monthlyPrice, info.currency),
+        yearlyFormatted: this.formatCurrency(info.yearlyPrice, info.currency),
       },
-      paymentMethods: isPixAvailable
-        ? ['PIX', 'CREDIT_CARD']
-        : ['CREDIT_CARD', 'STRIPE_CHECKOUT'],
+      paymentMethods: info.methods,
+      // Informações adicionais por método
+      methodsInfo: this.getMethodsInfo(info.methods, country),
     };
+  }
+
+  /**
+   * Retorna informações detalhadas sobre cada método de pagamento
+   */
+  private getMethodsInfo(methods: string[], country: string): Record<string, any> {
+    const methodsInfo: Record<string, any> = {};
+
+    for (const method of methods) {
+      switch (method) {
+        case 'PIX':
+          methodsInfo.PIX = {
+            name: 'PIX',
+            description: 'Pagamento instantâneo via PIX',
+            icon: 'pix',
+            processingTime: 'Instantâneo',
+          };
+          break;
+        case 'BOLETO':
+          methodsInfo.BOLETO = {
+            name: 'Boleto Bancário',
+            description: 'Pagamento via boleto bancário',
+            icon: 'barcode',
+            processingTime: '1-3 dias úteis',
+          };
+          break;
+        case 'CREDIT_CARD':
+          methodsInfo.CREDIT_CARD = {
+            name: 'Cartão de Crédito',
+            description: 'Visa, Mastercard, Amex',
+            icon: 'credit-card',
+            processingTime: 'Instantâneo',
+          };
+          break;
+        case 'OXXO':
+          methodsInfo.OXXO = {
+            name: 'OXXO',
+            description: 'Pague em qualquer loja OXXO',
+            icon: 'store',
+            processingTime: '1-3 dias úteis',
+            expiresIn: '3 dias',
+          };
+          break;
+        case 'SEPA_DEBIT':
+          methodsInfo.SEPA_DEBIT = {
+            name: 'SEPA Direct Debit',
+            description: 'Débito direto na conta bancária',
+            icon: 'bank',
+            processingTime: '3-5 dias úteis',
+          };
+          break;
+        case 'IDEAL':
+          methodsInfo.IDEAL = {
+            name: 'iDEAL',
+            description: 'Pagamento bancário holandês',
+            icon: 'bank',
+            processingTime: 'Instantâneo',
+          };
+          break;
+        case 'BANCONTACT':
+          methodsInfo.BANCONTACT = {
+            name: 'Bancontact',
+            description: 'Pagamento bancário belga',
+            icon: 'bank',
+            processingTime: 'Instantâneo',
+          };
+          break;
+      }
+    }
+
+    return methodsInfo;
+  }
+
+  /**
+   * Formata valor em moeda
+   */
+  private formatCurrency(amount: number, currency: string): string {
+    const currencyConfig: Record<string, { locale: string; symbol: string }> = {
+      BRL: { locale: 'pt-BR', symbol: 'R$' },
+      USD: { locale: 'en-US', symbol: '$' },
+      EUR: { locale: 'de-DE', symbol: '€' },
+      GBP: { locale: 'en-GB', symbol: '£' },
+      MXN: { locale: 'es-MX', symbol: '$' },
+      CAD: { locale: 'en-CA', symbol: 'CA$' },
+      AUD: { locale: 'en-AU', symbol: 'A$' },
+      JPY: { locale: 'ja-JP', symbol: '¥' },
+    };
+
+    const config = currencyConfig[currency] || { locale: 'en-US', symbol: '$' };
+
+    try {
+      return new Intl.NumberFormat(config.locale, {
+        style: 'currency',
+        currency,
+      }).format(amount);
+    } catch {
+      return `${config.symbol}${amount.toFixed(2)}`;
+    }
   }
 
   // ============================================

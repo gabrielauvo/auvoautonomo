@@ -22,6 +22,92 @@ export class ClientsSyncService {
     private planLimitsService: PlanLimitsService,
   ) {}
 
+  /**
+   * Normalize taxId by removing formatting characters
+   */
+  private normalizeTaxId(taxId: string | undefined | null): string | null {
+    if (!taxId) return null;
+    return taxId.replace(/[.\-\/]/g, '');
+  }
+
+  /**
+   * Check for duplicate clients based on name+phone or taxId
+   * @returns error message if duplicate found, null otherwise
+   */
+  private async checkForDuplicates(
+    userId: string,
+    name: string,
+    phone: string | undefined | null,
+    taxId: string | undefined | null,
+    excludeId?: string,
+  ): Promise<string | null> {
+    const normalizedTaxId = this.normalizeTaxId(taxId);
+
+    // Build conditions for duplicate check
+    const orConditions: any[] = [];
+
+    // Check name + phone combination (both must be present and match)
+    if (name && phone) {
+      orConditions.push({
+        name: { equals: name, mode: 'insensitive' },
+        phone: phone,
+      });
+    }
+
+    // Check taxId (CPF/CNPJ) - must match normalized version
+    if (normalizedTaxId) {
+      // Check both formatted and unformatted versions
+      orConditions.push({
+        taxId: taxId, // Exact match with formatting
+      });
+      orConditions.push({
+        taxId: normalizedTaxId, // Match without formatting
+      });
+    }
+
+    if (orConditions.length === 0) {
+      return null; // Nothing to check
+    }
+
+    const existingClient = await this.prisma.client.findFirst({
+      where: {
+        userId,
+        deletedAt: null, // Only check active clients
+        ...(excludeId && { id: { not: excludeId } }),
+        OR: orConditions,
+      },
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        taxId: true,
+      },
+    });
+
+    if (existingClient) {
+      // Determine which field caused the duplicate
+      const existingNormalizedTaxId = this.normalizeTaxId(existingClient.taxId);
+
+      if (normalizedTaxId && existingNormalizedTaxId === normalizedTaxId) {
+        return `Já existe um cliente cadastrado com este CPF/CNPJ: ${existingClient.name}`;
+      }
+
+      if (
+        name &&
+        phone &&
+        existingClient.name.toLowerCase() === name.toLowerCase() &&
+        existingClient.phone === phone
+      ) {
+        return `Já existe um cliente cadastrado com este nome e telefone: ${existingClient.name}`;
+      }
+
+      // Generic fallback
+      return `Já existe um cliente com dados semelhantes: ${existingClient.name}`;
+    }
+
+    return null;
+  }
+
   // =============================================================================
   // PULL - Delta Sync with Cursor Pagination
   // =============================================================================
@@ -257,6 +343,22 @@ export class ClientsSyncService {
       };
     }
 
+    // Check for duplicates
+    const duplicateError = await this.checkForDuplicates(
+      userId,
+      mutation.record.name,
+      mutation.record.phone,
+      mutation.record.taxId,
+    );
+
+    if (duplicateError) {
+      return {
+        mutationId: mutation.mutationId,
+        status: MutationStatus.REJECTED,
+        error: duplicateError,
+      };
+    }
+
     const client = await this.prisma.client.create({
       data: {
         id: mutation.record.id, // Use client-provided ID if exists
@@ -337,6 +439,45 @@ export class ClientsSyncService {
       updateData.taxId = mutation.record.taxId;
     if (mutation.record.notes !== undefined)
       updateData.notes = mutation.record.notes;
+
+    // Check for duplicates only if relevant fields are being updated
+    const nameToCheck = mutation.record.name ?? existing.name;
+    const phoneToCheck =
+      mutation.record.phone !== undefined
+        ? mutation.record.phone
+        : existing.phone;
+    const taxIdToCheck =
+      mutation.record.taxId !== undefined
+        ? mutation.record.taxId
+        : existing.taxId;
+
+    // Only check if name, phone or taxId are actually changing
+    const isChangingName =
+      mutation.record.name && mutation.record.name !== existing.name;
+    const isChangingPhone =
+      mutation.record.phone !== undefined &&
+      mutation.record.phone !== existing.phone;
+    const isChangingTaxId =
+      mutation.record.taxId !== undefined &&
+      mutation.record.taxId !== existing.taxId;
+
+    if (isChangingName || isChangingPhone || isChangingTaxId) {
+      const duplicateError = await this.checkForDuplicates(
+        userId,
+        nameToCheck,
+        phoneToCheck,
+        taxIdToCheck,
+        mutation.record.id, // Exclude current client from duplicate check
+      );
+
+      if (duplicateError) {
+        return {
+          mutationId: mutation.mutationId,
+          status: MutationStatus.REJECTED,
+          error: duplicateError,
+        };
+      }
+    }
 
     const client = await this.prisma.client.update({
       where: { id: mutation.record.id },

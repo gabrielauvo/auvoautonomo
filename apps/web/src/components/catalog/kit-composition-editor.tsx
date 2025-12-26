@@ -53,6 +53,7 @@ import {
   Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useFormatting } from '@/context';
 
 interface KitCompositionEditorProps {
   bundleId: string;
@@ -66,13 +67,6 @@ const typeConfig: Record<ItemType, { icon: React.ElementType; color: string }> =
   BUNDLE: { icon: Layers, color: 'text-warning' },
 };
 
-// Formatar moeda
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
-}
 
 // Modal de seleção de item
 function ItemSelectModal({
@@ -80,11 +74,13 @@ function ItemSelectModal({
   onClose,
   onSelect,
   excludeIds,
+  formatCurrency,
 }: {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (item: CatalogItem) => void;
   excludeIds: string[];
+  formatCurrency: (value: number, recordCurrency?: string) => string;
 }) {
   const [search, setSearch] = useState('');
   const [selectedType, setSelectedType] = useState<'PRODUCT' | 'SERVICE' | 'ALL'>('ALL');
@@ -213,10 +209,12 @@ function KitItemRow({
   bundleItem,
   onRemove,
   isRemoving,
+  formatCurrency,
 }: {
   bundleItem: BundleItem;
   onRemove: () => void;
   isRemoving: boolean;
+  formatCurrency: (value: number, recordCurrency?: string) => string;
 }) {
   const config = typeConfig[bundleItem.item.type];
   const Icon = config.icon;
@@ -263,6 +261,7 @@ function KitItemRow({
 }
 
 export function KitCompositionEditor({ bundleId, bundleItems }: KitCompositionEditorProps) {
+  const { formatCurrency } = useFormatting();
   const [showItemModal, setShowItemModal] = useState(false);
   const [pendingItem, setPendingItem] = useState<CatalogItem | null>(null);
   const [quantity, setQuantity] = useState('1');
@@ -406,6 +405,7 @@ export function KitCompositionEditor({ bundleId, bundleItems }: KitCompositionEd
                     bundleItem={bi}
                     onRemove={() => handleRemoveItem(bi.id)}
                     isRemoving={removeBundleItem.isPending}
+                    formatCurrency={formatCurrency}
                   />
                 ))}
               </TableBody>
@@ -452,6 +452,7 @@ export function KitCompositionEditor({ bundleId, bundleItems }: KitCompositionEd
           setQuantity('1');
         }}
         excludeIds={excludeIds}
+        formatCurrency={formatCurrency}
       />
     </Card>
   );

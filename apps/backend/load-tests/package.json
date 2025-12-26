@@ -1,0 +1,27 @@
+{
+  "name": "@auvo/load-tests",
+  "version": "1.0.0",
+  "description": "Load tests for Auvo API using k6",
+  "scripts": {
+    "test:sync": "k6 run scenarios/sync-load-test.js",
+    "test:sync:smoke": "k6 run --env SCENARIO=smoke scenarios/sync-load-test.js",
+    "test:sync:load": "k6 run --env SCENARIO=load scenarios/sync-load-test.js",
+    "test:sync:stress": "k6 run --env SCENARIO=stress scenarios/sync-load-test.js",
+    "test:sync:spike": "k6 run --env SCENARIO=spike scenarios/sync-load-test.js",
+    "test:pdf": "k6 run scenarios/pdf-load-test.js",
+    "test:pdf:smoke": "k6 run --env SCENARIO=smoke scenarios/pdf-load-test.js",
+    "test:pdf:load": "k6 run --env SCENARIO=load scenarios/pdf-load-test.js",
+    "test:pdf:stress": "k6 run --env SCENARIO=stress scenarios/pdf-load-test.js",
+    "test:public": "k6 run scenarios/public-links-load-test.js",
+    "test:public:smoke": "k6 run --env SCENARIO=smoke scenarios/public-links-load-test.js",
+    "test:public:load": "k6 run --env SCENARIO=load scenarios/public-links-load-test.js",
+    "test:public:stress": "k6 run --env SCENARIO=stress scenarios/public-links-load-test.js",
+    "test:all": "npm run test:sync && npm run test:pdf && npm run test:public",
+    "test:all:smoke": "npm run test:sync:smoke && npm run test:pdf:smoke && npm run test:public:smoke",
+    "report": "k6 run --out json=results.json scenarios/sync-load-test.js && node utils/generate-report.js"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18"
+  }
+}

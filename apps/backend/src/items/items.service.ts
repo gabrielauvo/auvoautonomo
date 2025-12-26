@@ -1,11 +1,15 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { RegionalService } from '../regional/regional.service';
 import { CreateItemDto, ItemType } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
 
 @Injectable()
 export class ItemsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private regionalService: RegionalService,
+  ) {}
 
   async create(userId: string, createItemDto: CreateItemDto) {
     // Validate category exists and belongs to user if provided
@@ -24,10 +28,14 @@ export class ItemsService {
       }
     }
 
+    // Get the company's configured currency
+    const currency = await this.regionalService.getCompanyCurrency(userId);
+
     return this.prisma.item.create({
       data: {
         ...createItemDto,
         userId,
+        currency,
       },
       include: {
         category: {

@@ -509,7 +509,7 @@ export const ExpenseDetailScreen: React.FC<ExpenseDetailScreenProps> = ({
               icon={<Ionicons name="close-circle-outline" size={20} color={colors.warning[600]} />}
               style={[styles.actionButton, { borderColor: colors.warning[500] }]}
             >
-              <Text style={{ color: colors.warning[600] }}>Cancelar Despesa</Text>
+              Cancelar Despesa
             </Button>
           )}
 
@@ -520,7 +520,7 @@ export const ExpenseDetailScreen: React.FC<ExpenseDetailScreenProps> = ({
             icon={<Ionicons name="trash-outline" size={20} color={colors.error[600]} />}
             style={[styles.actionButton, { borderColor: colors.error[500] }]}
           >
-            <Text style={{ color: colors.error[600] }}>Excluir</Text>
+            Excluir
           </Button>
         </View>
       </ScrollView>

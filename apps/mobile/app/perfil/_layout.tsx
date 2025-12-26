@@ -24,6 +24,7 @@ export default function ProfileLayout() {
       <Stack.Screen name="empresa" />
       <Stack.Screen name="plano" />
       <Stack.Screen name="idioma" />
+      <Stack.Screen name="regional" />
       <Stack.Screen name="indicacoes" />
       <Stack.Screen name="crescimento" />
     </Stack>

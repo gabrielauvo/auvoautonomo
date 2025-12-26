@@ -28,6 +28,7 @@ interface ButtonProps extends Omit<TouchableOpacityProps, 'children'> {
   size?: ButtonSize;
   loading?: boolean;
   disabled?: boolean;
+  icon?: React.ReactNode; // Alias for leftIcon
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   fullWidth?: boolean;
@@ -68,6 +69,7 @@ export function Button({
   size = 'md',
   loading = false,
   disabled = false,
+  icon,
   leftIcon,
   rightIcon,
   fullWidth = false,
@@ -75,6 +77,8 @@ export function Button({
   style,
   ...props
 }: ButtonProps) {
+  // Support icon as alias for leftIcon
+  const resolvedLeftIcon = leftIcon || icon;
   const colors = useColors();
   const sizeConfig = sizeStyles[size];
 
@@ -155,7 +159,7 @@ export function Button({
         <ActivityIndicator size="small" color={variantConfig.textColor} />
       ) : (
         <View style={styles.content}>
-          {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
+          {resolvedLeftIcon && <View style={styles.leftIcon}>{resolvedLeftIcon}</View>}
           <Text
             variant="label"
             style={[

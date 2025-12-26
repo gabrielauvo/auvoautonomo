@@ -10,6 +10,7 @@
  */
 
 import { Skeleton } from '@/components/ui';
+import { useFormatting } from '@/context';
 import {
   FileText,
   Play,
@@ -37,15 +38,17 @@ interface WorkOrderTimelineProps {
 }
 
 // Configuração de tipos de evento
-const eventConfig: Record<
-  string,
-  {
-    icon: React.ElementType;
-    color: string;
-    bgColor: string;
-    getLabel: (data: Record<string, unknown>) => string;
-  }
-> = {
+type EventConfigItem = {
+  icon: React.ElementType;
+  color: string;
+  bgColor: string;
+  getLabel: (
+    data: Record<string, unknown>,
+    formatCurrency?: (value: number, recordCurrency?: string) => string
+  ) => string;
+};
+
+const eventConfig: Record<string, EventConfigItem> = {
   WORK_ORDER_CREATED: {
     icon: FileText,
     color: 'text-gray-500',
@@ -104,19 +107,22 @@ const eventConfig: Record<
     icon: DollarSign,
     color: 'text-warning',
     bgColor: 'bg-warning-100',
-    getLabel: (data) => `Cobrança criada: ${formatCurrency(Number(data.value) || 0)}`,
+    getLabel: (data, formatCurrency) =>
+      `Cobrança criada: ${formatCurrency ? formatCurrency(Number(data.value) || 0) : Number(data.value) || 0}`,
   },
   PAYMENT_CONFIRMED: {
     icon: DollarSign,
     color: 'text-success',
     bgColor: 'bg-success-100',
-    getLabel: (data) => `Pagamento confirmado: ${formatCurrency(Number(data.value) || 0)}`,
+    getLabel: (data, formatCurrency) =>
+      `Pagamento confirmado: ${formatCurrency ? formatCurrency(Number(data.value) || 0) : Number(data.value) || 0}`,
   },
   PAYMENT_OVERDUE: {
     icon: AlertCircle,
     color: 'text-error',
     bgColor: 'bg-error-100',
-    getLabel: (data) => `Pagamento em atraso: ${formatCurrency(Number(data.value) || 0)}`,
+    getLabel: (data, formatCurrency) =>
+      `Pagamento em atraso: ${formatCurrency ? formatCurrency(Number(data.value) || 0) : Number(data.value) || 0}`,
   },
   // Eventos genéricos
   STATUS_CHANGED: {
@@ -126,14 +132,6 @@ const eventConfig: Record<
     getLabel: (data) => `Status alterado para ${data.newStatus || 'novo status'}`,
   },
 };
-
-// Formatar valor em moeda
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
-}
 
 // Formatar data
 function formatDateTime(dateString: string): string {
@@ -164,6 +162,8 @@ function TimelineSkeleton() {
 }
 
 export function WorkOrderTimeline({ events, isLoading }: WorkOrderTimelineProps) {
+  const { formatCurrency } = useFormatting();
+
   if (isLoading) {
     return <TimelineSkeleton />;
   }
@@ -212,7 +212,7 @@ export function WorkOrderTimeline({ events, isLoading }: WorkOrderTimelineProps)
               {/* Conteúdo */}
               <div className="flex-1 min-w-0 pt-0.5">
                 <p className="text-sm text-gray-900">
-                  {config.getLabel(event.data)}
+                  {config.getLabel(event.data, formatCurrency)}
                 </p>
                 <p className="text-xs text-gray-500 mt-0.5">
                   {formatDateTime(event.date)}

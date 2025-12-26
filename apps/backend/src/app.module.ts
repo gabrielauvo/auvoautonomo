@@ -48,7 +48,9 @@ import { WorkOrderTypesModule } from './work-order-types/work-order-types.module
 import { InventoryModule } from './inventory/inventory.module';
 import { EmailModule } from './email/email.module';
 import { ReferralModule } from './referral/referral.module';
-import { GoogleBusinessModule } from './google-business/google-business.module';
+import { AiGatewayModule } from './ai-gateway/ai-gateway.module';
+import { KbModule } from './kb/kb.module';
+import { RegionalModule } from './regional/regional.module';
 
 @Module({
   imports: [
@@ -62,17 +64,17 @@ import { GoogleBusinessModule } from './google-business/google-business.module';
       {
         name: 'short',
         ttl: 1000, // 1 segundo
-        limit: 50, // 50 requests por segundo (aumentado para sync burst)
+        limit: 500, // 500 requests por segundo (aumentado para load tests)
       },
       {
         name: 'medium',
         ttl: 60000, // 1 minuto
-        limit: 500, // 500 requests por minuto (aumentado para sync offline)
+        limit: 10000, // 10000 requests por minuto (aumentado para load tests)
       },
       {
         name: 'long',
         ttl: 3600000, // 1 hora
-        limit: 5000, // 5000 requests por hora (aumentado para trabalho intensivo)
+        limit: 100000, // 100000 requests por hora (aumentado para load tests)
       },
     ]),
     PrismaModule,
@@ -117,8 +119,10 @@ import { GoogleBusinessModule } from './google-business/google-business.module';
     ExpensesModule,
     WorkOrderTypesModule,
     InventoryModule,
-    GoogleBusinessModule,
     ReferralModule,
+    KbModule,
+    AiGatewayModule,
+    RegionalModule,
   ],
   controllers: [AppController],
   providers: [

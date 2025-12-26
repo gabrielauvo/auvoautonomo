@@ -31,7 +31,6 @@ import {
   Warehouse,
   Rocket,
   Gift,
-  TrendingUp,
   FolderOpen,
   Wallet,
 } from 'lucide-react';
@@ -50,7 +49,6 @@ const iconMap: Record<string, React.ReactNode> = {
   quotes: <FileText className="h-5 w-5" />,
   expenses: <Receipt className="h-5 w-5" />,
   billing: <CreditCard className="h-5 w-5" />,
-  growth: <TrendingUp className="h-5 w-5" />,
   reports: <BarChart3 className="h-5 w-5" />,
 };
 
@@ -96,7 +94,6 @@ const menuStructure: MenuItem[] = [
       { labelKey: 'billing', href: '/billing/charges' },
     ],
   },
-  { labelKey: 'growth', href: '/growth' },
   { labelKey: 'reports', href: '/reports' },
 ];
 

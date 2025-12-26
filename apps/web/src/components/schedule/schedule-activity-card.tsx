@@ -14,6 +14,7 @@ import {
   ScheduleActivityStatus,
 } from '@/services/schedule.service';
 import { formatTime } from '@/hooks/use-schedule';
+import { useFormatting } from '@/context';
 import {
   Wrench,
   FileText,
@@ -70,16 +71,6 @@ const statusConfig: Record<
 };
 
 /**
- * Formata valor em moeda
- */
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
-}
-
-/**
  * Formata duração em minutos para exibição
  */
 function formatDuration(minutes?: number): string | null {
@@ -94,6 +85,7 @@ export function ScheduleActivityCard({
   activity,
   className,
 }: ScheduleActivityCardProps) {
+  const { formatCurrency } = useFormatting();
   const config = typeConfig[activity.type];
   const status = statusConfig[activity.status];
   const duration = formatDuration(activity.durationMinutes);

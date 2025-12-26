@@ -66,3 +66,7 @@ export {
   useMarkExpenseAsPaid,
   useDeleteExpense,
 } from './use-expenses';
+
+// AI Copilot
+export { useAiChat, type UseAiChatOptions, type UseAiChatReturn } from './use-ai-chat';
+export { useAiContext, type UseAiContextOptions, type UseAiContextReturn } from './use-ai-context';

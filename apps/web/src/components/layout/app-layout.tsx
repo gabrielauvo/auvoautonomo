@@ -17,6 +17,7 @@ import { Sidebar } from './sidebar';
 import { Header } from './header';
 import { OnboardingBanner } from './onboarding-banner';
 import { TrialBanner } from './trial-banner';
+import { AiCopilot } from '@/components/ai-copilot';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
 
@@ -58,6 +59,9 @@ export function AppLayout({ children, className }: AppLayoutProps) {
             {children}
           </main>
         </div>
+
+        {/* AI Copilot Widget */}
+        <AiCopilot />
       </div>
     </ProtectedRoute>
   );

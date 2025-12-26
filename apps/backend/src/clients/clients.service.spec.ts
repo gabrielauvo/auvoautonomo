@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { ClientsService } from './clients.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { PlanLimitsService } from '../billing/plan-limits.service';
@@ -16,6 +16,7 @@ describe('ClientsService', () => {
       findMany: jest.fn(),
       findFirst: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
       delete: jest.fn(),
       count: jest.fn(),
     },
@@ -80,6 +81,8 @@ describe('ClientsService', () => {
         notes: 'Test notes',
       };
 
+      // Mock duplicate check - no duplicate found
+      mockPrismaService.client.findFirst.mockResolvedValueOnce(null);
       mockPrismaService.client.create.mockResolvedValue({
         ...mockClient,
         equipment: [],
@@ -101,6 +104,45 @@ describe('ClientsService', () => {
         equipment: [],
       });
     });
+
+    it('should throw BadRequestException when duplicate taxId exists', async () => {
+      const createClientDto: CreateClientDto = {
+        name: 'New Client',
+        phone: '(11) 88888-8888',
+        taxId: '123.456.789-00',
+      };
+
+      // Mock duplicate check - duplicate found
+      mockPrismaService.client.findFirst.mockResolvedValueOnce({
+        id: 'existing-id',
+        name: 'Existing Client',
+        phone: '(11) 99999-9999',
+        taxId: '123.456.789-00',
+      });
+
+      await expect(service.create('user-id', createClientDto)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw BadRequestException when duplicate name+phone exists', async () => {
+      const createClientDto: CreateClientDto = {
+        name: 'Test Client',
+        phone: '(11) 99999-9999',
+      };
+
+      // Mock duplicate check - duplicate found
+      mockPrismaService.client.findFirst.mockResolvedValueOnce({
+        id: 'existing-id',
+        name: 'Test Client',
+        phone: '(11) 99999-9999',
+        taxId: null,
+      });
+
+      await expect(service.create('user-id', createClientDto)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
   });
 
   describe('findAll', () => {
@@ -118,7 +160,7 @@ describe('ClientsService', () => {
       const result = await service.findAll('user-id');
 
       expect(prisma.client.findMany).toHaveBeenCalledWith({
-        where: { userId: 'user-id' },
+        where: { userId: 'user-id', deletedAt: null },
         include: {
           equipment: true,
           _count: {
@@ -184,6 +226,7 @@ describe('ClientsService', () => {
       expect(prisma.client.findMany).toHaveBeenCalledWith({
         where: {
           userId: 'user-id',
+          deletedAt: null,
           OR: [
             { name: { contains: 'Test', mode: 'insensitive' } },
             { email: { contains: 'Test', mode: 'insensitive' } },
@@ -225,7 +268,10 @@ describe('ClientsService', () => {
         _count: { quotes: 0, workOrders: 0, invoices: 0 },
       };
 
-      mockPrismaService.client.findFirst.mockResolvedValue(mockClientDetail);
+      // Mock findOne call
+      mockPrismaService.client.findFirst.mockResolvedValueOnce(mockClientDetail);
+      // Mock duplicate check - no duplicate found
+      mockPrismaService.client.findFirst.mockResolvedValueOnce(null);
       mockPrismaService.client.update.mockResolvedValue({
         ...mockClient,
         ...updateClientDto,
@@ -255,10 +301,12 @@ describe('ClientsService', () => {
         service.update('user-id', 'invalid-id', { name: 'Test' }),
       ).rejects.toThrow(NotFoundException);
     });
-  });
 
-  describe('remove', () => {
-    it('should delete a client', async () => {
+    it('should throw BadRequestException when update causes duplicate', async () => {
+      const updateClientDto: UpdateClientDto = {
+        taxId: '999.888.777-66',
+      };
+
       const mockClientDetail = {
         ...mockClient,
         equipment: [],
@@ -268,15 +316,48 @@ describe('ClientsService', () => {
         _count: { quotes: 0, workOrders: 0, invoices: 0 },
       };
 
+      // Mock findOne call
+      mockPrismaService.client.findFirst.mockResolvedValueOnce(mockClientDetail);
+      // Mock duplicate check - duplicate found
+      mockPrismaService.client.findFirst.mockResolvedValueOnce({
+        id: 'other-client-id',
+        name: 'Other Client',
+        phone: '(11) 77777-7777',
+        taxId: '999.888.777-66',
+      });
+
+      await expect(
+        service.update('user-id', 'client-id', updateClientDto),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('remove', () => {
+    it('should soft delete a client', async () => {
+      const mockClientDetail = {
+        ...mockClient,
+        equipment: [],
+        quotes: [],
+        workOrders: [],
+        invoices: [],
+        _count: { quotes: 0, workOrders: 0, invoices: 0 },
+      };
+
+      const softDeletedClient = {
+        ...mockClient,
+        deletedAt: new Date(),
+      };
+
       mockPrismaService.client.findFirst.mockResolvedValue(mockClientDetail);
-      mockPrismaService.client.delete.mockResolvedValue(mockClient);
+      mockPrismaService.client.update.mockResolvedValue(softDeletedClient);
 
       const result = await service.remove('user-id', 'client-id');
 
-      expect(prisma.client.delete).toHaveBeenCalledWith({
+      expect(prisma.client.update).toHaveBeenCalledWith({
         where: { id: 'client-id' },
+        data: { deletedAt: expect.any(Date) },
       });
-      expect(result).toEqual(mockClient);
+      expect(result.deletedAt).toBeDefined();
     });
 
     it('should throw NotFoundException when deleting non-existent client', async () => {
@@ -289,13 +370,13 @@ describe('ClientsService', () => {
   });
 
   describe('count', () => {
-    it('should return count of clients for a user', async () => {
+    it('should return count of active clients for a user', async () => {
       mockPrismaService.client.count.mockResolvedValue(5);
 
       const result = await service.count('user-id');
 
       expect(prisma.client.count).toHaveBeenCalledWith({
-        where: { userId: 'user-id' },
+        where: { userId: 'user-id', deletedAt: null },
       });
       expect(result).toBe(5);
     });

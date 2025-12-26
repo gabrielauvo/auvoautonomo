@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PlanLimitsService } from '../billing/plan-limits.service';
+import { RegionalService } from '../regional/regional.service';
 import { CreateQuoteDto } from './dto/create-quote.dto';
 import { UpdateQuoteDto } from './dto/update-quote.dto';
 import { AddQuoteItemDto, QuoteItemType } from './dto/add-quote-item.dto';
@@ -27,6 +28,7 @@ export class QuotesService {
     private notificationsService: NotificationsService,
     private planLimitsService: PlanLimitsService,
     private domainEventsService: DomainEventsService,
+    private regionalService: RegionalService,
   ) {}
 
   async create(userId: string, createQuoteDto: CreateQuoteDto) {
@@ -49,6 +51,9 @@ export class QuotesService {
         `Client with ID ${createQuoteDto.clientId} not found or does not belong to you`,
       );
     }
+
+    // Get the company's configured currency
+    const currency = await this.regionalService.getCompanyCurrency(userId);
 
     // Separate items from catalog and manual items
     const catalogItemDtos = createQuoteDto.items.filter((item) => item.itemId);
@@ -96,6 +101,7 @@ export class QuotesService {
         unitPrice,
         discountValue,
         totalPrice,
+        currency,
       };
     });
 
@@ -121,6 +127,7 @@ export class QuotesService {
         unitPrice,
         discountValue,
         totalPrice,
+        currency,
       };
     });
 
@@ -152,6 +159,7 @@ export class QuotesService {
         discountValue,
         totalValue,
         notes: createQuoteDto.notes,
+        currency,
         items: {
           create: quoteItems,
         },
@@ -348,6 +356,9 @@ export class QuotesService {
   async addItem(userId: string, quoteId: string, dto: AddQuoteItemDto) {
     const quote = await this.findOne(userId, quoteId);
 
+    // Get the company's configured currency
+    const currency = await this.regionalService.getCompanyCurrency(userId);
+
     let name: string;
     let type: ItemType;
     let unit: string;
@@ -407,6 +418,7 @@ export class QuotesService {
         unitPrice,
         discountValue,
         totalPrice,
+        currency,
       },
     });
 

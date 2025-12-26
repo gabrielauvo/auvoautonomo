@@ -31,6 +31,7 @@ import { WorkOrderItemsTable } from '@/components/work-orders';
 import { CatalogSelectModal } from '@/components/quotes';
 import { QuickClientModal } from '@/components/clients';
 import { useAuth } from '@/context/auth-context';
+import { useFormatting } from '@/context';
 import { useSearchClients } from '@/hooks/use-clients';
 import { useQuote } from '@/hooks/use-quotes';
 import {
@@ -91,13 +92,6 @@ interface LocalItem {
   itemId?: string;
 }
 
-// Formatar valor em moeda
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
-}
 
 // Componente de seleção de cliente
 function ClientSelector({
@@ -245,6 +239,7 @@ export function WorkOrderForm({ workOrder, onSuccess, onCancel, preselectedClien
   const router = useRouter();
   const searchParams = useSearchParams();
   const { billing } = useAuth();
+  const { formatCurrency } = useFormatting();
 
   const quoteId = searchParams.get('quoteId');
   const { data: quote, isLoading: isLoadingQuote } = useQuote(quoteId || undefined);

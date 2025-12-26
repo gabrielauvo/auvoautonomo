@@ -7,6 +7,7 @@
  */
 
 import { Button } from '@/components/ui';
+import { useFormatting } from '@/context';
 import { MessageSquare } from 'lucide-react';
 import { Charge, billingTypeLabels, getPublicPaymentUrl } from '@/services/charges.service';
 
@@ -15,14 +16,6 @@ interface WhatsAppShareButtonProps {
   variant?: 'default' | 'outline' | 'ghost';
   size?: 'sm' | 'default' | 'lg';
   showLabel?: boolean;
-}
-
-// Formatar valor em moeda
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
 }
 
 // Formatar data
@@ -35,7 +28,10 @@ function formatDate(dateString: string): string {
 }
 
 // Gerar mensagem padrão
-function generateWhatsAppMessage(charge: Charge): string {
+function generateWhatsAppMessage(
+  charge: Charge,
+  formatCurrency: (value: number, recordCurrency?: string) => string
+): string {
   const paymentType = billingTypeLabels[charge.billingType] || 'Pagamento';
 
   // Usa a URL pública interna (não a do Asaas)
@@ -69,8 +65,12 @@ function generateWhatsAppMessage(charge: Charge): string {
 }
 
 // Gerar URL do WhatsApp
-function generateWhatsAppUrl(charge: Charge, phone?: string): string {
-  const message = generateWhatsAppMessage(charge);
+function generateWhatsAppUrl(
+  charge: Charge,
+  formatCurrency: (value: number, recordCurrency?: string) => string,
+  phone?: string
+): string {
+  const message = generateWhatsAppMessage(charge, formatCurrency);
   const encodedMessage = encodeURIComponent(message);
 
   // Se tiver telefone, adiciona ao link
@@ -91,8 +91,10 @@ export function WhatsAppShareButton({
   size = 'default',
   showLabel = true,
 }: WhatsAppShareButtonProps) {
+  const { formatCurrency } = useFormatting();
+
   const handleClick = () => {
-    const url = generateWhatsAppUrl(charge, charge.client?.phone);
+    const url = generateWhatsAppUrl(charge, formatCurrency, charge.client?.phone);
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 

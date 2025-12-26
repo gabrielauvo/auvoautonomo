@@ -15,7 +15,7 @@ import { Text } from './Text';
 // =============================================================================
 
 type BadgeVariant = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'default';
-type BadgeSize = 'sm' | 'md' | 'small';
+type BadgeSize = 'sm' | 'md' | 'small' | 'medium';
 
 interface BadgeProps {
   variant?: BadgeVariant;

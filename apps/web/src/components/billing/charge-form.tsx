@@ -28,6 +28,7 @@ import {
 } from '@/components/ui';
 import { UpsellModal } from '@/components/billing';
 import { useAuth } from '@/context/auth-context';
+import { useFormatting } from '@/context';
 import { useSearchClients } from '@/hooks/use-clients';
 import { useCreateCharge, useUpdateCharge } from '@/hooks/use-charges';
 import {
@@ -78,13 +79,6 @@ const BILLING_TYPE_OPTIONS: { value: BillingType; label: string; icon: React.Ele
   { value: 'CREDIT_CARD', label: 'Cartão de Crédito', icon: CreditCard },
 ];
 
-// Formatar valor em moeda
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
-}
 
 // Componente de seleção de cliente
 function ClientSelector({
@@ -202,6 +196,7 @@ export function ChargeForm({
   onCancel,
 }: ChargeFormProps) {
   const router = useRouter();
+  const { formatCurrency } = useFormatting();
   const searchParams = useSearchParams();
   const { billing } = useAuth();
 

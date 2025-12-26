@@ -53,7 +53,7 @@ const STATUS_FILTERS: { label: string; value: WorkOrderStatus | 'ALL' }[] = [
 
 function getStatusColor(status: WorkOrderStatus, isPaused?: boolean): string {
   if (status === 'IN_PROGRESS' && isPaused) {
-    return colors.orange[500]; // Cor diferente para pausada
+    return colors.warning[500]; // Cor diferente para pausada (âmbar/laranja)
   }
   return theme.statusColors.workOrder[status] || colors.gray[500];
 }

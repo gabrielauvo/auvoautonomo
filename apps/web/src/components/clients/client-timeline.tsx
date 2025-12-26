@@ -11,6 +11,7 @@
  */
 
 import { Skeleton, Badge } from '@/components/ui';
+import { useFormatting } from '@/context';
 import { TimelineEvent, TimelineEventType } from '@/services/clients.service';
 import {
   FileText,
@@ -102,14 +103,6 @@ const eventConfig: Record<
   },
 };
 
-// Formatar valor em moeda
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
-}
-
 // Formatar data
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
@@ -129,7 +122,13 @@ function formatTime(dateString: string): string {
 }
 
 // Componente de item da timeline
-function TimelineItem({ event }: { event: TimelineEvent }) {
+function TimelineItem({
+  event,
+  formatCurrency,
+}: {
+  event: TimelineEvent;
+  formatCurrency: (value: number, recordCurrency?: string) => string;
+}) {
   const config = eventConfig[event.type];
   const Icon = config.icon;
 
@@ -275,6 +274,8 @@ function TimelineSkeleton() {
 }
 
 export function ClientTimeline({ events, isLoading }: ClientTimelineProps) {
+  const { formatCurrency } = useFormatting();
+
   if (isLoading) {
     return <TimelineSkeleton />;
   }
@@ -296,7 +297,11 @@ export function ClientTimeline({ events, isLoading }: ClientTimelineProps) {
   return (
     <div className="relative">
       {events.map((event, index) => (
-        <TimelineItem key={`${event.type}-${event.date}-${index}`} event={event} />
+        <TimelineItem
+          key={`${event.type}-${event.date}-${index}`}
+          event={event}
+          formatCurrency={formatCurrency}
+        />
       ))}
     </div>
   );

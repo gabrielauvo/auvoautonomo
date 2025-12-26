@@ -23,6 +23,7 @@ import {
 import { QuoteItem, QuoteItemType } from '@/services/quotes.service';
 import { Pencil, Trash2, Package, Wrench, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useFormatting } from '@/context';
 
 interface QuoteItemsTableProps {
   items: QuoteItem[];
@@ -54,13 +55,6 @@ const typeConfig: Record<
   },
 };
 
-// Formatar valor em moeda
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
-}
 
 // Loading skeleton
 function TableSkeleton() {
@@ -86,11 +80,13 @@ function ItemRow({
   isEditable,
   onEditItem,
   onRemoveItem,
+  formatCurrency,
 }: {
   item: QuoteItem;
   isEditable: boolean;
   onEditItem?: (item: QuoteItem) => void;
   onRemoveItem?: (item: QuoteItem) => void;
+  formatCurrency: (value: number) => string;
 }) {
   const config = typeConfig[item.type];
   const Icon = config.icon;
@@ -183,6 +179,8 @@ export function QuoteItemsTable({
   onEditItem,
   onRemoveItem,
 }: QuoteItemsTableProps) {
+  const { formatCurrency } = useFormatting();
+
   if (isLoading) {
     return <TableSkeleton />;
   }
@@ -226,6 +224,7 @@ export function QuoteItemsTable({
               isEditable={isEditable}
               onEditItem={onEditItem}
               onRemoveItem={onRemoveItem}
+              formatCurrency={formatCurrency}
             />
           ))}
         </TableBody>

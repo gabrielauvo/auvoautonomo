@@ -7,9 +7,10 @@ import { WorkOrdersController } from './work-orders.controller';
 import { WorkOrdersPublicController } from './work-orders-public.controller';
 import { DomainEventsModule } from '../domain-events/domain-events.module';
 import { InventoryModule } from '../inventory/inventory.module';
+import { RegionalModule } from '../regional/regional.module';
 
 @Module({
-  imports: [DomainEventsModule, forwardRef(() => InventoryModule)],
+  imports: [DomainEventsModule, forwardRef(() => InventoryModule), RegionalModule],
   controllers: [WorkOrdersController, WorkOrdersPublicController],
   providers: [
     WorkOrdersService,

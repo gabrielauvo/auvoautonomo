@@ -8,6 +8,7 @@
 
 import { useState } from 'react';
 import { Modal, Button, Alert } from '@/components/ui';
+import { useFormatting } from '@/context';
 import { Copy, Check, QrCode, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -19,14 +20,6 @@ interface PixQRCodeModalProps {
   value: number;
 }
 
-// Formatar valor em moeda
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
-}
-
 export function PixQRCodeModal({
   isOpen,
   onClose,
@@ -34,6 +27,7 @@ export function PixQRCodeModal({
   pixCopiaECola,
   value,
 }: PixQRCodeModalProps) {
+  const { formatCurrency } = useFormatting();
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {

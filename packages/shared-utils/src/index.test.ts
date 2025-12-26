@@ -8,6 +8,16 @@ import {
   isValidCpf,
   isValidCnpj,
   formatCurrency,
+  getCurrencySymbol,
+  getLocaleForCountry,
+  formatDateInTimezone,
+  formatShortDate,
+  formatDateTime,
+  formatTime,
+  getDateStringInTimezone,
+  isValidTimezone,
+  getTimezoneAbbreviation,
+  getTimezoneOffset,
 } from './index';
 
 describe('shared-utils', () => {
@@ -212,6 +222,172 @@ describe('shared-utils', () => {
     it('should return empty for non-finite numbers', () => {
       expect(formatCurrency(NaN)).toBe('');
       expect(formatCurrency(Infinity)).toBe('');
+    });
+  });
+
+  describe('getCurrencySymbol', () => {
+    it('should return correct symbol for BRL', () => {
+      expect(getCurrencySymbol('BRL')).toBe('R$');
+    });
+
+    it('should return correct symbol for USD', () => {
+      expect(getCurrencySymbol('USD')).toBe('$');
+    });
+
+    it('should return correct symbol for EUR', () => {
+      expect(getCurrencySymbol('EUR')).toBe('€');
+    });
+
+    it('should return currency code for invalid currency', () => {
+      expect(getCurrencySymbol('INVALID')).toBe('INVALID');
+    });
+  });
+
+  describe('getLocaleForCountry', () => {
+    it('should return pt-BR for Brazil', () => {
+      expect(getLocaleForCountry('BR')).toBe('pt-BR');
+    });
+
+    it('should return en-US for United States', () => {
+      expect(getLocaleForCountry('US')).toBe('en-US');
+    });
+
+    it('should return es-MX for Mexico', () => {
+      expect(getLocaleForCountry('MX')).toBe('es-MX');
+    });
+
+    it('should return en-US for unknown country', () => {
+      expect(getLocaleForCountry('XX')).toBe('en-US');
+    });
+  });
+
+  describe('formatDateInTimezone', () => {
+    it('should format date in São Paulo timezone', () => {
+      const date = new Date('2024-12-25T15:00:00Z');
+      const formatted = formatDateInTimezone(
+        date,
+        'America/Sao_Paulo',
+        { year: 'numeric', month: '2-digit', day: '2-digit' },
+        'pt-BR'
+      );
+      expect(formatted).toMatch(/\d+/);
+    });
+
+    it('should format date string', () => {
+      const formatted = formatDateInTimezone(
+        '2024-12-25T15:00:00Z',
+        'America/Sao_Paulo',
+        { year: 'numeric' },
+        'pt-BR'
+      );
+      expect(formatted).toContain('2024');
+    });
+
+    it('should return empty string for invalid date', () => {
+      expect(
+        formatDateInTimezone('invalid', 'America/Sao_Paulo', {}, 'pt-BR')
+      ).toBe('');
+    });
+
+    it('should fallback on invalid timezone', () => {
+      const date = new Date('2024-12-25T15:00:00Z');
+      const formatted = formatDateInTimezone(
+        date,
+        'Invalid/Timezone',
+        { year: 'numeric' },
+        'pt-BR'
+      );
+      expect(formatted).toContain('2024');
+    });
+  });
+
+  describe('formatShortDate', () => {
+    it('should format date as DD/MM/YYYY for pt-BR', () => {
+      const formatted = formatShortDate(
+        '2024-12-25T15:00:00Z',
+        'America/Sao_Paulo',
+        'pt-BR'
+      );
+      expect(formatted).toMatch(/\d{2}\/\d{2}\/\d{4}/);
+    });
+  });
+
+  describe('formatDateTime', () => {
+    it('should format date and time', () => {
+      const formatted = formatDateTime(
+        '2024-12-25T15:30:00Z',
+        'America/Sao_Paulo',
+        'pt-BR'
+      );
+      expect(formatted).toMatch(/\d+:\d+/);
+    });
+  });
+
+  describe('formatTime', () => {
+    it('should format time only', () => {
+      const formatted = formatTime(
+        '2024-12-25T15:30:00Z',
+        'America/Sao_Paulo',
+        'pt-BR'
+      );
+      expect(formatted).toMatch(/\d+:\d+/);
+    });
+  });
+
+  describe('getDateStringInTimezone', () => {
+    it('should return YYYY-MM-DD format', () => {
+      const result = getDateStringInTimezone(
+        '2024-12-25T15:00:00Z',
+        'America/Sao_Paulo'
+      );
+      expect(result).toMatch(/\d{4}-\d{2}-\d{2}/);
+    });
+
+    it('should return empty string for invalid date', () => {
+      expect(getDateStringInTimezone('invalid', 'America/Sao_Paulo')).toBe('');
+    });
+  });
+
+  describe('isValidTimezone', () => {
+    it('should return true for valid timezones', () => {
+      expect(isValidTimezone('America/Sao_Paulo')).toBe(true);
+      expect(isValidTimezone('America/New_York')).toBe(true);
+      expect(isValidTimezone('UTC')).toBe(true);
+    });
+
+    it('should return false for invalid timezones', () => {
+      expect(isValidTimezone('Invalid/Timezone')).toBe(false);
+      expect(isValidTimezone('')).toBe(false);
+    });
+
+    it('should return false for null/undefined', () => {
+      expect(isValidTimezone(null as unknown as string)).toBe(false);
+      expect(isValidTimezone(undefined as unknown as string)).toBe(false);
+    });
+  });
+
+  describe('getTimezoneAbbreviation', () => {
+    it('should return abbreviation for São Paulo', () => {
+      const abbr = getTimezoneAbbreviation('America/Sao_Paulo');
+      // Could be BRT or -03 depending on locale
+      expect(abbr).toBeTruthy();
+    });
+
+    it('should return timezone ID for invalid timezone', () => {
+      const result = getTimezoneAbbreviation('Invalid/Timezone');
+      expect(result).toBe('Invalid/Timezone');
+    });
+  });
+
+  describe('getTimezoneOffset', () => {
+    it('should return offset for São Paulo', () => {
+      const offset = getTimezoneOffset('America/Sao_Paulo');
+      expect(offset).toMatch(/[+-]\d{2}:\d{2}/);
+    });
+
+    it('should return +00:00 for invalid timezone', () => {
+      const offset = getTimezoneOffset('Invalid/Timezone');
+      expect(offset).toBe('+00:00');
     });
   });
 });

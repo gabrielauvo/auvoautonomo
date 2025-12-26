@@ -1,14 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { RegionalService } from '../regional/regional.service';
 import {
   ScheduleActivityDto,
   ScheduleActivityType,
   ScheduleDayResponseDto,
 } from './dto';
+import {
+  getDayBoundsInTimezone,
+  getDateStringInTimezone,
+} from '../common/utils/timezone.util';
 
 @Injectable()
 export class ScheduleService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly regionalService: RegionalService,
+  ) {}
 
   /**
    * Busca todas as atividades de um dia específico
@@ -18,11 +26,13 @@ export class ScheduleService {
     userId: string,
     date: string,
   ): Promise<ScheduleDayResponseDto> {
-    // Converte a data para início e fim do dia no timezone do Brasil (UTC-3)
+    // Obtém o timezone configurado para a empresa do usuário
+    const timezone = await this.regionalService.getCompanyTimezone(userId);
+
+    // Converte a data para início e fim do dia no timezone do usuário
     // A data vem como YYYY-MM-DD do frontend no timezone local do usuário
-    // Precisamos converter para UTC considerando o offset
-    const startOfDay = new Date(`${date}T00:00:00.000-03:00`);
-    const endOfDay = new Date(`${date}T23:59:59.999-03:00`);
+    // Precisamos converter para UTC considerando o offset do timezone configurado
+    const { startOfDay, endOfDay } = getDayBoundsInTimezone(date, timezone);
 
     // Busca Work Orders agendadas para o dia
     const workOrders = await this.prisma.workOrder.findMany({
@@ -143,9 +153,12 @@ export class ScheduleService {
     startDate: string,
     endDate: string,
   ): Promise<Record<string, ScheduleDayResponseDto>> {
-    // Converte para timezone do Brasil (UTC-3)
-    const start = new Date(`${startDate}T00:00:00.000-03:00`);
-    const end = new Date(`${endDate}T23:59:59.999-03:00`);
+    // Obtém o timezone configurado para a empresa do usuário
+    const timezone = await this.regionalService.getCompanyTimezone(userId);
+
+    // Converte para o timezone do usuário
+    const { startOfDay: start } = getDayBoundsInTimezone(startDate, timezone);
+    const { endOfDay: end } = getDayBoundsInTimezone(endDate, timezone);
 
     // Busca Work Orders no range
     const workOrders = await this.prisma.workOrder.findMany({
@@ -201,9 +214,8 @@ export class ScheduleService {
 
     // Processa Work Orders
     for (const wo of workOrders) {
-      // Converte para timezone local (UTC-3) antes de extrair a data
-      const localDate = new Date(wo.scheduledDate!.getTime() - 3 * 60 * 60 * 1000);
-      const dateKey = localDate.toISOString().split('T')[0];
+      // Converte para timezone do usuário antes de extrair a data
+      const dateKey = getDateStringInTimezone(wo.scheduledDate!, timezone);
 
       if (!result[dateKey]) {
         result[dateKey] = {
@@ -241,9 +253,8 @@ export class ScheduleService {
 
     // Processa Quote visits
     for (const q of quoteVisits) {
-      // Converte para timezone local (UTC-3) antes de extrair a data
-      const localDate = new Date(q.visitScheduledAt!.getTime() - 3 * 60 * 60 * 1000);
-      const dateKey = localDate.toISOString().split('T')[0];
+      // Converte para timezone do usuário antes de extrair a data
+      const dateKey = getDateStringInTimezone(q.visitScheduledAt!, timezone);
 
       if (!result[dateKey]) {
         result[dateKey] = {

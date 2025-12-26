@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PlanLimitsService } from '../billing/plan-limits.service';
+import { RegionalService } from '../regional/regional.service';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { ExpenseFiltersDto } from './dto/expense-filters.dto';
@@ -13,6 +14,7 @@ export class ExpensesService {
   constructor(
     private prisma: PrismaService,
     private planLimitsService: PlanLimitsService,
+    private regionalService: RegionalService,
   ) {}
 
   async create(userId: string, createDto: CreateExpenseDto) {
@@ -30,6 +32,9 @@ export class ExpensesService {
     // Validate foreign keys if provided
     await this.validateRelations(userId, createDto);
 
+    // Get the company's configured currency
+    const currency = await this.regionalService.getCompanyCurrency(userId);
+
     return this.prisma.expense.create({
       data: {
         description: createDto.description,
@@ -44,6 +49,7 @@ export class ExpensesService {
         supplierId: createDto.supplierId,
         categoryId: createDto.categoryId,
         workOrderId: createDto.workOrderId,
+        currency,
       },
       include: {
         supplier: true,

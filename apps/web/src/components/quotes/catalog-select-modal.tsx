@@ -20,6 +20,7 @@ import {
   Badge,
   Skeleton,
 } from '@/components/ui';
+import { useFormatting } from '@/context';
 import { useCatalogItems, useCatalogCategories } from '@/hooks/use-quotes';
 import {
   CatalogItem,
@@ -45,7 +46,7 @@ interface CatalogSelectModalProps {
   onSelect: (data: AddQuoteItemDto) => void;
 }
 
-// Configuração de tipos
+// Configuracao de tipos
 const typeConfig: Record<
   QuoteItemType | 'ALL',
   { icon: React.ElementType; label: string; color: string }
@@ -55,14 +56,6 @@ const typeConfig: Record<
   SERVICE: { icon: Wrench, label: 'Serviço', color: 'text-success' },
   BUNDLE: { icon: Layers, label: 'Kit', color: 'text-warning' },
 };
-
-// Formatar valor em moeda
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
-}
 
 // Skeleton loader
 function CatalogSkeleton() {
@@ -89,12 +82,14 @@ function CatalogItemCard({
   quantity,
   onSelect,
   onQuantityChange,
+  formatCurrency,
 }: {
   item: CatalogItem;
   isSelected: boolean;
   quantity: number;
   onSelect: (item: CatalogItem) => void;
   onQuantityChange: (quantity: number) => void;
+  formatCurrency: (value: number, recordCurrency?: string) => string;
 }) {
   const config = typeConfig[item.type];
   const Icon = config.icon;
@@ -314,6 +309,7 @@ export function CatalogSelectModal({
   onClose,
   onSelect,
 }: CatalogSelectModalProps) {
+  const { formatCurrency } = useFormatting();
   const [isVisible, setIsVisible] = useState(false);
   const [search, setSearch] = useState('');
   const [selectedType, setSelectedType] = useState<QuoteItemType | 'ALL'>('ALL');
@@ -514,6 +510,7 @@ export function CatalogSelectModal({
                       quantity={selectedItem?.id === item.id ? quantity : 1}
                       onSelect={handleSelectItem}
                       onQuantityChange={setQuantity}
+                      formatCurrency={formatCurrency}
                     />
                   ))}
                 </div>

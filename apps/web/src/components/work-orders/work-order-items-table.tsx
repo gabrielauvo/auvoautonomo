@@ -14,6 +14,7 @@ import { Button, Badge, Skeleton } from '@/components/ui';
 import { Edit, Trash2, Package, Wrench, Layers } from 'lucide-react';
 import { WorkOrderItem, WorkOrderItemType } from '@/services/work-orders.service';
 import { cn } from '@/lib/utils';
+import { useFormatting } from '@/context';
 
 interface WorkOrderItemsTableProps {
   items: WorkOrderItem[];
@@ -33,13 +34,6 @@ const typeConfig: Record<
   BUNDLE: { icon: Layers, label: 'Kit', color: 'text-warning' },
 };
 
-// Formatar valor em moeda
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
-}
 
 // Skeleton loader
 function TableSkeleton() {
@@ -65,6 +59,8 @@ export function WorkOrderItemsTable({
   onEditItem,
   onRemoveItem,
 }: WorkOrderItemsTableProps) {
+  const { formatCurrency } = useFormatting();
+
   if (isLoading) {
     return <TableSkeleton />;
   }

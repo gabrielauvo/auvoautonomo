@@ -296,6 +296,14 @@ export default function ProfileScreen() {
       route: '/perfil/idioma',
       showChevron: true,
     },
+    {
+      id: 'regional',
+      icon: 'globe-outline',
+      label: 'Configurações Regionais',
+      description: 'País, moeda e fuso horário',
+      route: '/perfil/regional',
+      showChevron: true,
+    },
   ];
 
   const getPlanBadgeColor = () => {

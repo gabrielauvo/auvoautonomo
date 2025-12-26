@@ -1,6 +1,7 @@
 /**
  * Fake LLM Provider
  * For testing and development without real API calls
+ * Uses friendly, natural language responses for end users
  */
 
 import { Logger } from '@nestjs/common';
@@ -57,51 +58,40 @@ export class FakeLLMProvider implements ILLMProvider {
 
   private createPatterns(): FakeResponsePattern[] {
     return [
-      // Customer creation flow - expanded patterns
+      // ==========================================
+      // CLIENTE / CUSTOMER
+      // ==========================================
+
+      // Criar cliente - com nome fornecido
       {
-        pattern: /(?:criar|cadastrar|novo|adicionar)\s*(?:um\s+)?(?:cliente|customer)/i,
-        response: (match, messages) => {
-          // Check if we have name in the message
-          const nameMatch = messages.match(/nome[:\s]+([^\n,]+)/i);
-          const emailMatch = messages.match(/email[:\s]+([^\s,]+@[^\s,]+)/i);
-          const phoneMatch = messages.match(/(?:telefone|phone)[:\s]+([0-9\s\-\(\)]+)/i);
-
-          const collectedFields: Record<string, string> = {};
-          const missingFields: string[] = [];
-
-          if (nameMatch) collectedFields.name = nameMatch[1].trim();
-          else missingFields.push('name');
-
-          if (emailMatch) collectedFields.email = emailMatch[1].trim();
-          if (phoneMatch) collectedFields.phone = phoneMatch[1].trim();
-
-          if (missingFields.length > 0) {
-            return this.createPlanResponse('customers.create', collectedFields, missingFields);
-          }
-
-          // All required fields collected, ask for confirmation
-          return this.createConfirmationRequest('customers.create', collectedFields);
+        pattern: /(?:criar|cadastrar|novo|adicionar)\s*(?:um\s+)?(?:cliente|customer)\s+(.+)/i,
+        response: (match) => {
+          const clientName = match[1].trim();
+          return this.createAskUserResponse(
+            `Vou criar o cliente "${clientName}" para você! 📝\n\n` +
+            `Preciso de mais algumas informações:\n\n` +
+            `**Qual o telefone do cliente?**\n` +
+            `(Pode ser celular ou fixo)`,
+            ['Pular telefone', 'Cancelar'],
+          );
         },
       },
 
-      // Confirmation responses
+      // Criar cliente - sem nome
       {
-        pattern: /^(sim|confirmo|sim,?\s*confirmo|ok|pode|confirmar)$/i,
+        pattern: /(?:criar|cadastrar|novo|adicionar)\s*(?:um\s+)?(?:cliente|customer)$/i,
         response: () => {
-          // This should be handled by state machine, but provide fallback
-          return {
-            content: JSON.stringify({
-              type: 'RESPONSE',
-              message: 'Por favor, inicie uma nova operação. Não há nenhuma ação pendente.',
-            }),
-            usage: { inputTokens: 10, outputTokens: 20, totalTokens: 30 },
-          };
+          return this.createAskUserResponse(
+            `Vamos cadastrar um novo cliente! 📝\n\n` +
+            `**Qual o nome do cliente?**`,
+            ['Cancelar'],
+          );
         },
       },
 
-      // Customer search
+      // Buscar/listar clientes
       {
-        pattern: /(?:buscar|listar|pesquisar|procurar|ver|mostrar)\s*(?:os\s+)?(?:clientes?|customers?)/i,
+        pattern: /(?:buscar|listar|pesquisar|procurar|ver|mostrar|encontrar)\s*(?:os\s+)?(?:meus\s+)?(?:clientes?|customers?)/i,
         response: () => ({
           content: JSON.stringify({
             type: 'CALL_TOOL',
@@ -112,209 +102,285 @@ export class FakeLLMProvider implements ILLMProvider {
         }),
       },
 
-      // Work order creation - expanded patterns
+      // Intenção de cliente genérica
       {
-        pattern: /(?:criar|cadastrar|nova?|abrir|adicionar)\s*(?:uma?\s+)?(?:ordem\s+de\s+servi[çc]o|os|work\s*order)/i,
-        response: (match, messages) => {
-          const customerIdMatch = messages.match(/cliente[:\s]+([a-f0-9-]{36})/i);
-          const titleMatch = messages.match(/t[íi]tulo[:\s]+([^\n]+)/i);
-
-          const collectedFields: Record<string, string> = {};
-          const missingFields: string[] = [];
-
-          if (customerIdMatch) collectedFields.customerId = customerIdMatch[1];
-          else missingFields.push('customerId');
-
-          if (titleMatch) collectedFields.title = titleMatch[1].trim();
-          else missingFields.push('title');
-
-          missingFields.push('items');
-
-          return this.createPlanResponse('workOrders.create', collectedFields, missingFields);
-        },
-      },
-
-      // Billing preview
-      {
-        pattern: /(?:cobrar|cobran[çc]a|pagamento|boleto|pix|gerar\s+cobran)/i,
-        response: (match, messages) => {
-          const customerIdMatch = messages.match(/cliente[:\s]+([a-f0-9-]{36})/i);
-          const valueMatch = messages.match(/(?:valor|value)[:\s]+R?\$?\s*([0-9,.]+)/i);
-          const typeMatch = messages.match(/(?:tipo|type)[:\s]+(pix|boleto|cartao|cart[aã]o|credit)/i);
-
-          const collectedFields: Record<string, unknown> = {};
-          const missingFields: string[] = [];
-
-          if (customerIdMatch) collectedFields.customerId = customerIdMatch[1];
-          else missingFields.push('customerId');
-
-          if (valueMatch) {
-            collectedFields.value = parseFloat(valueMatch[1].replace(',', '.'));
-          } else {
-            missingFields.push('value');
-          }
-
-          if (typeMatch) {
-            const typeMap: Record<string, string> = {
-              pix: 'PIX',
-              boleto: 'BOLETO',
-              cartao: 'CREDIT_CARD',
-              cartão: 'CREDIT_CARD',
-              credit: 'CREDIT_CARD',
-            };
-            collectedFields.billingType = typeMap[typeMatch[1].toLowerCase()];
-          } else {
-            missingFields.push('billingType');
-          }
-
-          missingFields.push('dueDate');
-
-          return this.createPlanResponse('billing.previewCharge', collectedFields, missingFields);
-        },
-      },
-
-      // Quote creation - EXPANDED patterns to catch more variations
-      {
-        pattern: /(?:criar|fazer|gerar|cadastrar|novo|montar|adicionar)\s*(?:um\s+)?(?:or[çc]amento|quote)/i,
-        response: (match, messages) => {
-          const customerIdMatch = messages.match(/cliente[:\s]+([a-f0-9-]{36})/i);
-          const titleMatch = messages.match(/t[íi]tulo[:\s]+([^\n]+)/i);
-
-          const collectedFields: Record<string, string> = {};
-          const missingFields: string[] = [];
-
-          if (customerIdMatch) collectedFields.customerId = customerIdMatch[1];
-          else missingFields.push('customerId');
-
-          if (titleMatch) collectedFields.title = titleMatch[1].trim();
-          else missingFields.push('title');
-
-          missingFields.push('items');
-
-          return this.createPlanResponse('quotes.create', collectedFields, missingFields);
-        },
-      },
-
-      // Quote intention - when user just mentions "orçamento" or asks for help
-      {
-        pattern: /(?:quero|preciso|gostaria|ajud[ae]|me\s+ajud[ae]|como).*(?:or[çc]amento|quote)/i,
+        pattern: /(?:quero|preciso|gostaria|ajud[ae]|me\s+ajud[ae]).*(?:cliente|customer)/i,
         response: () => {
-          const missingFields = ['customerId', 'title', 'items'];
-          return this.createPlanResponse('quotes.create', {}, missingFields);
+          return this.createAskUserResponse(
+            `Posso ajudar com clientes! 👥\n\n` +
+            `O que você gostaria de fazer?`,
+            ['Criar novo cliente', 'Buscar cliente', 'Cancelar'],
+          );
         },
       },
 
-      // Just "orçamento" or "quote" alone
+      // ==========================================
+      // ORÇAMENTO / QUOTE
+      // ==========================================
+
+      // Criar orçamento - com detalhes
+      {
+        pattern: /(?:criar|fazer|gerar|cadastrar|novo|montar|adicionar)\s*(?:um\s+)?(?:or[çc]amento|quote)\s+(?:para|pro?)\s+(.+)/i,
+        response: (match) => {
+          const clientRef = match[1].trim();
+          return this.createAskUserResponse(
+            `Vou criar um orçamento para "${clientRef}"! 📋\n\n` +
+            `**O que você quer incluir no orçamento?**\n\n` +
+            `Me conte os serviços ou produtos que deseja adicionar.`,
+            ['Cancelar'],
+          );
+        },
+      },
+
+      // Criar orçamento - sem detalhes
+      {
+        pattern: /(?:criar|fazer|gerar|cadastrar|novo|montar|adicionar)\s*(?:um\s+)?(?:or[çc]amento|quote)$/i,
+        response: () => {
+          return this.createAskUserResponse(
+            `Vamos criar um orçamento! 📋\n\n` +
+            `**Para qual cliente é esse orçamento?**\n\n` +
+            `Digite o nome do cliente ou parte do nome para eu buscar.`,
+            ['Ver meus clientes', 'Cancelar'],
+          );
+        },
+      },
+
+      // Apenas "orçamento" sozinho
       {
         pattern: /^(?:or[çc]amento|quote)s?$/i,
         response: () => {
-          const missingFields = ['customerId', 'title', 'items'];
-          return this.createPlanResponse('quotes.create', {}, missingFields);
+          return this.createAskUserResponse(
+            `Você quer trabalhar com orçamentos? 📋\n\n` +
+            `O que posso fazer por você?`,
+            ['Criar novo orçamento', 'Ver orçamentos pendentes', 'Cancelar'],
+          );
         },
       },
 
-      // Work order intention
+      // Intenção de orçamento genérica
+      {
+        pattern: /(?:quero|preciso|gostaria|ajud[ae]|me\s+ajud[ae]|como).*(?:or[çc]amento|quote)/i,
+        response: () => {
+          return this.createAskUserResponse(
+            `Posso ajudar com orçamentos! 📋\n\n` +
+            `O que você gostaria de fazer?`,
+            ['Criar novo orçamento', 'Ver orçamentos pendentes', 'Cancelar'],
+          );
+        },
+      },
+
+      // ==========================================
+      // ORDEM DE SERVIÇO / WORK ORDER
+      // ==========================================
+
+      // Criar OS - com detalhes
+      {
+        pattern: /(?:criar|cadastrar|nova?|abrir|adicionar)\s*(?:uma?\s+)?(?:ordem\s+de\s+servi[çc]o|os)\s+(?:para|pro?)\s+(.+)/i,
+        response: (match) => {
+          const clientRef = match[1].trim();
+          return this.createAskUserResponse(
+            `Vou abrir uma OS para "${clientRef}"! 🔧\n\n` +
+            `**Qual o serviço a ser realizado?**\n\n` +
+            `Descreva brevemente o trabalho.`,
+            ['Cancelar'],
+          );
+        },
+      },
+
+      // Criar OS - sem detalhes
+      {
+        pattern: /(?:criar|cadastrar|nova?|abrir|adicionar)\s*(?:uma?\s+)?(?:ordem\s+de\s+servi[çc]o|os)$/i,
+        response: () => {
+          return this.createAskUserResponse(
+            `Vamos abrir uma ordem de serviço! 🔧\n\n` +
+            `**Para qual cliente é essa OS?**\n\n` +
+            `Digite o nome do cliente ou parte do nome.`,
+            ['Ver meus clientes', 'Cancelar'],
+          );
+        },
+      },
+
+      // Intenção de OS genérica
       {
         pattern: /(?:quero|preciso|gostaria|ajud[ae]|me\s+ajud[ae]|como).*(?:ordem\s+de\s+servi[çc]o|os)/i,
         response: () => {
-          const missingFields = ['customerId', 'title', 'items'];
-          return this.createPlanResponse('workOrders.create', {}, missingFields);
+          return this.createAskUserResponse(
+            `Posso ajudar com ordens de serviço! 🔧\n\n` +
+            `O que você gostaria de fazer?`,
+            ['Abrir nova OS', 'Ver OS pendentes', 'Cancelar'],
+          );
         },
       },
 
-      // Client intention
+      // ==========================================
+      // COBRANÇA / BILLING
+      // ==========================================
+
+      // Criar cobrança com valor
       {
-        pattern: /(?:quero|preciso|gostaria|ajud[ae]|me\s+ajud[ae]|como).*(?:cliente|customer)/i,
+        pattern: /(?:cobrar|gerar\s+cobran[çc]a|criar\s+cobran[çc]a).*?(?:de\s+)?R?\$?\s*(\d+(?:[.,]\d{2})?)/i,
+        response: (match) => {
+          const value = match[1].replace(',', '.');
+          return this.createAskUserResponse(
+            `Vou gerar uma cobrança de **R$ ${parseFloat(value).toFixed(2)}**! 💰\n\n` +
+            `**Para qual cliente é essa cobrança?**\n\n` +
+            `Digite o nome do cliente.`,
+            ['Ver meus clientes', 'Cancelar'],
+          );
+        },
+      },
+
+      // Cobrança genérica
+      {
+        pattern: /(?:cobrar|cobran[çc]a|pagamento|boleto|pix|gerar\s+cobran)/i,
         response: () => {
-          const missingFields = ['name'];
-          return this.createPlanResponse('customers.create', {}, missingFields);
+          return this.createAskUserResponse(
+            `Vamos gerar uma cobrança! 💰\n\n` +
+            `**Como você quer cobrar?**`,
+            ['PIX', 'Boleto', 'Cartão de Crédito', 'Cancelar'],
+          );
         },
       },
 
-      // General help request - provide options
+      // ==========================================
+      // CONFIRMAÇÕES
+      // ==========================================
+
       {
-        pattern: /(?:ajuda|help|o\s+que|como|quero|preciso)/i,
-        response: () => ({
-          content: JSON.stringify({
-            type: 'ASK_USER',
-            question: 'Posso ajudar você com:\n\n' +
-              '1️⃣ **Clientes** - criar, buscar ou atualizar clientes\n' +
-              '2️⃣ **Orçamentos** - criar orçamentos para seus clientes\n' +
-              '3️⃣ **Ordens de Serviço** - criar e gerenciar OS\n' +
-              '4️⃣ **Cobranças** - gerar PIX, boleto ou cartão\n\n' +
-              'O que você gostaria de fazer?',
-            options: ['Criar cliente', 'Criar orçamento', 'Criar OS', 'Gerar cobrança'],
-          }),
-          usage: { inputTokens: 20, outputTokens: 80, totalTokens: 100 },
-        }),
+        pattern: /^(sim|confirmo|sim,?\s*confirmo|ok|pode|confirmar|isso|exato|correto)$/i,
+        response: () => {
+          return {
+            content: JSON.stringify({
+              type: 'RESPONSE',
+              message: '✅ Entendido! Mas parece que não há nenhuma operação pendente.\n\n' +
+                'Como posso ajudar você agora?',
+            }),
+            usage: { inputTokens: 10, outputTokens: 20, totalTokens: 30 },
+          };
+        },
+      },
+
+      // Cancelar
+      {
+        pattern: /^(n[aã]o|cancelar|cancela|deixa|esquece|para)$/i,
+        response: () => {
+          return {
+            content: JSON.stringify({
+              type: 'RESPONSE',
+              message: 'Tudo bem! Operação cancelada. 👍\n\n' +
+                'Se precisar de algo, é só me chamar!',
+            }),
+            usage: { inputTokens: 10, outputTokens: 20, totalTokens: 30 },
+          };
+        },
+      },
+
+      // ==========================================
+      // SAUDAÇÕES E AJUDA GERAL
+      // ==========================================
+
+      // Saudações
+      {
+        pattern: /^(oi|ol[aá]|hey|hi|hello|bom\s+dia|boa\s+tarde|boa\s+noite|e\s+a[ií])$/i,
+        response: () => {
+          return {
+            content: JSON.stringify({
+              type: 'RESPONSE',
+              message: 'Olá! 👋 Sou seu assistente do Auvo.\n\n' +
+                'Posso ajudar você a:\n' +
+                '• Criar e gerenciar **clientes**\n' +
+                '• Fazer **orçamentos**\n' +
+                '• Abrir **ordens de serviço**\n' +
+                '• Gerar **cobranças** (PIX, Boleto, Cartão)\n\n' +
+                'O que você precisa hoje?',
+            }),
+            usage: { inputTokens: 20, outputTokens: 60, totalTokens: 80 },
+          };
+        },
+      },
+
+      // Pedido de ajuda
+      {
+        pattern: /(?:ajuda|help|me\s+ajud[ae]|preciso\s+de\s+ajuda)/i,
+        response: () => {
+          return this.createAskUserResponse(
+            `Claro! Estou aqui para ajudar! 🤝\n\n` +
+            `O que você precisa fazer?`,
+            ['Criar cliente', 'Fazer orçamento', 'Abrir OS', 'Gerar cobrança'],
+          );
+        },
+      },
+
+      // O que você faz / pode fazer
+      {
+        pattern: /(?:o\s+que\s+(?:voc[eê]|vc)\s+(?:faz|pode|consegue)|quais?\s+(?:s[aã]o\s+)?(?:suas?\s+)?fun[çc][oõ]es)/i,
+        response: () => {
+          return {
+            content: JSON.stringify({
+              type: 'RESPONSE',
+              message: 'Posso ajudar você com várias tarefas do dia a dia! 🚀\n\n' +
+                '**👥 Clientes**\n' +
+                'Criar, buscar e atualizar cadastros\n\n' +
+                '**📋 Orçamentos**\n' +
+                'Montar orçamentos para seus clientes\n\n' +
+                '**🔧 Ordens de Serviço**\n' +
+                'Abrir e acompanhar OS\n\n' +
+                '**💰 Cobranças**\n' +
+                'Gerar PIX, Boleto ou Cartão\n\n' +
+                'É só me dizer o que precisa!',
+            }),
+            usage: { inputTokens: 20, outputTokens: 100, totalTokens: 120 },
+          };
+        },
+      },
+
+      // Agradecimentos
+      {
+        pattern: /(?:obrigad[oa]|valeu|thanks|vlw|brigad)/i,
+        response: () => {
+          return {
+            content: JSON.stringify({
+              type: 'RESPONSE',
+              message: 'Por nada! 😊 Precisando, é só chamar!',
+            }),
+            usage: { inputTokens: 10, outputTokens: 15, totalTokens: 25 },
+          };
+        },
       },
     ];
   }
 
-  private createPlanResponse(
-    tool: string,
-    collectedFields: Record<string, unknown>,
-    missingFields: string[],
+  /**
+   * Create a friendly ASK_USER response
+   */
+  private createAskUserResponse(
+    question: string,
+    options: string[],
   ): LLMResponse {
-    const plan = {
-      type: 'PLAN',
-      action: tool,
-      collectedFields,
-      missingFields,
-      suggestedActions: missingFields.length > 0
-        ? [`Fornecer: ${missingFields.join(', ')}`]
-        : ['Confirmar operação'],
-      requiresConfirmation: true,
-    };
-
-    let message = '';
-    if (missingFields.length > 0) {
-      message = `Para criar, preciso das seguintes informações:\n${missingFields.map(f => `- ${f}`).join('\n')}`;
-    } else {
-      message = 'Todos os campos coletados. Confirma a operação?';
-    }
-
     return {
       content: JSON.stringify({
-        ...plan,
-        message,
+        type: 'ASK_USER',
+        question,
+        options,
       }),
-      usage: { inputTokens: 50, outputTokens: 100, totalTokens: 150 },
+      usage: { inputTokens: 30, outputTokens: 50, totalTokens: 80 },
     };
   }
 
-  private createConfirmationRequest(
-    tool: string,
-    params: Record<string, unknown>,
-  ): LLMResponse {
-    const summary = Object.entries(params)
-      .map(([k, v]) => `- ${k}: ${v}`)
-      .join('\n');
-
-    return {
-      content: JSON.stringify({
-        type: 'PLAN',
-        action: tool,
-        collectedFields: params,
-        missingFields: [],
-        suggestedActions: ['Confirmar operação'],
-        requiresConfirmation: true,
-        message: `Resumo da operação:\n${summary}\n\nDeseja confirmar?`,
-      }),
-      usage: { inputTokens: 30, outputTokens: 80, totalTokens: 110 },
-    };
-  }
-
+  /**
+   * Default response for unrecognized inputs
+   */
   private createDefaultResponse(): LLMResponse {
     return {
       content: JSON.stringify({
         type: 'RESPONSE',
-        message: 'Olá! Sou o AI Copilot do Auvo. Posso ajudá-lo a:\n' +
-          '- Gerenciar clientes (buscar, criar, atualizar)\n' +
-          '- Criar ordens de serviço\n' +
-          '- Criar orçamentos\n' +
-          '- Gerar cobranças (PIX, Boleto, Cartão)\n\n' +
-          'O que você gostaria de fazer?',
+        message: 'Oi! 👋 Não entendi bem o que você precisa.\n\n' +
+          'Posso ajudar com:\n' +
+          '• **Clientes** - "criar cliente João"\n' +
+          '• **Orçamentos** - "fazer orçamento"\n' +
+          '• **OS** - "abrir ordem de serviço"\n' +
+          '• **Cobranças** - "gerar cobrança PIX"\n\n' +
+          'Tenta de novo? 😊',
       }),
       usage: { inputTokens: 20, outputTokens: 60, totalTokens: 80 },
     };

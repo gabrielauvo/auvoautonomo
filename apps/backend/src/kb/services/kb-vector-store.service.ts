@@ -180,21 +180,21 @@ export class KbVectorStore implements OnModuleInit {
     minScore: number,
     sources?: string[],
   ): Promise<KbSearchResult[]> {
-    // First, get all active documents with optional source filter
-    const documentFilter: { isActive: boolean; source?: { in: string[] } } = {
+    // Build where clause with proper Prisma types
+    const whereClause: Prisma.KbDocumentWhereInput = {
       isActive: true,
     };
+
+    // Add source filter if provided (cast to KbSource enum)
     if (sources?.length) {
-      documentFilter.source = { in: sources };
+      whereClause.source = {
+        in: sources as ('DOCS' | 'FAQ' | 'HELP_CENTER' | 'CUSTOM')[]
+      };
     }
 
     const documents = await this.prisma.kbDocument.findMany({
-      where: documentFilter,
-      select: {
-        id: true,
-        source: true,
-        sourceId: true,
-        title: true,
+      where: whereClause,
+      include: {
         chunks: {
           select: {
             id: true,

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations } from '@/i18n';
 import { Plus, Search, MoreHorizontal, Pencil, Power, PowerOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -58,8 +58,8 @@ const DEFAULT_COLORS = [
 ];
 
 export default function WorkOrderTypesPage() {
-  const t = useTranslations('settings');
-  const tCommon = useTranslations('common');
+  const { t } = useTranslations('settings');
+  const { t: tCommon } = useTranslations('common');
 
   const [search, setSearch] = useState('');
   const [showInactive, setShowInactive] = useState(false);

@@ -32,15 +32,15 @@ describe('FakeLLMProvider', () => {
       expect(parsed.message).toContain('Olá');
     });
 
-    it('should offer options when asking about quotes', async () => {
+    it('should ask for client when wanting to make quotes', async () => {
       const response = await provider.complete({
         messages: [{ role: 'user', content: 'quero fazer orçamentos' }],
       });
 
       const parsed = JSON.parse(response.content);
       expect(parsed.type).toBe('ASK_USER');
-      expect(parsed.question).toContain('orçamentos');
-      expect(parsed.options).toContain('Criar novo orçamento');
+      // Now goes directly to asking for client
+      expect(parsed.question).toContain('cliente');
     });
 
     it('should ask for client name when creating quote without details', async () => {
@@ -51,6 +51,37 @@ describe('FakeLLMProvider', () => {
       const parsed = JSON.parse(response.content);
       expect(parsed.type).toBe('ASK_USER');
       expect(parsed.question).toContain('qual cliente');
+    });
+
+    it('should understand "Fazer orçamentos" (plural)', async () => {
+      const response = await provider.complete({
+        messages: [{ role: 'user', content: 'Fazer orçamentos' }],
+      });
+
+      const parsed = JSON.parse(response.content);
+      expect(parsed.type).toBe('ASK_USER');
+      expect(parsed.question).toContain('qual cliente');
+    });
+
+    it('should answer how to add a client', async () => {
+      const response = await provider.complete({
+        messages: [{ role: 'user', content: 'Como adicionar um novo cliente?' }],
+      });
+
+      const parsed = JSON.parse(response.content);
+      expect(parsed.type).toBe('RESPONSE');
+      expect(parsed.message).toContain('cliente');
+    });
+
+    it('should understand "como faço para criar cliente"', async () => {
+      const response = await provider.complete({
+        messages: [{ role: 'user', content: 'como faço para criar um cliente' }],
+      });
+
+      const parsed = JSON.parse(response.content);
+      // This goes to generic client intent which offers options
+      expect(parsed.type).toBe('ASK_USER');
+      expect(parsed.question).toContain('cliente');
     });
   });
 
@@ -80,77 +111,62 @@ describe('FakeLLMProvider', () => {
       expect(secondParsed.question).toContain('incluir');
     });
 
-    it('should understand "criar um" as option selection', async () => {
-      // First message: user asks about quotes
+    it('should understand client name after asking for quote client', async () => {
+      // First message: user asks to make quotes - now goes directly to asking for client
       const firstResponse = await provider.complete({
         messages: [{ role: 'user', content: 'quero fazer orçamentos' }],
       });
 
       const firstParsed = JSON.parse(firstResponse.content);
-      expect(firstParsed.options).toContain('Criar novo orçamento');
+      expect(firstParsed.question).toContain('cliente');
 
-      // Second message: user says "criar um"
+      // Second message: user provides client name
       const secondResponse = await provider.complete({
         messages: [
           { role: 'user', content: 'quero fazer orçamentos' },
           { role: 'assistant', content: firstResponse.content },
-          { role: 'user', content: 'criar um' },
+          { role: 'user', content: 'João Silva' },
         ],
       });
 
       const secondParsed = JSON.parse(secondResponse.content);
       expect(secondParsed.type).toBe('ASK_USER');
-      expect(secondParsed.question).toContain('qual cliente');
+      expect(secondParsed.question).toContain('João Silva');
     });
 
     it('should complete full quote creation flow', async () => {
-      // Step 1: User wants to make quotes
+      // Step 1: User wants to make quotes - now goes directly to asking for client
       const step1 = await provider.complete({
-        messages: [{ role: 'user', content: 'quero fazer orçamentos' }],
+        messages: [{ role: 'user', content: 'fazer orçamento' }],
       });
       const parsed1 = JSON.parse(step1.content);
-      expect(parsed1.options).toContain('Criar novo orçamento');
+      expect(parsed1.question).toContain('cliente');
 
-      // Step 2: User selects "Criar novo orçamento"
+      // Step 2: User provides client name
       const step2 = await provider.complete({
         messages: [
-          { role: 'user', content: 'quero fazer orçamentos' },
+          { role: 'user', content: 'fazer orçamento' },
           { role: 'assistant', content: step1.content },
-          { role: 'user', content: 'Criar novo orçamento' },
+          { role: 'user', content: 'Maria Silva' },
         ],
       });
       const parsed2 = JSON.parse(step2.content);
-      expect(parsed2.question).toContain('qual cliente');
+      expect(parsed2.question).toContain('Maria Silva');
+      expect(parsed2.question).toContain('incluir');
 
-      // Step 3: User provides client name
+      // Step 3: User provides items
       const step3 = await provider.complete({
         messages: [
-          { role: 'user', content: 'quero fazer orçamentos' },
+          { role: 'user', content: 'fazer orçamento' },
           { role: 'assistant', content: step1.content },
-          { role: 'user', content: 'Criar novo orçamento' },
-          { role: 'assistant', content: step2.content },
           { role: 'user', content: 'Maria Silva' },
-        ],
-      });
-      const parsed3 = JSON.parse(step3.content);
-      expect(parsed3.question).toContain('Maria Silva');
-      expect(parsed3.question).toContain('incluir');
-
-      // Step 4: User provides items
-      const step4 = await provider.complete({
-        messages: [
-          { role: 'user', content: 'quero fazer orçamentos' },
-          { role: 'assistant', content: step1.content },
-          { role: 'user', content: 'Criar novo orçamento' },
           { role: 'assistant', content: step2.content },
-          { role: 'user', content: 'Maria Silva' },
-          { role: 'assistant', content: step3.content },
           { role: 'user', content: 'Manutenção de ar condicionado' },
         ],
       });
-      const parsed4 = JSON.parse(step4.content);
-      expect(parsed4.type).toBe('RESPONSE');
-      expect(parsed4.message).toContain('criado');
+      const parsed3 = JSON.parse(step3.content);
+      expect(parsed3.type).toBe('RESPONSE');
+      expect(parsed3.message).toContain('criado');
     });
 
     it('should complete full OS creation flow', async () => {

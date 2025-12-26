@@ -463,13 +463,32 @@ export class FakeLLMProvider implements ILLMProvider {
 
       // Criar cliente - sem nome
       {
-        pattern: /(?:criar|cadastrar|novo|adicionar)\s*(?:um\s+)?(?:cliente|customer)$/i,
+        pattern: /(?:criar|cadastrar|novo|adicionar)\s*(?:uma?\s+)?(?:novo\s+)?(?:cliente|customer)s?$/i,
         response: () => {
           return this.createAskUserResponse(
             `Vamos cadastrar um novo cliente! 📝\n\n` +
             `**Qual o nome do cliente?**`,
             ['Cancelar'],
           );
+        },
+      },
+
+      // Pergunta sobre como criar cliente
+      {
+        pattern: /como\s+(?:fa[çc]o\s+(?:para\s+)?|posso\s+|adiciono?\s*|crio\s*|cadastro\s*)(?:uma?\s+)?(?:novo\s+)?(?:cliente|customer)/i,
+        response: () => {
+          return {
+            content: JSON.stringify({
+              type: 'RESPONSE',
+              message: 'Para criar um novo cliente, basta me dizer! 👥\n\n' +
+                'Você pode digitar algo como:\n' +
+                '• "Criar cliente João Silva"\n' +
+                '• "Novo cliente"\n' +
+                '• "Cadastrar cliente"\n\n' +
+                '**Quer que eu crie um cliente agora?**',
+            }),
+            usage: { inputTokens: 20, outputTokens: 50, totalTokens: 70 },
+          };
         },
       },
 
@@ -516,9 +535,9 @@ export class FakeLLMProvider implements ILLMProvider {
         },
       },
 
-      // Criar orçamento - sem detalhes
+      // Criar orçamento - sem detalhes (inclui plural)
       {
-        pattern: /(?:criar|fazer|gerar|cadastrar|novo|montar|adicionar)\s*(?:um\s+)?(?:or[çc]amento|quote)$/i,
+        pattern: /(?:criar|fazer|gerar|cadastrar|novo|montar|adicionar)\s*(?:uma?\s+)?(?:or[çc]amento|quote)s?$/i,
         response: () => {
           return this.createAskUserResponse(
             `Vamos criar um orçamento! 📋\n\n` +

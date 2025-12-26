@@ -175,7 +175,7 @@ export const ExpenseDetailScreen: React.FC<ExpenseDetailScreenProps> = ({
   onEdit,
   onDeleted,
 }) => {
-  const { locale } = useTranslation();
+  const { t, locale } = useTranslation();
   const colors = useColors();
   const [expense, setExpense] = useState<Expense | null>(null);
   const [loading, setLoading] = useState(true);
@@ -194,7 +194,7 @@ export const ExpenseDetailScreen: React.FC<ExpenseDetailScreenProps> = ({
         setSelectedPaymentMethod(data.paymentMethod);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar despesa');
+      setError(err instanceof Error ? err.message : t('expenses.loadError'));
     } finally {
       setLoading(false);
     }
@@ -221,9 +221,9 @@ export const ExpenseDetailScreen: React.FC<ExpenseDetailScreenProps> = ({
       });
       setExpense(updatedExpense);
       setShowPaymentModal(false);
-      Alert.alert('Sucesso', 'Despesa marcada como paga!');
+      Alert.alert(t('common.success'), t('expenses.markedAsPaidSuccess'));
     } catch (err) {
-      Alert.alert('Erro', err instanceof Error ? err.message : 'Erro ao marcar como paga');
+      Alert.alert(t('common.error'), err instanceof Error ? err.message : t('expenses.markedAsPaidError'));
     } finally {
       setActionLoading(false);
     }
@@ -233,12 +233,12 @@ export const ExpenseDetailScreen: React.FC<ExpenseDetailScreenProps> = ({
     if (!expense) return;
 
     Alert.alert(
-      'Cancelar Despesa',
-      'Tem certeza que deseja cancelar esta despesa?',
+      t('expenses.cancelExpense'),
+      t('expenses.cancelConfirm'),
       [
-        { text: 'Não', style: 'cancel' },
+        { text: t('common.no'), style: 'cancel' },
         {
-          text: 'Sim, Cancelar',
+          text: t('expenses.yesCancel'),
           style: 'destructive',
           onPress: async () => {
             setActionLoading(true);
@@ -247,9 +247,9 @@ export const ExpenseDetailScreen: React.FC<ExpenseDetailScreenProps> = ({
                 status: 'CANCELED',
               });
               setExpense(updated);
-              Alert.alert('Sucesso', 'Despesa cancelada!');
+              Alert.alert(t('common.success'), t('expenses.canceledSuccess'));
             } catch (err) {
-              Alert.alert('Erro', err instanceof Error ? err.message : 'Erro ao cancelar');
+              Alert.alert(t('common.error'), err instanceof Error ? err.message : t('expenses.cancelError'));
             } finally {
               setActionLoading(false);
             }
@@ -263,22 +263,22 @@ export const ExpenseDetailScreen: React.FC<ExpenseDetailScreenProps> = ({
     if (!expense) return;
 
     Alert.alert(
-      'Excluir Despesa',
-      'Tem certeza que deseja excluir esta despesa? Esta ação não pode ser desfeita.',
+      t('expenses.deleteExpense'),
+      t('expenses.deleteConfirm'),
       [
-        { text: 'Não', style: 'cancel' },
+        { text: t('common.no'), style: 'cancel' },
         {
-          text: 'Sim, Excluir',
+          text: t('expenses.yesDelete'),
           style: 'destructive',
           onPress: async () => {
             setActionLoading(true);
             try {
               await ExpenseService.deleteExpense(expense.id);
-              Alert.alert('Sucesso', 'Despesa excluída!', [
+              Alert.alert(t('common.success'), t('expenses.deleteSuccess'), [
                 { text: 'OK', onPress: onDeleted },
               ]);
             } catch (err) {
-              Alert.alert('Erro', err instanceof Error ? err.message : 'Erro ao excluir');
+              Alert.alert(t('common.error'), err instanceof Error ? err.message : t('expenses.deleteError'));
             } finally {
               setActionLoading(false);
             }
@@ -301,14 +301,14 @@ export const ExpenseDetailScreen: React.FC<ExpenseDetailScreenProps> = ({
       <View style={[styles.container, styles.errorContainer, { backgroundColor: colors.background.secondary }]}>
         <Ionicons name="alert-circle-outline" size={64} color={colors.error[400]} />
         <Text variant="body" weight="semibold" align="center" style={{ marginTop: spacing[4] }}>
-          {error || 'Despesa não encontrada'}
+          {error || t('expenses.notFound')}
         </Text>
         <TouchableOpacity
           style={[styles.retryButton, { backgroundColor: colors.primary[600] }]}
           onPress={loadExpense}
         >
           <Text variant="body" weight="semibold" style={{ color: colors.white }}>
-            Tentar novamente
+            {t('common.retry')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -316,7 +316,16 @@ export const ExpenseDetailScreen: React.FC<ExpenseDetailScreenProps> = ({
   }
 
   const overdue = isExpenseOverdue(expense);
-  const statusLabel = overdue ? 'Vencida' : expenseStatusLabels[expense.status];
+  const getStatusLabel = () => {
+    if (overdue) return t('expenses.overdue');
+    switch (expense.status) {
+      case 'PENDING': return t('expenses.pending');
+      case 'PAID': return t('expenses.paid');
+      case 'CANCELED': return t('expenses.canceled');
+      default: return expense.status;
+    }
+  };
+  const statusLabel = getStatusLabel();
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background.secondary }]}>
@@ -376,12 +385,12 @@ export const ExpenseDetailScreen: React.FC<ExpenseDetailScreenProps> = ({
         {/* Details Card */}
         <Card variant="elevated" style={styles.detailsCard}>
           <Text variant="h5" weight="semibold" style={{ marginBottom: spacing[4] }}>
-            Detalhes
+            {t('common.details')}
           </Text>
 
           <DetailRow
             icon="calendar-outline"
-            label="Vencimento"
+            label={t('expenses.dueDate')}
             value={formatDate(expense.dueDate, locale)}
             colors={colors}
             valueColor={overdue ? colors.error[500] : undefined}
@@ -392,7 +401,7 @@ export const ExpenseDetailScreen: React.FC<ExpenseDetailScreenProps> = ({
               <Divider style={styles.divider} />
               <DetailRow
                 icon="checkmark-circle-outline"
-                label="Data de Pagamento"
+                label={t('expenses.paymentDate')}
                 value={formatDate(expense.paidAt, locale)}
                 colors={colors}
                 valueColor={colors.success[600]}
@@ -405,8 +414,8 @@ export const ExpenseDetailScreen: React.FC<ExpenseDetailScreenProps> = ({
               <Divider style={styles.divider} />
               <DetailRow
                 icon="card-outline"
-                label="Forma de Pagamento"
-                value={paymentMethodLabels[expense.paymentMethod]}
+                label={t('expenses.paymentMethod')}
+                value={t(`expenses.paymentMethods.${expense.paymentMethod}`)}
                 colors={colors}
               />
             </>
@@ -417,7 +426,7 @@ export const ExpenseDetailScreen: React.FC<ExpenseDetailScreenProps> = ({
               <Divider style={styles.divider} />
               <DetailRow
                 icon="business-outline"
-                label="Fornecedor"
+                label={t('expenses.supplier')}
                 value={expense.supplier.name}
                 colors={colors}
               />
@@ -429,7 +438,7 @@ export const ExpenseDetailScreen: React.FC<ExpenseDetailScreenProps> = ({
               <Divider style={styles.divider} />
               <DetailRow
                 icon="construct-outline"
-                label="Ordem de Serviço"
+                label={t('navigation.workOrders')}
                 value={expense.workOrder.title}
                 colors={colors}
               />
@@ -439,7 +448,7 @@ export const ExpenseDetailScreen: React.FC<ExpenseDetailScreenProps> = ({
           <Divider style={styles.divider} />
           <DetailRow
             icon="time-outline"
-            label="Criado em"
+            label={t('expenses.createdAt')}
             value={formatDate(expense.createdAt, locale)}
             colors={colors}
           />
@@ -449,7 +458,7 @@ export const ExpenseDetailScreen: React.FC<ExpenseDetailScreenProps> = ({
         {showPaymentModal && (
           <Card variant="elevated" style={styles.paymentCard}>
             <Text variant="h5" weight="semibold" style={{ marginBottom: spacing[3] }}>
-              Forma de Pagamento
+              {t('expenses.paymentMethod')}
             </Text>
             <PaymentMethodSelector
               selectedMethod={selectedPaymentMethod}
@@ -462,7 +471,7 @@ export const ExpenseDetailScreen: React.FC<ExpenseDetailScreenProps> = ({
                 onPress={() => setShowPaymentModal(false)}
                 style={{ flex: 1, marginRight: spacing[2] }}
               >
-                Cancelar
+                {t('common.cancel')}
               </Button>
               <Button
                 variant="primary"
@@ -470,7 +479,7 @@ export const ExpenseDetailScreen: React.FC<ExpenseDetailScreenProps> = ({
                 loading={actionLoading}
                 style={{ flex: 1, marginLeft: spacing[2] }}
               >
-                Confirmar
+                {t('common.confirm')}
               </Button>
             </View>
           </Card>
@@ -486,7 +495,7 @@ export const ExpenseDetailScreen: React.FC<ExpenseDetailScreenProps> = ({
               icon={<Ionicons name="checkmark-circle" size={20} color={colors.white} />}
               style={styles.actionButton}
             >
-              Marcar como Paga
+              {t('expenses.markAsPaid')}
             </Button>
           )}
 
@@ -497,7 +506,7 @@ export const ExpenseDetailScreen: React.FC<ExpenseDetailScreenProps> = ({
               icon={<Ionicons name="create-outline" size={20} color={colors.primary[600]} />}
               style={styles.actionButton}
             >
-              Editar
+              {t('common.edit')}
             </Button>
           )}
 
@@ -509,7 +518,7 @@ export const ExpenseDetailScreen: React.FC<ExpenseDetailScreenProps> = ({
               icon={<Ionicons name="close-circle-outline" size={20} color={colors.warning[600]} />}
               style={[styles.actionButton, { borderColor: colors.warning[500] }]}
             >
-              Cancelar Despesa
+              {t('expenses.cancelExpense')}
             </Button>
           )}
 
@@ -520,7 +529,7 @@ export const ExpenseDetailScreen: React.FC<ExpenseDetailScreenProps> = ({
             icon={<Ionicons name="trash-outline" size={20} color={colors.error[600]} />}
             style={[styles.actionButton, { borderColor: colors.error[500] }]}
           >
-            Excluir
+            {t('common.delete')}
           </Button>
         </View>
       </ScrollView>

@@ -179,9 +179,12 @@ const CompanySettingsContext = createContext<
 >(undefined);
 
 /**
- * API base URL
+ * API base URLs
+ * - API_URL: Direct backend URL for public endpoints (countries, currencies)
+ * - PROXY_URL: Next.js proxy for authenticated endpoints (uses HttpOnly cookies)
  */
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const PROXY_URL = '/api/proxy';
 
 /**
  * Provider
@@ -202,7 +205,7 @@ export function CompanySettingsProvider({
 
   /**
    * Fetch company settings from API
-   * Uses HttpOnly cookies for authentication (credentials: 'include')
+   * Uses Next.js proxy to handle HttpOnly cookie authentication
    */
   const fetchSettings = useCallback(async () => {
     if (!isAuthenticated) {
@@ -212,7 +215,8 @@ export function CompanySettingsProvider({
     }
 
     try {
-      const response = await fetch(`${API_URL}/settings/regional`, {
+      // Use proxy for authenticated requests (handles HttpOnly cookies)
+      const response = await fetch(`${PROXY_URL}/settings/regional`, {
         credentials: 'include',
       });
 
@@ -315,7 +319,7 @@ export function CompanySettingsProvider({
 
   /**
    * Update settings
-   * Uses HttpOnly cookies for authentication (credentials: 'include')
+   * Uses Next.js proxy to handle HttpOnly cookie authentication
    */
   const updateSettings = useCallback(
     async (data: Partial<RegionalSettings>) => {
@@ -326,7 +330,8 @@ export function CompanySettingsProvider({
       setError(null);
 
       try {
-        const response = await fetch(`${API_URL}/settings/regional`, {
+        // Use proxy for authenticated requests (handles HttpOnly cookies)
+        const response = await fetch(`${PROXY_URL}/settings/regional`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',

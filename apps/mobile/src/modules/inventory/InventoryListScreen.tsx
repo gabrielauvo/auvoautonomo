@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { useTranslation } from '../../i18n';
 import { InventoryService } from './InventoryService';
 import { InventoryBalance } from './InventoryRepository';
 import { InventoryBalanceCard, AdjustStockModal } from './components';
@@ -26,6 +27,7 @@ interface Props {
 }
 
 export function InventoryListScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const [balances, setBalances] = useState<InventoryBalance[]>([]);
   const [filteredBalances, setFilteredBalances] = useState<InventoryBalance[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -119,7 +121,7 @@ export function InventoryListScreen({ navigation }: Props) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color="#6366f1" />
-        <Text style={styles.loadingText}>Carregando estoque...</Text>
+        <Text style={styles.loadingText}>{t('inventory.loadingStock')}</Text>
       </View>
     );
   }
@@ -128,10 +130,9 @@ export function InventoryListScreen({ navigation }: Props) {
     return (
       <View style={styles.centered}>
         <Ionicons name="cube-outline" size={64} color="#d1d5db" />
-        <Text style={styles.disabledTitle}>Módulo Desabilitado</Text>
+        <Text style={styles.disabledTitle}>{t('inventory.moduleDisabled')}</Text>
         <Text style={styles.disabledText}>
-          O controle de estoque não está habilitado.{'\n'}
-          Ative nas configurações pelo painel web.
+          {t('inventory.moduleDisabledMessage')}
         </Text>
       </View>
     );
@@ -144,23 +145,23 @@ export function InventoryListScreen({ navigation }: Props) {
         <View style={styles.statCard}>
           <Ionicons name="cube" size={24} color="#6366f1" />
           <Text style={styles.statValue}>{stats.totalProducts}</Text>
-          <Text style={styles.statLabel}>Produtos</Text>
+          <Text style={styles.statLabel}>{t('inventory.products')}</Text>
         </View>
         <View style={styles.statCard}>
           <Ionicons name="layers" size={24} color="#22c55e" />
           <Text style={styles.statValue}>{stats.totalQuantity.toFixed(0)}</Text>
-          <Text style={styles.statLabel}>Total</Text>
+          <Text style={styles.statLabel}>{t('inventory.total')}</Text>
         </View>
         <View style={styles.statCard}>
           <Ionicons name="warning" size={24} color="#f59e0b" />
           <Text style={styles.statValue}>{stats.lowStockCount}</Text>
-          <Text style={styles.statLabel}>Baixo</Text>
+          <Text style={styles.statLabel}>{t('inventory.low')}</Text>
         </View>
         {stats.pendingSyncCount > 0 && (
           <View style={styles.statCard}>
             <Ionicons name="cloud-upload" size={24} color="#3b82f6" />
             <Text style={styles.statValue}>{stats.pendingSyncCount}</Text>
-            <Text style={styles.statLabel}>Pendente</Text>
+            <Text style={styles.statLabel}>{t('inventory.pendingSync')}</Text>
           </View>
         )}
       </View>
@@ -170,7 +171,7 @@ export function InventoryListScreen({ navigation }: Props) {
         <Ionicons name="search" size={20} color="#9ca3af" style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
-          placeholder="Buscar produto..."
+          placeholder={t('inventory.searchProduct')}
           placeholderTextColor="#9ca3af"
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -205,12 +206,12 @@ export function InventoryListScreen({ navigation }: Props) {
           <View style={styles.emptyContainer}>
             <Ionicons name="cube-outline" size={48} color="#d1d5db" />
             <Text style={styles.emptyTitle}>
-              {searchQuery ? 'Nenhum resultado' : 'Sem produtos'}
+              {searchQuery ? t('inventory.noResults') : t('inventory.noProducts')}
             </Text>
             <Text style={styles.emptyText}>
               {searchQuery
-                ? 'Tente outro termo de busca'
-                : 'Adicione produtos ao catálogo para controlar o estoque'}
+                ? t('inventory.tryAnotherSearch')
+                : t('inventory.addProductsMessage')}
             </Text>
           </View>
         }

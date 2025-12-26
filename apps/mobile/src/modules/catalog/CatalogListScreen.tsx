@@ -28,6 +28,7 @@ import { CatalogItemRepository, CategoryRepository } from '../../db/repositories
 import { CatalogItem, ProductCategory, ItemType } from '../../db/schema';
 import { useSyncStatus } from '../../sync';
 import { colors, spacing, typography, borderRadius } from '../../design-system/tokens';
+import { useTranslation } from '../../i18n';
 
 // =============================================================================
 // TYPES
@@ -45,23 +46,10 @@ interface FilterTab {
 // CONSTANTS
 // =============================================================================
 
-const FILTER_TABS: FilterTab[] = [
-  { key: 'ALL', label: 'Todos', icon: 'grid-outline' },
-  { key: 'PRODUCT', label: 'Produtos', icon: 'cube-outline' },
-  { key: 'SERVICE', label: 'Serviços', icon: 'construct-outline' },
-  { key: 'BUNDLE', label: 'Kits', icon: 'layers-outline' },
-];
-
 const TYPE_COLORS: Record<ItemType, string> = {
   PRODUCT: colors.info[500],      // Blue
   SERVICE: colors.primary[500],   // Purple
   BUNDLE: colors.warning[500],    // Orange
-};
-
-const TYPE_LABELS: Record<ItemType, string> = {
-  PRODUCT: 'Produto',
-  SERVICE: 'Serviço',
-  BUNDLE: 'Kit',
 };
 
 // =============================================================================
@@ -71,11 +59,13 @@ const TYPE_LABELS: Record<ItemType, string> = {
 interface ItemCardProps {
   item: CatalogItem;
   onPress: () => void;
+  typeLabels: Record<ItemType, string>;
+  pendingLabel: string;
 }
 
-const ItemCard: React.FC<ItemCardProps> = ({ item, onPress }) => {
+const ItemCard: React.FC<ItemCardProps> = ({ item, onPress, typeLabels, pendingLabel }) => {
   const typeColor = TYPE_COLORS[item.type];
-  const typeLabel = TYPE_LABELS[item.type];
+  const typeLabel = typeLabels[item.type];
 
   const formatPrice = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -118,7 +108,7 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, onPress }) => {
       {!item.syncedAt && (
         <View style={styles.pendingSyncBadge}>
           <Ionicons name="cloud-upload-outline" size={12} color={colors.warning[500]} />
-          <Text style={styles.pendingSyncText}>Pendente</Text>
+          <Text style={styles.pendingSyncText}>{pendingLabel}</Text>
         </View>
       )}
     </TouchableOpacity>
@@ -133,6 +123,21 @@ export default function CatalogListScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { sync } = useSyncStatus();
+  const { t } = useTranslation();
+
+  // Translation-based constants
+  const FILTER_TABS: FilterTab[] = [
+    { key: 'ALL', label: t('catalog.filterAll'), icon: 'grid-outline' },
+    { key: 'PRODUCT', label: t('catalog.filterProducts'), icon: 'cube-outline' },
+    { key: 'SERVICE', label: t('catalog.filterServices'), icon: 'construct-outline' },
+    { key: 'BUNDLE', label: t('catalog.filterBundles'), icon: 'layers-outline' },
+  ];
+
+  const TYPE_LABELS: Record<ItemType, string> = {
+    PRODUCT: t('catalog.typeProduct'),
+    SERVICE: t('catalog.typeService'),
+    BUNDLE: t('catalog.typeBundle'),
+  };
 
   // State
   const [items, setItems] = useState<CatalogItem[]>([]);
@@ -255,7 +260,7 @@ export default function CatalogListScreen() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary[500]} />
-        <Text style={styles.loadingText}>Carregando catálogo...</Text>
+        <Text style={styles.loadingText}>{t('catalog.loading')}</Text>
       </View>
     );
   }
@@ -266,19 +271,19 @@ export default function CatalogListScreen() {
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
           <Text style={styles.statValue}>{stats.total}</Text>
-          <Text style={styles.statLabel}>Total</Text>
+          <Text style={styles.statLabel}>{t('catalog.statsTotal')}</Text>
         </View>
         <View style={styles.statItem}>
           <Text style={[styles.statValue, { color: TYPE_COLORS.PRODUCT }]}>{stats.products}</Text>
-          <Text style={styles.statLabel}>Produtos</Text>
+          <Text style={styles.statLabel}>{t('catalog.statsProducts')}</Text>
         </View>
         <View style={styles.statItem}>
           <Text style={[styles.statValue, { color: TYPE_COLORS.SERVICE }]}>{stats.services}</Text>
-          <Text style={styles.statLabel}>Serviços</Text>
+          <Text style={styles.statLabel}>{t('catalog.statsServices')}</Text>
         </View>
         <View style={styles.statItem}>
           <Text style={[styles.statValue, { color: TYPE_COLORS.BUNDLE }]}>{stats.bundles}</Text>
-          <Text style={styles.statLabel}>Kits</Text>
+          <Text style={styles.statLabel}>{t('catalog.statsBundles')}</Text>
         </View>
       </View>
 
@@ -288,7 +293,7 @@ export default function CatalogListScreen() {
           <Ionicons name="search" size={20} color={colors.gray[400]} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Buscar por nome ou SKU..."
+            placeholder={t('catalog.searchPlaceholder')}
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholderTextColor={colors.gray[400]}
@@ -329,7 +334,7 @@ export default function CatalogListScreen() {
               setShowCategoryPicker(false);
             }}
           >
-            <Text style={styles.categoryPickerText}>Todas categorias</Text>
+            <Text style={styles.categoryPickerText}>{t('catalog.allCategories')}</Text>
           </TouchableOpacity>
           {categories.map(cat => (
             <TouchableOpacity
@@ -385,7 +390,12 @@ export default function CatalogListScreen() {
         data={filteredItems}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
-          <ItemCard item={item} onPress={() => handleItemPress(item)} />
+          <ItemCard
+            item={item}
+            onPress={() => handleItemPress(item)}
+            typeLabels={TYPE_LABELS}
+            pendingLabel={t('catalog.pendingSync')}
+          />
         )}
         contentContainerStyle={styles.listContent}
         refreshControl={
@@ -398,16 +408,16 @@ export default function CatalogListScreen() {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="cube-outline" size={64} color={colors.gray[300]} />
-            <Text style={styles.emptyTitle}>Nenhum item encontrado</Text>
+            <Text style={styles.emptyTitle}>{t('catalog.emptyTitle')}</Text>
             <Text style={styles.emptySubtitle}>
               {searchQuery || selectedCategory || activeFilter !== 'ALL'
-                ? 'Tente ajustar os filtros'
-                : 'Adicione produtos, serviços ou kits ao seu catálogo'}
+                ? t('catalog.emptyFilterHint')
+                : t('catalog.emptySubtitle')}
             </Text>
             {!searchQuery && !selectedCategory && activeFilter === 'ALL' && (
               <TouchableOpacity style={styles.emptyButton} onPress={handleAddItem}>
                 <Ionicons name="add" size={20} color={colors.white} />
-                <Text style={styles.emptyButtonText}>Adicionar Item</Text>
+                <Text style={styles.emptyButtonText}>{t('catalog.addItem')}</Text>
               </TouchableOpacity>
             )}
           </View>

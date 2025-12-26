@@ -142,7 +142,7 @@ export const ChargeDetailScreen: React.FC<ChargeDetailScreenProps> = ({
       setCharge(data);
     } catch (err) {
       console.error('Error loading charge:', err);
-      setError(err instanceof Error ? err.message : 'Erro ao carregar cobrança');
+      setError(err instanceof Error ? err.message : t('charges.loadError'));
     } finally {
       setLoading(false);
     }
@@ -158,11 +158,11 @@ export const ChargeDetailScreen: React.FC<ChargeDetailScreenProps> = ({
 
     const paymentUrl = charge.urls?.invoiceUrl;
     if (!paymentUrl) {
-      Alert.alert('Erro', 'Link de pagamento não disponível');
+      Alert.alert(t('common.error'), t('charges.paymentLinkUnavailable'));
       return;
     }
 
-    const message = `Olá! Segue o link para pagamento da cobrança de ${formatCurrency(charge.value, locale)}:\n\n${paymentUrl}`;
+    const message = t('charges.sharePaymentMessage', { value: formatCurrency(charge.value, locale), url: paymentUrl });
 
     try {
       await Share.share({
@@ -181,7 +181,7 @@ export const ChargeDetailScreen: React.FC<ChargeDetailScreenProps> = ({
     try {
       await Linking.openURL(charge.urls.invoiceUrl);
     } catch (err) {
-      Alert.alert('Erro', 'Não foi possível abrir o link de pagamento');
+      Alert.alert(t('common.error'), t('charges.openPaymentLinkError'));
     }
   }, [charge]);
 
@@ -190,7 +190,7 @@ export const ChargeDetailScreen: React.FC<ChargeDetailScreenProps> = ({
     if (!charge?.urls?.pixCopiaECola) return;
 
     Clipboard.setString(charge.urls.pixCopiaECola);
-    Alert.alert('Copiado!', 'Código PIX copiado para a área de transferência');
+    Alert.alert(t('charges.copied'), t('charges.pixCodeCopied'));
   }, [charge]);
 
   // Open bank slip
@@ -200,7 +200,7 @@ export const ChargeDetailScreen: React.FC<ChargeDetailScreenProps> = ({
     try {
       await Linking.openURL(charge.urls.bankSlipUrl);
     } catch (err) {
-      Alert.alert('Erro', 'Não foi possível abrir o boleto');
+      Alert.alert(t('common.error'), t('charges.openBankSlipError'));
     }
   }, [charge]);
 
@@ -209,25 +209,25 @@ export const ChargeDetailScreen: React.FC<ChargeDetailScreenProps> = ({
     if (!charge) return;
 
     Alert.alert(
-      'Registrar Pagamento Manual',
-      `Confirmar recebimento de ${formatCurrency(charge.value, locale)}?\n\nO pagamento será registrado como "Recebido em Dinheiro".`,
+      t('charges.registerManualPayment'),
+      t('charges.confirmManualPaymentMessage', { value: formatCurrency(charge.value, locale) }),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Confirmar Recebimento',
+          text: t('charges.confirmReceipt'),
           onPress: async () => {
             try {
               setActionLoading(true);
               const updatedCharge = await ChargeService.registerManualPayment(charge.id, {
                 paymentDate: new Date().toISOString(),
                 value: charge.value,
-                paymentMethod: 'Dinheiro',
+                paymentMethod: t('charges.cash'),
               });
               setCharge(updatedCharge);
               onChargeUpdated?.(updatedCharge);
-              Alert.alert('Sucesso', 'Pagamento registrado com sucesso!');
+              Alert.alert(t('common.success'), t('charges.paymentRegisteredSuccess'));
             } catch (err) {
-              Alert.alert('Erro', err instanceof Error ? err.message : 'Erro ao registrar pagamento');
+              Alert.alert(t('common.error'), err instanceof Error ? err.message : t('charges.registerPaymentError'));
             } finally {
               setActionLoading(false);
             }
@@ -242,24 +242,24 @@ export const ChargeDetailScreen: React.FC<ChargeDetailScreenProps> = ({
     if (!charge) return;
 
     Alert.alert(
-      'Cancelar Cobrança',
-      'Tem certeza que deseja cancelar esta cobrança? Esta ação não pode ser desfeita.',
+      t('charges.cancelCharge'),
+      t('charges.cancelChargeConfirm'),
       [
-        { text: 'Não', style: 'cancel' },
+        { text: t('common.no'), style: 'cancel' },
         {
-          text: 'Sim, Cancelar',
+          text: t('charges.yesCancel'),
           style: 'destructive',
           onPress: async () => {
             try {
               setActionLoading(true);
               const updatedCharge = await ChargeService.cancelCharge(charge.id, {
-                reason: 'Cancelado pelo usuário',
+                reason: t('charges.cancelledByUser'),
               });
               setCharge(updatedCharge);
               onChargeUpdated?.(updatedCharge);
-              Alert.alert('Sucesso', 'Cobrança cancelada com sucesso!');
+              Alert.alert(t('common.success'), t('charges.chargeCancelledSuccess'));
             } catch (err) {
-              Alert.alert('Erro', err instanceof Error ? err.message : 'Erro ao cancelar cobrança');
+              Alert.alert(t('common.error'), err instanceof Error ? err.message : t('charges.cancelChargeError'));
             } finally {
               setActionLoading(false);
             }
@@ -276,9 +276,9 @@ export const ChargeDetailScreen: React.FC<ChargeDetailScreenProps> = ({
     try {
       setActionLoading(true);
       await ChargeService.resendChargeEmail(charge.id);
-      Alert.alert('Sucesso', 'Email reenviado com sucesso!');
+      Alert.alert(t('common.success'), t('charges.emailResendSuccess'));
     } catch (err) {
-      Alert.alert('Erro', err instanceof Error ? err.message : 'Erro ao reenviar email');
+      Alert.alert(t('common.error'), err instanceof Error ? err.message : t('charges.emailResendError'));
     } finally {
       setActionLoading(false);
     }
@@ -299,14 +299,14 @@ export const ChargeDetailScreen: React.FC<ChargeDetailScreenProps> = ({
       <View style={[styles.container, styles.centerContent, { backgroundColor: colors.background.secondary }]}>
         <Ionicons name="alert-circle-outline" size={64} color={colors.error[400]} />
         <Text variant="body" weight="semibold" align="center" style={{ marginTop: spacing[4] }}>
-          {error || 'Cobrança não encontrada'}
+          {error || t('charges.notFound')}
         </Text>
         <TouchableOpacity
           style={[styles.retryButton, { backgroundColor: colors.primary[600] }]}
           onPress={loadCharge}
         >
           <Text variant="body" weight="semibold" style={{ color: colors.white }}>
-            Tentar novamente
+            {t('common.retry')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -333,7 +333,7 @@ export const ChargeDetailScreen: React.FC<ChargeDetailScreenProps> = ({
       <Card variant="elevated" style={styles.mainCard}>
         <View style={styles.statusRow}>
           <Badge
-            label={overdue ? 'Vencida' : chargeStatusLabels[charge.status]}
+            label={overdue ? t('charges.statuses.overdue') : t(`charges.statuses.${charge.status.toLowerCase()}`)}
             variant={overdue ? 'error' : getStatusBadgeVariant(charge.status)}
           />
           <View style={styles.billingType}>
@@ -363,7 +363,7 @@ export const ChargeDetailScreen: React.FC<ChargeDetailScreenProps> = ({
         <View style={styles.infoRow}>
           <Ionicons name="person-outline" size={20} color={colors.text.tertiary} />
           <View style={styles.infoContent}>
-            <Text variant="caption" color="tertiary">Cliente</Text>
+            <Text variant="caption" color="tertiary">{t('charges.client')}</Text>
             <Text variant="body" weight="medium">{charge.client?.name || 'N/A'}</Text>
             {charge.client?.email && (
               <Text variant="bodySmall" color="secondary">{charge.client.email}</Text>
@@ -380,7 +380,7 @@ export const ChargeDetailScreen: React.FC<ChargeDetailScreenProps> = ({
           />
           <View style={styles.infoContent}>
             <Text variant="caption" color={overdue ? 'error' : 'tertiary'}>
-              Vencimento
+              {t('charges.dueDate')}
             </Text>
             <Text
               variant="body"
@@ -397,7 +397,7 @@ export const ChargeDetailScreen: React.FC<ChargeDetailScreenProps> = ({
           <View style={styles.infoRow}>
             <Ionicons name="checkmark-circle-outline" size={20} color={colors.success[500]} />
             <View style={styles.infoContent}>
-              <Text variant="caption" color="tertiary">Pago em</Text>
+              <Text variant="caption" color="tertiary">{t('charges.paidAt')}</Text>
               <Text variant="body" weight="medium" style={{ color: colors.success[600] }}>
                 {formatDate(charge.paymentDate, locale)}
               </Text>
@@ -409,7 +409,7 @@ export const ChargeDetailScreen: React.FC<ChargeDetailScreenProps> = ({
         <View style={styles.infoRow}>
           <Ionicons name="time-outline" size={20} color={colors.text.tertiary} />
           <View style={styles.infoContent}>
-            <Text variant="caption" color="tertiary">Criada em</Text>
+            <Text variant="caption" color="tertiary">{t('charges.createdAt')}</Text>
             <Text variant="body" weight="medium">{formatDate(charge.createdAt, locale)}</Text>
           </View>
         </View>
@@ -419,7 +419,7 @@ export const ChargeDetailScreen: React.FC<ChargeDetailScreenProps> = ({
       {!paid && (
         <Card variant="elevated" style={styles.actionsCard}>
           <Text variant="h6" weight="semibold" style={{ marginBottom: spacing[3] }}>
-            Ações de Pagamento
+            {t('charges.paymentActions')}
           </Text>
 
           {/* Share Payment Link */}
@@ -430,7 +430,7 @@ export const ChargeDetailScreen: React.FC<ChargeDetailScreenProps> = ({
             >
               <Ionicons name="share-outline" size={22} color={colors.primary[600]} />
               <Text variant="body" weight="medium" style={{ color: colors.primary[600], marginLeft: spacing[3] }}>
-                Compartilhar Link de Pagamento
+                {t('charges.sharePaymentLink')}
               </Text>
             </TouchableOpacity>
           )}
@@ -443,7 +443,7 @@ export const ChargeDetailScreen: React.FC<ChargeDetailScreenProps> = ({
             >
               <Ionicons name="open-outline" size={22} color={colors.text.primary} />
               <Text variant="body" weight="medium" style={{ marginLeft: spacing[3] }}>
-                Abrir Página de Pagamento
+                {t('charges.openPaymentPage')}
               </Text>
             </TouchableOpacity>
           )}
@@ -456,7 +456,7 @@ export const ChargeDetailScreen: React.FC<ChargeDetailScreenProps> = ({
             >
               <Ionicons name="copy-outline" size={22} color={colors.text.primary} />
               <Text variant="body" weight="medium" style={{ marginLeft: spacing[3] }}>
-                Copiar Código PIX
+                {t('charges.copyPixCode')}
               </Text>
             </TouchableOpacity>
           )}
@@ -469,7 +469,7 @@ export const ChargeDetailScreen: React.FC<ChargeDetailScreenProps> = ({
             >
               <Ionicons name="document-text-outline" size={22} color={colors.text.primary} />
               <Text variant="body" weight="medium" style={{ marginLeft: spacing[3] }}>
-                Abrir Boleto
+                {t('charges.openBankSlip')}
               </Text>
             </TouchableOpacity>
           )}
@@ -481,7 +481,7 @@ export const ChargeDetailScreen: React.FC<ChargeDetailScreenProps> = ({
           >
             <Ionicons name="mail-outline" size={22} color={colors.text.primary} />
             <Text variant="body" weight="medium" style={{ marginLeft: spacing[3] }}>
-              Reenviar por Email
+              {t('charges.resendEmail')}
             </Text>
           </TouchableOpacity>
 
@@ -493,7 +493,7 @@ export const ChargeDetailScreen: React.FC<ChargeDetailScreenProps> = ({
             >
               <Ionicons name="cash-outline" size={22} color={colors.success[600]} />
               <Text variant="body" weight="medium" style={{ color: colors.success[600], marginLeft: spacing[3] }}>
-                Registrar Pagamento Manual
+                {t('charges.registerManualPayment')}
               </Text>
             </TouchableOpacity>
           )}
@@ -504,7 +504,7 @@ export const ChargeDetailScreen: React.FC<ChargeDetailScreenProps> = ({
       {canCancel && (
         <Card variant="outlined" style={[styles.dangerCard, { borderColor: colors.error[200] }]}>
           <Text variant="h6" weight="semibold" style={{ marginBottom: spacing[3], color: colors.error[600] }}>
-            Zona de Perigo
+            {t('charges.dangerZone')}
           </Text>
 
           <TouchableOpacity
@@ -513,7 +513,7 @@ export const ChargeDetailScreen: React.FC<ChargeDetailScreenProps> = ({
           >
             <Ionicons name="close-circle-outline" size={22} color={colors.error[600]} />
             <Text variant="body" weight="medium" style={{ color: colors.error[600], marginLeft: spacing[3] }}>
-              Cancelar Cobrança
+              {t('charges.cancelCharge')}
             </Text>
           </TouchableOpacity>
         </Card>
@@ -523,15 +523,15 @@ export const ChargeDetailScreen: React.FC<ChargeDetailScreenProps> = ({
       {(charge.discount || charge.fine || charge.interest) && (
         <Card variant="elevated" style={styles.extrasCard}>
           <Text variant="h6" weight="semibold" style={{ marginBottom: spacing[3] }}>
-            Configurações
+            {t('charges.settings')}
           </Text>
 
           {charge.discount && (
             <View style={styles.extraRow}>
               <Ionicons name="pricetag-outline" size={18} color={colors.success[500]} />
               <Text variant="body" style={{ marginLeft: spacing[2] }}>
-                Desconto: {charge.discount.type === 'PERCENTAGE' ? `${charge.discount.value}%` : formatCurrency(charge.discount.value, locale)}
-                {charge.discount.dueDateLimitDays && ` (até ${charge.discount.dueDateLimitDays} dias antes)`}
+                {t('charges.discountLabel')}: {charge.discount.type === 'PERCENTAGE' ? `${charge.discount.value}%` : formatCurrency(charge.discount.value, locale)}
+                {charge.discount.dueDateLimitDays && ` (${t('charges.upToDaysBefore', { days: charge.discount.dueDateLimitDays })})`}
               </Text>
             </View>
           )}
@@ -540,7 +540,7 @@ export const ChargeDetailScreen: React.FC<ChargeDetailScreenProps> = ({
             <View style={styles.extraRow}>
               <Ionicons name="alert-outline" size={18} color={colors.warning[500]} />
               <Text variant="body" style={{ marginLeft: spacing[2] }}>
-                Multa: {charge.fine.type === 'PERCENTAGE' ? `${charge.fine.value}%` : formatCurrency(charge.fine.value, locale)}
+                {t('charges.fineLabel')}: {charge.fine.type === 'PERCENTAGE' ? `${charge.fine.value}%` : formatCurrency(charge.fine.value, locale)}
               </Text>
             </View>
           )}
@@ -549,7 +549,7 @@ export const ChargeDetailScreen: React.FC<ChargeDetailScreenProps> = ({
             <View style={styles.extraRow}>
               <Ionicons name="trending-up-outline" size={18} color={colors.error[500]} />
               <Text variant="body" style={{ marginLeft: spacing[2] }}>
-                Juros: {charge.interest.value}% ao mês
+                {t('charges.interestLabel')}: {charge.interest.value}% {t('charges.perMonth')}
               </Text>
             </View>
           )}

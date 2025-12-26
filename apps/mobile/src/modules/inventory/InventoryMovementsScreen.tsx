@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { useTranslation } from '../../i18n';
 import { InventoryService } from './InventoryService';
 import { InventoryMovement } from './InventoryRepository';
 import { MovementListItem } from './components';
@@ -33,6 +34,7 @@ interface Props {
 type FilterType = 'all' | 'in' | 'out';
 
 export function InventoryMovementsScreen({ navigation, route }: Props) {
+  const { t } = useTranslation();
   const { itemId, itemName } = route?.params || {};
 
   const [movements, setMovements] = useState<InventoryMovement[]>([]);
@@ -141,7 +143,7 @@ export function InventoryMovementsScreen({ navigation, route }: Props) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color="#6366f1" />
-        <Text style={styles.loadingText}>Carregando histórico...</Text>
+        <Text style={styles.loadingText}>{t('inventory.loadingHistory')}</Text>
       </View>
     );
   }
@@ -158,19 +160,21 @@ export function InventoryMovementsScreen({ navigation, route }: Props) {
         </TouchableOpacity>
         <View style={styles.headerTitle}>
           <Text style={styles.title}>
-            {itemName ? `Histórico - ${itemName}` : 'Movimentações'}
+            {itemName ? t('inventory.historyFor', { name: itemName }) : t('inventory.movements')}
           </Text>
           <Text style={styles.subtitle}>
-            {movements.length} registro{movements.length !== 1 ? 's' : ''}
+            {movements.length === 1
+              ? t('inventory.recordCount', { count: movements.length })
+              : t('inventory.recordCountPlural', { count: movements.length })}
           </Text>
         </View>
       </View>
 
       {/* Filters */}
       <View style={styles.filtersContainer}>
-        <FilterButton type="all" label="Todas" icon="list" />
-        <FilterButton type="in" label="Entradas" icon="add-circle" />
-        <FilterButton type="out" label="Saídas" icon="remove-circle" />
+        <FilterButton type="all" label={t('inventory.filterAll')} icon="list" />
+        <FilterButton type="in" label={t('inventory.filterIn')} icon="add-circle" />
+        <FilterButton type="out" label={t('inventory.filterOut')} icon="remove-circle" />
       </View>
 
       {/* Movements List */}
@@ -197,11 +201,11 @@ export function InventoryMovementsScreen({ navigation, route }: Props) {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="time-outline" size={48} color="#d1d5db" />
-            <Text style={styles.emptyTitle}>Sem movimentações</Text>
+            <Text style={styles.emptyTitle}>{t('inventory.noMovements')}</Text>
             <Text style={styles.emptyText}>
               {filter !== 'all'
-                ? 'Nenhuma movimentação deste tipo'
-                : 'Nenhuma movimentação registrada ainda'}
+                ? t('inventory.noMovementsOfType')
+                : t('inventory.noMovementsYet')}
             </Text>
           </View>
         }

@@ -5,7 +5,7 @@
  * Suporta busca, filtro por status e pull to refresh.
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -23,6 +23,7 @@ import { WorkOrder, WorkOrderStatus } from '../../db/schema';
 import { workOrderService } from './WorkOrderService';
 import { WorkOrderFilter } from './WorkOrderRepository';
 import { ExecutionSessionRepository } from './execution/ExecutionSessionRepository';
+import { useTranslation } from '../../i18n';
 
 // =============================================================================
 // TYPES
@@ -39,36 +40,15 @@ interface WorkOrdersListScreenProps {
 
 const PAGE_SIZE = 20;
 
-const STATUS_FILTERS: { label: string; value: WorkOrderStatus | 'ALL' }[] = [
-  { label: 'Todas', value: 'ALL' },
-  { label: 'Agendadas', value: 'SCHEDULED' },
-  { label: 'Em Andamento', value: 'IN_PROGRESS' },
-  { label: 'Concluídas', value: 'DONE' },
-  { label: 'Canceladas', value: 'CANCELED' },
-];
-
 // =============================================================================
 // HELPERS
 // =============================================================================
 
 function getStatusColor(status: WorkOrderStatus, isPaused?: boolean): string {
   if (status === 'IN_PROGRESS' && isPaused) {
-    return colors.warning[500]; // Cor diferente para pausada (âmbar/laranja)
+    return colors.warning[500];
   }
   return theme.statusColors.workOrder[status] || colors.gray[500];
-}
-
-function getStatusLabel(status: WorkOrderStatus, isPaused?: boolean): string {
-  if (status === 'IN_PROGRESS' && isPaused) {
-    return 'Pausada';
-  }
-  const labels: Record<WorkOrderStatus, string> = {
-    SCHEDULED: 'Agendada',
-    IN_PROGRESS: 'Em Andamento',
-    DONE: 'Concluída',
-    CANCELED: 'Cancelada',
-  };
-  return labels[status];
 }
 
 function formatDate(dateStr: string): string {
@@ -87,11 +67,12 @@ function formatDate(dateStr: string): string {
 const SearchBar: React.FC<{
   value: string;
   onChangeText: (text: string) => void;
-}> = ({ value, onChangeText }) => (
+  placeholder: string;
+}> = ({ value, onChangeText, placeholder }) => (
   <View style={styles.searchContainer}>
     <TextInput
       style={styles.searchInput}
-      placeholder="Buscar OS..."
+      placeholder={placeholder}
       placeholderTextColor={colors.gray[400]}
       value={value}
       onChangeText={onChangeText}
@@ -102,12 +83,13 @@ const SearchBar: React.FC<{
 const StatusFilterBar: React.FC<{
   selectedStatus: WorkOrderStatus | 'ALL';
   onStatusChange: (status: WorkOrderStatus | 'ALL') => void;
-}> = ({ selectedStatus, onStatusChange }) => (
+  statusFilters: { label: string; value: WorkOrderStatus | 'ALL' }[];
+}> = ({ selectedStatus, onStatusChange, statusFilters }) => (
   <View style={styles.filterContainer}>
     <FlatList
       horizontal
       showsHorizontalScrollIndicator={false}
-      data={STATUS_FILTERS}
+      data={statusFilters}
       keyExtractor={(item) => item.value}
       renderItem={({ item }) => (
         <TouchableOpacity
@@ -137,14 +119,16 @@ const WorkOrderListItem: React.FC<{
   workOrder: WorkOrder;
   onPress: () => void;
   isPaused?: boolean;
-}> = ({ workOrder, onPress, isPaused }) => {
+  statusLabel: string;
+  clientNotDefined: string;
+}> = ({ workOrder, onPress, isPaused, statusLabel, clientNotDefined }) => {
   const scheduledDate = workOrder.scheduledDate || workOrder.scheduledStartTime;
   const time = workOrderService.formatScheduledTime(workOrder);
 
   // Determinar variante do badge baseado no status e pausa
   const getBadgeVariant = () => {
     if (workOrder.status === 'IN_PROGRESS' && isPaused) {
-      return 'warning'; // Laranja para pausada
+      return 'warning';
     }
     if (workOrder.status === 'DONE') return 'success';
     if (workOrder.status === 'IN_PROGRESS') return 'warning';
@@ -171,25 +155,25 @@ const WorkOrderListItem: React.FC<{
                 {workOrder.title}
               </Text>
               <Badge
-                label={getStatusLabel(workOrder.status, isPaused)}
+                label={statusLabel}
                 variant={getBadgeVariant()}
                 size="small"
               />
             </View>
 
             <Text variant="bodySmall" color="secondary" numberOfLines={1}>
-              {workOrder.clientName || 'Cliente não definido'}
+              {workOrder.clientName || clientNotDefined}
             </Text>
 
             <View style={styles.listItemFooter}>
               {scheduledDate && (
                 <Text variant="caption" color="tertiary">
-                  📅 {formatDate(scheduledDate)} • {time}
+                  {formatDate(scheduledDate)} - {time}
                 </Text>
               )}
               {workOrder.address && (
                 <Text variant="caption" color="tertiary" numberOfLines={1} style={{ flex: 1 }}>
-                  📍 {workOrder.address}
+                  {workOrder.address}
                 </Text>
               )}
             </View>
@@ -200,16 +184,20 @@ const WorkOrderListItem: React.FC<{
   );
 };
 
-const EmptyState: React.FC<{ hasFilter: boolean }> = ({ hasFilter }) => (
+const EmptyState: React.FC<{
+  hasFilter: boolean;
+  noOrdersFound: string;
+  noOrders: string;
+  adjustFilters: string;
+  ordersWillAppear: string;
+}> = ({ hasFilter, noOrdersFound, noOrders, adjustFilters, ordersWillAppear }) => (
   <View style={styles.emptyState}>
-    <Text variant="h2" style={styles.emptyIcon}>📋</Text>
+    <Text variant="h2" style={styles.emptyIcon}></Text>
     <Text variant="body" weight="semibold" align="center">
-      {hasFilter ? 'Nenhuma OS encontrada' : 'Nenhuma ordem de serviço'}
+      {hasFilter ? noOrdersFound : noOrders}
     </Text>
     <Text variant="bodySmall" color="secondary" align="center">
-      {hasFilter
-        ? 'Tente ajustar os filtros de busca'
-        : 'Suas ordens de serviço aparecerão aqui'}
+      {hasFilter ? adjustFilters : ordersWillAppear}
     </Text>
   </View>
 );
@@ -222,6 +210,7 @@ export const WorkOrdersListScreen: React.FC<WorkOrdersListScreenProps> = ({
   onWorkOrderPress,
   onSync,
 }) => {
+  const { t } = useTranslation();
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -231,6 +220,29 @@ export const WorkOrdersListScreen: React.FC<WorkOrdersListScreenProps> = ({
   const [selectedStatus, setSelectedStatus] = useState<WorkOrderStatus | 'ALL'>('ALL');
   const [offset, setOffset] = useState(0);
   const [pausedWorkOrderIds, setPausedWorkOrderIds] = useState<Set<string>>(new Set());
+
+  // Build status filters with translations
+  const statusFilters = useMemo(() => [
+    { label: t('workOrders.all'), value: 'ALL' as const },
+    { label: t('workOrders.scheduled'), value: 'SCHEDULED' as const },
+    { label: t('workOrders.inProgress'), value: 'IN_PROGRESS' as const },
+    { label: t('workOrders.completed'), value: 'DONE' as const },
+    { label: t('workOrders.cancelled'), value: 'CANCELED' as const },
+  ], [t]);
+
+  // Get status label for a work order
+  const getStatusLabel = useCallback((status: WorkOrderStatus, isPaused?: boolean): string => {
+    if (status === 'IN_PROGRESS' && isPaused) {
+      return t('workOrders.paused');
+    }
+    const labels: Record<WorkOrderStatus, string> = {
+      SCHEDULED: t('workOrders.statusScheduled'),
+      IN_PROGRESS: t('workOrders.statusInProgress'),
+      DONE: t('workOrders.statusCompleted'),
+      CANCELED: t('workOrders.statusCancelled'),
+    };
+    return labels[status];
+  }, [t]);
 
   // Build filter
   const buildFilter = useCallback((): WorkOrderFilter => {
@@ -345,6 +357,8 @@ export const WorkOrdersListScreen: React.FC<WorkOrdersListScreenProps> = ({
       workOrder={item}
       onPress={() => handleWorkOrderPress(item)}
       isPaused={pausedWorkOrderIds.has(item.id)}
+      statusLabel={getStatusLabel(item.status, pausedWorkOrderIds.has(item.id))}
+      clientNotDefined={t('workOrders.clientNotDefined')}
     />
   );
 
@@ -361,10 +375,15 @@ export const WorkOrdersListScreen: React.FC<WorkOrdersListScreenProps> = ({
 
   return (
     <View style={styles.container}>
-      <SearchBar value={searchQuery} onChangeText={setSearchQuery} />
+      <SearchBar
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        placeholder={t('workOrders.searchPlaceholder')}
+      />
       <StatusFilterBar
         selectedStatus={selectedStatus}
         onStatusChange={setSelectedStatus}
+        statusFilters={statusFilters}
       />
 
       {loading ? (
@@ -388,7 +407,15 @@ export const WorkOrdersListScreen: React.FC<WorkOrdersListScreenProps> = ({
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}
           ListFooterComponent={renderFooter}
-          ListEmptyComponent={<EmptyState hasFilter={hasFilter} />}
+          ListEmptyComponent={
+            <EmptyState
+              hasFilter={hasFilter}
+              noOrdersFound={t('workOrders.noOrdersFound')}
+              noOrders={t('workOrders.noOrders')}
+              adjustFilters={t('workOrders.adjustFilters')}
+              ordersWillAppear={t('workOrders.ordersWillAppear')}
+            />
+          }
         />
       )}
     </View>

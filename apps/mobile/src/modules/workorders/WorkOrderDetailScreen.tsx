@@ -25,6 +25,7 @@ import { workOrderService } from './WorkOrderService';
 import { getAllowedNextStatuses, canEditWorkOrder, canDeleteWorkOrder } from './WorkOrderSyncConfig';
 import { ShareService } from '../../services';
 import { SignatureSection } from './components/SignatureSection';
+import { useTranslation } from '../../i18n';
 
 // =============================================================================
 // TYPES
@@ -46,16 +47,6 @@ interface WorkOrderDetailScreenProps {
 
 function getStatusColor(status: WorkOrderStatus): string {
   return theme.statusColors.workOrder[status] || colors.gray[500];
-}
-
-function getStatusLabel(status: WorkOrderStatus): string {
-  const labels: Record<WorkOrderStatus, string> = {
-    SCHEDULED: 'Agendada',
-    IN_PROGRESS: 'Em Andamento',
-    DONE: 'Concluída',
-    CANCELED: 'Cancelada',
-  };
-  return labels[status];
 }
 
 function getStatusBadgeVariant(status: WorkOrderStatus) {
@@ -179,12 +170,24 @@ export const WorkOrderDetailScreen: React.FC<WorkOrderDetailScreenProps> = ({
   onShareWhatsApp,
   onCreateCharge,
 }) => {
+  const { t } = useTranslation();
   const [workOrder, setWorkOrder] = useState(initialWorkOrder);
   const [loading, setLoading] = useState<WorkOrderStatus | 'delete' | 'share' | null>(null);
 
   const allowedNextStatuses = getAllowedNextStatuses(workOrder.status);
   const canEdit = canEditWorkOrder(workOrder.status);
   const canDelete = canDeleteWorkOrder(workOrder.status);
+
+  // Get status label for the work order
+  const getStatusLabel = useCallback((status: WorkOrderStatus): string => {
+    const labels: Record<WorkOrderStatus, string> = {
+      SCHEDULED: t('workOrders.statusScheduled'),
+      IN_PROGRESS: t('workOrders.statusInProgress'),
+      DONE: t('workOrders.statusCompleted'),
+      CANCELED: t('workOrders.statusCancelled'),
+    };
+    return labels[status];
+  }, [t]);
 
   const handleStatusChange = useCallback(async (newStatus: WorkOrderStatus) => {
     try {
@@ -194,44 +197,44 @@ export const WorkOrderDetailScreen: React.FC<WorkOrderDetailScreenProps> = ({
       onStatusChange?.(updated);
     } catch (error: any) {
       Alert.alert(
-        'Erro',
-        error.message || 'Não foi possível atualizar o status',
+        t('common.error'),
+        error.message || t('workOrders.statusUpdateError'),
       );
     } finally {
       setLoading(null);
     }
-  }, [workOrder.id, onStatusChange]);
+  }, [workOrder.id, onStatusChange, t]);
 
   const handleStartWorkOrder = () => {
     Alert.alert(
-      'Iniciar OS',
-      'Deseja iniciar esta ordem de serviço agora?',
+      t('workOrders.startOrder'),
+      t('workOrders.startOrderConfirm'),
       [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Iniciar', onPress: () => handleStatusChange('IN_PROGRESS') },
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('workOrders.start'), onPress: () => handleStatusChange('IN_PROGRESS') },
       ],
     );
   };
 
   const handleCompleteWorkOrder = () => {
     Alert.alert(
-      'Concluir OS',
-      'Deseja marcar esta ordem de serviço como concluída?',
+      t('workOrders.completeOrder'),
+      t('workOrders.completeOrderConfirm'),
       [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Concluir', onPress: () => handleStatusChange('DONE') },
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('workOrders.complete'), onPress: () => handleStatusChange('DONE') },
       ],
     );
   };
 
   const handleCancelWorkOrder = () => {
     Alert.alert(
-      'Cancelar OS',
-      'Tem certeza que deseja cancelar esta ordem de serviço?',
+      t('workOrders.cancelOrder'),
+      t('workOrders.cancelOrderConfirm'),
       [
-        { text: 'Voltar', style: 'cancel' },
+        { text: t('common.back'), style: 'cancel' },
         {
-          text: 'Cancelar OS',
+          text: t('workOrders.cancelOrder'),
           style: 'destructive',
           onPress: () => handleStatusChange('CANCELED'),
         },
@@ -241,12 +244,12 @@ export const WorkOrderDetailScreen: React.FC<WorkOrderDetailScreenProps> = ({
 
   const handleDelete = () => {
     Alert.alert(
-      'Excluir OS',
-      'Tem certeza que deseja excluir esta ordem de serviço? Esta ação não pode ser desfeita.',
+      t('workOrders.deleteOrder'),
+      t('workOrders.deleteConfirm'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Excluir',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -254,7 +257,7 @@ export const WorkOrderDetailScreen: React.FC<WorkOrderDetailScreenProps> = ({
               await workOrderService.deleteWorkOrder(workOrder.id);
               onDelete?.();
             } catch (error: any) {
-              Alert.alert('Erro', error.message || 'Não foi possível excluir');
+              Alert.alert(t('common.error'), error.message || t('workOrders.deleteError'));
             } finally {
               setLoading(null);
             }
@@ -267,8 +270,8 @@ export const WorkOrderDetailScreen: React.FC<WorkOrderDetailScreenProps> = ({
   const handleShareWhatsApp = async () => {
     if (!workOrder.clientPhone) {
       Alert.alert(
-        'Erro',
-        'Cliente não possui telefone cadastrado',
+        t('common.error'),
+        t('workOrders.noClientPhone'),
       );
       return;
     }
@@ -278,14 +281,14 @@ export const WorkOrderDetailScreen: React.FC<WorkOrderDetailScreenProps> = ({
       await ShareService.shareWorkOrderViaWhatsApp(
         workOrder.id,
         workOrder.clientPhone,
-        workOrder.clientName || 'Cliente',
+        workOrder.clientName || t('workOrders.client'),
         workOrder.title,
       );
     } catch (error: any) {
       console.error('Error sharing work order:', error);
       Alert.alert(
-        'Erro',
-        error.message || 'Erro ao compartilhar ordem de serviço',
+        t('common.error'),
+        error.message || t('workOrders.shareError'),
       );
     } finally {
       setLoading(null);
@@ -325,37 +328,37 @@ export const WorkOrderDetailScreen: React.FC<WorkOrderDetailScreenProps> = ({
 
       {/* Client Info */}
       <Card style={styles.card}>
-        <InfoSection title="Cliente">
+        <InfoSection title={t('workOrders.client')}>
           <InfoRow
-            icon="👤"
-            label="Nome"
-            value={workOrder.clientName || 'Não definido'}
+            icon=""
+            label={t('common.name')}
+            value={workOrder.clientName || t('workOrders.notDefined')}
           />
           {workOrder.clientPhone && (
-            <InfoRow icon="📱" label="Telefone" value={workOrder.clientPhone} />
+            <InfoRow icon="" label={t('workOrders.phone')} value={workOrder.clientPhone} />
           )}
         </InfoSection>
       </Card>
 
       {/* Schedule Info */}
       <Card style={styles.card}>
-        <InfoSection title="Agendamento">
+        <InfoSection title={t('workOrders.scheduledDate')}>
           {scheduledDate && (
             <InfoRow
-              icon="📅"
-              label="Data"
+              icon=""
+              label={t('common.date')}
               value={formatDate(scheduledDate)}
             />
           )}
           {workOrder.scheduledStartTime && (
             <InfoRow
-              icon="🕐"
-              label="Horário"
+              icon=""
+              label={t('common.time')}
               value={workOrderService.formatDateRange(workOrder)}
             />
           )}
           {workOrder.address && (
-            <InfoRow icon="📍" label="Endereço" value={workOrder.address} />
+            <InfoRow icon="" label={t('workOrders.address')} value={workOrder.address} />
           )}
         </InfoSection>
       </Card>
@@ -363,18 +366,18 @@ export const WorkOrderDetailScreen: React.FC<WorkOrderDetailScreenProps> = ({
       {/* Execution Info (if started) */}
       {(workOrder.executionStart || workOrder.executionEnd) && (
         <Card style={styles.card}>
-          <InfoSection title="Execução">
+          <InfoSection title={t('workOrders.execution')}>
             {workOrder.executionStart && (
               <InfoRow
-                icon="▶️"
-                label="Iniciado em"
+                icon=""
+                label={t('workOrders.startedAt')}
                 value={formatDateTime(workOrder.executionStart)}
               />
             )}
             {workOrder.executionEnd && (
               <InfoRow
-                icon="✅"
-                label="Concluído em"
+                icon=""
+                label={t('workOrders.completedAt')}
                 value={formatDateTime(workOrder.executionEnd)}
               />
             )}
@@ -385,7 +388,7 @@ export const WorkOrderDetailScreen: React.FC<WorkOrderDetailScreenProps> = ({
       {/* Notes */}
       {workOrder.notes && (
         <Card style={styles.card}>
-          <InfoSection title="Observações">
+          <InfoSection title={t('workOrders.notes')}>
             <Text variant="body">{workOrder.notes}</Text>
           </InfoSection>
         </Card>
@@ -395,7 +398,7 @@ export const WorkOrderDetailScreen: React.FC<WorkOrderDetailScreenProps> = ({
       <Card style={[styles.card, styles.placeholderCard]}>
         <View style={styles.placeholder}>
           <Text variant="body" color="tertiary">
-            📋 Checklist (em breve)
+            {t('workOrders.checklistComingSoon')}
           </Text>
         </View>
       </Card>
@@ -415,7 +418,7 @@ export const WorkOrderDetailScreen: React.FC<WorkOrderDetailScreenProps> = ({
         {workOrder.status === 'SCHEDULED' && allowedNextStatuses.includes('IN_PROGRESS') && (
           <StatusButton
             status="IN_PROGRESS"
-            label="▶️ Iniciar OS"
+            label={t('workOrders.startOrder')}
             onPress={handleStartWorkOrder}
             loading={loading === 'IN_PROGRESS'}
           />
@@ -424,7 +427,7 @@ export const WorkOrderDetailScreen: React.FC<WorkOrderDetailScreenProps> = ({
         {workOrder.status === 'IN_PROGRESS' && allowedNextStatuses.includes('DONE') && (
           <StatusButton
             status="DONE"
-            label="✅ Concluir OS"
+            label={t('workOrders.completeOrder')}
             onPress={handleCompleteWorkOrder}
             loading={loading === 'DONE'}
           />
@@ -441,7 +444,7 @@ export const WorkOrderDetailScreen: React.FC<WorkOrderDetailScreenProps> = ({
               <ActivityIndicator size="small" color={colors.white} />
             ) : (
               <Text variant="body" weight="semibold" style={{ color: colors.white }}>
-                📱 Enviar Relatório via WhatsApp
+                {t('workOrders.shareReport')}
               </Text>
             )}
           </TouchableOpacity>
@@ -453,11 +456,11 @@ export const WorkOrderDetailScreen: React.FC<WorkOrderDetailScreenProps> = ({
             style={[styles.secondaryButton]}
             onPress={() => {
               Alert.alert(
-                'Reabrir OS',
-                'Deseja reabrir esta ordem de serviço?',
+                t('workOrders.reopenOrder'),
+                t('workOrders.reopenConfirm'),
                 [
-                  { text: 'Cancelar', style: 'cancel' },
-                  { text: 'Reabrir', onPress: () => handleStatusChange('IN_PROGRESS') },
+                  { text: t('common.cancel'), style: 'cancel' },
+                  { text: t('workOrders.reopen'), onPress: () => handleStatusChange('IN_PROGRESS') },
                 ],
               );
             }}
@@ -467,7 +470,7 @@ export const WorkOrderDetailScreen: React.FC<WorkOrderDetailScreenProps> = ({
               <ActivityIndicator size="small" color={colors.primary[600]} />
             ) : (
               <Text variant="body" weight="semibold" style={{ color: colors.primary[600] }}>
-                🔄 Reabrir OS
+                {t('workOrders.reopenOrder')}
               </Text>
             )}
           </TouchableOpacity>
@@ -480,7 +483,7 @@ export const WorkOrderDetailScreen: React.FC<WorkOrderDetailScreenProps> = ({
             onPress={() => onCreateCharge(workOrder)}
           >
             <Text variant="body" weight="semibold" style={{ color: colors.white }}>
-              💰 Criar Cobrança
+              {t('workOrders.createCharge')}
             </Text>
           </TouchableOpacity>
         )}
@@ -489,7 +492,7 @@ export const WorkOrderDetailScreen: React.FC<WorkOrderDetailScreenProps> = ({
         {allowedNextStatuses.includes('CANCELED') && (
           <StatusButton
             status="CANCELED"
-            label="❌ Cancelar OS"
+            label={t('workOrders.cancelOrder')}
             onPress={handleCancelWorkOrder}
             loading={loading === 'CANCELED'}
             variant="danger"
@@ -503,7 +506,7 @@ export const WorkOrderDetailScreen: React.FC<WorkOrderDetailScreenProps> = ({
             onPress={() => onEdit(workOrder)}
           >
             <Text variant="body" weight="semibold" style={{ color: colors.primary[600] }}>
-              ✏️ Editar
+              {t('common.edit')}
             </Text>
           </TouchableOpacity>
         )}
@@ -519,7 +522,7 @@ export const WorkOrderDetailScreen: React.FC<WorkOrderDetailScreenProps> = ({
               <ActivityIndicator size="small" color={colors.error[500]} />
             ) : (
               <Text variant="body" weight="semibold" style={{ color: colors.error[500] }}>
-                🗑️ Excluir
+                {t('common.delete')}
               </Text>
             )}
           </TouchableOpacity>

@@ -86,15 +86,16 @@ const BillingTypeSelector: React.FC<{
   onSelect: (type: BillingType) => void;
   colors: ThemeColors;
 }> = ({ selected, onSelect, colors }) => {
-  const types: { type: BillingType; icon: string; label: string }[] = [
-    { type: 'PIX', icon: 'qr-code-outline', label: 'PIX' },
-    { type: 'BOLETO', icon: 'document-text-outline', label: 'Boleto' },
-    { type: 'CREDIT_CARD', icon: 'card-outline', label: 'Cartão' },
+  const { t } = useTranslation();
+  const types: { type: BillingType; icon: string; labelKey: string }[] = [
+    { type: 'PIX', icon: 'qr-code-outline', labelKey: 'charges.billingTypes.pix' },
+    { type: 'BOLETO', icon: 'document-text-outline', labelKey: 'charges.billingTypes.boleto' },
+    { type: 'CREDIT_CARD', icon: 'card-outline', labelKey: 'charges.billingTypes.creditCard' },
   ];
 
   return (
     <View style={styles.billingTypeContainer}>
-      {types.map(({ type, icon, label }) => (
+      {types.map(({ type, icon, labelKey }) => (
         <TouchableOpacity
           key={type}
           style={[
@@ -114,7 +115,7 @@ const BillingTypeSelector: React.FC<{
             weight={selected === type ? 'semibold' : 'normal'}
             style={{ marginTop: spacing[1], color: selected === type ? colors.primary[600] : colors.text.secondary }}
           >
-            {label}
+            {t(labelKey)}
           </Text>
         </TouchableOpacity>
       ))}
@@ -127,7 +128,8 @@ const ClientSelector: React.FC<{
   onSelectClient: () => void;
   colors: ThemeColors;
   disabled?: boolean;
-}> = ({ selectedClient, onSelectClient, colors, disabled }) => (
+  placeholder: string;
+}> = ({ selectedClient, onSelectClient, colors, disabled, placeholder }) => (
   <TouchableOpacity
     style={[
       styles.clientSelector,
@@ -147,7 +149,7 @@ const ClientSelector: React.FC<{
       </View>
     ) : (
       <Text variant="body" color="secondary" style={{ marginLeft: spacing[3] }}>
-        Buscar cliente por nome ou telefone...
+        {placeholder}
       </Text>
     )}
     {!disabled && (
@@ -266,7 +268,7 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
   // Handle create quick client
   const handleCreateQuickClient = useCallback(async () => {
     if (!newClientName.trim() || !newClientPhone.trim()) {
-      Alert.alert('Erro', 'Nome e telefone são obrigatórios');
+      Alert.alert(t('common.error'), t('charges.nameAndPhoneRequired'));
       return;
     }
 
@@ -286,7 +288,7 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
       setNewClientPhone('');
       setShowNewClientForm(false);
     } catch (err) {
-      Alert.alert('Erro', err instanceof Error ? err.message : 'Erro ao criar cliente');
+      Alert.alert(t('common.error'), err instanceof Error ? err.message : t('charges.createClientError'));
     } finally {
       setCreatingClient(false);
     }
@@ -309,21 +311,21 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
   // Validate form
   const validateForm = (): string | null => {
     if (!selectedClient) {
-      return 'Selecione um cliente';
+      return t('charges.selectClientError');
     }
 
     const numValue = parseValue(value);
     if (numValue <= 0) {
-      return 'Informe um valor válido';
+      return t('charges.invalidValueError');
     }
 
     if (!dueDate) {
-      return 'Informe a data de vencimento';
+      return t('charges.dueDateRequiredError');
     }
 
     const dueDateObj = new Date(dueDate + 'T00:00:00');
     if (dueDateObj < new Date()) {
-      return 'A data de vencimento deve ser futura';
+      return t('charges.futureDueDateError');
     }
 
     return null;
@@ -338,7 +340,7 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
 
     const error = validateForm();
     if (error) {
-      Alert.alert('Erro', error);
+      Alert.alert(t('common.error'), error);
       return;
     }
 
@@ -383,8 +385,8 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
       setLoading(true);
       const charge = await ChargeService.createCharge(data);
       Alert.alert(
-        'Sucesso!',
-        `Cobrança de ${formatCurrency(charge.value, locale)} criada com sucesso!`,
+        t('common.success'),
+        t('charges.chargeCreatedSuccess', { value: formatCurrency(charge.value, locale) }),
         [
           {
             text: 'OK',
@@ -393,7 +395,7 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
         ]
       );
     } catch (err) {
-      Alert.alert('Erro', err instanceof Error ? err.message : 'Erro ao criar cobrança');
+      Alert.alert(t('common.error'), err instanceof Error ? err.message : t('charges.createChargeError'));
     } finally {
       setLoading(false);
     }
@@ -415,7 +417,7 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
               styles.searchInput,
               { color: colors.text.primary, backgroundColor: colors.gray[100] }
             ]}
-            placeholder="Buscar cliente..."
+            placeholder={t('charges.searchClient')}
             placeholderTextColor={colors.text.tertiary}
             value={clientSearchQuery}
             onChangeText={setClientSearchQuery}
@@ -426,11 +428,11 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
         {showNewClientForm ? (
           <View style={[styles.newClientForm, { backgroundColor: colors.background.primary }]}>
             <Text variant="h6" weight="semibold" style={{ marginBottom: spacing[4] }}>
-              Criar novo cliente
+              {t('charges.createNewClient')}
             </Text>
             <TextInput
               style={[styles.newClientInput, { borderColor: colors.border.light, color: colors.text.primary, backgroundColor: colors.gray[100] }]}
-              placeholder="Nome do cliente *"
+              placeholder={t('charges.clientNamePlaceholder')}
               placeholderTextColor={colors.text.tertiary}
               value={newClientName}
               onChangeText={setNewClientName}
@@ -438,7 +440,7 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
             />
             <TextInput
               style={[styles.newClientInput, { borderColor: colors.border.light, color: colors.text.primary, backgroundColor: colors.gray[100] }]}
-              placeholder="Telefone *"
+              placeholder={t('charges.phonePlaceholder')}
               placeholderTextColor={colors.text.tertiary}
               value={newClientPhone}
               onChangeText={setNewClientPhone}
@@ -449,7 +451,7 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
                 style={styles.cancelNewClientButton}
                 onPress={() => { setShowNewClientForm(false); setNewClientName(''); setNewClientPhone(''); }}
               >
-                <Text variant="body" color="secondary">Cancelar</Text>
+                <Text variant="body" color="secondary">{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.createNewClientButton, { backgroundColor: colors.primary[600] }, creatingClient && { opacity: 0.7 }]}
@@ -459,7 +461,7 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
                 {creatingClient ? (
                   <ActivityIndicator size="small" color={colors.white} />
                 ) : (
-                  <Text variant="body" weight="semibold" style={{ color: colors.white }}>Criar</Text>
+                  <Text variant="body" weight="semibold" style={{ color: colors.white }}>{t('common.create')}</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -473,7 +475,7 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
             >
               <Ionicons name="add-circle-outline" size={24} color={colors.primary[600]} />
               <Text variant="body" weight="semibold" style={{ color: colors.primary[600], marginLeft: spacing[2] }}>
-                Criar novo cliente
+                {t('charges.createNewClient')}
               </Text>
             </TouchableOpacity>
 
@@ -482,7 +484,7 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
               <View style={styles.searchLoading}>
                 <ActivityIndicator size="small" color={colors.primary[500]} />
                 <Text variant="caption" color="secondary" style={{ marginTop: spacing[2] }}>
-                  Carregando clientes...
+                  {t('charges.loadingClients')}
                 </Text>
               </View>
             ) : (
@@ -513,13 +515,13 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
                     <Ionicons name="people-outline" size={48} color={colors.text.tertiary} style={{ marginBottom: spacing[2] }} />
                     <Text variant="body" color="secondary">
                       {clientSearchQuery.length >= 2
-                        ? 'Nenhum cliente encontrado'
-                        : 'Nenhum cliente cadastrado'}
+                        ? t('charges.noClientFound')
+                        : t('charges.noClientsRegistered')}
                     </Text>
                     <Text variant="caption" color="tertiary" style={{ marginTop: spacing[1] }}>
                       {clientSearchQuery.length >= 2
-                        ? 'Tente outra busca ou crie um novo cliente'
-                        : 'Crie seu primeiro cliente'}
+                        ? t('charges.tryAnotherSearchOrCreate')
+                        : t('charges.createFirstClient')}
                     </Text>
                   </View>
                 )}
@@ -546,7 +548,7 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
           <View style={styles.sectionHeader}>
             <Ionicons name="person-outline" size={20} color={colors.text.secondary} />
             <Text variant="h6" weight="semibold" style={{ marginLeft: spacing[2] }}>
-              Cliente
+              {t('charges.client')}
             </Text>
           </View>
           <ClientSelector
@@ -554,6 +556,7 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
             onSelectClient={() => setShowClientSearch(true)}
             colors={colors}
             disabled={!!preSelectedClientId}
+            placeholder={t('charges.searchClientPlaceholder')}
           />
         </Card>
 
@@ -562,14 +565,14 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
           <View style={styles.sectionHeader}>
             <Ionicons name="cash-outline" size={20} color={colors.text.secondary} />
             <Text variant="h6" weight="semibold" style={{ marginLeft: spacing[2] }}>
-              Valor e Vencimento
+              {t('charges.valueAndDueDate')}
             </Text>
           </View>
 
           <View style={styles.row}>
             <View style={styles.inputContainer}>
               <Text variant="caption" color="secondary" style={{ marginBottom: spacing[1] }}>
-                Valor *
+                {t('charges.value')} *
               </Text>
               <View style={[styles.valueInput, { borderColor: colors.border.light, backgroundColor: colors.gray[100] }]}>
                 <Text variant="body" color="secondary">R$</Text>
@@ -586,7 +589,7 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
 
             <View style={[styles.inputContainer, { marginLeft: spacing[4] }]}>
               <Text variant="caption" color="secondary" style={{ marginBottom: spacing[1] }}>
-                Vencimento *
+                {t('charges.dueDate')} *
               </Text>
               <TextInput
                 style={[
@@ -607,7 +610,7 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
           <View style={styles.sectionHeader}>
             <Ionicons name="card-outline" size={20} color={colors.text.secondary} />
             <Text variant="h6" weight="semibold" style={{ marginLeft: spacing[2] }}>
-              Forma de Pagamento
+              {t('charges.paymentMethod')}
             </Text>
           </View>
           <BillingTypeSelector
@@ -622,7 +625,7 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
           <View style={styles.sectionHeader}>
             <Ionicons name="document-text-outline" size={20} color={colors.text.secondary} />
             <Text variant="h6" weight="semibold" style={{ marginLeft: spacing[2] }}>
-              Descrição
+              {t('charges.description')}
             </Text>
           </View>
           <TextInput
@@ -632,7 +635,7 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
             ]}
             value={description}
             onChangeText={setDescription}
-            placeholder="Descrição da cobrança (aparecerá no boleto/fatura)..."
+            placeholder={t('charges.descriptionPlaceholder')}
             placeholderTextColor={colors.text.tertiary}
             multiline
             numberOfLines={3}
@@ -645,7 +648,7 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
           onPress={() => setShowAdvanced(!showAdvanced)}
         >
           <Text variant="body" weight="medium" style={{ color: colors.primary[600] }}>
-            {showAdvanced ? 'Ocultar opções avançadas' : 'Mostrar opções avançadas'}
+            {showAdvanced ? t('charges.hideAdvancedOptions') : t('charges.showAdvancedOptions')}
           </Text>
           <Ionicons
             name={showAdvanced ? 'chevron-up' : 'chevron-down'}
@@ -658,12 +661,12 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
         {showAdvanced && (
           <Card variant="outlined" style={styles.section}>
             <Text variant="h6" weight="semibold" style={{ marginBottom: spacing[3] }}>
-              Desconto, Multa e Juros
+              {t('charges.discountFineInterest')}
             </Text>
 
             {/* Discount */}
             <View style={styles.advancedRow}>
-              <Text variant="bodySmall" color="secondary">Desconto para pagamento antecipado</Text>
+              <Text variant="bodySmall" color="secondary">{t('charges.earlyPaymentDiscount')}</Text>
               <View style={styles.advancedInputs}>
                 <TextInput
                   style={[styles.advancedInput, { borderColor: colors.border.light, color: colors.text.primary }]}
@@ -696,7 +699,7 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
 
             {discountValue && (
               <View style={styles.advancedRow}>
-                <Text variant="bodySmall" color="secondary">Até quantos dias antes do vencimento</Text>
+                <Text variant="bodySmall" color="secondary">{t('charges.daysBeforeDueDate')}</Text>
                 <TextInput
                   style={[styles.advancedInput, { borderColor: colors.border.light, color: colors.text.primary }]}
                   value={discountDays}
@@ -712,7 +715,7 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
 
             {/* Fine */}
             <View style={styles.advancedRow}>
-              <Text variant="bodySmall" color="secondary">Multa por atraso</Text>
+              <Text variant="bodySmall" color="secondary">{t('charges.lateFine')}</Text>
               <View style={styles.advancedInputs}>
                 <TextInput
                   style={[styles.advancedInput, { borderColor: colors.border.light, color: colors.text.primary }]}
@@ -747,7 +750,7 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
 
             {/* Interest */}
             <View style={styles.advancedRow}>
-              <Text variant="bodySmall" color="secondary">Juros ao mês (%)</Text>
+              <Text variant="bodySmall" color="secondary">{t('charges.monthlyInterest')}</Text>
               <TextInput
                 style={[styles.advancedInput, { borderColor: colors.border.light, color: colors.text.primary }]}
                 value={interestValue}
@@ -767,8 +770,8 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
               <Ionicons name="link-outline" size={18} color={colors.primary[500]} />
               <Text variant="bodySmall" color="secondary" style={{ marginLeft: spacing[2] }}>
                 {preSelectedQuoteId
-                  ? 'Vinculada ao orçamento'
-                  : 'Vinculada à ordem de serviço'}
+                  ? t('charges.linkedToQuote')
+                  : t('charges.linkedToWorkOrder')}
               </Text>
             </View>
           </Card>
@@ -781,7 +784,7 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
           style={styles.cancelButton}
           onPress={onCancel}
         >
-          <Text variant="body" weight="medium" color="secondary">Cancelar</Text>
+          <Text variant="body" weight="medium" color="secondary">{t('common.cancel')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -799,7 +802,7 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
             <>
               <Ionicons name="checkmark" size={20} color={colors.white} />
               <Text variant="body" weight="semibold" style={{ color: colors.white, marginLeft: spacing[2] }}>
-                Criar Cobrança
+                {t('charges.createCharge')}
               </Text>
             </>
           )}

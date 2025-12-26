@@ -24,6 +24,7 @@ import { Text, Avatar, Badge, Divider } from '../design-system';
 import { useColors } from '../design-system/ThemeProvider';
 import { useAuth } from '../services';
 import { spacing, borderRadius } from '../design-system/tokens';
+import { useTranslation } from '../i18n';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -38,13 +39,13 @@ interface MenuItem {
   id: string;
   icon: IconName;
   activeIcon: IconName;
-  label: string;
+  labelKey: string;
   route: string;
   badge?: number;
 }
 
 interface MenuSection {
-  title?: string;
+  titleKey?: string;
   items: MenuItem[];
 }
 
@@ -59,91 +60,91 @@ interface DrawerMenuProps {
 
 const MENU_SECTIONS: MenuSection[] = [
   {
-    title: 'Principal',
+    titleKey: 'menu.main',
     items: [
       {
         id: 'home',
         icon: 'home-outline',
         activeIcon: 'home',
-        label: 'Início',
+        labelKey: 'navigation.home',
         route: '/(main)',
       },
       {
         id: 'agenda',
         icon: 'calendar-outline',
         activeIcon: 'calendar',
-        label: 'Agenda',
+        labelKey: 'navigation.schedule',
         route: '/(main)/agenda',
       },
       {
         id: 'os',
         icon: 'clipboard-outline',
         activeIcon: 'clipboard',
-        label: 'Ordens de Serviço',
+        labelKey: 'navigation.workOrders',
         route: '/(main)/os',
       },
       {
         id: 'clientes',
         icon: 'people-outline',
         activeIcon: 'people',
-        label: 'Clientes',
+        labelKey: 'navigation.clients',
         route: '/(main)/clientes',
       },
     ],
   },
   {
-    title: 'Financeiro',
+    titleKey: 'menu.financial',
     items: [
       {
         id: 'orcamentos',
         icon: 'document-text-outline',
         activeIcon: 'document-text',
-        label: 'Orçamentos',
+        labelKey: 'navigation.quotes',
         route: '/orcamentos',
       },
       {
         id: 'cobrancas',
         icon: 'cash-outline',
         activeIcon: 'cash',
-        label: 'Cobranças',
+        labelKey: 'navigation.charges',
         route: '/cobrancas',
       },
       {
         id: 'despesas',
         icon: 'wallet-outline',
         activeIcon: 'wallet',
-        label: 'Despesas',
+        labelKey: 'menu.expenses',
         route: '/despesas',
       },
     ],
   },
   {
-    title: 'Catálogo',
+    titleKey: 'menu.catalogSection',
     items: [
       {
         id: 'catalogo',
         icon: 'cube-outline',
         activeIcon: 'cube',
-        label: 'Catálogo',
+        labelKey: 'navigation.catalog',
         route: '/catalogo',
       },
     ],
   },
   {
-    title: 'Outros',
+    titleKey: 'menu.other',
     items: [
       {
         id: 'relatorios',
         icon: 'bar-chart-outline',
         activeIcon: 'bar-chart',
-        label: 'Relatórios',
+        labelKey: 'navigation.reports',
         route: '/relatorios',
       },
       {
         id: 'ajuda',
         icon: 'help-circle-outline',
         activeIcon: 'help-circle',
-        label: 'Ajuda',
+        labelKey: 'menu.help',
         route: '/ajuda',
       },
     ],
@@ -158,9 +159,10 @@ interface MenuItemComponentProps {
   item: MenuItem;
   isActive: boolean;
   onPress: () => void;
+  t: (key: string) => string;
 }
 
-const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, isActive, onPress }) => {
+const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, isActive, onPress, t }) => {
   const colors = useColors();
 
   return (
@@ -192,7 +194,7 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, isActive, o
           { color: isActive ? colors.primary[700] : colors.text.primary },
         ]}
       >
-        {item.label}
+        {t(item.labelKey)}
       </Text>
       {item.badge && item.badge > 0 && (
         <Badge variant="error" size="sm">
@@ -216,6 +218,7 @@ export const DrawerMenu: React.FC<DrawerMenuProps> = ({ isOpen, onClose }) => {
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
 
   const slideAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -250,13 +253,14 @@ export const DrawerMenu: React.FC<DrawerMenuProps> = ({ isOpen, onClose }) => {
     }
   }, [isOpen, slideAnim, fadeAnim]);
 
-  const handleComingSoon = useCallback((feature: string) => {
+  const handleComingSoon = useCallback((featureKey: string) => {
+    const featureName = t(featureKey);
     Alert.alert(
-      'Em breve',
-      `A funcionalidade "${feature}" estará disponível em breve.`,
-      [{ text: 'OK' }]
+      t('common.soon'),
+      t('menu.comingSoonMessage', { feature: featureName }),
+      [{ text: t('common.confirm') }]
     );
-  }, []);
+  }, [t]);
 
   const handleMenuPress = useCallback(
     (item: MenuItem) => {
@@ -266,7 +270,7 @@ export const DrawerMenu: React.FC<DrawerMenuProps> = ({ isOpen, onClose }) => {
       const comingSoonRoutes = ['/relatorios', '/ajuda'];
 
       if (comingSoonRoutes.includes(item.route)) {
-        setTimeout(() => handleComingSoon(item.label), 300);
+        setTimeout(() => handleComingSoon(item.labelKey), 300);
         return;
       }
 
@@ -280,18 +284,18 @@ export const DrawerMenu: React.FC<DrawerMenuProps> = ({ isOpen, onClose }) => {
   const handleLogout = useCallback(() => {
     onClose();
     Alert.alert(
-      'Sair',
-      'Deseja realmente sair do aplicativo?',
+      t('settings.logout'),
+      t('settings.logoutConfirm'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Sair',
+          text: t('settings.logout'),
           style: 'destructive',
           onPress: () => logout(),
         },
       ]
     );
-  }, [onClose, logout]);
+  }, [onClose, logout, t]);
 
   const handleEditProfile = useCallback(() => {
     onClose();
@@ -355,7 +359,7 @@ export const DrawerMenu: React.FC<DrawerMenuProps> = ({ isOpen, onClose }) => {
             <Avatar name={user?.name} src={user?.avatarUrl} size="lg" />
             <View style={styles.profileInfo}>
               <Text variant="h5" numberOfLines={1}>
-                {user?.name || 'Usuário'}
+                {user?.name || t('menu.user')}
               </Text>
               <Text variant="caption" color="secondary" numberOfLines={1}>
                 {user?.email}
@@ -372,15 +376,15 @@ export const DrawerMenu: React.FC<DrawerMenuProps> = ({ isOpen, onClose }) => {
           showsVerticalScrollIndicator={false}
         >
           {MENU_SECTIONS.map((section, sectionIndex) => (
-            <View key={section.title || sectionIndex} style={styles.section}>
-              {section.title && (
+            <View key={section.titleKey || sectionIndex} style={styles.section}>
+              {section.titleKey && (
                 <Text
                   variant="caption"
                   weight="semibold"
                   color="tertiary"
                   style={styles.sectionTitle}
                 >
-                  {section.title.toUpperCase()}
+                  {t(section.titleKey).toUpperCase()}
                 </Text>
               )}
               {section.items.map((item) => (
@@ -389,6 +393,7 @@ export const DrawerMenu: React.FC<DrawerMenuProps> = ({ isOpen, onClose }) => {
                   item={item}
                   isActive={isRouteActive(item.route)}
                   onPress={() => handleMenuPress(item)}
+                  t={t}
                 />
               ))}
               {sectionIndex < MENU_SECTIONS.length - 1 && (
@@ -406,11 +411,11 @@ export const DrawerMenu: React.FC<DrawerMenuProps> = ({ isOpen, onClose }) => {
           >
             <Ionicons name="log-out-outline" size={22} color={colors.error[600]} />
             <Text variant="body" weight="medium" style={{ color: colors.error[600], marginLeft: spacing[3] }}>
-              Sair da conta
+              {t('menu.logoutAccount')}
             </Text>
           </TouchableOpacity>
           <Text variant="caption" color="tertiary" align="center" style={styles.version}>
-            Auvo Mobile v1.0.0
+            {t('menu.appVersion', { version: '1.0.0' })}
           </Text>
         </View>
       </Animated.View>

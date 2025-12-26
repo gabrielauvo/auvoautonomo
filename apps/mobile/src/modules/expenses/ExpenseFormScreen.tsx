@@ -112,7 +112,8 @@ const OptionPicker: React.FC<{
   onClose: () => void;
   colors: ThemeColors;
   allowEmpty?: boolean;
-}> = ({ title, options, selectedValue, onSelect, onClose, colors, allowEmpty }) => (
+  emptyLabel?: string;
+}> = ({ title, options, selectedValue, onSelect, onClose, colors, allowEmpty, emptyLabel }) => (
   <View style={[styles.pickerOverlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
     <View style={[styles.pickerContainer, { backgroundColor: colors.background.primary }]}>
       <View style={styles.pickerHeader}>
@@ -140,7 +141,7 @@ const OptionPicker: React.FC<{
               variant="body"
               style={{ color: selectedValue === '' ? colors.primary[600] : colors.text.secondary }}
             >
-              Nenhum
+              {emptyLabel || 'None'}
             </Text>
           </TouchableOpacity>
         )}
@@ -183,7 +184,7 @@ export const ExpenseFormScreen: React.FC<ExpenseFormScreenProps> = ({
   onSave,
   onCancel,
 }) => {
-  const { locale } = useTranslation();
+  const { t, locale } = useTranslation();
   const colors = useColors();
   const isEditing = !!expense;
 
@@ -241,15 +242,15 @@ export const ExpenseFormScreen: React.FC<ExpenseFormScreenProps> = ({
     const newErrors: Partial<Record<keyof FormData, string>> = {};
 
     if (!formData.description.trim()) {
-      newErrors.description = 'Descrição é obrigatória';
+      newErrors.description = t('expenses.descriptionRequired');
     }
 
     if (!formData.amount || parseFloat(formData.amount) <= 0) {
-      newErrors.amount = 'Valor deve ser maior que zero';
+      newErrors.amount = t('expenses.amountRequired');
     }
 
     if (!formData.dueDate) {
-      newErrors.dueDate = 'Data de vencimento é obrigatória';
+      newErrors.dueDate = t('expenses.dueDateRequired');
     }
 
     setErrors(newErrors);
@@ -285,11 +286,11 @@ export const ExpenseFormScreen: React.FC<ExpenseFormScreenProps> = ({
         savedExpense = await ExpenseService.createExpense(dto as CreateExpenseDto);
       }
 
-      Alert.alert('Sucesso', isEditing ? 'Despesa atualizada!' : 'Despesa criada!', [
+      Alert.alert(t('expenses.success'), isEditing ? t('expenses.expenseUpdated') : t('expenses.expenseCreated'), [
         { text: 'OK', onPress: () => onSave?.(savedExpense) },
       ]);
     } catch (err) {
-      Alert.alert('Erro', err instanceof Error ? err.message : 'Erro ao salvar despesa');
+      Alert.alert(t('expenses.error'), err instanceof Error ? err.message : t('expenses.saveError'));
     } finally {
       setSaving(false);
     }
@@ -335,14 +336,14 @@ export const ExpenseFormScreen: React.FC<ExpenseFormScreenProps> = ({
             {/* Description */}
             <View style={styles.inputGroup}>
               <Text variant="caption" color="secondary" style={styles.inputLabel}>
-                Descrição *
+                {t('expenses.description')} *
               </Text>
               <TextInput
                 style={[
                   styles.input,
                   { backgroundColor: colors.gray[100], color: colors.text.primary, borderColor: errors.description ? colors.error[500] : colors.border.light },
                 ]}
-                placeholder="Ex: Compra de materiais"
+                placeholder={t('expenses.descriptionPlaceholder')}
                 placeholderTextColor={colors.text.tertiary}
                 value={formData.description}
                 onChangeText={(value) => handleChange('description', value)}
@@ -357,14 +358,14 @@ export const ExpenseFormScreen: React.FC<ExpenseFormScreenProps> = ({
             {/* Amount */}
             <View style={styles.inputGroup}>
               <Text variant="caption" color="secondary" style={styles.inputLabel}>
-                Valor *
+                {t('expenses.amount')} *
               </Text>
               <TextInput
                 style={[
                   styles.input,
                   { backgroundColor: colors.gray[100], color: colors.text.primary, borderColor: errors.amount ? colors.error[500] : colors.border.light },
                 ]}
-                placeholder="0,00"
+                placeholder={t('expenses.amountPlaceholder')}
                 placeholderTextColor={colors.text.tertiary}
                 value={formData.amount}
                 onChangeText={(value) => handleChange('amount', value.replace(',', '.'))}
@@ -380,14 +381,14 @@ export const ExpenseFormScreen: React.FC<ExpenseFormScreenProps> = ({
             {/* Due Date */}
             <View style={styles.inputGroup}>
               <Text variant="caption" color="secondary" style={styles.inputLabel}>
-                Data de Vencimento *
+                {t('expenses.dueDate')} *
               </Text>
               <TextInput
                 style={[
                   styles.input,
                   { backgroundColor: colors.gray[100], color: colors.text.primary, borderColor: errors.dueDate ? colors.error[500] : colors.border.light },
                 ]}
-                placeholder="AAAA-MM-DD"
+                placeholder={t('expenses.dueDatePlaceholder')}
                 placeholderTextColor={colors.text.tertiary}
                 value={formData.dueDate}
                 onChangeText={(value) => handleChange('dueDate', value)}
@@ -401,36 +402,36 @@ export const ExpenseFormScreen: React.FC<ExpenseFormScreenProps> = ({
 
             {/* Status */}
             <SelectButton
-              label="Status"
+              label={t('expenses.status')}
               value={expenseStatusLabels[formData.status]}
-              placeholder="Selecione o status"
+              placeholder={t('expenses.selectStatus')}
               onPress={() => setShowPicker('status')}
               colors={colors}
             />
 
             {/* Payment Method */}
             <SelectButton
-              label="Forma de Pagamento"
+              label={t('expenses.paymentMethod')}
               value={formData.paymentMethod ? paymentMethodLabels[formData.paymentMethod] : undefined}
-              placeholder="Selecione (opcional)"
+              placeholder={t('expenses.selectPaymentMethod')}
               onPress={() => setShowPicker('paymentMethod')}
               colors={colors}
             />
 
             {/* Supplier */}
             <SelectButton
-              label="Fornecedor"
+              label={t('expenses.supplier')}
               value={getSelectedSupplierName()}
-              placeholder="Selecione (opcional)"
+              placeholder={t('expenses.selectPaymentMethod')}
               onPress={() => setShowPicker('supplier')}
               colors={colors}
             />
 
             {/* Category */}
             <SelectButton
-              label="Categoria"
+              label={t('expenses.category')}
               value={getSelectedCategoryName()}
-              placeholder="Selecione (opcional)"
+              placeholder={t('expenses.selectPaymentMethod')}
               onPress={() => setShowPicker('category')}
               colors={colors}
             />
@@ -438,7 +439,7 @@ export const ExpenseFormScreen: React.FC<ExpenseFormScreenProps> = ({
             {/* Notes */}
             <View style={styles.inputGroup}>
               <Text variant="caption" color="secondary" style={styles.inputLabel}>
-                Observações
+                {t('expenses.notes')}
               </Text>
               <TextInput
                 style={[
@@ -446,7 +447,7 @@ export const ExpenseFormScreen: React.FC<ExpenseFormScreenProps> = ({
                   styles.textArea,
                   { backgroundColor: colors.gray[100], color: colors.text.primary, borderColor: colors.border.light },
                 ]}
-                placeholder="Observações adicionais (opcional)"
+                placeholder={t('expenses.notesPlaceholder')}
                 placeholderTextColor={colors.text.tertiary}
                 value={formData.notes}
                 onChangeText={(value) => handleChange('notes', value)}
@@ -464,7 +465,7 @@ export const ExpenseFormScreen: React.FC<ExpenseFormScreenProps> = ({
               onPress={onCancel}
               style={{ flex: 1, marginRight: spacing[2] }}
             >
-              Cancelar
+              {t('expenses.cancel')}
             </Button>
             <Button
               variant="primary"
@@ -472,7 +473,7 @@ export const ExpenseFormScreen: React.FC<ExpenseFormScreenProps> = ({
               loading={saving}
               style={{ flex: 1, marginLeft: spacing[2] }}
             >
-              {isEditing ? 'Salvar' : 'Criar Despesa'}
+              {isEditing ? t('expenses.save') : t('expenses.createExpense')}
             </Button>
           </View>
         </ScrollView>
@@ -480,31 +481,33 @@ export const ExpenseFormScreen: React.FC<ExpenseFormScreenProps> = ({
         {/* Pickers */}
         {showPicker === 'supplier' && (
           <OptionPicker
-            title="Selecionar Fornecedor"
+            title={t('expenses.selectSupplier')}
             options={suppliers.map((s) => ({ label: s.name, value: s.id }))}
             selectedValue={formData.supplierId}
             onSelect={(value) => handleChange('supplierId', value)}
             onClose={() => setShowPicker(null)}
             colors={colors}
             allowEmpty
+            emptyLabel={t('expenses.none')}
           />
         )}
 
         {showPicker === 'category' && (
           <OptionPicker
-            title="Selecionar Categoria"
+            title={t('expenses.selectCategory')}
             options={categories.map((c) => ({ label: c.name, value: c.id }))}
             selectedValue={formData.categoryId}
             onSelect={(value) => handleChange('categoryId', value)}
             onClose={() => setShowPicker(null)}
             colors={colors}
             allowEmpty
+            emptyLabel={t('expenses.none')}
           />
         )}
 
         {showPicker === 'status' && (
           <OptionPicker
-            title="Selecionar Status"
+            title={t('expenses.selectStatus')}
             options={statusOptions}
             selectedValue={formData.status}
             onSelect={(value) => handleChange('status', value)}
@@ -515,13 +518,14 @@ export const ExpenseFormScreen: React.FC<ExpenseFormScreenProps> = ({
 
         {showPicker === 'paymentMethod' && (
           <OptionPicker
-            title="Forma de Pagamento"
+            title={t('expenses.paymentMethod')}
             options={paymentMethodOptions}
             selectedValue={formData.paymentMethod}
             onSelect={(value) => handleChange('paymentMethod', value)}
             onClose={() => setShowPicker(null)}
             colors={colors}
             allowEmpty
+            emptyLabel={t('expenses.none')}
           />
         )}
       </View>

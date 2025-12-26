@@ -139,31 +139,32 @@ const FinancialSummaryCard: React.FC<{
   stats: ChargeStats;
   locale: string;
   colors: ThemeColors;
-}> = ({ stats, locale, colors }) => (
+  t: (key: string, params?: Record<string, any>) => string;
+}> = ({ stats, locale, colors, t }) => (
   <Card variant="elevated" style={styles.summaryCard}>
     <View style={styles.summaryRow}>
       <View style={styles.summaryItem}>
-        <Text variant="caption" color="secondary">Pendente</Text>
+        <Text variant="caption" color="secondary">{t('charges.summary.pending')}</Text>
         <Text variant="h5" weight="bold" style={{ color: colors.warning[600] }}>
           {formatCurrency(stats.pendingValue, locale)}
         </Text>
-        <Text variant="caption" color="tertiary">{stats.pending} cobranças</Text>
+        <Text variant="caption" color="tertiary">{t('charges.chargesCount', { count: stats.pending })}</Text>
       </View>
       <View style={[styles.summaryDivider, { backgroundColor: colors.border.light }]} />
       <View style={styles.summaryItem}>
-        <Text variant="caption" color="secondary">Vencida</Text>
+        <Text variant="caption" color="secondary">{t('charges.summary.overdue')}</Text>
         <Text variant="h5" weight="bold" style={{ color: colors.error[600] }}>
           {formatCurrency(stats.overdueValue, locale)}
         </Text>
-        <Text variant="caption" color="tertiary">{stats.overdue} cobranças</Text>
+        <Text variant="caption" color="tertiary">{t('charges.chargesCount', { count: stats.overdue })}</Text>
       </View>
       <View style={[styles.summaryDivider, { backgroundColor: colors.border.light }]} />
       <View style={styles.summaryItem}>
-        <Text variant="caption" color="secondary">Recebido</Text>
+        <Text variant="caption" color="secondary">{t('charges.summary.received')}</Text>
         <Text variant="h5" weight="bold" style={{ color: colors.success[600] }}>
           {formatCurrency(stats.receivedValue, locale)}
         </Text>
-        <Text variant="caption" color="tertiary">{stats.confirmed} cobranças</Text>
+        <Text variant="caption" color="tertiary">{t('charges.chargesCount', { count: stats.confirmed })}</Text>
       </View>
     </View>
   </Card>
@@ -196,13 +197,14 @@ const StatusFilterBar: React.FC<{
   selectedStatus: ChargeStatus | 'ALL';
   onStatusChange: (status: ChargeStatus | 'ALL') => void;
   colors: ThemeColors;
-}> = ({ selectedStatus, onStatusChange, colors }) => {
-  const statusFilters: { label: string; value: ChargeStatus | 'ALL' }[] = [
-    { label: 'Todas', value: 'ALL' },
-    { label: 'Pendentes', value: 'PENDING' },
-    { label: 'Vencidas', value: 'OVERDUE' },
-    { label: 'Recebidas', value: 'RECEIVED' },
-    { label: 'Canceladas', value: 'CANCELED' },
+  t: (key: string) => string;
+}> = ({ selectedStatus, onStatusChange, colors, t }) => {
+  const statusFilters: { labelKey: string; value: ChargeStatus | 'ALL' }[] = [
+    { labelKey: 'charges.filters.all', value: 'ALL' },
+    { labelKey: 'charges.filters.pending', value: 'PENDING' },
+    { labelKey: 'charges.filters.overdue', value: 'OVERDUE' },
+    { labelKey: 'charges.filters.received', value: 'RECEIVED' },
+    { labelKey: 'charges.filters.canceled', value: 'CANCELED' },
   ];
 
   return (
@@ -234,7 +236,7 @@ const StatusFilterBar: React.FC<{
                 color: selectedStatus === item.value ? colors.white : colors.text.secondary,
               }}
             >
-              {item.label}
+              {t(item.labelKey)}
             </Text>
           </TouchableOpacity>
         )}
@@ -250,9 +252,8 @@ const ChargeListItem: React.FC<{
   onSharePayment: (charge: Charge) => void;
   locale: string;
   colors: ThemeColors;
-}> = ({ charge, onPress, onSharePayment, locale, colors }) => {
-  const statusLabel = chargeStatusLabels[charge.status];
-  const billingLabel = billingTypeLabels[charge.billingType];
+  t: (key: string) => string;
+}> = ({ charge, onPress, onSharePayment, locale, colors, t }) => {
   const overdue = isOverdue(charge);
   const paid = isChargePaid(charge);
 
@@ -272,10 +273,10 @@ const ChargeListItem: React.FC<{
           <View style={styles.listItemMain}>
             <View style={styles.listItemHeader}>
               <Text variant="body" weight="semibold" numberOfLines={1} style={{ flex: 1 }}>
-                {charge.client?.name || 'Cliente'}
+                {charge.client?.name || t('charges.client')}
               </Text>
               <Badge
-                label={overdue ? 'Vencida' : statusLabel}
+                label={overdue ? t('charges.statuses.overdue') : t(`charges.statuses.${charge.status.toLowerCase()}`)}
                 variant={overdue ? 'error' : getStatusBadgeVariant(charge.status)}
                 size="small"
               />
@@ -289,7 +290,7 @@ const ChargeListItem: React.FC<{
               <View style={styles.metaItem}>
                 <Ionicons name={getBillingTypeIcon(charge.billingType) as any} size={14} color={colors.text.tertiary} />
                 <Text variant="caption" color="tertiary" style={{ marginLeft: 4 }}>
-                  {billingLabel}
+                  {t(`charges.billingTypes.${charge.billingType.toLowerCase()}`)}
                 </Text>
               </View>
               <View style={styles.metaItem}>
@@ -318,7 +319,7 @@ const ChargeListItem: React.FC<{
                 >
                   <Ionicons name="share-outline" size={16} color={colors.primary[600]} />
                   <Text variant="caption" weight="medium" style={{ color: colors.primary[600], marginLeft: 4 }}>
-                    Compartilhar
+                    {t('charges.share')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -334,7 +335,8 @@ const SortToggle: React.FC<{
   sortOrder: SortOrder;
   onToggle: () => void;
   colors: ThemeColors;
-}> = ({ sortOrder, onToggle, colors }) => (
+  t: (key: string) => string;
+}> = ({ sortOrder, onToggle, colors, t }) => (
   <TouchableOpacity
     style={[styles.sortToggle, { backgroundColor: colors.background.primary }]}
     onPress={onToggle}
@@ -345,21 +347,21 @@ const SortToggle: React.FC<{
       color={colors.primary[600]}
     />
     <Text variant="caption" weight="medium" style={{ color: colors.primary[600], marginLeft: 4 }}>
-      {sortOrder === 'newest' ? 'Mais recentes' : 'Mais antigos'}
+      {sortOrder === 'newest' ? t('charges.sortNewest') : t('charges.sortOldest')}
     </Text>
   </TouchableOpacity>
 );
 
-const EmptyState: React.FC<{ hasFilter: boolean; colors: ThemeColors }> = ({ hasFilter, colors }) => (
+const EmptyState: React.FC<{ hasFilter: boolean; colors: ThemeColors; t: (key: string) => string }> = ({ hasFilter, colors, t }) => (
   <View style={styles.emptyState}>
     <Ionicons name="receipt-outline" size={64} color={colors.gray[400]} style={{ marginBottom: spacing[3] }} />
     <Text variant="body" weight="semibold" align="center">
-      {hasFilter ? 'Nenhuma cobrança encontrada' : 'Sem cobranças'}
+      {hasFilter ? t('charges.noChargesFound') : t('charges.noCharges')}
     </Text>
     <Text variant="bodySmall" color="secondary" align="center">
       {hasFilter
-        ? 'Tente ajustar os filtros'
-        : 'Crie sua primeira cobrança tocando no botão +'}
+        ? t('charges.tryAdjustFilters')
+        : t('charges.createFirstCharge')}
     </Text>
   </View>
 );
@@ -503,11 +505,11 @@ export const ChargesListScreen: React.FC<ChargesListScreenProps> = ({
   const handleSharePayment = useCallback(async (charge: Charge) => {
     const paymentUrl = charge.urls?.invoiceUrl;
     if (!paymentUrl) {
-      Alert.alert('Erro', 'Link de pagamento não disponível');
+      Alert.alert(t('common.error'), t('charges.paymentLinkUnavailable'));
       return;
     }
 
-    const message = `Olá! Segue o link para pagamento da cobrança de ${formatCurrency(charge.value, locale)}:\n\n${paymentUrl}`;
+    const message = t('charges.sharePaymentMessage', { value: formatCurrency(charge.value, locale), url: paymentUrl });
 
     try {
       await Share.share({
@@ -533,13 +535,14 @@ export const ChargesListScreen: React.FC<ChargesListScreenProps> = ({
       onSharePayment={handleSharePayment}
       locale={locale}
       colors={colors}
+      t={t}
     />
   );
 
   const renderHeader = () => {
     if (!stats) return null;
     return (
-      <FinancialSummaryCard stats={stats} locale={locale} colors={colors} />
+      <FinancialSummaryCard stats={stats} locale={locale} colors={colors} t={t} />
     );
   };
 
@@ -561,19 +564,19 @@ export const ChargesListScreen: React.FC<ChargesListScreenProps> = ({
       <View style={[styles.container, styles.errorContainer, { backgroundColor: colors.background.secondary }]}>
         <Ionicons name="cloud-offline-outline" size={64} color={colors.error[400]} />
         <Text variant="body" weight="semibold" align="center" style={{ marginTop: spacing[4] }}>
-          {isOfflineError ? 'Sem conexão' : 'Erro ao carregar cobranças'}
+          {isOfflineError ? t('charges.noConnection') : t('charges.loadChargesError')}
         </Text>
         <Text variant="bodySmall" color="secondary" align="center" style={{ marginTop: spacing[2] }}>
           {isOfflineError
-            ? 'Cobranças só está disponível com conexão com a internet'
-            : 'Não foi possível carregar as cobranças. Tente novamente.'}
+            ? t('charges.offlineMessage')
+            : t('charges.loadChargesErrorMessage')}
         </Text>
         <TouchableOpacity
           style={[styles.retryButton, { backgroundColor: colors.primary[600] }]}
           onPress={() => loadCharges(true)}
         >
           <Text variant="body" weight="semibold" style={{ color: colors.white }}>
-            Tentar novamente
+            {t('common.retry')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -585,18 +588,19 @@ export const ChargesListScreen: React.FC<ChargesListScreenProps> = ({
       <SearchBar
         value={searchQuery}
         onChangeText={setSearchQuery}
-        placeholder="Buscar por cliente..."
+        placeholder={t('charges.searchByClient')}
         colors={colors}
       />
       <StatusFilterBar
         selectedStatus={selectedStatus}
         onStatusChange={setSelectedStatus}
         colors={colors}
+        t={t}
       />
 
       {/* Sort Toggle */}
       <View style={[styles.sortContainer, { borderBottomColor: colors.border.light }]}>
-        <SortToggle sortOrder={sortOrder} onToggle={handleSortToggle} colors={colors} />
+        <SortToggle sortOrder={sortOrder} onToggle={handleSortToggle} colors={colors} t={t} />
       </View>
 
       {loading ? (
@@ -621,7 +625,7 @@ export const ChargesListScreen: React.FC<ChargesListScreenProps> = ({
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}
           ListFooterComponent={renderFooter}
-          ListEmptyComponent={<EmptyState hasFilter={hasFilter} colors={colors} />}
+          ListEmptyComponent={<EmptyState hasFilter={hasFilter} colors={colors} t={t} />}
         />
       )}
 

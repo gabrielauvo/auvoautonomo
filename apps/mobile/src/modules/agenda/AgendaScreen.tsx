@@ -6,7 +6,7 @@
  * Funciona offline com dados sincronizados.
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -21,6 +21,7 @@ import { Badge } from '../../design-system/components/Badge';
 import { colors, spacing, borderRadius, shadows, theme } from '../../design-system/tokens';
 import { WorkOrder, WorkOrderStatus } from '../../db/schema';
 import { workOrderService } from '../workorders/WorkOrderService';
+import { useTranslation } from '../../i18n';
 
 // =============================================================================
 // TYPES
@@ -37,11 +38,7 @@ type ViewMode = 'day' | 'week';
 // CONSTANTS
 // =============================================================================
 
-const DAYS_OF_WEEK = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-const MONTHS = [
-  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
-];
+// Days and months are now provided via translations in the components
 
 // =============================================================================
 // HELPERS
@@ -71,14 +68,14 @@ function getStatusColor(status: WorkOrderStatus): string {
   return theme.statusColors.workOrder[status] || colors.gray[500];
 }
 
-function getStatusLabel(status: WorkOrderStatus): string {
-  const labels: Record<WorkOrderStatus, string> = {
-    SCHEDULED: 'Agendada',
-    IN_PROGRESS: 'Em Andamento',
-    DONE: 'Concluída',
-    CANCELED: 'Cancelada',
+function getStatusLabelKey(status: WorkOrderStatus): string {
+  const keys: Record<WorkOrderStatus, string> = {
+    SCHEDULED: 'agenda.status.scheduled',
+    IN_PROGRESS: 'agenda.status.inProgress',
+    DONE: 'agenda.status.done',
+    CANCELED: 'agenda.status.canceled',
   };
-  return labels[status];
+  return keys[status];
 }
 
 // =============================================================================
@@ -91,6 +88,33 @@ const DateNavigator: React.FC<{
   onDateChange: (date: Date) => void;
   onViewModeChange: (mode: ViewMode) => void;
 }> = ({ selectedDate, viewMode, onDateChange, onViewModeChange }) => {
+  const { t } = useTranslation();
+
+  const daysOfWeek = useMemo(() => [
+    t('agenda.daysShort.sun'),
+    t('agenda.daysShort.mon'),
+    t('agenda.daysShort.tue'),
+    t('agenda.daysShort.wed'),
+    t('agenda.daysShort.thu'),
+    t('agenda.daysShort.fri'),
+    t('agenda.daysShort.sat'),
+  ], [t]);
+
+  const months = useMemo(() => [
+    t('agenda.months.january'),
+    t('agenda.months.february'),
+    t('agenda.months.march'),
+    t('agenda.months.april'),
+    t('agenda.months.may'),
+    t('agenda.months.june'),
+    t('agenda.months.july'),
+    t('agenda.months.august'),
+    t('agenda.months.september'),
+    t('agenda.months.october'),
+    t('agenda.months.november'),
+    t('agenda.months.december'),
+  ], [t]);
+
   const navigatePrev = () => {
     const days = viewMode === 'week' ? -7 : -1;
     onDateChange(addDays(selectedDate, days));
@@ -106,11 +130,10 @@ const DateNavigator: React.FC<{
   };
 
   const weekDays = getWeekDays(selectedDate);
-  const isToday = isSameDay(selectedDate, new Date());
 
   return (
     <View style={styles.navigator}>
-      {/* Header com mês/ano e navegação */}
+      {/* Header with month/year and navigation */}
       <View style={styles.navigatorHeader}>
         <TouchableOpacity onPress={navigatePrev} style={styles.navButton}>
           <Text variant="h4" color="primary">‹</Text>
@@ -118,7 +141,7 @@ const DateNavigator: React.FC<{
 
         <TouchableOpacity onPress={goToToday}>
           <Text variant="h4" weight="semibold">
-            {MONTHS[selectedDate.getMonth()]} {selectedDate.getFullYear()}
+            {months[selectedDate.getMonth()]} {selectedDate.getFullYear()}
           </Text>
         </TouchableOpacity>
 
@@ -138,7 +161,7 @@ const DateNavigator: React.FC<{
             weight={viewMode === 'day' ? 'semibold' : 'normal'}
             style={{ color: viewMode === 'day' ? colors.white : colors.gray[600] }}
           >
-            Dia
+            {t('agenda.viewMode.day')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -150,7 +173,7 @@ const DateNavigator: React.FC<{
             weight={viewMode === 'week' ? 'semibold' : 'normal'}
             style={{ color: viewMode === 'week' ? colors.white : colors.gray[600] }}
           >
-            Semana
+            {t('agenda.viewMode.week')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -177,7 +200,7 @@ const DateNavigator: React.FC<{
                   color: isSelected ? colors.white : colors.gray[500],
                 }}
               >
-                {DAYS_OF_WEEK[index]}
+                {daysOfWeek[index]}
               </Text>
               <Text
                 variant="body"
@@ -200,6 +223,7 @@ const WorkOrderCard: React.FC<{
   workOrder: WorkOrder;
   onPress: () => void;
 }> = ({ workOrder, onPress }) => {
+  const { t } = useTranslation();
   const time = workOrderService.formatScheduledTime(workOrder);
   const statusColor = getStatusColor(workOrder.status);
 
@@ -224,18 +248,18 @@ const WorkOrderCard: React.FC<{
             </Text>
 
             <Text variant="bodySmall" color="secondary" numberOfLines={1}>
-              {workOrder.clientName || 'Cliente'}
+              {workOrder.clientName || t('agenda.defaultClient')}
             </Text>
 
             {workOrder.address && (
               <Text variant="caption" color="tertiary" numberOfLines={1}>
-                📍 {workOrder.address}
+                {workOrder.address}
               </Text>
             )}
 
             <View style={styles.badgeContainer}>
               <Badge
-                label={getStatusLabel(workOrder.status)}
+                label={t(getStatusLabelKey(workOrder.status))}
                 variant={
                   workOrder.status === 'DONE' ? 'success' :
                   workOrder.status === 'IN_PROGRESS' ? 'warning' :
@@ -252,18 +276,21 @@ const WorkOrderCard: React.FC<{
 };
 
 const EmptyState: React.FC<{ date: Date }> = ({ date }) => {
+  const { t, locale } = useTranslation();
   const isToday = isSameDay(date, new Date());
+
+  const formattedDate = date.toLocaleDateString(locale === 'pt-BR' ? 'pt-BR' : locale === 'es' ? 'es' : 'en-US');
 
   return (
     <View style={styles.emptyState}>
-      <Text variant="h2" style={styles.emptyIcon}>📋</Text>
+      <Text variant="h2" style={styles.emptyIcon}>{String.fromCodePoint(0x1F4CB)}</Text>
       <Text variant="body" weight="semibold" align="center">
-        {isToday ? 'Nenhuma OS para hoje' : 'Nenhuma OS agendada'}
+        {isToday ? t('agenda.empty.todayTitle') : t('agenda.empty.title')}
       </Text>
       <Text variant="bodySmall" color="secondary" align="center">
         {isToday
-          ? 'Aproveite para organizar seu dia!'
-          : `Sem ordens de serviço para ${date.toLocaleDateString('pt-BR')}`}
+          ? t('agenda.empty.todaySubtitle')
+          : t('agenda.empty.subtitle', { date: formattedDate })}
       </Text>
     </View>
   );
@@ -277,11 +304,22 @@ export const AgendaScreen: React.FC<AgendaScreenProps> = ({
   onWorkOrderPress,
   onSync,
 }) => {
+  const { t } = useTranslation();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>('day');
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  const daysOfWeek = useMemo(() => [
+    t('agenda.daysShort.sun'),
+    t('agenda.daysShort.mon'),
+    t('agenda.daysShort.tue'),
+    t('agenda.daysShort.wed'),
+    t('agenda.daysShort.thu'),
+    t('agenda.daysShort.fri'),
+    t('agenda.daysShort.sat'),
+  ], [t]);
 
   // Load work orders for selected date/week
   const loadWorkOrders = useCallback(async () => {
@@ -361,10 +399,10 @@ export const AgendaScreen: React.FC<AgendaScreenProps> = ({
       <View style={styles.weekDaySection}>
         <View style={[styles.weekDayHeader, isToday && styles.weekDayHeaderToday]}>
           <Text variant="bodySmall" weight="semibold">
-            {DAYS_OF_WEEK[dateObj.getDay()]} {dateObj.getDate()}
+            {daysOfWeek[dateObj.getDay()]} {dateObj.getDate()}
           </Text>
           <Text variant="caption" color="secondary">
-            {orders.length} OS
+            {orders.length} {t('agenda.workOrdersCount')}
           </Text>
         </View>
         {orders.map((wo) => (

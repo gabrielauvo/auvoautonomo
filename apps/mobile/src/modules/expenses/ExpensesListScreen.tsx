@@ -103,42 +103,43 @@ const FinancialSummaryCard: React.FC<{
   summary: ExpenseSummary;
   locale: string;
   colors: ThemeColors;
-}> = ({ summary, locale, colors }) => (
+  t: (key: string) => string;
+}> = ({ summary, locale, colors, t }) => (
   <Card variant="elevated" style={styles.summaryCard}>
     <View style={styles.summaryRow}>
       <View style={styles.summaryItem}>
         <Text variant="caption" color="secondary">
-          Pendente
+          {t('expenses.summaryPending')}
         </Text>
         <Text variant="h5" weight="bold" style={{ color: colors.warning[600] }}>
           {formatCurrency(summary.pending.amount, locale)}
         </Text>
         <Text variant="caption" color="tertiary">
-          {summary.pending.count} despesas
+          {summary.pending.count} {t('expenses.expenseCount')}
         </Text>
       </View>
       <View style={[styles.summaryDivider, { backgroundColor: colors.border.light }]} />
       <View style={styles.summaryItem}>
         <Text variant="caption" color="secondary">
-          Vencida
+          {t('expenses.summaryOverdue')}
         </Text>
         <Text variant="h5" weight="bold" style={{ color: colors.error[600] }}>
           {formatCurrency(summary.overdue.amount, locale)}
         </Text>
         <Text variant="caption" color="tertiary">
-          {summary.overdue.count} despesas
+          {summary.overdue.count} {t('expenses.expenseCount')}
         </Text>
       </View>
       <View style={[styles.summaryDivider, { backgroundColor: colors.border.light }]} />
       <View style={styles.summaryItem}>
         <Text variant="caption" color="secondary">
-          Pago
+          {t('expenses.summaryPaid')}
         </Text>
         <Text variant="h5" weight="bold" style={{ color: colors.success[600] }}>
           {formatCurrency(summary.paid.amount, locale)}
         </Text>
         <Text variant="caption" color="tertiary">
-          {summary.paid.count} despesas
+          {summary.paid.count} {t('expenses.expenseCount')}
         </Text>
       </View>
     </View>
@@ -172,13 +173,14 @@ const StatusFilterBar: React.FC<{
   selectedStatus: ExpenseStatus | 'ALL' | 'OVERDUE';
   onStatusChange: (status: ExpenseStatus | 'ALL' | 'OVERDUE') => void;
   colors: ThemeColors;
-}> = ({ selectedStatus, onStatusChange, colors }) => {
+  t: (key: string) => string;
+}> = ({ selectedStatus, onStatusChange, colors, t }) => {
   const statusFilters: { label: string; value: ExpenseStatus | 'ALL' | 'OVERDUE' }[] = [
-    { label: 'Todas', value: 'ALL' },
-    { label: 'Pendentes', value: 'PENDING' },
-    { label: 'Vencidas', value: 'OVERDUE' },
-    { label: 'Pagas', value: 'PAID' },
-    { label: 'Canceladas', value: 'CANCELED' },
+    { label: t('expenses.all'), value: 'ALL' },
+    { label: t('expenses.pending'), value: 'PENDING' },
+    { label: t('expenses.overdue'), value: 'OVERDUE' },
+    { label: t('expenses.paid'), value: 'PAID' },
+    { label: t('expenses.canceled'), value: 'CANCELED' },
   ];
 
   return (
@@ -227,9 +229,23 @@ const ExpenseListItem: React.FC<{
   onPress: () => void;
   locale: string;
   colors: ThemeColors;
-}> = ({ expense, onPress, locale, colors }) => {
+  t: (key: string) => string;
+}> = ({ expense, onPress, locale, colors, t }) => {
   const overdue = isExpenseOverdue(expense);
-  const statusLabel = overdue ? 'Vencida' : expenseStatusLabels[expense.status];
+  const getStatusLabel = (status: ExpenseStatus, isOverdue: boolean) => {
+    if (isOverdue) return t('expenses.statusOverdue');
+    switch (status) {
+      case 'PENDING':
+        return t('expenses.statusPending');
+      case 'PAID':
+        return t('expenses.statusPaid');
+      case 'CANCELED':
+        return t('expenses.statusCanceled');
+      default:
+        return status;
+    }
+  };
+  const statusLabel = getStatusLabel(expense.status, overdue);
   const paid = expense.status === 'PAID';
 
   return (
@@ -309,7 +325,7 @@ const ExpenseListItem: React.FC<{
 
             {expense.paymentMethod && paid && (
               <Text variant="caption" color="tertiary" style={{ marginTop: 4 }}>
-                Pago via {paymentMethodLabels[expense.paymentMethod]}
+                {t('expenses.paidVia')} {paymentMethodLabels[expense.paymentMethod]}
               </Text>
             )}
           </View>
@@ -323,11 +339,12 @@ const SortToggle: React.FC<{
   sortOrder: SortOrder;
   onToggle: () => void;
   colors: ThemeColors;
-}> = ({ sortOrder, onToggle, colors }) => {
+  t: (key: string) => string;
+}> = ({ sortOrder, onToggle, colors, t }) => {
   const sortLabels: Record<SortOrder, string> = {
-    dueDate: 'Vencimento',
-    newest: 'Mais recentes',
-    amount: 'Valor',
+    dueDate: t('expenses.sortDueDate'),
+    newest: t('expenses.sortNewest'),
+    amount: t('expenses.sortAmount'),
   };
 
   return (
@@ -343,9 +360,10 @@ const SortToggle: React.FC<{
   );
 };
 
-const EmptyState: React.FC<{ hasFilter: boolean; colors: ThemeColors }> = ({
+const EmptyState: React.FC<{ hasFilter: boolean; colors: ThemeColors; t: (key: string) => string }> = ({
   hasFilter,
   colors,
+  t,
 }) => (
   <View style={styles.emptyState}>
     <Ionicons
@@ -355,12 +373,12 @@ const EmptyState: React.FC<{ hasFilter: boolean; colors: ThemeColors }> = ({
       style={{ marginBottom: spacing[3] }}
     />
     <Text variant="body" weight="semibold" align="center">
-      {hasFilter ? 'Nenhuma despesa encontrada' : 'Sem despesas'}
+      {hasFilter ? t('expenses.noExpensesFound') : t('expenses.noExpenses')}
     </Text>
     <Text variant="bodySmall" color="secondary" align="center">
       {hasFilter
-        ? 'Tente ajustar os filtros'
-        : 'Cadastre sua primeira despesa tocando no botão +'}
+        ? t('expenses.adjustFiltersHint')
+        : t('expenses.noExpensesHint')}
     </Text>
   </View>
 );
@@ -374,7 +392,7 @@ export const ExpensesListScreen: React.FC<ExpensesListScreenProps> = ({
   onNewExpense,
   preSelectedWorkOrderId,
 }) => {
-  const { locale } = useTranslation();
+  const { t, locale } = useTranslation();
   const colors = useColors();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [summary, setSummary] = useState<ExpenseSummary | null>(null);
@@ -500,12 +518,13 @@ export const ExpensesListScreen: React.FC<ExpensesListScreenProps> = ({
       onPress={() => handleExpensePress(item)}
       locale={locale}
       colors={colors}
+      t={t}
     />
   );
 
   const renderHeader = () => {
     if (!summary) return null;
-    return <FinancialSummaryCard summary={summary} locale={locale} colors={colors} />;
+    return <FinancialSummaryCard summary={summary} locale={locale} colors={colors} t={t} />;
   };
 
   const hasFilter = searchQuery.trim() !== '' || selectedStatus !== 'ALL';
@@ -519,19 +538,19 @@ export const ExpensesListScreen: React.FC<ExpensesListScreenProps> = ({
       >
         <Ionicons name="cloud-offline-outline" size={64} color={colors.error[400]} />
         <Text variant="body" weight="semibold" align="center" style={{ marginTop: spacing[4] }}>
-          {isOfflineError ? 'Sem conexão' : 'Erro ao carregar despesas'}
+          {isOfflineError ? t('expenses.offlineTitle') : t('expenses.errorTitle')}
         </Text>
         <Text variant="bodySmall" color="secondary" align="center" style={{ marginTop: spacing[2] }}>
           {isOfflineError
-            ? 'Despesas requer conexão com a internet'
-            : 'Não foi possível carregar as despesas. Tente novamente.'}
+            ? t('expenses.offlineMessage')
+            : t('expenses.errorMessage')}
         </Text>
         <TouchableOpacity
           style={[styles.retryButton, { backgroundColor: colors.primary[600] }]}
           onPress={loadExpenses}
         >
           <Text variant="body" weight="semibold" style={{ color: colors.white }}>
-            Tentar novamente
+            {t('expenses.retry')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -543,18 +562,19 @@ export const ExpensesListScreen: React.FC<ExpensesListScreenProps> = ({
       <SearchBar
         value={searchQuery}
         onChangeText={setSearchQuery}
-        placeholder="Buscar despesa..."
+        placeholder={t('expenses.searchPlaceholder')}
         colors={colors}
       />
       <StatusFilterBar
         selectedStatus={selectedStatus}
         onStatusChange={setSelectedStatus}
         colors={colors}
+        t={t}
       />
 
       {/* Sort Toggle */}
       <View style={[styles.sortContainer, { borderBottomColor: colors.border.light }]}>
-        <SortToggle sortOrder={sortOrder} onToggle={handleSortToggle} colors={colors} />
+        <SortToggle sortOrder={sortOrder} onToggle={handleSortToggle} colors={colors} t={t} />
       </View>
 
       {loading ? (
@@ -576,7 +596,7 @@ export const ExpensesListScreen: React.FC<ExpensesListScreenProps> = ({
               tintColor={colors.primary[500]}
             />
           }
-          ListEmptyComponent={<EmptyState hasFilter={hasFilter} colors={colors} />}
+          ListEmptyComponent={<EmptyState hasFilter={hasFilter} colors={colors} t={t} />}
         />
       )}
 

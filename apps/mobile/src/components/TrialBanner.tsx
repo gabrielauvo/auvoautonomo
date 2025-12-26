@@ -28,6 +28,7 @@ import {
   BillingService,
   calculateTrialDaysRemaining,
 } from '../services/BillingService';
+import { useTranslation } from '../i18n';
 
 // =============================================================================
 // TYPES
@@ -47,6 +48,7 @@ interface TrialBannerProps {
 export function TrialBanner({ billing: propBilling, onDismiss }: TrialBannerProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const [billing, setBilling] = useState<BillingStatus | null>(propBilling || null);
   const [dismissed, setDismissed] = useState(false);
   const [loading, setLoading] = useState(!propBilling);
@@ -149,12 +151,12 @@ export function TrialBanner({ billing: propBilling, onDismiss }: TrialBannerProp
   // Message based on days remaining
   const getMessage = () => {
     if (daysRemaining <= 0) {
-      return 'Seu período de teste terminou';
+      return t('billing.trialEnded');
     }
     if (daysRemaining === 1) {
-      return 'Último dia do teste grátis!';
+      return t('billing.lastTrialDay');
     }
-    return `${daysRemaining} dias restantes no teste grátis`;
+    return t('billing.trialDaysRemaining', { days: daysRemaining });
   };
 
   return (
@@ -200,7 +202,7 @@ export function TrialBanner({ billing: propBilling, onDismiss }: TrialBannerProp
             weight="semibold"
             style={{ color: bannerColors.buttonText }}
           >
-            Assinar
+            {t('billing.subscribe')}
           </Text>
         </TouchableOpacity>
 

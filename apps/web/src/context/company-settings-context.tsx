@@ -201,19 +201,11 @@ export function CompanySettingsProvider({
   const [currencies, setCurrencies] = useState<CurrencyInfo[]>([]);
 
   /**
-   * Get auth token from localStorage
-   */
-  const getToken = useCallback(() => {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem('token');
-  }, []);
-
-  /**
    * Fetch company settings from API
+   * Uses HttpOnly cookies for authentication (credentials: 'include')
    */
   const fetchSettings = useCallback(async () => {
-    const token = getToken();
-    if (!token) {
+    if (!isAuthenticated) {
       setSettings(DEFAULT_SETTINGS);
       setIsLoading(false);
       return;
@@ -221,9 +213,7 @@ export function CompanySettingsProvider({
 
     try {
       const response = await fetch(`${API_URL}/settings/regional`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: 'include',
       });
 
       if (response.ok) {
@@ -242,7 +232,7 @@ export function CompanySettingsProvider({
     } finally {
       setIsLoading(false);
     }
-  }, [getToken]);
+  }, [isAuthenticated]);
 
   /**
    * Fetch countries list
@@ -325,11 +315,11 @@ export function CompanySettingsProvider({
 
   /**
    * Update settings
+   * Uses HttpOnly cookies for authentication (credentials: 'include')
    */
   const updateSettings = useCallback(
     async (data: Partial<RegionalSettings>) => {
-      const token = getToken();
-      if (!token) {
+      if (!isAuthenticated) {
         throw new Error('Not authenticated');
       }
 
@@ -340,8 +330,8 @@ export function CompanySettingsProvider({
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
           },
+          credentials: 'include',
           body: JSON.stringify(data),
         });
 
@@ -363,7 +353,7 @@ export function CompanySettingsProvider({
         throw err;
       }
     },
-    [getToken],
+    [isAuthenticated],
   );
 
   /**

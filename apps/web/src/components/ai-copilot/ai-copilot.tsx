@@ -175,7 +175,7 @@ export function AiCopilot({
                 aria-live="polite"
               >
                 {messages.length === 0 ? (
-                  <EmptyState pageName={pageName} />
+                  <EmptyState pageName={pageName} onSuggestionClick={handleSend} />
                 ) : (
                   messages.map((message, index) => (
                     <ChatMessage
@@ -234,7 +234,13 @@ export function AiCopilot({
 /**
  * Empty State Component
  */
-function EmptyState({ pageName }: { pageName: string }) {
+function EmptyState({
+  pageName,
+  onSuggestionClick
+}: {
+  pageName: string;
+  onSuggestionClick: (suggestion: string) => void;
+}) {
   const suggestions = getSuggestions(pageName);
 
   return (
@@ -254,12 +260,13 @@ function EmptyState({ pageName }: { pageName: string }) {
           <p className="text-xs text-gray-400 mb-2">Sugestões:</p>
           <div className="space-y-1">
             {suggestions.map((suggestion, index) => (
-              <div
+              <button
                 key={index}
-                className="text-xs text-left px-3 py-2 rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100 cursor-pointer"
+                onClick={() => onSuggestionClick(suggestion)}
+                className="w-full text-xs text-left px-3 py-2 rounded-lg bg-gray-50 text-gray-600 hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer border border-transparent hover:border-primary/20"
               >
-                "{suggestion}"
-              </div>
+                &ldquo;{suggestion}&rdquo;
+              </button>
             ))}
           </div>
         </div>

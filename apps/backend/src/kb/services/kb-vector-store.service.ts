@@ -189,7 +189,7 @@ export class KbVectorStore implements OnModuleInit {
     const chunks = await this.prisma.kbChunk.findMany({
       where: {
         document: {
-          isActive: true,
+          isActive: { equals: true },
           ...sourceFilter,
         },
       },
@@ -207,7 +207,7 @@ export class KbVectorStore implements OnModuleInit {
     });
 
     // Calculate similarities
-    const results: Array<ChunkWithScore & { score: number }> = [];
+    const results: Array<{ chunk: typeof chunks[0]; score: number }> = [];
 
     for (const chunk of chunks) {
       if (!chunk.embedding || chunk.embedding.length === 0) {
@@ -221,7 +221,7 @@ export class KbVectorStore implements OnModuleInit {
 
       if (score >= minScore) {
         results.push({
-          ...chunk,
+          chunk,
           score,
         });
       }
@@ -232,13 +232,13 @@ export class KbVectorStore implements OnModuleInit {
     const topResults = results.slice(0, topK);
 
     return topResults.map((r) => ({
-      id: r.id,
-      content: r.content,
+      id: r.chunk.id,
+      content: r.chunk.content,
       score: r.score,
-      source: r.document.source as 'DOCS' | 'FAQ' | 'HELP_CENTER' | 'CUSTOM',
-      sourceRef: r.document.sourceId,
-      title: r.document.title,
-      metadata: r.metadata as Record<string, unknown> | undefined,
+      source: r.chunk.document.source as 'DOCS' | 'FAQ' | 'HELP_CENTER' | 'CUSTOM',
+      sourceRef: r.chunk.document.sourceId,
+      title: r.chunk.document.title,
+      metadata: r.chunk.metadata as Record<string, unknown> | undefined,
     }));
   }
 

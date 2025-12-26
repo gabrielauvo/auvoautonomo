@@ -13,12 +13,6 @@ model User {
   password                    String
   name                        String?
   companyName                 String?
-  companyLegalName            String?
-  companyTaxId                String?
-  companyStateRegistration    String?
-  companyWhatsapp             String?
-  companyAddress              Json?
-  companyBranding             Json?
   phone                       String?
   language                    String?                      @default("pt-BR")
   timezone                    String?                      @default("America/Sao_Paulo")
@@ -27,16 +21,22 @@ model User {
   googleId                    String?                      @unique
   avatarUrl                   String?
   companyLogoUrl              String?
-  // Pix payment settings
-  pixKey                      String?
-  pixKeyType                  String?                      // CPF, CNPJ, EMAIL, PHONE, RANDOM
-  pixKeyOwnerName             String?
-  pixKeyEnabled               Boolean                      @default(false)
-  // Password reset
-  passwordResetToken          String?
-  passwordResetExpires        DateTime?
   createdAt                   DateTime                     @default(now())
   updatedAt                   DateTime                     @updatedAt
+  companyAddress              Json?
+  companyBranding             Json?
+  companyLegalName            String?
+  companyStateRegistration    String?
+  companyTaxId                String?
+  companyWhatsapp             String?
+  pixKey                      String?
+  pixKeyEnabled               Boolean                      @default(false)
+  pixKeyOwnerName             String?
+  pixKeyType                  String?
+  passwordResetExpires        DateTime?
+  passwordResetToken          String?
+  aiConversations             AiConversation[]
+  aiToolIdempotency           AiToolIdempotency[]
   asaasIntegration            AsaasIntegration?
   createdAttachments          Attachment[]                 @relation("AttachmentCreator")
   attachments                 Attachment[]                 @relation("UserAttachments")
@@ -47,10 +47,11 @@ model User {
   devices                     Device[]
   domainEvents                DomainEvent[]
   equipment                   Equipment[]
-  expenses                    Expense[]
   expenseCategories           ExpenseCategory[]
+  expenses                    Expense[]
   financialAutomationSettings FinancialAutomationSettings?
   importJobs                  ImportJob[]
+  inventorySettings           InventorySettings?
   invoices                    Invoice[]
   items                       Item[]
   notificationLogs            NotificationLog[]
@@ -58,25 +59,18 @@ model User {
   pdfJobs                     PdfJob[]
   productCategories           ProductCategory[]
   quotes                      Quote[]
+  referralCode                ReferralCode?
+  referralRewards             ReferralReward[]
+  referralAsReferee           Referral?                    @relation("ReferralReferee")
+  referralsAsReferrer         Referral[]                   @relation("ReferralReferrer")
   signatures                  Signature[]
   suppliers                   Supplier[]
   syncLogs                    SyncLog[]
   templateSettings            TemplateSettings?
   subscription                UserSubscription?
   plan                        Plan?                        @relation(fields: [planId], references: [id])
-  workOrders                  WorkOrder[]
   workOrderTypes              WorkOrderType[]
-  inventorySettings           InventorySettings?
-  // Referral Program
-  referralCode                ReferralCode?
-  referralsAsReferrer         Referral[]                   @relation("ReferralReferrer")
-  referralAsReferee           Referral?                    @relation("ReferralReferee")
-  referralRewards             ReferralReward[]
-  // Google Business Growth
-  googleIntegration           GoogleIntegration?
-  demandEvents                DemandEvent[]
-  attributionLinks            AttributionLink[]
-  growthInsights              GrowthInsight[]
+  workOrders                  WorkOrder[]
 
   @@map("users")
 }
@@ -104,43 +98,44 @@ model Plan {
 }
 
 model UserSubscription {
-  id                   String                       @id @default(uuid())
-  userId               String                       @unique
-  planId               String
-  // Asaas (Brasil)
-  asaasCustomerId      String?
-  asaasSubscriptionId  String?
-  asaasPaymentId       String?
-  // Stripe (Internacional)
-  stripeCustomerId     String?
-  stripeSubscriptionId String?
-  stripePaymentId      String?
-  // Status e período
-  status               SubscriptionStatus           @default(ACTIVE)
-  billingPeriod        BillingPeriod                @default(MONTHLY)
-  currentPeriodStart   DateTime?
-  currentPeriodEnd     DateTime?
-  trialEndAt           DateTime?
-  canceledAt           DateTime?
-  cancelAtPeriodEnd    Boolean                      @default(false)
-  paymentMethod        PaymentMethod?
-  lastPaymentDate      DateTime?
-  overdueAt            DateTime?
-  retryCount           Int                          @default(0)
-  lastRetryAt          DateTime?
-  blockedAt            DateTime?
-  blockReason          String?
-  creditCardToken      String?
-  creditCardLastFour   String?
-  creditCardBrand      String?
-  // Moeda e país
-  currency             String?                      @default("BRL")
-  country              String?                      @default("BR")
-  createdAt            DateTime                     @default(now())
-  updatedAt            DateTime                     @updatedAt
-  paymentHistory       SubscriptionPaymentHistory[]
-  plan                 Plan                         @relation(fields: [planId], references: [id])
-  user                 User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                       String                       @id @default(uuid())
+  userId                   String                       @unique
+  planId                   String
+  asaasCustomerId          String?
+  asaasSubscriptionId      String?
+  asaasPaymentId           String?
+  status                   SubscriptionStatus           @default(ACTIVE)
+  billingPeriod            BillingPeriod                @default(MONTHLY)
+  currentPeriodStart       DateTime?
+  currentPeriodEnd         DateTime?
+  trialEndAt               DateTime?
+  canceledAt               DateTime?
+  cancelAtPeriodEnd        Boolean                      @default(false)
+  paymentMethod            PaymentMethod?
+  lastPaymentDate          DateTime?
+  overdueAt                DateTime?
+  retryCount               Int                          @default(0)
+  lastRetryAt              DateTime?
+  blockedAt                DateTime?
+  blockReason              String?
+  creditCardToken          String?
+  creditCardLastFour       String?
+  creditCardBrand          String?
+  createdAt                DateTime                     @default(now())
+  updatedAt                DateTime                     @updatedAt
+  country                  String?                      @default("BR")
+  currency                 String?                      @default("BRL")
+  timezone                 String?                      @default("America/Sao_Paulo")
+  stripeCustomerId         String?
+  stripePaymentId          String?
+  stripeSubscriptionId     String?
+  // Mercado Pago fields (LATAM: AR, CL, CO, PE, UY)
+  mercadoPagoCustomerId    String?
+  mercadoPagoSubscriptionId String?
+  mercadoPagoPreferenceId  String?
+  paymentHistory           SubscriptionPaymentHistory[]
+  plan                     Plan                         @relation(fields: [planId], references: [id])
+  user                     User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([planId])
@@ -149,6 +144,8 @@ model UserSubscription {
   @@index([asaasSubscriptionId])
   @@index([stripeCustomerId])
   @@index([stripeSubscriptionId])
+  @@index([mercadoPagoCustomerId])
+  @@index([mercadoPagoSubscriptionId])
   @@index([overdueAt])
   @@index([blockedAt])
   @@map("user_subscriptions")
@@ -186,21 +183,21 @@ model UsageLimitsConfig {
   maxWorkOrders             Int      @default(-1)
   maxPayments               Int      @default(-1)
   maxNotificationsPerMonth  Int      @default(-1)
-  maxSuppliers              Int      @default(-1)
-  maxExpenses               Int      @default(-1)
   enableAdvancedAutomations Boolean  @default(false)
   enableAdvancedAnalytics   Boolean  @default(false)
   enableClientPortal        Boolean  @default(false)
   enablePdfExport           Boolean  @default(true)
   enableDigitalSignature    Boolean  @default(false)
   enableWhatsApp            Boolean  @default(false)
-  enableExpenseManagement   Boolean  @default(false)
-  enablePixKey              Boolean  @default(true)   // Pix key feature - default true for all plans
-  enableWorkOrderTypes      Boolean  @default(false)  // Work order types feature - default false
-  enableInventory           Boolean  @default(false)  // Inventory/stock control feature - default false
-  enableAcceptanceTerms     Boolean  @default(false)  // Acceptance terms for quote signatures - paid plans only
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
+  enableExpenseManagement   Boolean  @default(false)
+  maxExpenses               Int      @default(-1)
+  maxSuppliers              Int      @default(-1)
+  enableAcceptanceTerms     Boolean  @default(false)
+  enableInventory           Boolean  @default(false)
+  enablePixKey              Boolean  @default(true)
+  enableWorkOrderTypes      Boolean  @default(false)
   plan                      Plan     @relation(fields: [planId], references: [id], onDelete: Cascade)
 
   @@index([planId])
@@ -208,32 +205,33 @@ model UsageLimitsConfig {
 }
 
 model Client {
-  id               String            @id @default(uuid())
-  userId           String
-  name             String
-  email            String?
-  phone            String?
-  address          String?
-  city             String?
-  state            String?
-  zipCode          String?
-  taxId            String?
-  notes            String?
-  asaasCustomerId  String?
-  isDelinquent     Boolean           @default(false)
-  delinquentAt     DateTime?
-  deletedAt        DateTime?
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  attachments      Attachment[]
-  payments         ClientPayment[]
-  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  equipment        Equipment[]
-  invoices         Invoice[]
-  notificationLogs NotificationLog[]
-  quotes           Quote[]
-  signatures       Signature[]
-  workOrders       WorkOrder[]
+  id                String             @id @default(uuid())
+  userId            String
+  name              String
+  email             String?
+  phone             String?
+  address           String?
+  city              String?
+  state             String?
+  zipCode           String?
+  taxId             String?
+  notes             String?
+  asaasCustomerId   String?
+  isDelinquent      Boolean            @default(false)
+  delinquentAt      DateTime?
+  deletedAt         DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  aiPaymentPreviews AiPaymentPreview[]
+  attachments       Attachment[]
+  payments          ClientPayment[]
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  equipment         Equipment[]
+  invoices          Invoice[]
+  notificationLogs  NotificationLog[]
+  quotes            Quote[]
+  signatures        Signature[]
+  workOrders        WorkOrder[]
 
   @@index([userId])
   @@index([asaasCustomerId])
@@ -270,17 +268,18 @@ model Item {
   unit                   String            @default("UN")
   basePrice              Decimal           @db.Decimal(10, 2)
   costPrice              Decimal?          @db.Decimal(10, 2)
+  currency               String            @default("BRL")
   defaultDurationMinutes Int?
   isActive               Boolean           @default(true)
   createdAt              DateTime          @default(now())
   updatedAt              DateTime          @updatedAt
   bundleAsParent         BundleItem[]      @relation("BundleParent")
   bundleAsChild          BundleItem[]      @relation("BundleChild")
+  inventoryBalance       InventoryBalance?
   category               ProductCategory?  @relation(fields: [categoryId], references: [id])
   user                   User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   quoteItems             QuoteItem[]
   workOrderItems         WorkOrderItem[]
-  inventoryBalance       InventoryBalance?
 
   @@index([userId])
   @@index([categoryId])
@@ -337,13 +336,14 @@ model Quote {
   status           QuoteStatus     @default(DRAFT)
   discountValue    Decimal         @default(0) @db.Decimal(15, 2)
   totalValue       Decimal         @db.Decimal(15, 2)
+  currency         String          @default("BRL")
   notes            String?
   sentAt           DateTime?
   visitScheduledAt DateTime?
-  validUntil       DateTime?
   shareKey         String?         @unique
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
+  validUntil       DateTime?
   attachments      Attachment[]
   clientPayments   ClientPayment[]
   items            QuoteItem[]
@@ -371,6 +371,7 @@ model QuoteItem {
   unitPrice      Decimal         @db.Decimal(15, 2)
   discountValue  Decimal         @default(0) @db.Decimal(15, 2)
   totalPrice     Decimal         @db.Decimal(15, 2)
+  currency       String          @default("BRL")
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   item           Item?           @relation(fields: [itemId], references: [id])
@@ -402,40 +403,41 @@ model WorkOrderType {
 }
 
 model WorkOrder {
-  id                   String                        @id @default(uuid())
-  userId               String
-  clientId             String
-  quoteId              String?                       @unique
-  workOrderTypeId      String?
-  title                String
-  description          String?
-  status               WorkOrderStatus               @default(SCHEDULED)
-  scheduledDate        DateTime?
-  scheduledStartTime   DateTime?
-  scheduledEndTime     DateTime?
-  executionStart       DateTime?
-  executionEnd         DateTime?
-  address              String?
-  notes                String?
-  totalValue           Decimal?                      @db.Decimal(15, 2)
-  shareKey             String?                       @unique
-  createdAt            DateTime                      @default(now())
-  updatedAt            DateTime                      @updatedAt
-  attachments          Attachment[]
-  checklistInstances   ChecklistInstance[]
-  expenses             Expense[]
-  payments             ClientPayment[]
-  invoice              Invoice?
-  signatures           Signature[]
-  checklists           WorkOrderChecklist[]
-  equipments           WorkOrderEquipment[]
-  executionSessions    WorkOrderExecutionSession[]
-  items                WorkOrderItem[]
-  client               Client                        @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  quote                Quote?                        @relation(fields: [quoteId], references: [id])
-  user                 User                          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  workOrderType        WorkOrderType?                @relation(fields: [workOrderTypeId], references: [id], onDelete: SetNull)
-  inventoryDeductions  WorkOrderInventoryDeduction[]
+  id                  String                       @id @default(uuid())
+  userId              String
+  clientId            String
+  quoteId             String?                      @unique
+  title               String
+  description         String?
+  status              WorkOrderStatus              @default(SCHEDULED)
+  scheduledDate       DateTime?
+  scheduledStartTime  DateTime?
+  scheduledEndTime    DateTime?
+  executionStart      DateTime?
+  executionEnd        DateTime?
+  address             String?
+  notes               String?
+  totalValue          Decimal?                     @db.Decimal(15, 2)
+  currency            String                       @default("BRL")
+  shareKey            String?                      @unique
+  createdAt           DateTime                     @default(now())
+  updatedAt           DateTime                     @updatedAt
+  workOrderTypeId     String?
+  attachments         Attachment[]
+  checklistInstances  ChecklistInstance[]
+  payments            ClientPayment[]
+  expenses            Expense[]
+  invoice             Invoice?
+  signatures          Signature[]
+  checklists          WorkOrderChecklist[]
+  equipments          WorkOrderEquipment[]
+  executionSessions   WorkOrderExecutionSession[]
+  inventoryDeductions WorkOrderInventoryDeduction?
+  items               WorkOrderItem[]
+  client              Client                       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  quote               Quote?                       @relation(fields: [quoteId], references: [id])
+  user                User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workOrderType       WorkOrderType?               @relation(fields: [workOrderTypeId], references: [id])
 
   @@index([userId])
   @@index([clientId])
@@ -479,6 +481,7 @@ model WorkOrderItem {
   unitPrice     Decimal    @db.Decimal(15, 2)
   discountValue Decimal    @default(0) @db.Decimal(15, 2)
   totalPrice    Decimal    @db.Decimal(15, 2)
+  currency      String     @default("BRL")
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
   item          Item?      @relation(fields: [itemId], references: [id])
@@ -683,6 +686,7 @@ model Invoice {
   discount      Decimal       @default(0) @db.Decimal(15, 2)
   tax           Decimal       @default(0) @db.Decimal(15, 2)
   total         Decimal       @db.Decimal(15, 2)
+  currency      String        @default("BRL")
   dueDate       DateTime
   paidDate      DateTime?
   notes         String?
@@ -720,6 +724,7 @@ model ClientPayment {
   asaasPaymentId  String             @unique
   billingType     PaymentBillingType
   value           Decimal            @db.Decimal(15, 2)
+  currency        String             @default("BRL")
   description     String?
   dueDate         DateTime
   status          PaymentStatus      @default(PENDING)
@@ -879,7 +884,6 @@ model Signature {
   signedAt        DateTime   @default(now())
   hash            String?
   localId         String?
-  // Acceptance Terms audit fields
   termsAcceptedAt DateTime?
   termsHash       String?
   termsVersion    Int?
@@ -996,10 +1000,6 @@ model TemplateSettings {
   quoteDefaultMessage         String    @default("Segue nosso orçamento conforme solicitado.")
   quoteTermsConditions        String?
   quoteShowSignature          Boolean   @default(false)
-  // Acceptance Terms - requires paid plan
-  acceptanceTermsEnabled      Boolean   @default(false)
-  acceptanceTermsUpdatedAt    DateTime?
-  acceptanceTermsVersion      Int       @default(0)
   workOrderShowLogo           Boolean   @default(true)
   workOrderLogoPosition       String    @default("left")
   workOrderPrimaryColor       String    @default("#7C3AED")
@@ -1022,6 +1022,9 @@ model TemplateSettings {
   chargeReminderMessage       String    @default("Olá {nome_cliente}, lembramos que seu pagamento no valor de {valor} vence em {data}.\nSe já pagou, desconsidere esta mensagem.")
   createdAt                   DateTime  @default(now())
   updatedAt                   DateTime  @updatedAt
+  acceptanceTermsEnabled      Boolean   @default(false)
+  acceptanceTermsUpdatedAt    DateTime?
+  acceptanceTermsVersion      Int       @default(0)
   user                        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
@@ -1066,6 +1069,400 @@ model DomainEvent {
   @@index([status])
   @@index([createdAt])
   @@map("domain_events")
+}
+
+model Supplier {
+  id        String    @id @default(uuid())
+  userId    String
+  name      String
+  document  String?
+  email     String?
+  phone     String?
+  address   String?
+  notes     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  expenses  Expense[]
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, deletedAt])
+  @@index([name])
+  @@map("suppliers")
+}
+
+model ExpenseCategory {
+  id        String    @id @default(uuid())
+  userId    String
+  name      String
+  color     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expenses  Expense[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("expense_categories")
+}
+
+model Expense {
+  id            String                @id @default(uuid())
+  userId        String
+  supplierId    String?
+  categoryId    String?
+  workOrderId   String?
+  description   String
+  notes         String?
+  amount        Decimal               @db.Decimal(15, 2)
+  currency      String                @default("BRL")
+  dueDate       DateTime
+  paidAt        DateTime?
+  status        ExpenseStatus         @default(PENDING)
+  paymentMethod ExpensePaymentMethod?
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  deletedAt     DateTime?
+  invoiceNumber String?
+  category      ExpenseCategory?      @relation(fields: [categoryId], references: [id])
+  supplier      Supplier?             @relation(fields: [supplierId], references: [id])
+  user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workOrder     WorkOrder?            @relation(fields: [workOrderId], references: [id])
+
+  @@index([userId])
+  @@index([userId, status])
+  @@index([userId, dueDate])
+  @@index([userId, workOrderId])
+  @@index([userId, supplierId])
+  @@index([userId, categoryId])
+  @@index([userId, deletedAt])
+  @@index([paidAt])
+  @@map("expenses")
+}
+
+model InventorySettings {
+  id                         String          @id @default(uuid())
+  userId                     String          @unique
+  isEnabled                  Boolean         @default(false)
+  deductOnStatus             WorkOrderStatus @default(DONE)
+  allowNegativeStock         Boolean         @default(false)
+  deductOnlyOncePerWorkOrder Boolean         @default(true)
+  createdAt                  DateTime        @default(now())
+  updatedAt                  DateTime        @updatedAt
+  user                       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("inventory_settings")
+}
+
+model InventoryBalance {
+  id        String   @id @default(uuid())
+  itemId    String   @unique
+  quantity  Decimal  @db.Decimal(15, 4)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  item      Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
+  @@map("inventory_balances")
+}
+
+model InventoryMovement {
+  id           String                  @id @default(uuid())
+  itemId       String
+  type         InventoryMovementType
+  source       InventoryMovementSource
+  quantity     Decimal                 @db.Decimal(15, 4)
+  balanceAfter Decimal                 @db.Decimal(15, 4)
+  sourceId     String?
+  notes        String?
+  createdBy    String?
+  createdAt    DateTime                @default(now())
+
+  @@unique([itemId, source, sourceId], name: "inventory_movement_idempotency")
+  @@index([itemId])
+  @@index([source])
+  @@index([sourceId])
+  @@index([createdAt])
+  @@map("inventory_movements")
+}
+
+model WorkOrderInventoryDeduction {
+  id          String    @id @default(uuid())
+  workOrderId String    @unique
+  deductedAt  DateTime  @default(now())
+  itemsCount  Int
+  notes       String?
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+
+  @@index([workOrderId])
+  @@index([deductedAt])
+  @@map("work_order_inventory_deductions")
+}
+
+model ReferralCode {
+  id         String             @id @default(uuid())
+  userId     String             @unique
+  code       String             @unique
+  customCode String?            @unique
+  status     ReferralCodeStatus @default(ACTIVE)
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  clicks     ReferralClick[]
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([code])
+  @@index([customCode])
+  @@index([status])
+  @@map("referral_codes")
+}
+
+model ReferralClick {
+  id              String           @id @default(uuid())
+  codeId          String
+  clickId         String           @unique @default(uuid())
+  ipHash          String
+  userAgent       String?
+  platformGuess   ReferralPlatform @default(UNKNOWN)
+  fingerprintHash String?
+  referer         String?
+  expiresAt       DateTime
+  converted       Boolean          @default(false)
+  convertedAt     DateTime?
+  createdAt       DateTime         @default(now())
+  code            ReferralCode     @relation(fields: [codeId], references: [id], onDelete: Cascade)
+  install         ReferralInstall?
+  referral        Referral?
+
+  @@index([codeId])
+  @@index([clickId])
+  @@index([fingerprintHash])
+  @@index([expiresAt])
+  @@index([createdAt])
+  @@map("referral_clicks")
+}
+
+model ReferralInstall {
+  id                     String           @id @default(uuid())
+  clickId                String?          @unique
+  deviceIdHash           String
+  platform               ReferralPlatform
+  installReferrerPayload Json?
+  fingerprintHash        String?
+  matched                Boolean          @default(false)
+  matchedAt              DateTime?
+  createdAt              DateTime         @default(now())
+  click                  ReferralClick?   @relation(fields: [clickId], references: [id])
+
+  @@index([deviceIdHash])
+  @@index([fingerprintHash])
+  @@index([matched])
+  @@index([createdAt])
+  @@map("referral_installs")
+}
+
+model Referral {
+  id                 String                    @id @default(uuid())
+  referrerUserId     String
+  refereeUserId      String                    @unique
+  clickId            String?                   @unique
+  attributionMethod  ReferralAttributionMethod
+  status             ReferralStatus            @default(PENDING)
+  subscriptionPaidAt DateTime?
+  rewardCredited     Boolean                   @default(false)
+  fraudFlags         String[]                  @default([])
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+  rewards            ReferralReward[]
+  click              ReferralClick?            @relation(fields: [clickId], references: [id])
+  refereeUser        User                      @relation("ReferralReferee", fields: [refereeUserId], references: [id], onDelete: Cascade)
+  referrerUser       User                      @relation("ReferralReferrer", fields: [referrerUserId], references: [id], onDelete: Cascade)
+
+  @@index([referrerUserId])
+  @@index([refereeUserId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("referrals")
+}
+
+model ReferralReward {
+  id             String               @id @default(uuid())
+  userId         String
+  referralId     String?
+  monthsCredited Int
+  reason         ReferralRewardReason
+  idempotencyKey String               @unique
+  status         ReferralRewardStatus @default(PENDING)
+  appliedAt      DateTime?
+  expiresAt      DateTime?
+  reversedAt     DateTime?
+  reversalReason String?
+  createdAt      DateTime             @default(now())
+  referral       Referral?            @relation(fields: [referralId], references: [id])
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([referralId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("referral_rewards")
+}
+
+model ReferralAuditLog {
+  id         String   @id @default(uuid())
+  action     String
+  entityType String
+  entityId   String
+  userId     String?
+  decision   String
+  reason     String?
+  metadata   Json?
+  ipHash     String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([action])
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("referral_audit_logs")
+}
+
+model AiConversation {
+  id            String               @id @default(uuid())
+  userId        String
+  title         String?
+  status        AiConversationStatus @default(ACTIVE)
+  messageCount  Int                  @default(0)
+  lastMessageAt DateTime?
+  metadata      Json?
+  expiresAt     DateTime
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages      AiMessage[]
+  plans         AiPlan[]
+
+  @@index([userId])
+  @@index([userId, status])
+  @@index([expiresAt])
+  @@map("ai_conversations")
+}
+
+model AiMessage {
+  id             String         @id @default(uuid())
+  conversationId String
+  role           String
+  content        String
+  toolCalls      Json?
+  toolResults    Json?
+  tokenCount     Int?
+  latencyMs      Int?
+  createdAt      DateTime       @default(now())
+  conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([conversationId, createdAt])
+  @@map("ai_messages")
+}
+
+model AiPlan {
+  id             String             @id @default(uuid())
+  conversationId String
+  userId         String
+  summary        String
+  actions        Json
+  status         AiPlanStatus       @default(PENDING_CONFIRMATION)
+  idempotencyKey String             @unique
+  confirmedAt    DateTime?
+  executedAt     DateTime?
+  expiresAt      DateTime
+  resultSummary  String?
+  errorMessage   String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  auditLogs      AiAuditLog[]
+  previews       AiPaymentPreview[]
+  conversation   AiConversation     @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([userId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("ai_plans")
+}
+
+model AiPaymentPreview {
+  id               String    @id @default(uuid())
+  planId           String
+  clientId         String
+  clientName       String
+  billingType      String
+  value            Decimal   @db.Decimal(15, 2)
+  dueDate          DateTime
+  description      String?
+  valid            Boolean   @default(true)
+  validatedAt      DateTime  @default(now())
+  expiresAt        DateTime?
+  usedAt           DateTime?
+  createdPaymentId String?
+  createdAt        DateTime  @default(now())
+  client           Client    @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  plan             AiPlan    @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@index([planId])
+  @@index([clientId])
+  @@map("ai_payment_previews")
+}
+
+model AiToolIdempotency {
+  id             String   @id @default(uuid())
+  userId         String
+  toolName       String
+  idempotencyKey String
+  requestHash    String
+  response       Json
+  status         String   @default("SUCCESS")
+  entityIds      Json?
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, toolName, idempotencyKey])
+  @@index([expiresAt])
+  @@index([userId])
+  @@map("ai_tool_idempotency")
+}
+
+model AiAuditLog {
+  id             String          @id @default(uuid())
+  userId         String
+  conversationId String?
+  planId         String?
+  category       AiAuditCategory
+  tool           String?
+  action         String
+  entityType     String?
+  entityId       String?
+  inputPayload   Json?
+  outputPayload  Json?
+  success        Boolean
+  errorMessage   String?
+  ipAddress      String?
+  userAgent      String?
+  durationMs     Int?
+  createdAt      DateTime        @default(now())
+  plan           AiPlan?         @relation(fields: [planId], references: [id])
+
+  @@index([userId])
+  @@index([userId, createdAt])
+  @@index([conversationId])
+  @@index([planId])
+  @@index([category])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("ai_audit_logs")
 }
 
 enum UserRole {
@@ -1297,16 +1694,11 @@ enum DomainEventStatus {
   FAILED
 }
 
-// =============================================================================
-// ACCOUNTS PAYABLE MODULE (Contas a Pagar / Despesas)
-// =============================================================================
-
 enum ExpenseStatus {
   DRAFT
   PENDING
   PAID
   CANCELED
-  // OVERDUE é calculado dinamicamente (dueDate < hoje AND status NOT IN [PAID, CANCELED])
 }
 
 enum ExpensePaymentMethod {
@@ -1319,177 +1711,26 @@ enum ExpensePaymentMethod {
   OTHER
 }
 
-model Supplier {
-  id        String    @id @default(uuid())
-  userId    String
-  name      String
-  document  String?   // CPF/CNPJ
-  email     String?
-  phone     String?
-  address   String?
-  notes     String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expenses Expense[]
-
-  @@index([userId])
-  @@index([userId, deletedAt])
-  @@index([name])
-  @@map("suppliers")
-}
-
-model ExpenseCategory {
-  id        String   @id @default(uuid())
-  userId    String
-  name      String
-  color     String?  // hex color para UI
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expenses Expense[]
-
-  @@unique([userId, name])
-  @@index([userId])
-  @@map("expense_categories")
-}
-
-model Expense {
-  id            String                @id @default(uuid())
-  userId        String
-  supplierId    String?
-  categoryId    String?
-  workOrderId   String?               // Vínculo opcional com OS para cálculo de lucro
-  description   String
-  notes         String?
-  invoiceNumber String?               // Número da nota fiscal
-  amount        Decimal               @db.Decimal(15, 2)
-  dueDate       DateTime
-  paidAt        DateTime?
-  status        ExpenseStatus         @default(PENDING)
-  paymentMethod ExpensePaymentMethod?
-  createdAt     DateTime              @default(now())
-  updatedAt     DateTime              @updatedAt
-  deletedAt     DateTime?
-
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  supplier  Supplier?        @relation(fields: [supplierId], references: [id])
-  category  ExpenseCategory? @relation(fields: [categoryId], references: [id])
-  workOrder WorkOrder?       @relation(fields: [workOrderId], references: [id])
-
-  @@index([userId])
-  @@index([userId, status])
-  @@index([userId, dueDate])
-  @@index([userId, workOrderId])
-  @@index([userId, supplierId])
-  @@index([userId, categoryId])
-  @@index([userId, deletedAt])
-  @@index([paidAt])
-  @@map("expenses")
-}
-
-// =============================================================================
-// INVENTORY MODULE (Controle de Estoque)
-// =============================================================================
-
-// Tipo de movimentação de estoque
 enum InventoryMovementType {
-  ADJUSTMENT_IN   // Entrada manual (compra, devolução, correção)
-  ADJUSTMENT_OUT  // Saída manual (perda, correção, uso interno)
-  WORK_ORDER_OUT  // Baixa automática por OS
-  INITIAL         // Saldo inicial ao ativar feature
+  ADJUSTMENT_IN
+  ADJUSTMENT_OUT
+  WORK_ORDER_OUT
+  INITIAL
 }
 
-// Fonte da movimentação
 enum InventoryMovementSource {
-  MANUAL          // Ajuste manual do usuário
-  WORK_ORDER      // Baixa por conclusão de OS
-  IMPORT          // Importação em lote
-  SYSTEM          // Ajuste do sistema
+  MANUAL
+  WORK_ORDER
+  IMPORT
+  SYSTEM
 }
 
-// Configurações de estoque por usuário/empresa
-model InventorySettings {
-  id                        String          @id @default(uuid())
-  userId                    String          @unique
-  isEnabled                 Boolean         @default(false)  // Se o controle de estoque está ativo
-  deductOnStatus            WorkOrderStatus @default(DONE)   // Em qual status da OS fazer a baixa
-  allowNegativeStock        Boolean         @default(false)  // Se permite estoque negativo
-  deductOnlyOncePerWorkOrder Boolean        @default(true)   // Prevenir múltiplas baixas na mesma OS
-  createdAt                 DateTime        @default(now())
-  updatedAt                 DateTime        @updatedAt
-  user                      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@map("inventory_settings")
-}
-
-// Saldo atual de cada produto (materialização para consultas rápidas)
-model InventoryBalance {
-  id        String   @id @default(uuid())
-  itemId    String   @unique  // Apenas para produtos (type = PRODUCT)
-  quantity  Decimal  @db.Decimal(15, 4)  // Saldo atual
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  item      Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
-
-  @@index([itemId])
-  @@map("inventory_balances")
-}
-
-// Ledger de movimentações - event sourcing para rastreabilidade
-model InventoryMovement {
-  id            String                  @id @default(uuid())
-  itemId        String
-  type          InventoryMovementType
-  source        InventoryMovementSource
-  quantity      Decimal                 @db.Decimal(15, 4)  // Positivo = entrada, Negativo = saída
-  balanceAfter  Decimal                 @db.Decimal(15, 4)  // Saldo após a movimentação
-  sourceId      String?                 // ID da entidade relacionada (workOrderId, etc)
-  notes         String?                 // Observações do usuário
-  createdBy     String?                 // userId que criou a movimentação
-  createdAt     DateTime                @default(now())
-
-  // Constraint de idempotência: impede duplicação de movimentações
-  // Para baixas de OS: sourceId = workOrderId, source = WORK_ORDER
-  @@unique([itemId, source, sourceId], name: "inventory_movement_idempotency")
-  @@index([itemId])
-  @@index([source])
-  @@index([sourceId])
-  @@index([createdAt])
-  @@map("inventory_movements")
-}
-
-// Controle de idempotência para baixas de OS
-// Registra quais OS já tiveram baixa de estoque processada
-model WorkOrderInventoryDeduction {
-  id           String    @id @default(uuid())
-  workOrderId  String    @unique  // Apenas uma baixa por OS
-  deductedAt   DateTime  @default(now())
-  itemsCount   Int       // Quantos produtos foram baixados
-  notes        String?   // Observações
-  workOrder    WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
-
-  @@index([workOrderId])
-  @@index([deductedAt])
-  @@map("work_order_inventory_deductions")
-}
-
-// =============================================================================
-// REFERRAL PROGRAM MODULE (Programa de Indicação)
-// =============================================================================
-
-// Status do código de indicação
 enum ReferralCodeStatus {
   ACTIVE
-  SUSPENDED // Suspenso por fraude ou violação
-  INACTIVE  // Desativado pelo usuário
+  SUSPENDED
+  INACTIVE
 }
 
-// Plataforma detectada no clique
 enum ReferralPlatform {
   IOS
   ANDROID
@@ -1497,359 +1738,174 @@ enum ReferralPlatform {
   UNKNOWN
 }
 
-// Método de atribuição do indicado
 enum ReferralAttributionMethod {
-  LINK_DIRECT       // Clicou no link e se cadastrou direto
-  INSTALL_REFERRER  // Play Install Referrer API (Android)
-  FINGERPRINT       // Fingerprint match (iOS deferred)
-  MANUAL_CODE       // Usuário digitou o código manualmente
+  LINK_DIRECT
+  INSTALL_REFERRER
+  FINGERPRINT
+  MANUAL_CODE
 }
 
-// Status do referral (indicação)
 enum ReferralStatus {
-  PENDING           // Clicou mas não cadastrou
-  SIGNUP_COMPLETE   // Cadastrou mas não pagou
-  SUBSCRIPTION_PAID // Pagou o plano - RECOMPENSA CREDITADA
-  CHURNED           // Cancelou assinatura
-  FRAUDULENT        // Marcado como fraude
+  PENDING
+  SIGNUP_COMPLETE
+  SUBSCRIPTION_PAID
+  CHURNED
+  FRAUDULENT
 }
 
-// Razão da recompensa
 enum ReferralRewardReason {
-  SINGLE_REFERRAL  // +1 mês por indicado que pagou
-  MILESTONE_10     // +12 meses ao atingir 10 indicados
-  BONUS            // Bônus promocional
-  REVERSAL         // Estorno (chargeback)
+  SINGLE_REFERRAL
+  MILESTONE_10
+  BONUS
+  REVERSAL
 }
 
-// Status da recompensa no ledger
 enum ReferralRewardStatus {
-  PENDING   // Aguardando aplicação
-  APPLIED   // Aplicado na assinatura
-  EXPIRED   // Expirou (não usou)
-  REVERSED  // Revertido (chargeback)
+  PENDING
+  APPLIED
+  EXPIRED
+  REVERSED
 }
 
-// Código único de indicação por usuário
-model ReferralCode {
-  id          String              @id @default(uuid())
-  userId      String              @unique
-  code        String              @unique  // Código gerado (ex: "A7K2F9")
-  customCode  String?             @unique  // Código personalizado (ex: "GABRIEL")
-  status      ReferralCodeStatus  @default(ACTIVE)
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+enum AiConversationStatus {
+  ACTIVE
+  COMPLETED
+  EXPIRED
+}
 
-  user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  clicks ReferralClick[]
+enum AiPlanStatus {
+  PENDING_CONFIRMATION
+  CONFIRMED
+  EXECUTING
+  COMPLETED
+  FAILED
+  REJECTED
+  EXPIRED
+}
 
-  @@index([code])
-  @@index([customCode])
+enum AiActionType {
+  READ
+  CREATE
+  UPDATE
+  DELETE
+  SEND
+  PAYMENT_CREATE
+  PAYMENT_SEND
+}
+
+enum AiAuditCategory {
+  TOOL_CALL
+  PLAN_CREATED
+  PLAN_CONFIRMED
+  PLAN_REJECTED
+  PLAN_EXECUTED
+  ACTION_SUCCESS
+  ACTION_FAILED
+  SECURITY_BLOCK
+  RATE_LIMIT
+}
+
+// ============================================
+// Knowledge Base (RAG) Models
+// ============================================
+
+model KbDocument {
+  id          String       @id @default(uuid())
+  source      KbSource
+  sourceId    String       // Unique identifier within source (filepath, url, etc)
+  title       String
+  content     String       // Full content for reference
+  metadata    Json?        // Additional metadata (author, version, etc)
+  hash        String       // SHA256 of content for change detection
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  indexedAt   DateTime?    // Last time chunks were indexed
+
+  chunks      KbChunk[]
+
+  @@unique([source, sourceId])
+  @@index([source])
+  @@index([isActive])
+  @@map("kb_documents")
+}
+
+model KbChunk {
+  id          String       @id @default(uuid())
+  documentId  String
+  document    KbDocument   @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  content     String       // Chunk text
+  chunkIndex  Int          // Order within document
+  startChar   Int          // Start position in original
+  endChar     Int          // End position in original
+  embedding   Float[]      // Vector embedding (1536 for OpenAI ada-002)
+  metadata    Json?        // Additional chunk metadata
+  createdAt   DateTime     @default(now())
+
+  @@index([documentId])
+  @@map("kb_chunks")
+}
+
+model KbFaq {
+  id          String       @id @default(uuid())
+  question    String
+  answer      String
+  category    String?
+  keywords    String[]     // For keyword matching
+  priority    Int          @default(0) // Higher = more relevant
+  isActive    Boolean      @default(true)
+  embedding   Float[]      // Vector embedding of question
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([isActive])
+  @@index([category])
+  @@map("kb_faqs")
+}
+
+model KbIndexJob {
+  id          String       @id @default(uuid())
+  source      KbSource
+  sourceId    String?      // Specific document, null = full reindex
+  status      KbIndexStatus @default(PENDING)
+  totalDocs   Int          @default(0)
+  processedDocs Int        @default(0)
+  errorMessage String?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime     @default(now())
+
   @@index([status])
-  @@map("referral_codes")
+  @@index([createdAt])
+  @@map("kb_index_jobs")
 }
 
-// Registro de cliques nos links de indicação
-model ReferralClick {
-  id              String            @id @default(uuid())
-  codeId          String
-  clickId         String            @unique @default(uuid())  // ID único para tracking
-  ipHash          String            // SHA256 do IP (privacidade)
-  userAgent       String?
-  platformGuess   ReferralPlatform  @default(UNKNOWN)
-  fingerprintHash String?           // Para deferred deep link iOS
-  referer         String?           // HTTP Referer
-  expiresAt       DateTime          // Click válido por 30 dias
-  converted       Boolean           @default(false)
-  convertedAt     DateTime?
-  createdAt       DateTime          @default(now())
+enum KbSource {
+  DOCS        // /docs folder in repo
+  FAQ         // FAQ entries
+  HELP_CENTER // External help center markdown
+  CUSTOM      // Custom uploaded documents
+}
 
-  code     ReferralCode     @relation(fields: [codeId], references: [id], onDelete: Cascade)
-  install  ReferralInstall?
-  referral Referral?
+enum KbIndexStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
 
-  @@index([codeId])
-  @@index([clickId])
-  @@index([fingerprintHash])
+// Embedding Cache for frequently queried texts
+model KbEmbeddingCache {
+  id             String   @id @default(uuid())
+  textHash       String   @unique @map("text_hash") // SHA256 hash of the text
+  embedding      Float[]  // Cached embedding vector
+  model          String   // Model used to generate embedding
+  hitCount       Int      @default(0) @map("hit_count")
+  createdAt      DateTime @default(now()) @map("created_at")
+  lastAccessedAt DateTime @default(now()) @map("last_accessed_at")
+  expiresAt      DateTime @map("expires_at")
+
+  @@index([textHash])
   @@index([expiresAt])
-  @@index([createdAt])
-  @@map("referral_clicks")
-}
-
-// Registro de instalações do app (para atribuição)
-model ReferralInstall {
-  id                     String           @id @default(uuid())
-  clickId                String?          @unique
-  deviceIdHash           String           // Hash do device ID
-  platform               ReferralPlatform
-  installReferrerPayload Json?            // Payload do Play Install Referrer
-  fingerprintHash        String?          // Para match com click iOS
-  matched                Boolean          @default(false)
-  matchedAt              DateTime?
-  createdAt              DateTime         @default(now())
-
-  click ReferralClick? @relation(fields: [clickId], references: [id])
-
-  @@index([deviceIdHash])
-  @@index([fingerprintHash])
-  @@index([matched])
-  @@index([createdAt])
-  @@map("referral_installs")
-}
-
-// Vínculo entre indicador e indicado
-model Referral {
-  id                  String                    @id @default(uuid())
-  referrerUserId      String
-  refereeUserId       String                    @unique  // Cada usuário só pode ter 1 referrer
-  clickId             String?                   @unique
-  attributionMethod   ReferralAttributionMethod
-  status              ReferralStatus            @default(PENDING)
-  subscriptionPaidAt  DateTime?
-  rewardCredited      Boolean                   @default(false)
-  fraudFlags          String[]                  @default([])  // Flags de fraude detectadas
-  createdAt           DateTime                  @default(now())
-  updatedAt           DateTime                  @updatedAt
-
-  referrerUser User           @relation("ReferralReferrer", fields: [referrerUserId], references: [id], onDelete: Cascade)
-  refereeUser  User           @relation("ReferralReferee", fields: [refereeUserId], references: [id], onDelete: Cascade)
-  click        ReferralClick? @relation(fields: [clickId], references: [id])
-  rewards      ReferralReward[]
-
-  @@index([referrerUserId])
-  @@index([refereeUserId])
-  @@index([status])
-  @@index([createdAt])
-  @@map("referrals")
-}
-
-// Ledger de recompensas (idempotente)
-model ReferralReward {
-  id                  String               @id @default(uuid())
-  userId              String               // Quem recebe a recompensa
-  referralId          String?              // Referral que gerou (se aplicável)
-  monthsCredited      Int                  // Meses creditados
-  reason              ReferralRewardReason
-  idempotencyKey      String               @unique  // Para evitar duplicatas
-  status              ReferralRewardStatus @default(PENDING)
-  appliedAt           DateTime?
-  expiresAt           DateTime?            // Data limite para usar
-  reversedAt          DateTime?
-  reversalReason      String?
-  createdAt           DateTime             @default(now())
-
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  referral Referral? @relation(fields: [referralId], references: [id])
-
-  @@index([userId])
-  @@index([referralId])
-  @@index([status])
-  @@index([createdAt])
-  @@map("referral_rewards")
-}
-
-// Audit log para decisões de atribuição (debugging e anti-fraude)
-model ReferralAuditLog {
-  id          String   @id @default(uuid())
-  action      String   // Ação realizada (click, attribution_attempt, reward_credit, fraud_flag, etc)
-  entityType  String   // Tipo de entidade (click, install, referral, reward)
-  entityId    String   // ID da entidade
-  userId      String?  // Usuário relacionado
-  decision    String   // Decisão tomada
-  reason      String?  // Razão da decisão
-  metadata    Json?    // Dados adicionais
-  ipHash      String?
-  userAgent   String?
-  createdAt   DateTime @default(now())
-
-  @@index([action])
-  @@index([entityType, entityId])
-  @@index([userId])
-  @@index([createdAt])
-  @@map("referral_audit_logs")
-}
-
-// =============================================================================
-// GOOGLE BUSINESS GROWTH MODULE
-// =============================================================================
-
-// Status da integração Google
-enum GoogleIntegrationStatus {
-  PENDING      // Aguardando seleção de location
-  CONNECTED    // Conectado e funcionando
-  ERROR        // Erro na última sincronização
-  DISCONNECTED // Desconectado pelo usuário
-  REVOKED      // Token revogado pelo Google
-}
-
-// Fonte do evento de demanda
-enum DemandEventSource {
-  GOOGLE_BUSINESS // Métricas do Google Business Profile
-  TRACKING_LINK   // Nossos links de tracking
-  MANUAL          // Entrada manual
-}
-
-// Tipo de ação
-enum DemandActionType {
-  CALL              // Ligação (click-to-call)
-  ROUTE             // Solicitação de rota
-  WEBSITE_CLICK     // Clique no site (Google)
-  WHATSAPP_CLICK    // Clique WhatsApp (tracking)
-  SITE_CLICK        // Clique site (tracking)
-  PROFILE_VIEW      // Visualização do perfil
-  SEARCH_IMPRESSION // Impressão na busca
-  MAPS_IMPRESSION   // Impressão no Maps
-}
-
-// Tipo de período
-enum DemandPeriodType {
-  DAY
-  WEEK
-  MONTH
-}
-
-// Tipo de link de atribuição
-enum AttributionLinkType {
-  WHATSAPP
-  WEBSITE
-}
-
-// Tipo de insight
-enum GrowthInsightType {
-  CONVERSION_DROP     // Queda de conversão
-  ACTION_SPIKE        // Pico de ações
-  LOW_CONVERSION_RATE // Taxa de conversão baixa
-  CHANNEL_COMPARISON  // Comparação de canais
-  WEEKLY_SUMMARY      // Resumo semanal
-  GOAL_ACHIEVED       // Meta atingida
-}
-
-// Severidade do insight
-enum GrowthInsightSeverity {
-  INFO
-  WARNING
-  CRITICAL
-  SUCCESS
-}
-
-// Confiança da atribuição
-enum AttributionConfidence {
-  HIGH   // UTM explícito
-  MEDIUM // Evento nas últimas 24h
-  LOW    // Evento nas últimas 72h
-  NONE   // Sem dados de atribuição
-}
-
-// Origem do orçamento
-enum QuoteOriginSource {
-  GOOGLE_BUSINESS
-  DIRECT
-  REFERRAL
-  SOCIAL_MEDIA
-  OTHER
-  UNKNOWN
-}
-
-// Integração com Google Business Profile
-model GoogleIntegration {
-  id                 String                  @id @default(uuid())
-  userId             String                  @unique
-  googleAccountId    String?
-  googleLocationId   String?
-  googleLocationName String?
-  status             GoogleIntegrationStatus @default(PENDING)
-  scopes             String[]
-  lastSyncAt         DateTime?
-  lastSyncError      String?
-  createdAt          DateTime                @default(now())
-  updatedAt          DateTime                @updatedAt
-
-  user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token GoogleToken?
-
-  @@index([userId])
-  @@index([status])
-  @@map("google_integrations")
-}
-
-// Tokens OAuth do Google (criptografados)
-model GoogleToken {
-  id              String   @id @default(uuid())
-  integrationId   String   @unique
-  accessTokenEnc  String // Encrypted
-  refreshTokenEnc String // Encrypted
-  expiresAt       DateTime
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  integration GoogleIntegration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
-
-  @@map("google_tokens")
-}
-
-// Eventos de demanda (métricas do Google + tracking)
-model DemandEvent {
-  id          String            @id @default(uuid())
-  userId      String
-  source      DemandEventSource
-  actionType  DemandActionType
-  occurredAt  DateTime
-  periodType  DemandPeriodType
-  periodStart DateTime
-  periodEnd   DateTime
-  value       Int               @default(1)
-  dimensions  Json?
-  rawRef      String?
-  createdAt   DateTime          @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, source, actionType, periodType, periodStart, periodEnd])
-  @@index([userId])
-  @@index([userId, occurredAt])
-  @@index([userId, actionType])
-  @@index([userId, source, occurredAt])
-  @@map("demand_events")
-}
-
-// Links de atribuição (tracking WhatsApp/Site)
-model AttributionLink {
-  id         String              @id @default(uuid())
-  userId     String
-  slug       String              @unique
-  type       AttributionLinkType
-  targetUrl  String
-  clickCount Int                 @default(0)
-  isActive   Boolean             @default(true)
-  createdAt  DateTime            @default(now())
-  updatedAt  DateTime            @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([slug])
-  @@map("attribution_links")
-}
-
-// Insights de crescimento gerados automaticamente
-model GrowthInsight {
-  id              String                @id @default(uuid())
-  userId          String
-  type            GrowthInsightType
-  severity        GrowthInsightSeverity
-  title           String
-  description     String
-  recommendations Json // Array de strings
-  metrics         Json? // Dados numéricos do insight
-  isRead          Boolean               @default(false)
-  isDismissed     Boolean               @default(false)
-  expiresAt       DateTime?
-  createdAt       DateTime              @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([userId, isRead])
-  @@index([userId, createdAt])
-  @@map("growth_insights")
+  @@map("kb_embedding_cache")
 }

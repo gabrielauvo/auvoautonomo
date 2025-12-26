@@ -4,7 +4,9 @@
  * Integrations Settings Page
  *
  * Configuracoes de integracoes com servicos externos:
- * - Asaas (gateway de pagamento)
+ * - Asaas (gateway de pagamento - Brasil)
+ * - Stripe (gateway de pagamento - Internacional)
+ * - Mercado Pago (gateway de pagamento - LATAM)
  */
 
 import { useState } from 'react';
@@ -20,6 +22,8 @@ import {
   Loader2,
   Unplug,
   AlertTriangle,
+  CreditCard,
+  Globe,
 } from 'lucide-react';
 import {
   Card,
@@ -40,7 +44,20 @@ import {
   useDisconnectAsaas,
 } from '@/hooks/use-integrations';
 import { AsaasEnvironment } from '@/services/integrations.service';
-import { GoogleBusinessIntegration } from '@/components/settings/google-business-integration';
+
+// Stripe Icon SVG Component
+const StripeIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z" />
+  </svg>
+);
+
+// Mercado Pago Icon SVG Component
+const MercadoPagoIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 17.08c-.74.74-1.75 1.15-2.84 1.15H8.946c-1.09 0-2.1-.41-2.84-1.15-.74-.74-1.15-1.75-1.15-2.84V9.76c0-1.09.41-2.1 1.15-2.84.74-.74 1.75-1.15 2.84-1.15h6.108c1.09 0 2.1.41 2.84 1.15.74.74 1.15 1.75 1.15 2.84v4.48c0 1.09-.41 2.1-1.15 2.84zm-2.34-8.32h-7.11c-.55 0-1 .45-1 1v4.48c0 .55.45 1 1 1h7.11c.55 0 1-.45 1-1V9.76c0-.55-.45-1-1-1zm-5.11 4.24c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" />
+  </svg>
+);
 
 export default function IntegrationsSettingsPage() {
   const { t } = useTranslations('integrations');
@@ -305,8 +322,151 @@ export default function IntegrationsSettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Google Business Integration */}
-      <GoogleBusinessIntegration />
+      {/* Stripe Integration - International Customers */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-indigo-100 rounded-lg">
+                <StripeIcon className="h-6 w-6 text-indigo-600" />
+              </div>
+              <div>
+                <CardTitle>Stripe</CardTitle>
+                <p className="text-sm text-gray-500">
+                  {t('stripeDescription')}
+                </p>
+              </div>
+            </div>
+            <Badge variant="default" className="flex items-center gap-1">
+              <X className="h-3 w-3" />
+              {t('notConfigured')}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <Alert>
+              <div className="flex items-start gap-2">
+                <Globe className="h-4 w-4 mt-0.5" />
+                <div>
+                  <p className="font-medium">{t('adminConfiguredIntegration')}</p>
+                  <p className="text-sm">
+                    {t('stripeAdminDescription')}
+                  </p>
+                </div>
+              </div>
+            </Alert>
+
+            <div className="p-4 bg-gray-50 rounded-lg space-y-3">
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-500">{t('status')}</span>
+                <Badge variant="default">
+                  {t('notConfigured')}
+                </Badge>
+              </div>
+
+              <div className="flex justify-between items-start">
+                <span className="text-sm text-gray-500">{t('supportedCountries')}</span>
+                <div className="text-right">
+                  <span className="text-sm font-medium">
+                    {t('stripeSupportedCountries')}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-500">{t('paymentMethods')}</span>
+                <span className="text-sm font-medium">
+                  {t('stripePaymentMethods')}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                leftIcon={<ExternalLink className="h-4 w-4" />}
+                onClick={() => window.open('https://dashboard.stripe.com', '_blank')}
+              >
+                {t('stripeDashboard')}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Mercado Pago Integration - LATAM */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-sky-100 rounded-lg">
+                <MercadoPagoIcon className="h-6 w-6 text-sky-500" />
+              </div>
+              <div>
+                <CardTitle>Mercado Pago</CardTitle>
+                <p className="text-sm text-gray-500">
+                  {t('mercadoPagoDescription')}
+                </p>
+              </div>
+            </div>
+            <Badge variant="default" className="flex items-center gap-1">
+              <X className="h-3 w-3" />
+              {t('notConfigured')}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <Alert>
+              <div className="flex items-start gap-2">
+                <Globe className="h-4 w-4 mt-0.5" />
+                <div>
+                  <p className="font-medium">{t('adminConfiguredIntegration')}</p>
+                  <p className="text-sm">
+                    {t('mercadoPagoAdminDescription')}
+                  </p>
+                </div>
+              </div>
+            </Alert>
+
+            <div className="p-4 bg-gray-50 rounded-lg space-y-3">
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-500">{t('status')}</span>
+                <Badge variant="default">
+                  {t('notConfigured')}
+                </Badge>
+              </div>
+
+              <div className="flex justify-between items-start">
+                <span className="text-sm text-gray-500">{t('supportedCountries')}</span>
+                <div className="text-right">
+                  <span className="text-sm font-medium">
+                    {t('mercadoPagoSupportedCountries')}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-500">{t('paymentMethods')}</span>
+                <span className="text-sm font-medium">
+                  {t('mercadoPagoPaymentMethods')}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                leftIcon={<ExternalLink className="h-4 w-4" />}
+                onClick={() => window.open('https://www.mercadopago.com.ar/developers/panel', '_blank')}
+              >
+                {t('mercadoPagoDashboard')}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Disconnect confirmation modal */}
       {showDisconnectConfirm && (

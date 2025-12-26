@@ -147,6 +147,58 @@ export interface PixStatusResult {
 }
 
 // ============================================
+// STRIPE CHECKOUT TYPES (International)
+// ============================================
+
+export interface GatewayInfo {
+  country: string;
+  gateway: 'asaas' | 'stripe';
+  currency: string;
+  currencySymbol?: string;
+  isPixAvailable?: boolean;
+  paymentMethods: {
+    card: boolean;
+    pix?: boolean;
+    boleto?: boolean;
+    oxxo?: boolean;
+    sepaDebit?: boolean;
+    ideal?: boolean;
+    bancontact?: boolean;
+    sofort?: boolean;
+  };
+  methodsInfo?: Record<string, {
+    name: string;
+    description: string;
+    icon: string;
+    processingTime: string;
+    expiresIn?: string;
+  }>;
+  pricing: {
+    monthly: number;
+    yearly: number;
+    yearlyTotal?: number;
+    yearlySavings?: number;
+    monthlyFormatted?: string;
+    yearlyFormatted?: string;
+  };
+}
+
+export interface StripeCheckoutResult {
+  success: boolean;
+  subscriptionId?: string;
+  checkoutUrl?: string;
+  currency?: string;
+  errorMessage?: string;
+}
+
+export interface StripeCheckoutDto {
+  billingPeriod: BillingPeriod;
+  country: string;
+  successUrl?: string;
+  cancelUrl?: string;
+}
+
+// ============================================
 // CHECKOUT FUNCTIONS
 // ============================================
 
@@ -210,6 +262,79 @@ export async function reactivateSubscription(): Promise<{ success: boolean; mess
   }
 }
 
+// ============================================
+// STRIPE CHECKOUT FUNCTIONS (International)
+// ============================================
+
+/**
+ * Obtém informações do gateway baseado no país
+ */
+export async function getGatewayInfo(country: string = 'BR'): Promise<GatewayInfo> {
+  try {
+    const response = await api.get<GatewayInfo>(`/billing/gateway-info?country=${country}`);
+    return response.data;
+  } catch (error) {
+    throw new Error(getErrorMessage(error));
+  }
+}
+
+/**
+ * Cria sessão de checkout Stripe (para clientes internacionais)
+ * Retorna URL para redirecionar o usuário
+ */
+export async function createStripeCheckout(data: StripeCheckoutDto): Promise<StripeCheckoutResult> {
+  try {
+    const response = await api.post<StripeCheckoutResult>('/billing/checkout/stripe', {
+      billingPeriod: data.billingPeriod,
+      country: data.country,
+      successUrl: data.successUrl || `${window.location.origin}/settings/plan?success=true`,
+      cancelUrl: data.cancelUrl || `${window.location.origin}/settings/plan?canceled=true`,
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(getErrorMessage(error));
+  }
+}
+
+/**
+ * Verifica se o país usa Stripe (internacional) ou Asaas (Brasil)
+ */
+export function isInternationalCountry(country: string): boolean {
+  return country.toUpperCase() !== 'BR';
+}
+
+/**
+ * Lista de países suportados pelo Stripe
+ */
+export const STRIPE_SUPPORTED_COUNTRIES = [
+  // América do Norte
+  { code: 'US', name: 'United States', currency: 'USD' },
+  { code: 'CA', name: 'Canada', currency: 'CAD' },
+  { code: 'MX', name: 'México', currency: 'MXN' },
+  // Europa
+  { code: 'GB', name: 'United Kingdom', currency: 'GBP' },
+  { code: 'DE', name: 'Germany', currency: 'EUR' },
+  { code: 'FR', name: 'France', currency: 'EUR' },
+  { code: 'ES', name: 'Spain', currency: 'EUR' },
+  { code: 'IT', name: 'Italy', currency: 'EUR' },
+  { code: 'PT', name: 'Portugal', currency: 'EUR' },
+  { code: 'NL', name: 'Netherlands', currency: 'EUR' },
+  { code: 'BE', name: 'Belgium', currency: 'EUR' },
+  { code: 'AT', name: 'Austria', currency: 'EUR' },
+  { code: 'IE', name: 'Ireland', currency: 'EUR' },
+  { code: 'CH', name: 'Switzerland', currency: 'CHF' },
+  { code: 'SE', name: 'Sweden', currency: 'SEK' },
+  { code: 'NO', name: 'Norway', currency: 'NOK' },
+  { code: 'DK', name: 'Denmark', currency: 'DKK' },
+  { code: 'PL', name: 'Poland', currency: 'PLN' },
+  // Ásia-Pacífico
+  { code: 'AU', name: 'Australia', currency: 'AUD' },
+  { code: 'NZ', name: 'New Zealand', currency: 'NZD' },
+  { code: 'JP', name: 'Japan', currency: 'JPY' },
+  { code: 'SG', name: 'Singapore', currency: 'SGD' },
+  { code: 'HK', name: 'Hong Kong', currency: 'HKD' },
+];
+
 export const billingService = {
   getBillingStatus,
   calculateTrialDaysRemaining,
@@ -219,9 +344,14 @@ export const billingService = {
   checkoutCreditCard,
   cancelSubscription,
   reactivateSubscription,
+  // Stripe (Internacional)
+  getGatewayInfo,
+  createStripeCheckout,
+  isInternationalCountry,
   // Constantes
   TRIAL_DURATION_DAYS,
   PRO_PLAN_PRICING,
+  STRIPE_SUPPORTED_COUNTRIES,
 };
 
 export default billingService;

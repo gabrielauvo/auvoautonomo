@@ -1,19 +1,22 @@
 /**
  * Payment Gateway Factory
  *
- * Factory para selecionar o gateway de pagamento correto baseado no país do cliente.
- * - Brasil (BR) → Asaas (PIX, Boleto, Cartão em BRL)
- * - Internacional → Stripe (Cartão em USD/EUR/GBP)
+ * Factory para selecionar o gateway de pagamento correto baseado no pais do cliente.
+ * - Brasil (BR) -> Asaas (PIX, Boleto, Cartao em BRL)
+ * - America Latina (AR, CL, CO, PE, UY) -> Mercado Pago
+ * - Internacional -> Stripe (Cartao em USD/EUR/GBP)
  */
 
 import { Injectable, Logger } from '@nestjs/common';
 import { AsaasBillingService } from './asaas-billing.service';
 import { StripeBillingService } from './stripe-billing.service';
+import { MercadoPagoBillingService } from './mercadopago-billing.service';
 import {
   IPaymentGateway,
   GatewayType,
   getGatewayTypeForCountry,
   getCurrencyForCountry,
+  getMercadoPagoMethodsForCountry,
   CustomerData,
   CreditCardData,
   CreditCardHolderData,
@@ -21,16 +24,48 @@ import {
   PaymentCycle,
 } from './interfaces/payment-gateway.interface';
 
-// Preços por moeda (em centavos/unidades)
-export const PRICING = {
+// Preços por moeda (valores em unidade da moeda, não centavos)
+export const PRICING: Record<string, { MONTHLY: number; YEARLY: number }> = {
+  // América do Sul - Brasil (Asaas)
   BRL: {
     MONTHLY: 99.90,
-    YEARLY: 89.90 * 12, // ~10% desconto
+    YEARLY: 89.90 * 12, // ~10% desconto anual
   },
+  // América do Sul - LATAM (Mercado Pago)
+  ARS: { // Argentina - Peso Argentino
+    MONTHLY: 19900,
+    YEARLY: 16900 * 12,
+  },
+  CLP: { // Chile - Peso Chileno
+    MONTHLY: 17900,
+    YEARLY: 14900 * 12,
+  },
+  COP: { // Colômbia - Peso Colombiano
+    MONTHLY: 79900,
+    YEARLY: 67900 * 12,
+  },
+  PEN: { // Peru - Sol Peruano
+    MONTHLY: 69.90,
+    YEARLY: 59.90 * 12,
+  },
+  UYU: { // Uruguai - Peso Uruguaio
+    MONTHLY: 799,
+    YEARLY: 679 * 12,
+  },
+  // América do Norte
   USD: {
     MONTHLY: 19.90,
-    YEARLY: 16.90 * 12, // ~15% desconto
+    YEARLY: 16.90 * 12, // ~15% desconto anual
   },
+  CAD: {
+    MONTHLY: 26.90,
+    YEARLY: 22.90 * 12,
+  },
+  MXN: {
+    MONTHLY: 349.00,
+    YEARLY: 299.00 * 12,
+  },
+  // Europa
   EUR: {
     MONTHLY: 18.90,
     YEARLY: 15.90 * 12,
@@ -38,6 +73,47 @@ export const PRICING = {
   GBP: {
     MONTHLY: 15.90,
     YEARLY: 13.90 * 12,
+  },
+  CHF: {
+    MONTHLY: 19.90,
+    YEARLY: 16.90 * 12,
+  },
+  SEK: {
+    MONTHLY: 199.00,
+    YEARLY: 169.00 * 12,
+  },
+  NOK: {
+    MONTHLY: 199.00,
+    YEARLY: 169.00 * 12,
+  },
+  DKK: {
+    MONTHLY: 139.00,
+    YEARLY: 119.00 * 12,
+  },
+  PLN: {
+    MONTHLY: 79.90,
+    YEARLY: 67.90 * 12,
+  },
+  // Ásia-Pacífico
+  AUD: {
+    MONTHLY: 29.90,
+    YEARLY: 25.90 * 12,
+  },
+  NZD: {
+    MONTHLY: 32.90,
+    YEARLY: 27.90 * 12,
+  },
+  JPY: {
+    MONTHLY: 2900,
+    YEARLY: 2490 * 12,
+  },
+  SGD: {
+    MONTHLY: 26.90,
+    YEARLY: 22.90 * 12,
+  },
+  HKD: {
+    MONTHLY: 149.00,
+    YEARLY: 129.00 * 12,
   },
 };
 
@@ -48,16 +124,21 @@ export class PaymentGatewayFactory {
   constructor(
     private asaasBillingService: AsaasBillingService,
     private stripeBillingService: StripeBillingService,
+    private mercadoPagoBillingService: MercadoPagoBillingService,
   ) {}
 
   /**
-   * Retorna o gateway apropriado para o país
+   * Retorna o gateway apropriado para o pais
    */
   getGateway(country: string): IPaymentGateway {
     const gatewayType = getGatewayTypeForCountry(country);
 
     if (gatewayType === 'asaas') {
       return this.asaasBillingService as unknown as IPaymentGateway;
+    }
+
+    if (gatewayType === 'mercadopago') {
+      return this.mercadoPagoBillingService;
     }
 
     return this.stripeBillingService;
@@ -136,11 +217,11 @@ export class PaymentGatewayFactory {
         return { ...result, gateway: 'asaas', currency };
       }
 
-      // Cartão de crédito
+      // Cartao de credito
       if (!creditCard || !holderInfo) {
         return {
           success: false,
-          errorMessage: 'Dados do cartão são obrigatórios',
+          errorMessage: 'Dados do cartao sao obrigatorios',
           gateway: 'asaas',
           currency,
         };
@@ -170,6 +251,39 @@ export class PaymentGatewayFactory {
         cycle,
       );
       return { ...result, gateway: 'asaas', currency };
+    }
+
+    // America Latina - Mercado Pago
+    if (gatewayType === 'mercadopago') {
+      // Criar/atualizar cliente no Mercado Pago
+      const customerResult = await this.mercadoPagoBillingService.createOrUpdateCustomer(customerData);
+      if (!customerResult.success || !customerResult.customerId) {
+        return {
+          success: false,
+          errorMessage: customerResult.errorMessage || 'Erro ao criar cliente',
+          gateway: 'mercadopago',
+          currency,
+        };
+      }
+
+      // PIX nao disponivel fora do Brasil
+      if (paymentMethod === 'PIX') {
+        return {
+          success: false,
+          errorMessage: 'PIX esta disponivel apenas para clientes no Brasil. Use cartao de credito ou Mercado Pago Checkout.',
+          gateway: 'mercadopago',
+          currency,
+        };
+      }
+
+      // Para Mercado Pago, recomendamos usar Checkout Pro
+      // Retornar indicacao para usar o checkout
+      return {
+        success: false,
+        errorMessage: 'Para pagamentos com Mercado Pago, use o Checkout Pro. Chame createMercadoPagoCheckoutSession().',
+        gateway: 'mercadopago',
+        currency,
+      };
     }
 
     // Internacional - Stripe
@@ -221,6 +335,7 @@ export class PaymentGatewayFactory {
 
   /**
    * Cria sessão de checkout do Stripe (para clientes internacionais)
+   * Suporta métodos de pagamento locais: OXXO (México), SEPA (Europa), iDEAL (Holanda), etc.
    */
   async createStripeCheckoutSession(
     userId: string,
@@ -229,8 +344,13 @@ export class PaymentGatewayFactory {
     successUrl: string,
     cancelUrl: string,
   ): Promise<SubscriptionResult & { gateway: GatewayType; currency: string }> {
-    const currency = this.getCurrency(customerData.country);
+    const country = customerData.country || 'US';
+    const currency = this.getCurrency(country);
     const amount = this.getPrice(currency, cycle);
+
+    this.logger.log(
+      `Creating Stripe checkout: user=${userId}, country=${country}, currency=${currency}, amount=${amount}`,
+    );
 
     // Criar cliente no Stripe
     const customerResult = await this.stripeBillingService.createOrUpdateCustomer(customerData);
@@ -260,16 +380,130 @@ export class PaymentGatewayFactory {
       };
     }
 
-    // Criar sessão de checkout
+    // Criar sessão de checkout com métodos de pagamento locais
     const result = await this.stripeBillingService.createCheckoutSession(
       userId,
       customerResult.customerId,
       priceId,
       successUrl,
       cancelUrl,
+      country, // Passa o país para determinar métodos de pagamento locais
     );
 
     return { ...result, gateway: 'stripe', currency };
+  }
+
+  /**
+   * Cria sessao de checkout do Mercado Pago (para clientes da America Latina)
+   * Suporta metodos de pagamento locais por pais
+   */
+  async createMercadoPagoCheckoutSession(
+    userId: string,
+    customerData: CustomerData,
+    cycle: PaymentCycle,
+    successUrl: string,
+    cancelUrl: string,
+  ): Promise<SubscriptionResult & { gateway: GatewayType; currency: string }> {
+    const country = customerData.country || 'AR';
+    const currency = this.getCurrency(country);
+    const amount = this.getPrice(currency, cycle);
+
+    this.logger.log(
+      `Creating Mercado Pago checkout: user=${userId}, country=${country}, currency=${currency}, amount=${amount}`,
+    );
+
+    // Criar cliente no Mercado Pago
+    const customerResult = await this.mercadoPagoBillingService.createOrUpdateCustomer(customerData);
+    if (!customerResult.success || !customerResult.customerId) {
+      return {
+        success: false,
+        errorMessage: customerResult.errorMessage || 'Erro ao criar cliente',
+        gateway: 'mercadopago',
+        currency,
+      };
+    }
+
+    // Criar sessao de checkout
+    const result = await this.mercadoPagoBillingService.createCheckoutSession(
+      userId,
+      customerResult.customerId,
+      `pro_${cycle.toLowerCase()}`, // priceId
+      successUrl,
+      cancelUrl,
+      country,
+    );
+
+    return { ...result, gateway: 'mercadopago', currency };
+  }
+
+  /**
+   * Retorna informacoes sobre metodos de pagamento disponiveis para o pais
+   */
+  getPaymentMethodsInfo(country: string): {
+    gateway: GatewayType;
+    currency: string;
+    methods: string[];
+    monthlyPrice: number;
+    yearlyPrice: number;
+  } {
+    const gateway = this.getGatewayType(country);
+    const currency = this.getCurrency(country);
+
+    let methods: string[] = [];
+
+    if (gateway === 'asaas') {
+      methods = ['PIX', 'BOLETO', 'CREDIT_CARD'];
+    } else if (gateway === 'mercadopago') {
+      // Mercado Pago - metodos variam por pais
+      const countryUpper = country.toUpperCase();
+      const mpMethods = getMercadoPagoMethodsForCountry(countryUpper);
+
+      methods = ['CREDIT_CARD', 'MERCADO_PAGO'];
+
+      // Argentina
+      if (mpMethods.rapipago) methods.push('RAPIPAGO');
+      if (mpMethods.pagoFacil) methods.push('PAGO_FACIL');
+
+      // Chile
+      if (mpMethods.servipag) methods.push('SERVIPAG');
+      if (mpMethods.webpay) methods.push('WEBPAY');
+
+      // Colombia
+      if (mpMethods.pse) methods.push('PSE');
+      if (mpMethods.efecty) methods.push('EFECTY');
+
+      // Peru
+      if (mpMethods.pagoEfectivo) methods.push('PAGO_EFECTIVO');
+
+      // Uruguay
+      if (mpMethods.abitab) methods.push('ABITAB');
+      if (mpMethods.redpagos) methods.push('REDPAGOS');
+    } else {
+      // Stripe - metodos variam por pais
+      const countryUpper = country.toUpperCase();
+      methods = ['CREDIT_CARD'];
+
+      if (countryUpper === 'MX') {
+        methods.push('OXXO');
+      }
+      if (['DE', 'FR', 'ES', 'IT', 'PT', 'NL', 'BE', 'AT'].includes(countryUpper)) {
+        methods.push('SEPA_DEBIT');
+      }
+      if (countryUpper === 'NL') {
+        methods.push('IDEAL');
+      }
+      if (countryUpper === 'BE') {
+        methods.push('BANCONTACT');
+      }
+    }
+
+    return {
+      gateway,
+      currency,
+      methods,
+      monthlyPrice: this.getPrice(currency, 'MONTHLY'),
+      yearlyPrice: this.getPrice(currency, 'YEARLY'),
+    };
   }
 
   /**
@@ -281,6 +515,12 @@ export class PaymentGatewayFactory {
     if (subscription?.asaasSubscriptionId) {
       await this.asaasBillingService.cancelSubscription(userId);
       return { success: true, message: 'Assinatura cancelada com sucesso' };
+    }
+
+    // Para Mercado Pago, verificar se temos mercadoPagoSubscriptionId
+    const mpSubId = (subscription as any)?.mercadoPagoSubscriptionId;
+    if (mpSubId) {
+      return this.mercadoPagoBillingService.cancelSubscription(mpSubId);
     }
 
     // Para Stripe, verificar se temos stripeSubscriptionId

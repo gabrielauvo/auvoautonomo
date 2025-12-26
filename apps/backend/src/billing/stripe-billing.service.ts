@@ -24,6 +24,9 @@ import {
   SubscriptionResult,
   PaymentStatusResult,
   PaymentCycle,
+  STRIPE_SUPPORTED_COUNTRIES,
+  getPaymentMethodsForCountry,
+  getCurrencyForCountry,
 } from './interfaces/payment-gateway.interface';
 
 // Stripe SDK types (instalar: npm install stripe)
@@ -58,8 +61,12 @@ export class StripeBillingService implements IPaymentGateway {
   private readonly webhookSecret: string;
 
   readonly name = 'stripe';
-  readonly supportedCurrencies = ['USD', 'EUR', 'GBP', 'CAD', 'AUD'];
-  readonly supportedCountries = ['US', 'GB', 'DE', 'FR', 'CA', 'AU', 'ES', 'IT', 'PT'];
+  readonly supportedCurrencies = [
+    'USD', 'CAD', 'MXN',           // América do Norte
+    'EUR', 'GBP', 'CHF', 'SEK', 'NOK', 'DKK', 'PLN', // Europa
+    'AUD', 'NZD', 'JPY', 'SGD', 'HKD', // Ásia-Pacífico
+  ];
+  readonly supportedCountries = STRIPE_SUPPORTED_COUNTRIES;
 
   constructor(
     private prisma: PrismaService,
@@ -192,6 +199,7 @@ export class StripeBillingService implements IPaymentGateway {
   /**
    * Cria sessão de checkout do Stripe
    * Redireciona usuário para página de pagamento hospedada pelo Stripe
+   * Suporta métodos de pagamento locais por país (OXXO, SEPA, iDEAL, etc.)
    */
   async createCheckoutSession(
     userId: string,
@@ -199,23 +207,29 @@ export class StripeBillingService implements IPaymentGateway {
     priceId: string,
     successUrl: string,
     cancelUrl: string,
+    country?: string,
   ): Promise<SubscriptionResult> {
-    this.logger.log(`Creating Stripe Checkout session for user ${userId}`);
+    this.logger.log(`Creating Stripe Checkout session for user ${userId}, country: ${country}`);
+
+    const currency = country ? getCurrencyForCountry(country) : 'USD';
 
     if (!this.isConfigured()) {
       return {
         success: true,
         subscriptionId: `sub_mock_${Date.now()}`,
         checkoutUrl: 'https://checkout.stripe.com/mock-session',
-        currency: 'USD',
+        currency,
       };
     }
 
     try {
+      // Determinar métodos de pagamento baseado no país
+      const paymentMethodTypes = this.getPaymentMethodTypesForCountry(country || 'US');
+
       const session = await this.stripe!.checkout.sessions.create({
         customer: customerId,
         mode: 'subscription',
-        payment_method_types: ['card'],
+        payment_method_types: paymentMethodTypes,
         line_items: [
           {
             price: priceId,
@@ -224,10 +238,28 @@ export class StripeBillingService implements IPaymentGateway {
         ],
         success_url: successUrl,
         cancel_url: cancelUrl,
-        metadata: { userId },
+        metadata: { userId, country: country || 'US' },
         subscription_data: {
-          metadata: { userId },
+          metadata: { userId, country: country || 'US' },
         },
+        // Configurações específicas para México (OXXO)
+        ...(country === 'MX' && {
+          payment_method_options: {
+            oxxo: {
+              expires_after_days: 3, // OXXO voucher expira em 3 dias
+            },
+          },
+        }),
+        // Configurações para Europa (SEPA)
+        ...(this.isSepaCountry(country) && {
+          payment_method_options: {
+            sepa_debit: {
+              mandate_options: {
+                transaction_type: 'personal',
+              },
+            },
+          },
+        }),
       });
 
       this.logger.log(`Created Stripe Checkout session ${session.id}`);
@@ -236,7 +268,7 @@ export class StripeBillingService implements IPaymentGateway {
         success: true,
         subscriptionId: session.subscription as string,
         checkoutUrl: session.url || undefined,
-        currency: 'USD',
+        currency,
       };
     } catch (error) {
       this.logger.error('Error creating Stripe Checkout session', error);
@@ -245,6 +277,46 @@ export class StripeBillingService implements IPaymentGateway {
         errorMessage: error instanceof Error ? error.message : 'Erro ao criar checkout',
       };
     }
+  }
+
+  /**
+   * Retorna os tipos de método de pagamento para o país
+   */
+  private getPaymentMethodTypesForCountry(country: string): string[] {
+    const methods = getPaymentMethodsForCountry(country);
+    const types: string[] = [];
+
+    // Cartão sempre disponível
+    if (methods.card) types.push('card');
+
+    // México - OXXO
+    if (methods.oxxo) types.push('oxxo');
+
+    // Europa - SEPA
+    if (methods.sepaDebit) types.push('sepa_debit');
+
+    // Holanda - iDEAL
+    if (methods.ideal) types.push('ideal');
+
+    // Bélgica - Bancontact
+    if (methods.bancontact) types.push('bancontact');
+
+    // Alemanha - Giropay (descontinuado, usar SEPA)
+    // if (methods.giropay) types.push('giropay');
+
+    // Europa - Sofort
+    if (methods.sofort) types.push('sofort');
+
+    return types.length > 0 ? types : ['card'];
+  }
+
+  /**
+   * Verifica se o país está na zona SEPA
+   */
+  private isSepaCountry(country?: string): boolean {
+    if (!country) return false;
+    const sepaCountries = ['DE', 'FR', 'ES', 'IT', 'PT', 'NL', 'BE', 'AT', 'IE', 'FI', 'LU', 'SK', 'SI', 'LV', 'LT', 'EE', 'CY', 'MT', 'GR'];
+    return sepaCountries.includes(country.toUpperCase());
   }
 
   /**
@@ -344,33 +416,172 @@ export class StripeBillingService implements IPaymentGateway {
   async processWebhook(event: string, payload: any): Promise<void> {
     this.logger.log(`Processing Stripe webhook: ${event}`);
 
-    const userId = payload.data?.object?.metadata?.userId;
-    if (!userId) {
+    const dataObject = payload.data?.object;
+    const userId = dataObject?.metadata?.userId;
+
+    // Alguns eventos podem não ter userId nos metadata (ex: checkout.session)
+    // Nesse caso, tentamos buscar da subscription associada
+    if (!userId && event !== 'checkout.session.completed' && event !== 'checkout.session.expired') {
       this.logger.warn('Stripe webhook without userId in metadata');
       return;
     }
 
     switch (event) {
+      // Checkout Session events
+      case 'checkout.session.completed':
+        await this.handleCheckoutSessionCompleted(dataObject);
+        break;
+
+      case 'checkout.session.expired':
+        await this.handleCheckoutSessionExpired(dataObject);
+        break;
+
+      case 'checkout.session.async_payment_succeeded':
+        await this.handleAsyncPaymentSucceeded(dataObject);
+        break;
+
+      case 'checkout.session.async_payment_failed':
+        await this.handleAsyncPaymentFailed(dataObject);
+        break;
+
+      // Subscription events
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
-        await this.handleSubscriptionUpdated(userId, payload.data.object);
+        if (userId) {
+          await this.handleSubscriptionUpdated(userId, dataObject);
+        }
         break;
 
       case 'customer.subscription.deleted':
-        await this.handleSubscriptionDeleted(userId);
+        if (userId) {
+          await this.handleSubscriptionDeleted(userId);
+        }
         break;
 
+      // Invoice events
       case 'invoice.paid':
-        await this.handleInvoicePaid(userId, payload.data.object);
+        if (userId) {
+          await this.handleInvoicePaid(userId, dataObject);
+        }
         break;
 
       case 'invoice.payment_failed':
-        await this.handlePaymentFailed(userId);
+        if (userId) {
+          await this.handlePaymentFailed(userId);
+        }
         break;
 
       default:
         this.logger.log(`Unhandled Stripe event: ${event}`);
     }
+  }
+
+  /**
+   * Handle checkout.session.completed
+   * Ocorre quando o cliente finaliza o checkout com sucesso
+   */
+  private async handleCheckoutSessionCompleted(session: any): Promise<void> {
+    const userId = session.metadata?.userId;
+    const subscriptionId = session.subscription;
+    const customerId = session.customer;
+    const country = session.metadata?.country || 'US';
+
+    this.logger.log(`Checkout completed for user ${userId}, subscription: ${subscriptionId}`);
+
+    if (!userId) {
+      this.logger.warn('Checkout session without userId in metadata');
+      return;
+    }
+
+    const proPlan = await this.prisma.plan.findUnique({
+      where: { type: PlanType.PRO },
+    });
+
+    if (!proPlan) {
+      this.logger.error('PRO plan not found');
+      return;
+    }
+
+    // Atualizar ou criar subscription do usuário
+    const existingSubscription = await this.prisma.userSubscription.findUnique({
+      where: { userId },
+    });
+
+    const subscriptionData = {
+      planId: proPlan.id,
+      status: SubscriptionStatus.ACTIVE,
+      stripeSubscriptionId: subscriptionId,
+      stripeCustomerId: customerId,
+      country: country.toUpperCase(),
+      currency: getCurrencyForCountry(country),
+      paymentMethod: PaymentMethod.CREDIT_CARD,
+      lastPaymentDate: new Date(),
+      currentPeriodStart: new Date(),
+      currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 dias
+    };
+
+    if (existingSubscription) {
+      await (this.prisma.userSubscription.update as any)({
+        where: { userId },
+        data: subscriptionData,
+      });
+    } else {
+      await (this.prisma.userSubscription.create as any)({
+        data: { userId, ...subscriptionData },
+      });
+    }
+
+    this.logger.log(`Subscription activated for user ${userId} via Stripe Checkout`);
+  }
+
+  /**
+   * Handle checkout.session.expired
+   * Ocorre quando a sessão de checkout expira sem conclusão
+   */
+  private async handleCheckoutSessionExpired(session: any): Promise<void> {
+    const userId = session.metadata?.userId;
+    this.logger.log(`Checkout session expired for user ${userId}`);
+    // Não é necessário ação - o usuário pode iniciar um novo checkout
+  }
+
+  /**
+   * Handle checkout.session.async_payment_succeeded
+   * Para métodos como OXXO que são assíncronos
+   */
+  private async handleAsyncPaymentSucceeded(session: any): Promise<void> {
+    const userId = session.metadata?.userId;
+    this.logger.log(`Async payment succeeded for user ${userId}`);
+
+    if (!userId) return;
+
+    // O pagamento assíncrono foi confirmado - atualizar status
+    await this.prisma.userSubscription.update({
+      where: { userId },
+      data: {
+        status: SubscriptionStatus.ACTIVE,
+        lastPaymentDate: new Date(),
+      },
+    });
+  }
+
+  /**
+   * Handle checkout.session.async_payment_failed
+   * Para métodos como OXXO que falham
+   */
+  private async handleAsyncPaymentFailed(session: any): Promise<void> {
+    const userId = session.metadata?.userId;
+    this.logger.log(`Async payment failed for user ${userId}`);
+
+    if (!userId) return;
+
+    // O pagamento assíncrono falhou - manter em pending ou marcar como failed
+    await this.prisma.userSubscription.update({
+      where: { userId },
+      data: {
+        status: SubscriptionStatus.PAST_DUE,
+        overdueAt: new Date(),
+      },
+    });
   }
 
   private async handleSubscriptionUpdated(userId: string, subscription: any): Promise<void> {

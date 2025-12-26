@@ -16,6 +16,8 @@ import {
   AlertCircle,
   X,
   Clock,
+  ExternalLink,
+  Globe,
 } from 'lucide-react';
 import {
   Card,
@@ -30,10 +32,14 @@ import {
   checkoutPix,
   checkPixStatus,
   checkoutCreditCard,
+  createStripeCheckout,
+  getGatewayInfo,
+  isInternationalCountry,
   type CheckoutPixDto,
   type CheckoutCreditCardDto,
   type PixCheckoutResult,
   type BillingPeriod,
+  type GatewayInfo,
   PRO_PLAN_PRICING,
 } from '@/services/billing.service';
 import { cn } from '@/lib/utils';
@@ -46,6 +52,8 @@ interface CheckoutModalProps {
   planName: string;
   planPrice: number;
   billingPeriod?: BillingPeriod;
+  /** País do usuário (ISO 3166-1 alpha-2). Se internacional, usa Stripe Checkout */
+  country?: string;
 }
 
 type PaymentMethod = 'pix' | 'credit-card';
@@ -57,11 +65,16 @@ export function CheckoutModal({
   planName,
   planPrice,
   billingPeriod = 'MONTHLY',
+  country = 'BR',
 }: CheckoutModalProps) {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('pix');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // Gateway info for international countries
+  const [gatewayInfo, setGatewayInfo] = useState<GatewayInfo | null>(null);
+  const isInternational = isInternationalCountry(country);
 
   // PIX state
   const [pixResult, setPixResult] = useState<PixCheckoutResult | null>(null);
@@ -101,6 +114,21 @@ export function CheckoutModal({
       isMountedRef.current = false;
     };
   }, []);
+
+  // Fetch gateway info for international countries
+  useEffect(() => {
+    if (isInternational && isOpen) {
+      getGatewayInfo(country)
+        .then((info) => {
+          if (isMountedRef.current) {
+            setGatewayInfo(info);
+          }
+        })
+        .catch((err) => {
+          console.error('Error fetching gateway info:', err);
+        });
+    }
+  }, [isInternational, country, isOpen]);
 
   // Poll for PIX payment status
   useEffect(() => {
@@ -185,6 +213,35 @@ export function CheckoutModal({
     }
   };
 
+  /**
+   * Stripe Checkout para clientes internacionais
+   * Redireciona para página de pagamento hospedada pelo Stripe
+   */
+  const handleStripeCheckout = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const result = await createStripeCheckout({
+        billingPeriod,
+        country,
+        successUrl: `${window.location.origin}/settings/plan?success=true`,
+        cancelUrl: `${window.location.origin}/settings/plan?canceled=true`,
+      });
+
+      if (result.success && result.checkoutUrl) {
+        // Redireciona para o Stripe Checkout
+        window.location.href = result.checkoutUrl;
+      } else {
+        setError(result.errorMessage || 'Error creating checkout session');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error processing payment');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const copyToClipboard = useCallback(async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -260,23 +317,51 @@ export function CheckoutModal({
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* Preço */}
-          <div className="text-center py-4 bg-primary-50 rounded-lg">
-            <p className="text-sm text-gray-600">
-              {billingPeriod === 'YEARLY' ? 'Plano Anual' : 'Plano Mensal'}
-            </p>
-            <p className="text-3xl font-bold text-primary">
-              R$ {planPrice.toFixed(2).replace('.', ',')}
-            </p>
-            {billingPeriod === 'YEARLY' && (
-              <p className="text-xs text-gray-500 mt-1">
-                (equivale a R$ {PRO_PLAN_PRICING.YEARLY.toFixed(2).replace('.', ',')}/mês)
+          {/* Preço - Brasil */}
+          {!isInternational && (
+            <div className="text-center py-4 bg-primary-50 rounded-lg">
+              <p className="text-sm text-gray-600">
+                {billingPeriod === 'YEARLY' ? 'Plano Anual' : 'Plano Mensal'}
               </p>
-            )}
-          </div>
+              <p className="text-3xl font-bold text-primary">
+                R$ {planPrice.toFixed(2).replace('.', ',')}
+              </p>
+              {billingPeriod === 'YEARLY' && (
+                <p className="text-xs text-gray-500 mt-1">
+                  (equivale a R$ {PRO_PLAN_PRICING.YEARLY.toFixed(2).replace('.', ',')}/mês)
+                </p>
+              )}
+            </div>
+          )}
 
-          {/* Seleção de método */}
-          {!pixResult && (
+          {/* Preço - Internacional */}
+          {isInternational && gatewayInfo && (
+            <div className="text-center py-4 bg-primary-50 rounded-lg">
+              <div className="flex items-center justify-center gap-2 text-sm text-gray-600 mb-1">
+                <Globe className="h-4 w-4" />
+                <span>{country.toUpperCase()} - {billingPeriod === 'YEARLY' ? 'Annual Plan' : 'Monthly Plan'}</span>
+              </div>
+              <p className="text-3xl font-bold text-primary">
+                {gatewayInfo.pricing.monthlyFormatted || `${gatewayInfo.currencySymbol}${billingPeriod === 'YEARLY' ? gatewayInfo.pricing.yearly.toFixed(2) : gatewayInfo.pricing.monthly.toFixed(2)}`}
+              </p>
+              {billingPeriod === 'YEARLY' && (
+                <p className="text-xs text-gray-500 mt-1">
+                  (per month, billed annually)
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Loading gateway info */}
+          {isInternational && !gatewayInfo && (
+            <div className="text-center py-4 bg-gray-50 rounded-lg">
+              <Loader2 className="h-6 w-6 animate-spin mx-auto text-gray-400" />
+              <p className="text-sm text-gray-500 mt-2">Loading payment options...</p>
+            </div>
+          )}
+
+          {/* Seleção de método - Brasil */}
+          {!isInternational && !pixResult && (
             <div className="flex gap-2">
               <Button
                 variant={paymentMethod === 'pix' ? 'default' : 'outline'}
@@ -293,6 +378,42 @@ export function CheckoutModal({
               >
                 <CreditCard className="h-4 w-4 mr-2" />
                 Cartão
+              </Button>
+            </div>
+          )}
+
+          {/* Stripe Checkout - Internacional */}
+          {isInternational && gatewayInfo && (
+            <div className="space-y-4">
+              <div className="text-center text-sm text-gray-600">
+                <p>You will be redirected to Stripe for secure payment.</p>
+                {gatewayInfo.paymentMethods && (
+                  <p className="mt-2 text-xs text-gray-500">
+                    Available methods: {gatewayInfo.paymentMethods.card ? 'Card' : ''}
+                    {gatewayInfo.paymentMethods.oxxo ? ', OXXO' : ''}
+                    {gatewayInfo.paymentMethods.sepaDebit ? ', SEPA Direct Debit' : ''}
+                    {gatewayInfo.paymentMethods.ideal ? ', iDEAL' : ''}
+                    {gatewayInfo.paymentMethods.bancontact ? ', Bancontact' : ''}
+                  </p>
+                )}
+              </div>
+
+              <Button
+                className="w-full"
+                onClick={handleStripeCheckout}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Redirecting...
+                  </>
+                ) : (
+                  <>
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Continue to Payment
+                  </>
+                )}
               </Button>
             </div>
           )}
@@ -353,8 +474,8 @@ export function CheckoutModal({
             </div>
           )}
 
-          {/* Formulário PIX */}
-          {paymentMethod === 'pix' && !pixResult && (
+          {/* Formulário PIX - Brasil apenas */}
+          {!isInternational && paymentMethod === 'pix' && !pixResult && (
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium">CPF/CNPJ *</label>
@@ -409,8 +530,8 @@ export function CheckoutModal({
             </div>
           )}
 
-          {/* Formulário Cartão de Crédito */}
-          {paymentMethod === 'credit-card' && !pixResult && (
+          {/* Formulário Cartão de Crédito - Brasil apenas */}
+          {!isInternational && paymentMethod === 'credit-card' && !pixResult && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
@@ -584,8 +705,9 @@ export function CheckoutModal({
 
           {/* Segurança */}
           <p className="text-xs text-center text-gray-500">
-            Pagamento processado com segurança via Asaas.
-            Seus dados estão protegidos.
+            {isInternational
+              ? 'Secure payment processed by Stripe. Your data is protected.'
+              : 'Pagamento processado com segurança via Asaas. Seus dados estão protegidos.'}
           </p>
         </CardContent>
       </Card>

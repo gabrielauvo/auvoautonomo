@@ -7,6 +7,7 @@ import { SubscriptionService } from './subscription.service';
 import { PlanLimitsService } from './plan-limits.service';
 import { AsaasBillingService } from './asaas-billing.service';
 import { StripeBillingService } from './stripe-billing.service';
+import { MercadoPagoBillingService } from './mercadopago-billing.service';
 import { PaymentGatewayFactory } from './payment-gateway.factory';
 import { BillingScheduler } from './billing.scheduler';
 import { ClientPaymentsModule } from '../client-payments/client-payments.module';
@@ -18,9 +19,10 @@ import { ClientPaymentsModule } from '../client-payments/client-payments.module'
  * easily injected into other modules (Client, Quote, WorkOrder, Payment)
  * without needing to import BillingModule everywhere.
  *
- * Suporta múltiplos gateways de pagamento:
- * - Asaas: Para clientes brasileiros (PIX, Cartão em BRL)
- * - Stripe: Para clientes internacionais (Cartão em USD/EUR/GBP)
+ * Suporta multiplos gateways de pagamento:
+ * - Asaas: Para clientes brasileiros (PIX, Cartao em BRL)
+ * - Stripe: Para clientes internacionais (Cartao em USD/EUR/GBP)
+ * - Mercado Pago: Para clientes da America Latina (AR, CL, CO, PE, UY)
  */
 @Global()
 @Module({
@@ -31,6 +33,7 @@ import { ClientPaymentsModule } from '../client-payments/client-payments.module'
     PlanLimitsService,
     AsaasBillingService,
     StripeBillingService,
+    MercadoPagoBillingService,
     PaymentGatewayFactory,
     BillingScheduler,
   ],
@@ -39,6 +42,7 @@ import { ClientPaymentsModule } from '../client-payments/client-payments.module'
     PlanLimitsService,
     AsaasBillingService,
     StripeBillingService,
+    MercadoPagoBillingService,
     PaymentGatewayFactory,
   ],
 })

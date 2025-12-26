@@ -16,8 +16,10 @@ import {
   Input,
   Alert,
 } from '@/components/ui';
+import { useTranslations } from '@/i18n';
 
 export default function ResetPasswordPage() {
+  const { t } = useTranslations('auth');
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
@@ -31,9 +33,9 @@ export default function ResetPasswordPage() {
   // Verifica se tem token
   useEffect(() => {
     if (!token) {
-      setFormError('Link inválido ou expirado. Solicite um novo link de recuperação.');
+      setFormError(t('invalidOrExpiredLink'));
     }
-  }, [token]);
+  }, [token, t]);
 
   const handlePasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);
@@ -49,22 +51,22 @@ export default function ResetPasswordPage() {
     e.preventDefault();
 
     if (!token) {
-      setFormError('Link inválido ou expirado. Solicite um novo link de recuperação.');
+      setFormError(t('invalidOrExpiredLink'));
       return;
     }
 
     if (!password) {
-      setFormError('Digite sua nova senha');
+      setFormError(t('enterNewPassword'));
       return;
     }
 
     if (password.length < 6) {
-      setFormError('A senha deve ter pelo menos 6 caracteres');
+      setFormError(t('passwordMinLength6'));
       return;
     }
 
     if (password !== confirmPassword) {
-      setFormError('As senhas não coincidem');
+      setFormError(t('passwordsDontMatch'));
       return;
     }
 
@@ -82,7 +84,7 @@ export default function ResetPasswordPage() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Erro ao redefinir senha');
+        throw new Error(error.message || t('errorResettingPassword'));
       }
 
       setSuccess(true);
@@ -91,7 +93,7 @@ export default function ResetPasswordPage() {
         router.push('/login');
       }, 3000);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Erro ao redefinir senha');
+      setFormError(err instanceof Error ? err.message : t('errorResettingPassword'));
     } finally {
       setIsSubmitting(false);
     }
@@ -116,31 +118,31 @@ export default function ResetPasswordPage() {
           </Link>
 
           <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
-            Redefinir senha
+            {t('resetPasswordTitle')}
           </h1>
           <p className="text-gray-500 mb-8">
-            Digite sua nova senha abaixo.
+            {t('resetPasswordSubtitle')}
           </p>
 
           {success ? (
             <div className="space-y-6">
               <Alert variant="success">
-                Senha redefinida com sucesso! Você será redirecionado para o login...
+                {t('passwordResetSuccess')}
               </Alert>
               <Link href="/login">
                 <Button fullWidth variant="outline">
-                  Ir para o login
+                  {t('goToLogin')}
                 </Button>
               </Link>
             </div>
           ) : !token ? (
             <div className="space-y-6">
               <Alert variant="error">
-                {formError || 'Link inválido ou expirado.'}
+                {formError || t('invalidOrExpiredLink')}
               </Alert>
               <Link href="/forgot-password">
                 <Button fullWidth>
-                  Solicitar novo link
+                  {t('requestNewLink')}
                 </Button>
               </Link>
             </div>
@@ -157,7 +159,7 @@ export default function ResetPasswordPage() {
               <div>
                 <Input
                   type="password"
-                  placeholder="Nova senha"
+                  placeholder={t('newPassword')}
                   value={password}
                   onChange={handlePasswordChange}
                   disabled={isSubmitting}
@@ -171,7 +173,7 @@ export default function ResetPasswordPage() {
               <div>
                 <Input
                   type="password"
-                  placeholder="Confirmar nova senha"
+                  placeholder={t('confirmNewPassword')}
                   value={confirmPassword}
                   onChange={handleConfirmPasswordChange}
                   disabled={isSubmitting}
@@ -188,7 +190,7 @@ export default function ResetPasswordPage() {
                 disabled={isSubmitting}
                 className="w-full py-3.5 bg-primary hover:bg-primary-700 text-white font-semibold rounded-xl transition-colors"
               >
-                Redefinir senha
+                {t('resetPassword')}
               </Button>
             </form>
           )}
@@ -197,7 +199,7 @@ export default function ResetPasswordPage() {
           {!success && token && (
             <div className="mt-6 text-center">
               <Link href="/login" className="text-primary text-sm hover:underline">
-                Voltar para o login
+                {t('backToLogin')}
               </Link>
             </div>
           )}
@@ -219,8 +221,8 @@ export default function ResetPasswordPage() {
             {/* Texto sobre a imagem */}
             <div className="absolute bottom-0 left-0 right-0 p-8">
               <h2 className="text-2xl xl:text-3xl font-bold leading-tight text-white drop-shadow-lg" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
-                O Software n°1<br />
-                para serviços técnicos
+                {t('softwareNumber1')}<br />
+                {t('forTechnicalServices')}
               </h2>
             </div>
           </div>

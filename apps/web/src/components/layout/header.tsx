@@ -181,13 +181,13 @@ export function Header({ className }: HeaderProps) {
             <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 animate-fade-in">
               {/* Header */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-700">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Notificações</h3>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{tNav('notificationsTitle')}</h3>
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllAsRead}
                     className="text-xs text-primary hover:text-primary-dark"
                   >
-                    Marcar todas como lidas
+                    {tNav('markAllAsRead')}
                   </button>
                 )}
               </div>
@@ -197,7 +197,7 @@ export function Header({ className }: HeaderProps) {
                 {notifications.length === 0 ? (
                   <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                     <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">Nenhuma notificação</p>
+                    <p className="text-sm">{tNav('noNotifications')}</p>
                   </div>
                 ) : (
                   notifications.map(notification => (
@@ -242,7 +242,7 @@ export function Header({ className }: HeaderProps) {
                   className="text-xs text-primary hover:text-primary-dark block text-center"
                   onClick={() => setNotificationsOpen(false)}
                 >
-                  Ver todas as notificações
+                  {tNav('viewAllNotifications')}
                 </a>
               </div>
             </div>

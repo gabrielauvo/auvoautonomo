@@ -46,6 +46,7 @@ import {
 } from '@/hooks/use-settings';
 import { cn } from '@/lib/utils';
 import { SessionInfo } from '@/services/settings.service';
+import { useTranslations } from '@/i18n';
 
 // Helper para determinar ícone do dispositivo
 function getDeviceIcon(device: string) {
@@ -59,8 +60,8 @@ function getDeviceIcon(device: string) {
   return Laptop;
 }
 
-// Helper para formatar data
-function formatLastActive(dateString: string): string {
+// Helper para formatar data - now uses translation function
+function formatLastActive(dateString: string, t: (key: string, params?: Record<string, unknown>) => string, locale: string): string {
   const date = new Date(dateString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -68,16 +69,17 @@ function formatLastActive(dateString: string): string {
   const diffHours = Math.floor(diffMins / 60);
   const diffDays = Math.floor(diffHours / 24);
 
-  if (diffMins < 1) return 'Agora';
-  if (diffMins < 60) return `Há ${diffMins} minutos`;
-  if (diffHours < 24) return `Há ${diffHours} horas`;
-  if (diffDays === 1) return 'Ontem';
-  if (diffDays < 7) return `Há ${diffDays} dias`;
+  if (diffMins < 1) return t('now');
+  if (diffMins < 60) return t('minutesAgo', { minutes: diffMins });
+  if (diffHours < 24) return t('hoursAgo', { hours: diffHours });
+  if (diffDays === 1) return t('yesterday');
+  if (diffDays < 7) return t('daysAgo', { days: diffDays });
 
-  return date.toLocaleDateString('pt-BR');
+  return date.toLocaleDateString(locale);
 }
 
 export default function SecuritySettingsPage() {
+  const { t, locale } = useTranslations('settings.securityPage');
   const { data: securityInfo, isLoading } = useSecurityInfo();
   const changePassword = useChangePassword();
   const logoutAll = useLogoutAllSessions();
@@ -103,17 +105,17 @@ export default function SecuritySettingsPage() {
     setPasswordError(null);
 
     if (!currentPassword) {
-      setPasswordError('Informe a senha atual');
+      setPasswordError(t('enterCurrentPassword'));
       return;
     }
 
     if (newPassword.length < 8) {
-      setPasswordError('A nova senha deve ter pelo menos 8 caracteres');
+      setPasswordError(t('newPasswordMinLength'));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setPasswordError('As senhas não conferem');
+      setPasswordError(t('passwordsDontMatch'));
       return;
     }
 
@@ -129,7 +131,7 @@ export default function SecuritySettingsPage() {
       setPasswordSaved(true);
       setTimeout(() => setPasswordSaved(false), 3000);
     } catch (error) {
-      setPasswordError(error instanceof Error ? error.message : 'Erro ao alterar senha');
+      setPasswordError(error instanceof Error ? error.message : t('passwordChangeError'));
     }
   };
 
@@ -154,7 +156,7 @@ export default function SecuritySettingsPage() {
   };
 
   const handleDeleteAccount = async () => {
-    if (deleteConfirmText !== 'EXCLUIR MINHA CONTA') {
+    if (deleteConfirmText !== t('deleteConfirmText')) {
       return;
     }
 
@@ -175,8 +177,8 @@ export default function SecuritySettingsPage() {
   }
 
   const lastPasswordChange = securityInfo?.lastPasswordChange
-    ? new Date(securityInfo.lastPasswordChange).toLocaleDateString('pt-BR')
-    : 'Nunca alterada';
+    ? new Date(securityInfo.lastPasswordChange).toLocaleDateString(locale)
+    : t('neverChanged');
 
   const sessions = securityInfo?.activeSessions || [];
   const currentSession = sessions.find((s) => s.current);
@@ -189,16 +191,16 @@ export default function SecuritySettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Key className="h-5 w-5" />
-            Alteração de Senha
+            {t('passwordChange')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-gray-500 mb-4">
-            Última alteração: <span className="font-medium">{lastPasswordChange}</span>
+            {t('lastChange')}: <span className="font-medium">{lastPasswordChange}</span>
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <FormField label="Senha atual">
+            <FormField label={t('currentPassword')}>
               <Input
                 type="password"
                 value={currentPassword}
@@ -207,7 +209,7 @@ export default function SecuritySettingsPage() {
               />
             </FormField>
 
-            <FormField label="Nova senha">
+            <FormField label={t('newPassword')}>
               <Input
                 type="password"
                 value={newPassword}
@@ -216,7 +218,7 @@ export default function SecuritySettingsPage() {
               />
             </FormField>
 
-            <FormField label="Confirmar nova senha">
+            <FormField label={t('confirmNewPassword')}>
               <Input
                 type="password"
                 value={confirmPassword}
@@ -227,8 +229,7 @@ export default function SecuritySettingsPage() {
           </div>
 
           <p className="text-xs text-gray-500">
-            A senha deve ter pelo menos 8 caracteres. Recomendamos usar letras maiúsculas,
-            minúsculas, números e caracteres especiais.
+            {t('passwordHint')}
           </p>
 
           {passwordError && (
@@ -244,7 +245,7 @@ export default function SecuritySettingsPage() {
             <Alert variant="success">
               <div className="flex items-center gap-2">
                 <Check className="h-4 w-4" />
-                Senha alterada com sucesso!
+                {t('passwordChanged')}
               </div>
             </Alert>
           )}
@@ -256,7 +257,7 @@ export default function SecuritySettingsPage() {
               disabled={!currentPassword || !newPassword || !confirmPassword}
               leftIcon={<Key className="h-4 w-4" />}
             >
-              Alterar senha
+              {t('changePassword')}
             </Button>
           </div>
         </CardContent>
@@ -268,7 +269,7 @@ export default function SecuritySettingsPage() {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5" />
-              Sessões Ativas
+              {t('activeSessions')}
             </CardTitle>
             {otherSessions.length > 0 && (
               <Button
@@ -278,7 +279,7 @@ export default function SecuritySettingsPage() {
                 onClick={() => setShowLogoutAllConfirm(true)}
                 leftIcon={<LogOut className="h-4 w-4" />}
               >
-                Encerrar todas
+                {t('endAllSessions')}
               </Button>
             )}
           </div>
@@ -292,6 +293,8 @@ export default function SecuritySettingsPage() {
                 isCurrent
                 onRevoke={() => {}}
                 isRevoking={false}
+                t={t}
+                locale={locale}
               />
             )}
 
@@ -300,7 +303,7 @@ export default function SecuritySettingsPage() {
               <>
                 <div className="border-t pt-4 mt-4">
                   <h4 className="text-sm font-medium text-gray-700 mb-4">
-                    Outras sessões ({otherSessions.length})
+                    {t('otherSessions')} ({otherSessions.length})
                   </h4>
                   <div className="space-y-3">
                     {otherSessions.map((session) => (
@@ -310,6 +313,8 @@ export default function SecuritySettingsPage() {
                         isCurrent={false}
                         onRevoke={() => handleRevokeSession(session.id)}
                         isRevoking={revokingSessionId === session.id}
+                        t={t}
+                        locale={locale}
                       />
                     ))}
                   </div>
@@ -319,7 +324,7 @@ export default function SecuritySettingsPage() {
 
             {sessions.length === 0 && (
               <p className="text-sm text-gray-500 text-center py-4">
-                Nenhuma sessão ativa encontrada
+                {t('noActiveSessions')}
               </p>
             )}
           </div>
@@ -331,17 +336,16 @@ export default function SecuritySettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-error">
             <AlertTriangle className="h-5 w-5" />
-            Zona de Perigo
+            {t('dangerZone')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="p-4 border border-error/20 rounded-lg bg-error/5">
             <div className="flex items-start justify-between">
               <div>
-                <h4 className="font-medium text-gray-900">Excluir conta</h4>
+                <h4 className="font-medium text-gray-900">{t('deleteAccount')}</h4>
                 <p className="text-sm text-gray-500 mt-1">
-                  Esta ação é permanente e não pode ser desfeita. Todos os seus dados,
-                  incluindo clientes, orçamentos, OS e cobranças serão excluídos.
+                  {t('deleteAccountDescription')}
                 </p>
               </div>
               <Button
@@ -350,7 +354,7 @@ export default function SecuritySettingsPage() {
                 onClick={() => setShowDeleteAccountConfirm(true)}
                 leftIcon={<Trash2 className="h-4 w-4" />}
               >
-                Excluir conta
+                {t('deleteAccountButton')}
               </Button>
             </div>
           </div>
@@ -364,7 +368,7 @@ export default function SecuritySettingsPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <LogOut className="h-5 w-5" />
-                Encerrar todas as sessões
+                {t('endAllSessionsTitle')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -372,10 +376,9 @@ export default function SecuritySettingsPage() {
                 <div className="flex items-start gap-2">
                   <AlertTriangle className="h-4 w-4 mt-0.5" />
                   <div className="text-sm">
-                    <p className="font-medium">Atenção!</p>
+                    <p className="font-medium">{t('endAllSessionsWarning')}</p>
                     <p>
-                      Todas as sessões serão encerradas, exceto esta.
-                      Você precisará fazer login novamente em outros dispositivos.
+                      {t('endAllSessionsMessage')}
                     </p>
                   </div>
                 </div>
@@ -386,14 +389,14 @@ export default function SecuritySettingsPage() {
                   variant="ghost"
                   onClick={() => setShowLogoutAllConfirm(false)}
                 >
-                  Cancelar
+                  {t('cancel')}
                 </Button>
                 <Button
                   variant="error"
                   onClick={handleLogoutAll}
                   loading={logoutAll.isPending}
                 >
-                  Encerrar sessões
+                  {t('endSessions')}
                 </Button>
               </div>
             </CardContent>
@@ -408,7 +411,7 @@ export default function SecuritySettingsPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-error">
                 <Trash2 className="h-5 w-5" />
-                Excluir Conta Permanentemente
+                {t('deleteAccountPermanently')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -416,17 +419,15 @@ export default function SecuritySettingsPage() {
                 <div className="flex items-start gap-2">
                   <AlertTriangle className="h-4 w-4 mt-0.5" />
                   <div className="text-sm">
-                    <p className="font-medium">Esta ação não pode ser desfeita!</p>
+                    <p className="font-medium">{t('deleteAccountCannotUndo')}</p>
                     <p>
-                      Todos os dados da sua conta serão permanentemente excluídos,
-                      incluindo clientes, orçamentos, ordens de serviço, cobranças
-                      e configurações.
+                      {t('deleteAccountDataWarning')}
                     </p>
                   </div>
                 </div>
               </Alert>
 
-              <FormField label="Digite sua senha para confirmar">
+              <FormField label={t('enterPasswordToConfirm')}>
                 <Input
                   type="password"
                   value={deletePassword}
@@ -435,11 +436,11 @@ export default function SecuritySettingsPage() {
                 />
               </FormField>
 
-              <FormField label="Digite 'EXCLUIR MINHA CONTA' para confirmar">
+              <FormField label={t('typeDeleteMyAccount')}>
                 <Input
                   value={deleteConfirmText}
                   onChange={(e) => setDeleteConfirmText(e.target.value)}
-                  placeholder="EXCLUIR MINHA CONTA"
+                  placeholder={t('deleteConfirmText')}
                 />
               </FormField>
 
@@ -452,17 +453,17 @@ export default function SecuritySettingsPage() {
                     setDeleteConfirmText('');
                   }}
                 >
-                  Cancelar
+                  {t('cancel')}
                 </Button>
                 <Button
                   variant="error"
                   onClick={handleDeleteAccount}
                   disabled={
                     !deletePassword ||
-                    deleteConfirmText !== 'EXCLUIR MINHA CONTA'
+                    deleteConfirmText !== t('deleteConfirmText')
                   }
                 >
-                  Excluir minha conta
+                  {t('deleteMyAccount')}
                 </Button>
               </div>
             </CardContent>
@@ -479,9 +480,11 @@ interface SessionItemProps {
   isCurrent: boolean;
   onRevoke: () => void;
   isRevoking: boolean;
+  t: (key: string, params?: Record<string, unknown>) => string;
+  locale: string;
 }
 
-function SessionItem({ session, isCurrent, onRevoke, isRevoking }: SessionItemProps) {
+function SessionItem({ session, isCurrent, onRevoke, isRevoking, t, locale }: SessionItemProps) {
   const DeviceIcon = getDeviceIcon(session.device);
 
   return (
@@ -512,7 +515,7 @@ function SessionItem({ session, isCurrent, onRevoke, isRevoking }: SessionItemPr
             </span>
             {isCurrent && (
               <Badge variant="primary" size="sm">
-                Sessão atual
+                {t('currentSession')}
               </Badge>
             )}
           </div>
@@ -528,7 +531,7 @@ function SessionItem({ session, isCurrent, onRevoke, isRevoking }: SessionItemPr
             )}
             <span className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
-              {formatLastActive(session.lastActive)}
+              {formatLastActive(session.lastActive, t, locale)}
             </span>
           </div>
         </div>
@@ -542,7 +545,7 @@ function SessionItem({ session, isCurrent, onRevoke, isRevoking }: SessionItemPr
           onClick={onRevoke}
           loading={isRevoking}
         >
-          Encerrar
+          {t('endSession')}
         </Button>
       )}
     </div>

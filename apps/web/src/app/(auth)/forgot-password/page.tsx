@@ -35,13 +35,13 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
 
     if (!email.trim()) {
-      setFormError('Digite seu e-mail');
+      setFormError(t('enterEmail'));
       return;
     }
 
     const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
     if (!emailRegex.test(email.trim())) {
-      setFormError('Digite um e-mail válido');
+      setFormError(t('enterValidEmail'));
       return;
     }
 
@@ -59,12 +59,12 @@ export default function ForgotPasswordPage() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Erro ao enviar e-mail de recuperação');
+        throw new Error(error.message || t('errorSendingEmail'));
       }
 
       setSuccess(true);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Erro ao enviar e-mail de recuperação');
+      setFormError(err instanceof Error ? err.message : t('errorSendingEmail'));
     } finally {
       setIsSubmitting(false);
     }
@@ -89,20 +89,20 @@ export default function ForgotPasswordPage() {
           </Link>
 
           <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
-            Recuperar senha
+            {t('recoverPassword')}
           </h1>
           <p className="text-gray-500 mb-8">
-            Digite seu e-mail e enviaremos instruções para redefinir sua senha.
+            {t('recoverPasswordSubtitle')}
           </p>
 
           {success ? (
             <div className="space-y-6">
               <Alert variant="success">
-                E-mail enviado com sucesso! Verifique sua caixa de entrada e siga as instruções para redefinir sua senha.
+                {t('emailSentSuccess')}
               </Alert>
               <Link href="/login">
                 <Button fullWidth variant="outline">
-                  Voltar para o login
+                  {t('backToLogin')}
                 </Button>
               </Link>
             </div>
@@ -119,7 +119,7 @@ export default function ForgotPasswordPage() {
               <div>
                 <Input
                   type="email"
-                  placeholder="Digite seu e-mail"
+                  placeholder={t('emailInputPlaceholder')}
                   value={email}
                   onChange={handleEmailChange}
                   disabled={isSubmitting}
@@ -137,7 +137,7 @@ export default function ForgotPasswordPage() {
                 disabled={isSubmitting}
                 className="w-full py-3.5 bg-primary hover:bg-primary-700 text-white font-semibold rounded-xl transition-colors"
               >
-                Enviar instruções
+                {t('sendInstructions')}
               </Button>
             </form>
           )}
@@ -146,7 +146,7 @@ export default function ForgotPasswordPage() {
           {!success && (
             <div className="mt-6 text-center">
               <Link href="/login" className="text-primary text-sm hover:underline">
-                Voltar para o login
+                {t('backToLogin')}
               </Link>
             </div>
           )}
@@ -168,8 +168,8 @@ export default function ForgotPasswordPage() {
             {/* Texto sobre a imagem */}
             <div className="absolute bottom-0 left-0 right-0 p-8">
               <h2 className="text-2xl xl:text-3xl font-bold leading-tight text-white drop-shadow-lg" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
-                O Software n°1<br />
-                para serviços técnicos
+                {t('softwareNumber1')}<br />
+                {t('forTechnicalServices')}
               </h2>
             </div>
           </div>

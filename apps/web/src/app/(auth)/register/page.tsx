@@ -152,7 +152,7 @@ export default function RegisterPage() {
         {/* Logo/Branding */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gradient-auvo">Auvo</h1>
-          <p className="text-gray-500 mt-2">Sistema de Gestão para Autônomos</p>
+          <p className="text-gray-500 mt-2">{t('systemTitle')}</p>
         </div>
 
         {/* Card de Registro */}
@@ -173,8 +173,8 @@ export default function RegisterPage() {
                     <Gift className="w-4 h-4 text-purple-600" />
                   </div>
                   <div className="text-sm">
-                    <p className="font-medium text-purple-900">Você foi indicado!</p>
-                    <p className="text-purple-600">Código: {referralCode}</p>
+                    <p className="font-medium text-purple-900">{t('youWereReferred')}</p>
+                    <p className="text-purple-600">{t('referralCode', { code: referralCode })}</p>
                   </div>
                 </div>
               )}
@@ -316,7 +316,7 @@ export default function RegisterPage() {
 
         {/* Footer */}
         <p className="text-center text-xs text-gray-400 mt-6">
-          &copy; {new Date().getFullYear()} Auvo. Todos os direitos reservados.
+          &copy; {new Date().getFullYear()} Auvo. {t('allRightsReserved')}
         </p>
       </div>
     </div>

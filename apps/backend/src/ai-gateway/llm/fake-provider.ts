@@ -40,9 +40,20 @@ export class FakeLLMProvider implements ILLMProvider {
       .reverse()
       .find((m) => m.role === 'user')?.content || '';
 
+    // Get the last assistant message for context
+    const lastAssistantMessage = [...messages]
+      .reverse()
+      .find((m) => m.role === 'assistant')?.content || '';
+
     const allMessages = messages.map((m) => m.content).join('\n');
 
     this.logger.debug(`FakeLLM processing: ${lastUserMessage.substring(0, 100)}...`);
+
+    // First, check if this is a contextual response to a previous question
+    const contextualResponse = this.handleContextualResponse(lastUserMessage, lastAssistantMessage);
+    if (contextualResponse) {
+      return contextualResponse;
+    }
 
     // Find matching pattern
     for (const { pattern, response } of this.patterns) {
@@ -54,6 +65,379 @@ export class FakeLLMProvider implements ILLMProvider {
 
     // Default response
     return this.createDefaultResponse();
+  }
+
+  /**
+   * Handle contextual responses based on previous assistant question
+   */
+  private handleContextualResponse(
+    userMessage: string,
+    lastAssistantMessage: string,
+  ): LLMResponse | null {
+    // Parse the last assistant message to understand context
+    let assistantContext: { type?: string; question?: string; options?: string[] } = {};
+    try {
+      assistantContext = JSON.parse(lastAssistantMessage);
+    } catch {
+      // Not a JSON response, check for known question patterns in text
+      assistantContext = { question: lastAssistantMessage };
+    }
+
+    const question = assistantContext.question || lastAssistantMessage;
+    const userInput = userMessage.trim();
+
+    // Check if user selected one of the offered options
+    if (assistantContext.options && assistantContext.options.length > 0) {
+      const selectedOption = this.matchOption(userInput, assistantContext.options);
+      if (selectedOption) {
+        return this.handleOptionSelection(selectedOption, question);
+      }
+    }
+
+    // Context: Asked for client name (for quote, OS, billing, etc.)
+    if (this.isAskingForClientName(question)) {
+      // User provided a name - proceed with action
+      if (this.looksLikeName(userInput)) {
+        return this.handleClientNameProvided(userInput, question);
+      }
+    }
+
+    // Context: Asked for phone number
+    if (this.isAskingForPhone(question)) {
+      if (this.looksLikePhone(userInput) || userInput.toLowerCase() === 'pular telefone') {
+        return this.handlePhoneProvided(userInput, question);
+      }
+    }
+
+    // Context: Asked for service description (OS)
+    if (this.isAskingForService(question)) {
+      // Any non-empty response is a service description
+      if (userInput.length > 2) {
+        return this.handleServiceDescriptionProvided(userInput, question);
+      }
+    }
+
+    // Context: Asked for quote items
+    if (this.isAskingForQuoteItems(question)) {
+      if (userInput.length > 2) {
+        return this.handleQuoteItemsProvided(userInput, question);
+      }
+    }
+
+    // Context: Asked for payment method
+    if (this.isAskingForPaymentMethod(question)) {
+      const method = this.detectPaymentMethod(userInput);
+      if (method) {
+        return this.handlePaymentMethodSelected(method);
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Match user input to available options
+   */
+  private matchOption(userInput: string, options: string[]): string | null {
+    const normalized = userInput.toLowerCase().trim();
+
+    for (const option of options) {
+      const optionLower = option.toLowerCase();
+      // Exact match or partial match
+      if (normalized === optionLower ||
+          optionLower.includes(normalized) ||
+          normalized.includes(optionLower)) {
+        return option;
+      }
+    }
+
+    // Check for common variations
+    const variations: Record<string, string[]> = {
+      'Criar novo cliente': ['criar', 'novo cliente', 'criar cliente'],
+      'Buscar cliente': ['buscar', 'procurar', 'pesquisar'],
+      'Criar novo orçamento': ['criar', 'novo', 'criar um', 'fazer', 'montar'],
+      'Ver orçamentos pendentes': ['ver', 'pendentes', 'listar'],
+      'Abrir nova OS': ['abrir', 'nova', 'criar'],
+      'Ver OS pendentes': ['ver', 'pendentes', 'listar'],
+      'PIX': ['pix'],
+      'Boleto': ['boleto'],
+      'Cartão de Crédito': ['cartão', 'cartao', 'crédito', 'credito'],
+      'Ver meus clientes': ['ver clientes', 'meus clientes', 'listar clientes'],
+      'Cancelar': ['cancelar', 'não', 'nao', 'deixa', 'esquece'],
+      'Pular telefone': ['pular', 'sem telefone', 'não tem'],
+    };
+
+    for (const [option, vars] of Object.entries(variations)) {
+      if (options.includes(option) && vars.some(v => normalized.includes(v))) {
+        return option;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Handle when user selects an option
+   */
+  private handleOptionSelection(option: string, _context: string): LLMResponse {
+    switch (option) {
+      case 'Criar novo cliente':
+      case 'Criar cliente':
+        return this.createAskUserResponse(
+          `Vamos cadastrar um novo cliente! 📝\n\n**Qual o nome do cliente?**`,
+          ['Cancelar'],
+        );
+
+      case 'Buscar cliente':
+        return {
+          content: JSON.stringify({
+            type: 'CALL_TOOL',
+            tool: 'customers.search',
+            params: { query: '', limit: 20, offset: 0 },
+          }),
+          usage: { inputTokens: 20, outputTokens: 30, totalTokens: 50 },
+        };
+
+      case 'Criar novo orçamento':
+      case 'Fazer orçamento':
+        return this.createAskUserResponse(
+          `Vamos criar um orçamento! 📋\n\n` +
+          `**Para qual cliente é esse orçamento?**\n\n` +
+          `Digite o nome do cliente ou parte do nome para eu buscar.`,
+          ['Ver meus clientes', 'Cancelar'],
+        );
+
+      case 'Ver orçamentos pendentes':
+        return {
+          content: JSON.stringify({
+            type: 'CALL_TOOL',
+            tool: 'quotes.search',
+            params: { status: 'PENDING', limit: 20 },
+          }),
+          usage: { inputTokens: 20, outputTokens: 30, totalTokens: 50 },
+        };
+
+      case 'Abrir nova OS':
+      case 'Abrir OS':
+        return this.createAskUserResponse(
+          `Vamos abrir uma ordem de serviço! 🔧\n\n` +
+          `**Para qual cliente é essa OS?**\n\n` +
+          `Digite o nome do cliente ou parte do nome.`,
+          ['Ver meus clientes', 'Cancelar'],
+        );
+
+      case 'Ver OS pendentes':
+        return {
+          content: JSON.stringify({
+            type: 'CALL_TOOL',
+            tool: 'workOrders.search',
+            params: { status: 'PENDING', limit: 20 },
+          }),
+          usage: { inputTokens: 20, outputTokens: 30, totalTokens: 50 },
+        };
+
+      case 'PIX':
+      case 'Boleto':
+      case 'Cartão de Crédito':
+        return this.handlePaymentMethodSelected(option);
+
+      case 'Gerar cobrança':
+        return this.createAskUserResponse(
+          `Vamos gerar uma cobrança! 💰\n\n**Como você quer cobrar?**`,
+          ['PIX', 'Boleto', 'Cartão de Crédito', 'Cancelar'],
+        );
+
+      case 'Ver meus clientes':
+        return {
+          content: JSON.stringify({
+            type: 'CALL_TOOL',
+            tool: 'customers.search',
+            params: { query: '', limit: 20, offset: 0 },
+          }),
+          usage: { inputTokens: 20, outputTokens: 30, totalTokens: 50 },
+        };
+
+      case 'Cancelar':
+      case 'Pular telefone':
+        return {
+          content: JSON.stringify({
+            type: 'RESPONSE',
+            message: 'Tudo bem! 👍 Se precisar de algo, é só me chamar!',
+          }),
+          usage: { inputTokens: 10, outputTokens: 20, totalTokens: 30 },
+        };
+
+      default:
+        return this.createDefaultResponse();
+    }
+  }
+
+  /**
+   * Check if question is asking for client name
+   */
+  private isAskingForClientName(question: string): boolean {
+    const patterns = [
+      /qual\s+(?:o\s+)?(?:nome\s+d[oa]\s+)?cliente/i,
+      /para\s+qual\s+cliente/i,
+      /nome\s+do\s+cliente/i,
+      /digite\s+o\s+nome/i,
+    ];
+    return patterns.some(p => p.test(question));
+  }
+
+  /**
+   * Check if question is asking for phone
+   */
+  private isAskingForPhone(question: string): boolean {
+    return /telefone|celular|fixo/i.test(question);
+  }
+
+  /**
+   * Check if question is asking for service description
+   */
+  private isAskingForService(question: string): boolean {
+    return /servi[çc]o\s+a\s+ser\s+realizado|descreva.*trabalho/i.test(question);
+  }
+
+  /**
+   * Check if question is asking for quote items
+   */
+  private isAskingForQuoteItems(question: string): boolean {
+    return /incluir\s+no\s+or[çc]amento|servi[çc]os\s+ou\s+produtos/i.test(question);
+  }
+
+  /**
+   * Check if question is asking for payment method
+   */
+  private isAskingForPaymentMethod(question: string): boolean {
+    return /como\s+(?:voc[eê]\s+)?quer\s+cobrar|forma\s+de\s+pagamento/i.test(question);
+  }
+
+  /**
+   * Check if input looks like a name
+   */
+  private looksLikeName(input: string): boolean {
+    // At least 2 characters, not a common command/keyword
+    const commands = ['cancelar', 'não', 'sim', 'ok', 'ver', 'listar', 'buscar', 'criar'];
+    return input.length >= 2 && !commands.includes(input.toLowerCase());
+  }
+
+  /**
+   * Check if input looks like a phone number
+   */
+  private looksLikePhone(input: string): boolean {
+    // Remove non-digits and check if we have enough digits for a phone
+    const digits = input.replace(/\D/g, '');
+    return digits.length >= 8;
+  }
+
+  /**
+   * Detect payment method from user input
+   */
+  private detectPaymentMethod(input: string): string | null {
+    const lower = input.toLowerCase();
+    if (lower.includes('pix')) return 'PIX';
+    if (lower.includes('boleto')) return 'Boleto';
+    if (lower.includes('cart') || lower.includes('créd') || lower.includes('cred')) return 'Cartão de Crédito';
+    return null;
+  }
+
+  /**
+   * Handle when client name is provided
+   */
+  private handleClientNameProvided(clientName: string, question: string): LLMResponse {
+    // Check what we're creating for this client
+    if (question.includes('orçamento') || question.includes('quote')) {
+      return this.createAskUserResponse(
+        `Vou criar um orçamento para **${clientName}**! 📋\n\n` +
+        `**O que você quer incluir no orçamento?**\n\n` +
+        `Me conte os serviços ou produtos que deseja adicionar.`,
+        ['Cancelar'],
+      );
+    }
+
+    if (question.includes('OS') || question.includes('ordem')) {
+      return this.createAskUserResponse(
+        `Vou abrir uma OS para **${clientName}**! 🔧\n\n` +
+        `**Qual o serviço a ser realizado?**\n\n` +
+        `Descreva brevemente o trabalho.`,
+        ['Cancelar'],
+      );
+    }
+
+    if (question.includes('cobrança') || question.includes('cobrar')) {
+      return this.createAskUserResponse(
+        `Vou gerar uma cobrança para **${clientName}**! 💰\n\n` +
+        `**Qual o valor da cobrança?**\n\n` +
+        `Digite o valor (ex: 150,00)`,
+        ['Cancelar'],
+      );
+    }
+
+    // Default: creating a client
+    return this.createAskUserResponse(
+      `Vou criar o cliente **${clientName}**! 📝\n\n` +
+      `**Qual o telefone do cliente?**\n` +
+      `(Pode ser celular ou fixo)`,
+      ['Pular telefone', 'Cancelar'],
+    );
+  }
+
+  /**
+   * Handle when phone is provided
+   */
+  private handlePhoneProvided(phone: string, _question: string): LLMResponse {
+    const phoneDisplay = phone.toLowerCase() === 'pular telefone' ? 'não informado' : phone;
+    return {
+      content: JSON.stringify({
+        type: 'RESPONSE',
+        message: `Perfeito! Vou criar o cliente com telefone: **${phoneDisplay}** ✅\n\n` +
+          `Cliente criado com sucesso! 🎉`,
+      }),
+      usage: { inputTokens: 20, outputTokens: 40, totalTokens: 60 },
+    };
+  }
+
+  /**
+   * Handle when service description is provided
+   */
+  private handleServiceDescriptionProvided(description: string, _question: string): LLMResponse {
+    return {
+      content: JSON.stringify({
+        type: 'RESPONSE',
+        message: `Ordem de serviço criada! 🔧✅\n\n` +
+          `**Serviço:** ${description}\n\n` +
+          `A OS foi criada com sucesso!`,
+      }),
+      usage: { inputTokens: 20, outputTokens: 40, totalTokens: 60 },
+    };
+  }
+
+  /**
+   * Handle when quote items are provided
+   */
+  private handleQuoteItemsProvided(items: string, _question: string): LLMResponse {
+    return {
+      content: JSON.stringify({
+        type: 'RESPONSE',
+        message: `Orçamento criado! 📋✅\n\n` +
+          `**Itens:** ${items}\n\n` +
+          `O orçamento foi criado com sucesso!`,
+      }),
+      usage: { inputTokens: 20, outputTokens: 40, totalTokens: 60 },
+    };
+  }
+
+  /**
+   * Handle payment method selection
+   */
+  private handlePaymentMethodSelected(method: string): LLMResponse {
+    return this.createAskUserResponse(
+      `Ótimo! Cobrança via **${method}**! 💰\n\n` +
+      `**Qual o valor da cobrança?**\n\n` +
+      `Digite o valor (ex: 150,00)`,
+      ['Cancelar'],
+    );
   }
 
   private createPatterns(): FakeResponsePattern[] {

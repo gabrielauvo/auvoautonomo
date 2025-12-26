@@ -38,7 +38,7 @@ export const KpiCard = memo(function KpiCard({
   loading = false,
   className,
 }: KpiCardProps) {
-  const { t } = useTranslations('reports');
+  const { t, locale } = useTranslations('reports');
   const { formatCurrency } = useFormatting();
 
   // Formata valor baseado no tipo
@@ -57,7 +57,8 @@ export const KpiCard = memo(function KpiCard({
   };
 
   // Memoiza formatação do valor para evitar cálculos desnecessários
-  const formattedValue = useMemo(() => formatValue(value, format), [value, format, formatCurrency]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const formattedValue = useMemo(() => formatValue(value, format), [value, format, formatCurrency, locale]);
 
   // Default changeLabel
   const displayChangeLabel = changeLabel ?? t('vsPrevious');

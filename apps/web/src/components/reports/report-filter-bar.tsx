@@ -30,7 +30,7 @@ export function ReportFilterBar({
   isLoading = false,
   className,
 }: ReportFilterBarProps) {
-  const { t } = useTranslations('reports');
+  const { t, locale } = useTranslations('reports');
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -44,7 +44,7 @@ export function ReportFilterBar({
     { value: 'lastMonth', label: t('lastMonth') },
     { value: 'thisYear', label: t('thisYear') },
     { value: 'custom', label: t('custom') },
-  ], [t]);
+  ], [t, locale]);
 
   const currentPeriod = (searchParams.get('period') as ReportPeriod) || 'last30days';
   const startDate = searchParams.get('startDate') || '';

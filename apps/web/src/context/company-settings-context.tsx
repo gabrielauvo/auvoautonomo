@@ -42,10 +42,24 @@ function formatCurrencyUtil(value: number, currency: string, locale: string): st
   if (!Number.isFinite(value)) {
     return '';
   }
-  return new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency,
-  }).format(value);
+
+  // Validate currency code - must be a 3-letter ISO 4217 code
+  const validCurrency = typeof currency === 'string' && /^[A-Z]{3}$/.test(currency)
+    ? currency
+    : 'BRL';
+
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: validCurrency,
+    }).format(value);
+  } catch {
+    // Fallback if currency formatting fails
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value);
+  }
 }
 
 function formatDateInTimezone(
@@ -406,7 +420,11 @@ export function CompanySettingsProvider({
    */
   const formatCurrency = useCallback(
     (value: number, recordCurrency?: string) => {
-      const currency = recordCurrency || settings?.currency || 'BRL';
+      // Ensure we have a valid currency code (3-letter ISO 4217)
+      let currency = recordCurrency || settings?.currency || 'BRL';
+      if (typeof currency !== 'string' || !/^[A-Z]{3}$/.test(currency)) {
+        currency = 'BRL';
+      }
       return formatCurrencyUtil(value, currency, locale);
     },
     [settings?.currency, locale],

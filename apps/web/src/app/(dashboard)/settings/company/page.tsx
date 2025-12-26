@@ -28,7 +28,6 @@ import {
   ToggleLeft,
   ToggleRight,
   Copy,
-  Globe,
 } from 'lucide-react';
 import {
   Card,
@@ -43,7 +42,7 @@ import {
   Skeleton,
 } from '@/components/ui';
 import { maskCNPJ, isValidCNPJ, cleanDocument, maskPhone, maskPhoneMobile } from '@/lib/utils';
-import { UploadLogo, ColorPicker, TemplatePreview, RegionalSettingsForm } from '@/components/settings';
+import { UploadLogo, ColorPicker, TemplatePreview } from '@/components/settings';
 import {
   useCompanySettings,
   useUpdateCompanySettings,
@@ -453,22 +452,6 @@ export default function CompanySettingsPage() {
               </select>
             </FormField>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Configurações Regionais */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Globe className="h-5 w-5" />
-            {t('regionalSettings')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-gray-500 mb-4">
-            {t('regionalSettingsDescription')}
-          </p>
-          <RegionalSettingsForm />
         </CardContent>
       </Card>
 

@@ -541,38 +541,11 @@ export class ServiceFlowService {
   async getWorkOrderTimeline(userId: string, workOrderId: string): Promise<TimelineEvent[]> {
     this.logger.log(`Getting timeline for work order ${workOrderId}`);
 
-    // 1. Verify work order belongs to user
+    // 1. Verify work order belongs to user and get basic info
     const workOrder = await this.prisma.workOrder.findFirst({
       where: { id: workOrderId, userId },
       include: {
-        client: { select: { name: true } },
-        checklistInstances: {
-          select: {
-            id: true,
-            status: true,
-            createdAt: true,
-            updatedAt: true,
-            template: { select: { title: true } },
-          },
-        },
-        attachments: {
-          select: {
-            id: true,
-            fileNameOriginal: true,
-            createdAt: true,
-          },
-        },
-        executionSessions: {
-          select: {
-            id: true,
-            sessionType: true,
-            startedAt: true,
-            endedAt: true,
-            pauseReason: true,
-            notes: true,
-          },
-          orderBy: { startedAt: 'asc' },
-        },
+        client: true,
       },
     });
 
@@ -596,8 +569,13 @@ export class ServiceFlowService {
       },
     });
 
-    // 3. Execution sessions (start, pause, resume)
-    for (const session of workOrder.executionSessions) {
+    // 3. Get execution sessions
+    const executionSessions = await this.prisma.workOrderExecutionSession.findMany({
+      where: { workOrderId },
+      orderBy: { startedAt: 'asc' },
+    });
+
+    for (const session of executionSessions) {
       if (session.sessionType === 'WORK') {
         // First work session = started, subsequent = resumed
         const existingWorkSessions = timeline.filter(
@@ -660,13 +638,18 @@ export class ServiceFlowService {
     }
 
     // 5. Checklists
-    for (const checklist of workOrder.checklistInstances) {
+    const checklists = await this.prisma.checklistInstance.findMany({
+      where: { workOrderId },
+      include: { template: true },
+    });
+
+    for (const checklist of checklists) {
       timeline.push({
         type: 'CHECKLIST_CREATED',
         date: checklist.createdAt,
         data: {
           id: checklist.id,
-          title: checklist.template?.title || 'Checklist',
+          title: checklist.template?.name || 'Checklist',
           workOrderId: workOrder.id,
         },
       });
@@ -678,7 +661,7 @@ export class ServiceFlowService {
           date: checklist.updatedAt,
           data: {
             id: checklist.id,
-            title: checklist.template?.title || 'Checklist',
+            title: checklist.template?.name || 'Checklist',
             workOrderId: workOrder.id,
           },
         });
@@ -686,7 +669,11 @@ export class ServiceFlowService {
     }
 
     // 6. Attachments
-    for (const attachment of workOrder.attachments) {
+    const attachments = await this.prisma.attachment.findMany({
+      where: { workOrderId },
+    });
+
+    for (const attachment of attachments) {
       timeline.push({
         type: 'ATTACHMENT_ADDED',
         date: attachment.createdAt,

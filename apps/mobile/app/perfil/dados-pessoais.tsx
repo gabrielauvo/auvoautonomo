@@ -22,12 +22,14 @@ import { router } from 'expo-router';
 import { Text, Card, Button } from '../../src/design-system';
 import { useColors, useSpacing } from '../../src/design-system/ThemeProvider';
 import { AuthService } from '../../src/services/AuthService';
+import { useAuth } from '../../src/services/AuthProvider';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 
 export default function DadosPessoaisScreen() {
   const colors = useColors();
   const spacing = useSpacing();
+  const { updateUser } = useAuth();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -87,6 +89,9 @@ export default function DadosPessoaisScreen() {
       });
 
       if (response.ok) {
+        // Update local auth context with new data
+        await updateUser({ name, phone });
+
         Alert.alert('Sucesso', 'Dados atualizados com sucesso', [
           { text: 'OK', onPress: () => router.back() },
         ]);

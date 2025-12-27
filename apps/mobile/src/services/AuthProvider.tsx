@@ -100,7 +100,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           console.log('[AuthProvider] API_URL:', API_URL);
           setUser(storedUser);
 
-          // Buscar perfil atualizado do servidor (para sincronizar avatar)
+          // Buscar perfil atualizado do servidor (para sincronizar nome, avatar, etc)
           // Não bloqueia inicialização - usa timeout curto e executa em background
           const fetchProfile = async () => {
             try {
@@ -115,11 +115,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
               if (profileRes.ok) {
                 const profileData = await profileRes.json();
-                if (profileData.avatarUrl !== storedUser.avatarUrl) {
-                  const updatedUser = { ...storedUser, avatarUrl: profileData.avatarUrl };
+                // Check if any important field changed
+                const hasChanges =
+                  profileData.name !== storedUser.name ||
+                  profileData.avatarUrl !== storedUser.avatarUrl ||
+                  profileData.phone !== storedUser.phone ||
+                  profileData.language !== storedUser.language;
+
+                if (hasChanges) {
+                  const updatedUser = {
+                    ...storedUser,
+                    name: profileData.name || storedUser.name,
+                    avatarUrl: profileData.avatarUrl,
+                    phone: profileData.phone,
+                    language: profileData.language,
+                  };
                   await AuthService.saveUser(updatedUser);
                   setUser(updatedUser);
-                  console.log('[AuthProvider] Updated user avatar from server');
+                  console.log('[AuthProvider] Updated user profile from server');
                 }
               }
             } catch (profileError) {

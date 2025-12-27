@@ -23,7 +23,6 @@ export const enUS: Translations = {
     success: 'Success',
     enabled: 'Enabled',
     disabled: 'Disabled',
-    confirm: 'Confirm',
     back: 'Back',
     next: 'Next',
     previous: 'Previous',
@@ -77,7 +76,6 @@ export const enUS: Translations = {
     notSynced: 'Not synced',
     client: 'Client',
     pendingSync: 'Pending sync',
-    details: 'Details',
   },
 
   auth: {

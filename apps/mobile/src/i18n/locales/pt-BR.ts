@@ -21,7 +21,6 @@ export const ptBR = {
     success: 'Sucesso',
     enabled: 'Ativado',
     disabled: 'Desativado',
-    confirm: 'Confirmar',
     back: 'Voltar',
     next: 'Proximo',
     previous: 'Anterior',
@@ -75,7 +74,6 @@ export const ptBR = {
     notSynced: 'Nao sincronizado',
     client: 'Cliente',
     pendingSync: 'Pendente de sync',
-    details: 'Detalhes',
   },
 
   auth: {

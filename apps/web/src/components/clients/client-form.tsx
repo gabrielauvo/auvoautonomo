@@ -4,10 +4,11 @@
  * Client Form - Formulário de cliente
  *
  * Usado para criar e editar clientes
- * Suporta auto-preenchimento via CNPJ usando API CNPJá
+ * Suporta auto-preenchimento via CNPJ usando API CNPJá (apenas pt-BR)
+ * Adapta campos de Tax ID baseado no locale (CPF/CNPJ, EIN/SSN, RFC)
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Card,
@@ -23,11 +24,12 @@ import {
 } from '@/components/ui';
 import { UpsellModal } from '@/components/billing';
 import { useAuth } from '@/context/auth-context';
+import { useTranslations } from '@/i18n';
 import { useCreateClient, useUpdateClient } from '@/hooks/use-clients';
 import { useCnpjLookup } from '@/hooks/use-cnpj-lookup';
 import { Client, CreateClientDto } from '@/services/clients.service';
 import { Save, X, User, Phone, Mail, MapPin, FileText, AlertCircle, Loader2, Building2, CheckCircle2 } from 'lucide-react';
-import { isValidCPF, isValidCNPJ, maskCPFCNPJ, cleanDocument } from '@/lib/utils';
+import { isValidCPF, isValidCNPJ, cleanDocument, getTaxIdConfig, type TaxIdLocale } from '@/lib/utils';
 
 interface ClientFormProps {
   client?: Client;
@@ -55,11 +57,15 @@ interface LimitError {
 export function ClientForm({ client, onSuccess, onCancel }: ClientFormProps) {
   const router = useRouter();
   const { billing } = useAuth();
+  const { t, locale } = useTranslations('clients');
   const createClient = useCreateClient();
   const updateClient = useUpdateClient();
   const cnpjLookup = useCnpjLookup();
 
   const isEditing = !!client;
+
+  // Get tax ID configuration based on locale
+  const taxIdConfig = useMemo(() => getTaxIdConfig(locale as TaxIdLocale), [locale]);
 
   // Ref para controlar se já buscou o CNPJ atual
   const lastLookedUpCnpj = useRef<string>('');
@@ -69,7 +75,7 @@ export function ClientForm({ client, onSuccess, onCancel }: ClientFormProps) {
     name: client?.name || '',
     email: client?.email || '',
     phone: client?.phone || '',
-    taxId: client?.taxId ? maskCPFCNPJ(client.taxId) : '',
+    taxId: client?.taxId ? taxIdConfig.mask(client.taxId) : '',
     address: client?.address || '',
     city: client?.city || '',
     state: client?.state || '',
@@ -88,34 +94,43 @@ export function ClientForm({ client, onSuccess, onCancel }: ClientFormProps) {
     const newErrors: FormErrors = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Nome é obrigatório';
+      newErrors.name = t('form.validation.nameRequired');
     }
 
     if (!formData.phone.trim()) {
-      newErrors.phone = 'Telefone é obrigatório';
+      newErrors.phone = t('form.validation.phoneRequired');
     } else if (!/^[\d\s()+-]+$/.test(formData.phone)) {
-      newErrors.phone = 'Telefone inválido';
+      newErrors.phone = t('form.validation.phoneInvalid');
     }
 
-    if (!formData.taxId.trim()) {
-      newErrors.taxId = 'CPF/CNPJ é obrigatório';
-    } else {
-      const cleanTaxId = cleanDocument(formData.taxId);
-      if (cleanTaxId.length === 11) {
-        if (!isValidCPF(cleanTaxId)) {
-          newErrors.taxId = 'CPF inválido';
-        }
-      } else if (cleanTaxId.length === 14) {
-        if (!isValidCNPJ(cleanTaxId)) {
-          newErrors.taxId = 'CNPJ inválido';
-        }
+    // Tax ID validation - only required for pt-BR
+    if (taxIdConfig.required) {
+      if (!formData.taxId.trim()) {
+        newErrors.taxId = t('form.validation.taxIdRequired');
       } else {
-        newErrors.taxId = 'CPF deve ter 11 dígitos ou CNPJ deve ter 14 dígitos';
+        const cleanTaxId = cleanDocument(formData.taxId);
+        if (cleanTaxId.length === 11) {
+          if (!isValidCPF(cleanTaxId)) {
+            newErrors.taxId = t('form.validation.cpfInvalid');
+          }
+        } else if (cleanTaxId.length === 14) {
+          if (!isValidCNPJ(cleanTaxId)) {
+            newErrors.taxId = t('form.validation.cnpjInvalid');
+          }
+        } else {
+          newErrors.taxId = t('form.validation.taxIdLength');
+        }
+      }
+    } else if (formData.taxId.trim() && taxIdConfig.validate) {
+      // For non-pt-BR locales, validate only if filled
+      const cleanTaxId = formData.taxId.replace(/[^A-Za-z0-9]/g, '');
+      if (cleanTaxId.length > 0 && !taxIdConfig.validate(cleanTaxId)) {
+        newErrors.taxId = t('form.validation.taxIdInvalid');
       }
     }
 
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Email inválido';
+      newErrors.email = t('form.validation.emailInvalid');
     }
 
     setErrors(newErrors);
@@ -131,9 +146,9 @@ export function ClientForm({ client, onSuccess, onCancel }: ClientFormProps) {
     }
   };
 
-  // Handler especial para CNPJ com auto-preenchimento
+  // Handler especial para Tax ID com auto-preenchimento (apenas para pt-BR CNPJ)
   const handleTaxIdChange = useCallback((value: string) => {
-    const maskedValue = maskCPFCNPJ(value);
+    const maskedValue = taxIdConfig.mask(value);
     setFormData((prev) => ({ ...prev, taxId: maskedValue }));
     setCnpjSuccess(false);
 
@@ -142,36 +157,34 @@ export function ClientForm({ client, onSuccess, onCancel }: ClientFormProps) {
       setErrors((prev) => ({ ...prev, taxId: undefined }));
     }
 
-    // Verifica se é um CNPJ válido (14 dígitos) e ainda não foi consultado
-    const cleanTaxId = cleanDocument(maskedValue);
-    if (cleanTaxId.length === 14 && isValidCNPJ(cleanTaxId) && cleanTaxId !== lastLookedUpCnpj.current) {
-      lastLookedUpCnpj.current = cleanTaxId;
+    // CNPJ lookup only for pt-BR
+    if (taxIdConfig.showCnpjLookup) {
+      const cleanTaxId = cleanDocument(maskedValue);
+      if (cleanTaxId.length === 14 && isValidCNPJ(cleanTaxId) && cleanTaxId !== lastLookedUpCnpj.current) {
+        lastLookedUpCnpj.current = cleanTaxId;
 
-      // Consulta a API de CNPJ
-      cnpjLookup.mutate(cleanTaxId, {
-        onSuccess: (data) => {
-          setFormData((prev) => ({
-            ...prev,
-            name: data.name || prev.name,
-            email: data.email || prev.email,
-            phone: data.phone || prev.phone,
-            address: data.address || prev.address,
-            city: data.city || prev.city,
-            state: data.state || prev.state,
-            zipCode: data.zipCode || prev.zipCode,
-          }));
-          setCnpjSuccess(true);
-
-          // Limpa indicador de sucesso após 3 segundos
-          setTimeout(() => setCnpjSuccess(false), 3000);
-        },
-        onError: (error) => {
-          // Não mostra erro, apenas não preenche automaticamente
-          console.warn('Erro ao consultar CNPJ:', error.message);
-        },
-      });
+        cnpjLookup.mutate(cleanTaxId, {
+          onSuccess: (data) => {
+            setFormData((prev) => ({
+              ...prev,
+              name: data.name || prev.name,
+              email: data.email || prev.email,
+              phone: data.phone || prev.phone,
+              address: data.address || prev.address,
+              city: data.city || prev.city,
+              state: data.state || prev.state,
+              zipCode: data.zipCode || prev.zipCode,
+            }));
+            setCnpjSuccess(true);
+            setTimeout(() => setCnpjSuccess(false), 3000);
+          },
+          onError: (error) => {
+            console.warn('Erro ao consultar CNPJ:', error.message);
+          },
+        });
+      }
     }
-  }, [cnpjLookup, errors.taxId]);
+  }, [taxIdConfig, cnpjLookup, errors.taxId]);
 
   // Máscaras
   const formatPhone = (value: string) => {
@@ -208,10 +221,10 @@ export function ClientForm({ client, onSuccess, onCancel }: ClientFormProps) {
     try {
       let result: Client;
 
-      // Prepara dados para envio - envia taxId apenas com números
+      // Prepara dados para envio - envia taxId apenas com números/letras
       const submitData = {
         ...formData,
-        taxId: cleanDocument(formData.taxId),
+        taxId: formData.taxId ? formData.taxId.replace(/[^A-Za-z0-9]/g, '') : undefined,
       };
 
       if (isEditing) {
@@ -229,11 +242,9 @@ export function ClientForm({ client, onSuccess, onCancel }: ClientFormProps) {
         router.push(`/clients/${result.id}`);
       }
     } catch (error: any) {
-      // Verifica se é erro de limite
       const errorMessage = error.message || '';
 
       if (errorMessage.includes('LIMIT_REACHED') || errorMessage.includes('limite')) {
-        // Tenta extrair dados do erro (mantido por compatibilidade, mas novo modelo não tem limites)
         setLimitError({
           error: 'LIMIT_REACHED',
           resource: 'CLIENT',
@@ -244,7 +255,7 @@ export function ClientForm({ client, onSuccess, onCancel }: ClientFormProps) {
         setShowUpsellModal(true);
       } else {
         setErrors({
-          general: errorMessage || 'Erro ao salvar cliente. Tente novamente.',
+          general: errorMessage || t('form.saveError'),
         });
       }
     } finally {
@@ -268,7 +279,7 @@ export function ClientForm({ client, onSuccess, onCancel }: ClientFormProps) {
       <form onSubmit={handleSubmit}>
         <Card>
           <CardHeader>
-            <CardTitle>{isEditing ? 'Editar Cliente' : 'Novo Cliente'}</CardTitle>
+            <CardTitle>{isEditing ? t('editClient') : t('newClient')}</CardTitle>
           </CardHeader>
 
           <CardContent className="space-y-6">
@@ -286,31 +297,31 @@ export function ClientForm({ client, onSuccess, onCancel }: ClientFormProps) {
             <div className="space-y-4">
               <h3 className="text-sm font-medium text-gray-700 flex items-center gap-2">
                 <User className="h-4 w-4" />
-                Dados Principais
+                {t('form.mainData')}
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField label="Nome / Razão Social" required error={errors.name}>
+                <FormField label={t('form.name')} required error={errors.name}>
                   <Input
                     value={formData.name}
                     onChange={(e) => handleChange('name', e.target.value)}
-                    placeholder="Nome completo ou razão social"
+                    placeholder={t('form.namePlaceholder')}
                     error={!!errors.name}
                     disabled={isLoading}
                   />
                 </FormField>
 
-                <FormField label="CPF / CNPJ" required error={errors.taxId}>
+                <FormField label={taxIdConfig.label} required={taxIdConfig.required} error={errors.taxId}>
                   <div className="relative">
                     <Input
                       value={formData.taxId}
                       onChange={(e) => handleTaxIdChange(e.target.value)}
-                      placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                      placeholder={taxIdConfig.placeholder}
                       error={!!errors.taxId}
                       disabled={isLoading}
-                      maxLength={18}
+                      maxLength={taxIdConfig.maxLength}
                       leftIcon={
-                        cnpjLookup.isPending ? (
+                        taxIdConfig.showCnpjLookup && cnpjLookup.isPending ? (
                           <Loader2 className="h-4 w-4 animate-spin text-primary" />
                         ) : cnpjSuccess ? (
                           <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -319,16 +330,16 @@ export function ClientForm({ client, onSuccess, onCancel }: ClientFormProps) {
                         )
                       }
                     />
-                    {cnpjLookup.isPending && (
+                    {taxIdConfig.showCnpjLookup && cnpjLookup.isPending && (
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">
-                        Buscando dados...
+                        {t('form.searchingData')}
                       </span>
                     )}
                   </div>
                   {cnpjSuccess && (
                     <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
                       <CheckCircle2 className="h-3 w-3" />
-                      Dados preenchidos automaticamente
+                      {t('form.autoFilled')}
                     </p>
                   )}
                 </FormField>
@@ -339,11 +350,11 @@ export function ClientForm({ client, onSuccess, onCancel }: ClientFormProps) {
             <div className="space-y-4">
               <h3 className="text-sm font-medium text-gray-700 flex items-center gap-2">
                 <Phone className="h-4 w-4" />
-                Contato
+                {t('form.contact')}
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField label="Telefone" required error={errors.phone}>
+                <FormField label={t('form.phone')} required error={errors.phone}>
                   <Input
                     value={formData.phone}
                     onChange={(e) => handleChange('phone', formatPhone(e.target.value))}
@@ -355,7 +366,7 @@ export function ClientForm({ client, onSuccess, onCancel }: ClientFormProps) {
                   />
                 </FormField>
 
-                <FormField label="Email" error={errors.email}>
+                <FormField label={t('form.email')} error={errors.email}>
                   <Input
                     type="email"
                     value={formData.email}
@@ -373,11 +384,11 @@ export function ClientForm({ client, onSuccess, onCancel }: ClientFormProps) {
             <div className="space-y-4">
               <h3 className="text-sm font-medium text-gray-700 flex items-center gap-2">
                 <MapPin className="h-4 w-4" />
-                Endereço
+                {t('form.address')}
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <FormField label="CEP" error={errors.zipCode}>
+                <FormField label={t('form.zipCode')} error={errors.zipCode}>
                   <Input
                     value={formData.zipCode}
                     onChange={(e) => handleChange('zipCode', formatZipCode(e.target.value))}
@@ -388,11 +399,11 @@ export function ClientForm({ client, onSuccess, onCancel }: ClientFormProps) {
                 </FormField>
 
                 <div className="md:col-span-2">
-                  <FormField label="Endereço">
+                  <FormField label={t('form.addressField')}>
                     <Input
                       value={formData.address}
                       onChange={(e) => handleChange('address', e.target.value)}
-                      placeholder="Rua, número, complemento"
+                      placeholder={t('form.addressPlaceholder')}
                       disabled={isLoading}
                     />
                   </FormField>
@@ -400,20 +411,20 @@ export function ClientForm({ client, onSuccess, onCancel }: ClientFormProps) {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField label="Cidade">
+                <FormField label={t('form.city')}>
                   <Input
                     value={formData.city}
                     onChange={(e) => handleChange('city', e.target.value)}
-                    placeholder="Cidade"
+                    placeholder={t('form.cityPlaceholder')}
                     disabled={isLoading}
                   />
                 </FormField>
 
-                <FormField label="Estado">
+                <FormField label={t('form.state')}>
                   <Input
                     value={formData.state}
                     onChange={(e) => handleChange('state', e.target.value.toUpperCase())}
-                    placeholder="UF"
+                    placeholder={t('form.statePlaceholder')}
                     disabled={isLoading}
                     maxLength={2}
                   />
@@ -425,14 +436,14 @@ export function ClientForm({ client, onSuccess, onCancel }: ClientFormProps) {
             <div className="space-y-4">
               <h3 className="text-sm font-medium text-gray-700 flex items-center gap-2">
                 <FileText className="h-4 w-4" />
-                Observações
+                {t('form.notes')}
               </h3>
 
-              <FormField label="Notas">
+              <FormField label={t('form.notesField')}>
                 <Textarea
                   value={formData.notes}
                   onChange={(e) => handleChange('notes', e.target.value)}
-                  placeholder="Observações sobre o cliente..."
+                  placeholder={t('form.notesPlaceholder')}
                   rows={3}
                   disabled={isLoading}
                 />
@@ -448,7 +459,7 @@ export function ClientForm({ client, onSuccess, onCancel }: ClientFormProps) {
               disabled={isLoading}
               leftIcon={<X className="h-4 w-4" />}
             >
-              Cancelar
+              {t('form.cancel')}
             </Button>
             <Button
               type="submit"
@@ -456,7 +467,7 @@ export function ClientForm({ client, onSuccess, onCancel }: ClientFormProps) {
               disabled={isLoading}
               leftIcon={<Save className="h-4 w-4" />}
             >
-              {isLoading ? 'Salvando...' : 'Salvar'}
+              {isLoading ? t('form.saving') : t('form.save')}
             </Button>
           </CardFooter>
         </Card>

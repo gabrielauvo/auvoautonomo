@@ -58,13 +58,68 @@ interface CompanyData {
   pixKeyFeatureEnabled: boolean;
 }
 
+// Tax ID configuration per locale
+interface TaxIdConfig {
+  label: string;
+  placeholder: string;
+  maxLength: number;
+  mask: (value: string) => string;
+  keyboardType: 'default' | 'numeric' | 'phone-pad';
+}
+
+function getTaxIdConfig(locale: string, t: (key: string) => string): TaxIdConfig {
+  switch (locale) {
+    case 'en-US':
+      return {
+        label: 'EIN (Employer ID)',
+        placeholder: 'XX-XXXXXXX',
+        maxLength: 10,
+        mask: (value: string) => {
+          const cleaned = value.replace(/[^0-9]/g, '');
+          if (cleaned.length <= 2) return cleaned;
+          return `${cleaned.slice(0, 2)}-${cleaned.slice(2, 9)}`;
+        },
+        keyboardType: 'numeric',
+      };
+    case 'es':
+      return {
+        label: 'RFC',
+        placeholder: 'XXX000000XXX',
+        maxLength: 13,
+        mask: (value: string) => value.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 13),
+        keyboardType: 'default',
+      };
+    default:
+      return {
+        label: t('profile.companyData.taxId'),
+        placeholder: '00.000.000/0000-00',
+        maxLength: 18,
+        mask: (value: string) => {
+          const numbers = value.replace(/\D/g, '');
+          if (numbers.length <= 2) return numbers;
+          if (numbers.length <= 5) return `${numbers.slice(0, 2)}.${numbers.slice(2)}`;
+          if (numbers.length <= 8) return `${numbers.slice(0, 2)}.${numbers.slice(2, 5)}.${numbers.slice(5)}`;
+          if (numbers.length <= 12) return `${numbers.slice(0, 2)}.${numbers.slice(2, 5)}.${numbers.slice(5, 8)}/${numbers.slice(8)}`;
+          return `${numbers.slice(0, 2)}.${numbers.slice(2, 5)}.${numbers.slice(5, 8)}/${numbers.slice(8, 12)}-${numbers.slice(12, 14)}`;
+        },
+        keyboardType: 'numeric',
+      };
+  }
+}
+
 export default function EmpresaScreen() {
   const colors = useColors();
   const spacing = useSpacing();
   const { t } = useTranslation();
   const { locale } = useLocale();
 
-  // PIX key types with translations
+  // PIX is only available for pt-BR
+  const showPIX = locale === 'pt-BR';
+
+  // Get tax ID config based on locale
+  const taxIdConfig = useMemo(() => getTaxIdConfig(locale, t), [locale, t]);
+
+  // PIX key types with translations (only used for pt-BR)
   const PIX_KEY_TYPES = useMemo(() => [
     { value: 'CPF' as PixKeyType, label: 'CPF' },
     { value: 'CNPJ' as PixKeyType, label: 'CNPJ' },
@@ -438,39 +493,41 @@ export default function EmpresaScreen() {
               </View>
             </View>
 
-            {/* CNPJ */}
+            {/* Tax ID (CNPJ for pt-BR, EIN for en-US, RFC for es) */}
             <View style={[styles.inputGroup, { marginTop: spacing[3] }]}>
               <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
-                {t('profile.companyData.taxId')}
+                {taxIdConfig.label}
               </Text>
               <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                 <TextInput
                   style={[styles.input, { color: colors.text.primary }]}
-                  placeholder="00.000.000/0000-00"
+                  placeholder={taxIdConfig.placeholder}
                   placeholderTextColor={colors.text.tertiary}
                   value={taxId}
-                  onChangeText={(text) => setTaxId(formatCNPJ(text))}
-                  keyboardType="numeric"
-                  maxLength={18}
+                  onChangeText={(text) => setTaxId(taxIdConfig.mask(text))}
+                  keyboardType={taxIdConfig.keyboardType}
+                  maxLength={taxIdConfig.maxLength}
                 />
               </View>
             </View>
 
-            {/* Inscrição Estadual */}
-            <View style={[styles.inputGroup, { marginTop: spacing[3] }]}>
-              <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
-                {t('profile.companyData.stateRegistration')}
-              </Text>
-              <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
-                <TextInput
-                  style={[styles.input, { color: colors.text.primary }]}
-                  placeholder={t('profile.companyData.stateRegistrationPlaceholder')}
-                  placeholderTextColor={colors.text.tertiary}
-                  value={stateRegistration}
-                  onChangeText={setStateRegistration}
-                />
+            {/* Inscrição Estadual - Only for pt-BR */}
+            {locale === 'pt-BR' && (
+              <View style={[styles.inputGroup, { marginTop: spacing[3] }]}>
+                <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
+                  {t('profile.companyData.stateRegistration')}
+                </Text>
+                <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
+                  <TextInput
+                    style={[styles.input, { color: colors.text.primary }]}
+                    placeholder={t('profile.companyData.stateRegistrationPlaceholder')}
+                    placeholderTextColor={colors.text.tertiary}
+                    value={stateRegistration}
+                    onChangeText={setStateRegistration}
+                  />
+                </View>
               </View>
-            </View>
+            )}
           </Card>
 
           {/* Contact */}
@@ -642,8 +699,8 @@ export default function EmpresaScreen() {
             </View>
           </Card>
 
-          {/* Pix Settings */}
-          {pixKeyFeatureEnabled && (
+          {/* Pix Settings - Only show for pt-BR */}
+          {showPIX && pixKeyFeatureEnabled && (
             <Card style={{ marginBottom: spacing[4] }}>
               <View style={styles.pixHeader}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>

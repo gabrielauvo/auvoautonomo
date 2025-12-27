@@ -136,6 +136,155 @@ export function formatDocument(value: string | null | undefined): string {
 }
 
 // ============================================
+// International Tax ID Utilities (USA, Mexico)
+// ============================================
+
+export type TaxIdLocale = 'pt-BR' | 'en-US' | 'es';
+
+export interface TaxIdConfig {
+  label: string;
+  labelBusiness?: string;
+  placeholder: string;
+  placeholderBusiness?: string;
+  mask: (value: string) => string;
+  maxLength: number;
+  validate?: (value: string) => boolean;
+  required: boolean;
+  showCnpjLookup: boolean;
+}
+
+/**
+ * Get tax ID configuration based on locale
+ */
+export function getTaxIdConfig(locale: TaxIdLocale): TaxIdConfig {
+  switch (locale) {
+    case 'en-US':
+      return {
+        label: 'Tax ID (SSN/EIN)',
+        labelBusiness: 'EIN (Employer ID)',
+        placeholder: 'XXX-XX-XXXX or XX-XXXXXXX',
+        placeholderBusiness: 'XX-XXXXXXX',
+        mask: maskUSATaxId,
+        maxLength: 11, // XX-XXXXXXX format
+        validate: isValidUSATaxId,
+        required: false, // Not strictly required in USA forms
+        showCnpjLookup: false,
+      };
+    case 'es':
+      return {
+        label: 'RFC',
+        labelBusiness: 'RFC (Registro Federal)',
+        placeholder: 'XXXX000000XXX',
+        placeholderBusiness: 'XXX000000XXX',
+        mask: maskMexicoRFC,
+        maxLength: 13, // 13 chars for individuals, 12 for businesses
+        validate: isValidMexicoRFC,
+        required: false, // Optional for our app
+        showCnpjLookup: false,
+      };
+    case 'pt-BR':
+    default:
+      return {
+        label: 'CPF / CNPJ',
+        labelBusiness: 'CNPJ',
+        placeholder: '000.000.000-00 ou 00.000.000/0000-00',
+        placeholderBusiness: '00.000.000/0000-00',
+        mask: maskCPFCNPJ,
+        maxLength: 18,
+        validate: isValidCPFCNPJ,
+        required: true,
+        showCnpjLookup: true,
+      };
+  }
+}
+
+/**
+ * Check if locale uses Brazilian document system (CPF/CNPJ)
+ */
+export function usesBrazilianTaxId(locale: TaxIdLocale): boolean {
+  return locale === 'pt-BR';
+}
+
+/**
+ * Check if PIX payment should be available for this locale
+ */
+export function isPIXAvailable(locale: TaxIdLocale): boolean {
+  return locale === 'pt-BR';
+}
+
+// ============================================
+// USA Tax ID (EIN/SSN)
+// ============================================
+
+/**
+ * Mask for USA Tax ID (SSN or EIN)
+ * SSN: XXX-XX-XXXX (9 digits)
+ * EIN: XX-XXXXXXX (9 digits)
+ */
+export function maskUSATaxId(value: string): string {
+  const cleaned = value.replace(/[^0-9]/g, '');
+
+  // Determine if it's SSN (starts with valid SSN pattern) or EIN
+  // For simplicity, we'll use EIN format for business (XX-XXXXXXX)
+  if (cleaned.length <= 2) return cleaned;
+  if (cleaned.length <= 9) return `${cleaned.slice(0, 2)}-${cleaned.slice(2)}`;
+  return `${cleaned.slice(0, 2)}-${cleaned.slice(2, 9)}`;
+}
+
+/**
+ * Mask for SSN specifically: XXX-XX-XXXX
+ */
+export function maskSSN(value: string): string {
+  const cleaned = value.replace(/[^0-9]/g, '');
+  if (cleaned.length <= 3) return cleaned;
+  if (cleaned.length <= 5) return `${cleaned.slice(0, 3)}-${cleaned.slice(3)}`;
+  return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 5)}-${cleaned.slice(5, 9)}`;
+}
+
+/**
+ * Mask for EIN: XX-XXXXXXX
+ */
+export function maskEIN(value: string): string {
+  const cleaned = value.replace(/[^0-9]/g, '');
+  if (cleaned.length <= 2) return cleaned;
+  return `${cleaned.slice(0, 2)}-${cleaned.slice(2, 9)}`;
+}
+
+/**
+ * Validate USA Tax ID (basic format check)
+ */
+export function isValidUSATaxId(value: string): boolean {
+  const cleaned = value.replace(/[^0-9]/g, '');
+  // EIN and SSN are both 9 digits
+  return cleaned.length === 9;
+}
+
+// ============================================
+// Mexico RFC
+// ============================================
+
+/**
+ * Mask for Mexico RFC
+ * Individual: 13 characters (XXXX000000XXX)
+ * Business: 12 characters (XXX000000XXX)
+ */
+export function maskMexicoRFC(value: string): string {
+  // RFC allows letters and numbers, keep alphanumeric only
+  const cleaned = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+  return cleaned.slice(0, 13);
+}
+
+/**
+ * Validate Mexico RFC (basic format check)
+ * Individual: 13 chars, Business: 12 chars
+ */
+export function isValidMexicoRFC(value: string): boolean {
+  const cleaned = value.replace(/[^A-Za-z0-9]/g, '');
+  // RFC can be 12 (business) or 13 (individual) characters
+  return cleaned.length === 12 || cleaned.length === 13;
+}
+
+// ============================================
 // Phone Utilities
 // ============================================
 

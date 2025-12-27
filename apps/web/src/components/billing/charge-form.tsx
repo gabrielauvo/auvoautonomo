@@ -11,7 +11,7 @@
  * - Adicionar descrição
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Card,
@@ -29,6 +29,7 @@ import {
 import { UpsellModal } from '@/components/billing';
 import { useAuth } from '@/context/auth-context';
 import { useFormatting } from '@/context';
+import { useTranslations } from '@/i18n';
 import { useSearchClients } from '@/hooks/use-clients';
 import { useCreateCharge, useUpdateCharge } from '@/hooks/use-charges';
 import {
@@ -51,7 +52,7 @@ import {
   Percent,
   AlertCircle,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, isPIXAvailable, type TaxIdLocale } from '@/lib/utils';
 
 interface ChargeFormProps {
   charge?: Charge;
@@ -72,9 +73,9 @@ interface FormErrors {
   general?: string;
 }
 
-// Opções de tipo de cobrança
-const BILLING_TYPE_OPTIONS: { value: BillingType; label: string; icon: React.ElementType }[] = [
-  { value: 'PIX', label: 'PIX', icon: QrCode },
+// Opções de tipo de cobrança - PIX only available for pt-BR
+const ALL_BILLING_TYPE_OPTIONS: { value: BillingType; label: string; icon: React.ElementType; ptBROnly?: boolean }[] = [
+  { value: 'PIX', label: 'PIX', icon: QrCode, ptBROnly: true },
   { value: 'BOLETO', label: 'Boleto', icon: FileText },
   { value: 'CREDIT_CARD', label: 'Cartão de Crédito', icon: CreditCard },
 ];
@@ -199,11 +200,19 @@ export function ChargeForm({
   const { formatCurrency } = useFormatting();
   const searchParams = useSearchParams();
   const { billing } = useAuth();
+  const { locale } = useTranslations();
 
   const createCharge = useCreateCharge();
   const updateCharge = useUpdateCharge();
 
   const isEditing = !!charge;
+
+  // Filter billing types based on locale - PIX only for pt-BR
+  const showPIX = isPIXAvailable(locale as TaxIdLocale);
+  const BILLING_TYPE_OPTIONS = useMemo(() =>
+    ALL_BILLING_TYPE_OPTIONS.filter(opt => !opt.ptBROnly || showPIX),
+    [showPIX]
+  );
 
   // Form state
   const [selectedClient, setSelectedClient] = useState<Client | null>(
@@ -213,7 +222,8 @@ export function ChargeForm({
     charge?.value?.toString() || defaultValue?.toString() || ''
   );
   const [dueDate, setDueDate] = useState(charge?.dueDate?.split('T')[0] || '');
-  const [billingType, setBillingType] = useState<BillingType>(charge?.billingType || 'PIX');
+  // Default to BOLETO if PIX is not available
+  const [billingType, setBillingType] = useState<BillingType>(charge?.billingType || (showPIX ? 'PIX' : 'BOLETO'));
   const [description, setDescription] = useState(
     charge?.description || defaultDescription || ''
   );

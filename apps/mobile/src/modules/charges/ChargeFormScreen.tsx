@@ -85,13 +85,16 @@ const BillingTypeSelector: React.FC<{
   selected: BillingType;
   onSelect: (type: BillingType) => void;
   colors: ThemeColors;
-}> = ({ selected, onSelect, colors }) => {
+  showPIX: boolean;
+}> = ({ selected, onSelect, colors, showPIX }) => {
   const { t } = useTranslation();
-  const types: { type: BillingType; icon: string; labelKey: string }[] = [
-    { type: 'PIX', icon: 'qr-code-outline', labelKey: 'charges.billingTypes.pix' },
+  const allTypes: { type: BillingType; icon: string; labelKey: string; ptBROnly?: boolean }[] = [
+    { type: 'PIX', icon: 'qr-code-outline', labelKey: 'charges.billingTypes.pix', ptBROnly: true },
     { type: 'BOLETO', icon: 'document-text-outline', labelKey: 'charges.billingTypes.boleto' },
     { type: 'CREDIT_CARD', icon: 'card-outline', labelKey: 'charges.billingTypes.creditCard' },
   ];
+  // Filter out PIX if not pt-BR
+  const types = allTypes.filter(t => !t.ptBROnly || showPIX);
 
   return (
     <View style={styles.billingTypeContainer}>
@@ -175,6 +178,9 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
   const { t, locale } = useTranslation();
   const colors = useColors();
 
+  // PIX is only available for pt-BR
+  const showPIX = locale === 'pt-BR';
+
   // Form state
   const [selectedClient, setSelectedClient] = useState<ClientSearchResult | null>(
     preSelectedClientId && preSelectedClientName
@@ -182,7 +188,8 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
       : null
   );
   const [value, setValue] = useState(preSelectedValue?.toString() || '');
-  const [billingType, setBillingType] = useState<BillingType>('PIX');
+  // Default to BOLETO if PIX is not available
+  const [billingType, setBillingType] = useState<BillingType>(showPIX ? 'PIX' : 'BOLETO');
   const [dueDate, setDueDate] = useState(formatDateForInput(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000))); // Default: 7 days
   const [description, setDescription] = useState(preSelectedDescription || '');
 
@@ -617,6 +624,7 @@ export const ChargeFormScreen: React.FC<ChargeFormScreenProps> = ({
             selected={billingType}
             onSelect={setBillingType}
             colors={colors}
+            showPIX={showPIX}
           />
         </Card>
 

@@ -11,7 +11,7 @@
  * - Auto-preenchimento via CNPJ (API CNPJá)
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useTranslations } from '@/i18n';
 import {
   Building2,
@@ -41,7 +41,7 @@ import {
   Alert,
   Skeleton,
 } from '@/components/ui';
-import { maskCNPJ, isValidCNPJ, cleanDocument, maskPhone, maskPhoneMobile } from '@/lib/utils';
+import { maskCNPJ, isValidCNPJ, cleanDocument, maskPhone, maskPhoneMobile, getTaxIdConfig, isPIXAvailable, type TaxIdLocale } from '@/lib/utils';
 import { UploadLogo, ColorPicker, TemplatePreview } from '@/components/settings';
 import {
   useCompanySettings,
@@ -61,12 +61,16 @@ const STATES = [
 ];
 
 export default function CompanySettingsPage() {
-  const { t } = useTranslations('settings');
+  const { t, locale } = useTranslations('settings');
   const { data: company, isLoading } = useCompanySettings();
   const updateCompany = useUpdateCompanySettings();
   const uploadLogo = useUploadLogo();
   const deleteLogo = useDeleteLogo();
   const cnpjLookup = useCnpjLookup();
+
+  // Get tax ID and PIX config based on locale
+  const taxIdConfig = useMemo(() => getTaxIdConfig(locale as TaxIdLocale), [locale]);
+  const showPIX = isPIXAvailable(locale as TaxIdLocale);
 
   // Ref para controlar se já buscou o CNPJ atual
   const lastLookedUpCnpj = useRef<string>('');
@@ -109,7 +113,7 @@ export default function CompanySettingsPage() {
     if (company) {
       setTradeName(company.tradeName || '');
       setLegalName(company.legalName || '');
-      setTaxId(company.taxId ? maskCNPJ(company.taxId) : '');
+      setTaxId(company.taxId ? taxIdConfig.mask(company.taxId) : '');
       setStateRegistration(company.stateRegistration || '');
       setEmail(company.email || '');
       setPhone(company.phone ? maskPhone(company.phone) : '');
@@ -137,63 +141,73 @@ export default function CompanySettingsPage() {
     }
   }, [company]);
 
-  // Handler especial para CNPJ com auto-preenchimento
+  // Handler especial para Tax ID com auto-preenchimento (CNPJ only for pt-BR)
   const handleTaxIdChange = useCallback((value: string) => {
-    const masked = maskCNPJ(value);
+    const masked = taxIdConfig.mask(value);
     setTaxId(masked);
     setCnpjSuccess(false);
 
-    // Valida quando completar 14 dígitos
-    const cleaned = cleanDocument(masked);
-    if (cleaned.length === 14) {
-      if (!isValidCNPJ(cleaned)) {
-        setTaxIdError('CNPJ inválido');
+    // For pt-BR, validate CNPJ and enable auto-fill
+    if (taxIdConfig.showCnpjLookup) {
+      const cleaned = cleanDocument(masked);
+      if (cleaned.length === 14) {
+        if (!isValidCNPJ(cleaned)) {
+          setTaxIdError(t('invalidCnpj'));
+        } else {
+          setTaxIdError(null);
+
+          // Consulta a API de CNPJ se ainda não foi consultado
+          if (cleaned !== lastLookedUpCnpj.current) {
+            lastLookedUpCnpj.current = cleaned;
+
+            cnpjLookup.mutate(cleaned, {
+              onSuccess: (data) => {
+                // Preenche os campos automaticamente
+                if (data.name) setLegalName(data.name);
+                if (data.alias) setTradeName((prev) => prev || data.alias || '');
+                if (data.email) setEmail((prev) => prev || data.email || '');
+                if (data.phone) setPhone((prev) => prev || maskPhone(data.phone || '') || '');
+                if (data.address) setStreet((prev) => prev || data.address || '');
+                if (data.city) setCity((prev) => prev || data.city || '');
+                if (data.state) setState((prev) => prev || data.state || '');
+                if (data.zipCode) setZipCode((prev) => prev || data.zipCode || '');
+
+                setCnpjSuccess(true);
+                setTimeout(() => setCnpjSuccess(false), 3000);
+              },
+              onError: (error) => {
+                console.warn('Erro ao consultar CNPJ:', error.message);
+              },
+            });
+          }
+        }
+      } else if (cleaned.length > 0 && cleaned.length < 14) {
+        setTaxIdError(null);
       } else {
         setTaxIdError(null);
-
-        // Consulta a API de CNPJ se ainda não foi consultado
-        if (cleaned !== lastLookedUpCnpj.current) {
-          lastLookedUpCnpj.current = cleaned;
-
-          cnpjLookup.mutate(cleaned, {
-            onSuccess: (data) => {
-              // Preenche os campos automaticamente
-              if (data.name) setLegalName(data.name);
-              if (data.alias) setTradeName((prev) => prev || data.alias || '');
-              if (data.email) setEmail((prev) => prev || data.email || '');
-              if (data.phone) setPhone((prev) => prev || maskPhone(data.phone || '') || '');
-              if (data.address) setStreet((prev) => prev || data.address || '');
-              if (data.city) setCity((prev) => prev || data.city || '');
-              if (data.state) setState((prev) => prev || data.state || '');
-              if (data.zipCode) setZipCode((prev) => prev || data.zipCode || '');
-
-              setCnpjSuccess(true);
-              // Limpa indicador de sucesso após 3 segundos
-              setTimeout(() => setCnpjSuccess(false), 3000);
-            },
-            onError: (error) => {
-              // Não mostra erro, apenas não preenche automaticamente
-              console.warn('Erro ao consultar CNPJ:', error.message);
-            },
-          });
-        }
       }
-    } else if (cleaned.length > 0 && cleaned.length < 14) {
-      setTaxIdError(null); // Limpa erro enquanto digita
     } else {
+      // For non-pt-BR, just validate if filled
       setTaxIdError(null);
     }
-  }, [cnpjLookup]);
+  }, [cnpjLookup, taxIdConfig, t]);
 
   const handleSave = async () => {
-    // Valida CNPJ antes de salvar
-    const cleanedTaxId = cleanDocument(taxId);
-    if (cleanedTaxId.length > 0 && cleanedTaxId.length !== 14) {
-      setTaxIdError('CNPJ deve ter 14 dígitos');
-      return;
-    }
-    if (cleanedTaxId.length === 14 && !isValidCNPJ(cleanedTaxId)) {
-      setTaxIdError('CNPJ inválido');
+    // Valida Tax ID antes de salvar (only required validation for pt-BR)
+    const cleanedTaxId = taxId.replace(/[^A-Za-z0-9]/g, '');
+    if (taxIdConfig.showCnpjLookup) {
+      // pt-BR: validate CNPJ
+      if (cleanedTaxId.length > 0 && cleanedTaxId.length !== 14) {
+        setTaxIdError(t('cnpjMustHave14Digits'));
+        return;
+      }
+      if (cleanedTaxId.length === 14 && !isValidCNPJ(cleanedTaxId)) {
+        setTaxIdError(t('invalidCnpj'));
+        return;
+      }
+    } else if (cleanedTaxId && taxIdConfig.validate && !taxIdConfig.validate(cleanedTaxId)) {
+      // For other locales, validate if filled
+      setTaxIdError(t('invalidTaxId'));
       return;
     }
 
@@ -294,9 +308,9 @@ export default function CompanySettingsPage() {
               />
             </FormField>
 
-            <FormField label={t('taxId')} error={taxIdError || undefined}>
+            <FormField label={taxIdConfig.labelBusiness || taxIdConfig.label} error={taxIdError || undefined}>
               <div className="relative">
-                {cnpjLookup.isPending ? (
+                {taxIdConfig.showCnpjLookup && cnpjLookup.isPending ? (
                   <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary animate-spin" />
                 ) : cnpjSuccess ? (
                   <CheckCircle2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
@@ -306,12 +320,12 @@ export default function CompanySettingsPage() {
                 <Input
                   value={taxId}
                   onChange={(e) => handleTaxIdChange(e.target.value)}
-                  placeholder="00.000.000/0000-00"
+                  placeholder={taxIdConfig.placeholderBusiness || taxIdConfig.placeholder}
                   className="pl-10"
-                  maxLength={18}
+                  maxLength={taxIdConfig.maxLength}
                   error={!!taxIdError}
                 />
-                {cnpjLookup.isPending && (
+                {taxIdConfig.showCnpjLookup && cnpjLookup.isPending && (
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">
                     {t('searchingData')}
                   </span>
@@ -455,8 +469,8 @@ export default function CompanySettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Recebimento via Pix */}
-      {company?.pixKeyFeatureEnabled !== false && (
+      {/* Recebimento via Pix - Only show for pt-BR */}
+      {showPIX && company?.pixKeyFeatureEnabled !== false && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">

@@ -3,6 +3,11 @@
  *
  * Lista paginada de cobranças com filtros.
  * Suporta busca, filtro por status e pull to refresh.
+ *
+ * OFFLINE-FIRST:
+ * - Usa cache local quando offline
+ * - Sincroniza automaticamente quando online
+ * - Mostra indicador de dados offline
  */
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
@@ -26,6 +31,9 @@ import { spacing, borderRadius, shadows } from '../../design-system/tokens';
 import { useColors } from '../../design-system/ThemeProvider';
 import { useTranslation } from '../../i18n';
 import { ChargeService } from './ChargeService';
+import { ChargesCacheService } from './ChargesCacheService';
+import { useSyncStatus } from '../../sync/useSyncStatus';
+import { useAuth } from '../../context/AuthContext';
 import type {
   Charge,
   ChargeStatus,
@@ -366,6 +374,68 @@ const EmptyState: React.FC<{ hasFilter: boolean; colors: ThemeColors; t: (key: s
   </View>
 );
 
+const OfflineBanner: React.FC<{
+  isOffline: boolean;
+  isSyncing: boolean;
+  lastSyncAt: string | null;
+  onSync: () => void;
+  colors: ThemeColors;
+  t: (key: string) => string;
+}> = ({ isOffline, isSyncing, lastSyncAt, onSync, colors, t }) => {
+  if (!isOffline && !isSyncing) return null;
+
+  const formatLastSync = (dateStr: string | null) => {
+    if (!dateStr) return t('charges.neverSynced');
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+
+    if (diffMins < 1) return t('charges.justNow');
+    if (diffMins < 60) return t('charges.minutesAgo', { count: diffMins });
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return t('charges.hoursAgo', { count: diffHours });
+    return date.toLocaleDateString();
+  };
+
+  return (
+    <View style={[
+      styles.offlineBanner,
+      { backgroundColor: isOffline ? colors.warning[100] : colors.primary[100] }
+    ]}>
+      <View style={styles.offlineBannerContent}>
+        <Ionicons
+          name={isOffline ? 'cloud-offline-outline' : 'sync-outline'}
+          size={18}
+          color={isOffline ? colors.warning[700] : colors.primary[700]}
+        />
+        <View style={styles.offlineBannerText}>
+          <Text
+            variant="bodySmall"
+            weight="medium"
+            style={{ color: isOffline ? colors.warning[800] : colors.primary[800] }}
+          >
+            {isOffline ? t('charges.offlineMode') : t('charges.syncing')}
+          </Text>
+          {isOffline && lastSyncAt && (
+            <Text variant="caption" style={{ color: colors.warning[600] }}>
+              {t('charges.lastSync')}: {formatLastSync(lastSyncAt)}
+            </Text>
+          )}
+        </View>
+      </View>
+      {isOffline && !isSyncing && (
+        <TouchableOpacity onPress={onSync} style={styles.offlineSyncButton}>
+          <Ionicons name="refresh-outline" size={18} color={colors.warning[700]} />
+        </TouchableOpacity>
+      )}
+      {isSyncing && (
+        <ActivityIndicator size="small" color={colors.primary[600]} />
+      )}
+    </View>
+  );
+};
+
 // =============================================================================
 // MAIN COMPONENT
 // =============================================================================
@@ -378,6 +448,9 @@ export const ChargesListScreen: React.FC<ChargesListScreenProps> = ({
 }) => {
   const { t, locale } = useTranslation();
   const colors = useColors();
+  const { user } = useAuth();
+  const { isOnline, isSyncing: globalSyncing } = useSyncStatus();
+
   const [charges, setCharges] = useState<Charge[]>([]);
   const [stats, setStats] = useState<ChargeStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -389,6 +462,18 @@ export const ChargesListScreen: React.FC<ChargesListScreenProps> = ({
   const [page, setPage] = useState(1);
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
   const [error, setError] = useState<string | null>(null);
+
+  // Cache state
+  const [isUsingCache, setIsUsingCache] = useState(false);
+  const [cacheSyncing, setCacheSyncing] = useState(false);
+  const [lastSyncAt, setLastSyncAt] = useState<string | null>(null);
+
+  // Configure cache service with user ID
+  useEffect(() => {
+    if (user?.id) {
+      ChargesCacheService.configure(user.id);
+    }
+  }, [user?.id]);
 
   // Toggle sort order
   const handleSortToggle = useCallback(() => {
@@ -404,17 +489,54 @@ export const ChargesListScreen: React.FC<ChargesListScreenProps> = ({
     });
   }, [charges, sortOrder]);
 
-  // Load stats
-  const loadStats = async () => {
+  // Load stats (from cache or server)
+  const loadStats = async (fromCache: boolean = false) => {
     try {
+      if (fromCache) {
+        const cachedStats = await ChargesCacheService.getCachedStats();
+        if (cachedStats) {
+          setStats(cachedStats);
+          return;
+        }
+      }
+
       const data = await ChargeService.getChargeStats();
       setStats(data);
+
+      // Save to cache for offline use
+      if (ChargesCacheService.isConfigured()) {
+        await ChargesCacheService.saveStatsToCache(data);
+      }
     } catch (err) {
       console.error('Error loading stats:', err);
+      // Try to load from cache if server fails
+      if (!fromCache && ChargesCacheService.isConfigured()) {
+        const cachedStats = await ChargesCacheService.getCachedStats();
+        if (cachedStats) {
+          setStats(cachedStats);
+        }
+      }
     }
   };
 
-  // Load charges
+  // Sync charges from server to cache
+  const syncChargesFromServer = useCallback(async () => {
+    if (!ChargesCacheService.isConfigured() || !isOnline) return false;
+
+    setCacheSyncing(true);
+    try {
+      const success = await ChargesCacheService.syncFromServer();
+      if (success) {
+        const syncStatus = ChargesCacheService.getSyncStatus();
+        setLastSyncAt(syncStatus.lastSyncAt);
+      }
+      return success;
+    } finally {
+      setCacheSyncing(false);
+    }
+  }, [isOnline]);
+
+  // Load charges (from server or cache)
   const loadCharges = useCallback(async (reset: boolean = false) => {
     try {
       setError(null);
@@ -429,23 +551,78 @@ export const ChargesListScreen: React.FC<ChargesListScreenProps> = ({
       const currentPage = reset ? 1 : page;
       const statusFilter = selectedStatus === 'ALL' ? undefined : selectedStatus;
 
-      const result = await ChargeService.listCharges({
-        search: searchQuery.trim() || undefined,
-        status: statusFilter,
-        clientId: preSelectedClientId,
-        page: currentPage,
-        pageSize: PAGE_SIZE,
-      });
+      // Try to load from server first if online
+      if (isOnline) {
+        try {
+          const result = await ChargeService.listCharges({
+            search: searchQuery.trim() || undefined,
+            status: statusFilter,
+            clientId: preSelectedClientId,
+            page: currentPage,
+            pageSize: PAGE_SIZE,
+          });
 
-      if (reset) {
-        setCharges(result.data);
-      } else {
-        setCharges((prev) => [...prev, ...result.data]);
+          if (reset) {
+            setCharges(result.data);
+            // Save to cache for offline use
+            if (ChargesCacheService.isConfigured()) {
+              await ChargesCacheService.saveToCache(result.data);
+            }
+          } else {
+            setCharges((prev) => [...prev, ...result.data]);
+          }
+
+          setHasMore(currentPage < result.totalPages);
+          if (!reset) {
+            setPage(currentPage + 1);
+          }
+
+          setIsUsingCache(false);
+          return;
+        } catch (err) {
+          console.log('[ChargesListScreen] Server fetch failed, falling back to cache');
+        }
       }
 
-      setHasMore(currentPage < result.totalPages);
-      if (!reset) {
-        setPage(currentPage + 1);
+      // Fallback to cache if offline or server failed
+      if (ChargesCacheService.isConfigured()) {
+        const hasCachedData = await ChargesCacheService.hasCachedData();
+
+        if (hasCachedData) {
+          const result = await ChargesCacheService.getCachedCharges({
+            search: searchQuery.trim() || undefined,
+            status: statusFilter,
+            clientId: preSelectedClientId,
+            page: currentPage,
+            pageSize: PAGE_SIZE,
+          });
+
+          if (reset) {
+            setCharges(result.data);
+          } else {
+            setCharges((prev) => [...prev, ...result.data]);
+          }
+
+          setHasMore(currentPage < result.totalPages);
+          if (!reset) {
+            setPage(currentPage + 1);
+          }
+
+          setIsUsingCache(true);
+          const syncStatus = ChargesCacheService.getSyncStatus();
+          setLastSyncAt(syncStatus.lastSyncAt);
+
+          // Load stats from cache too
+          await loadStats(true);
+          return;
+        }
+      }
+
+      // No cache and offline - show error
+      if (!isOnline) {
+        setError('OFFLINE');
+      } else {
+        setError('GENERIC');
       }
     } catch (err) {
       // Check if it's a network/offline error
@@ -468,13 +645,41 @@ export const ChargesListScreen: React.FC<ChargesListScreenProps> = ({
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [page, selectedStatus, searchQuery, preSelectedClientId]);
+  }, [page, selectedStatus, searchQuery, preSelectedClientId, isOnline]);
 
-  // Initial load
+  // Initial load and sync
   useEffect(() => {
-    loadCharges(true);
-    loadStats();
+    const initializeData = async () => {
+      // First load (may use cache if offline)
+      await loadCharges(true);
+      await loadStats();
+
+      // If online and not already syncing, do a full cache sync in background
+      if (isOnline && ChargesCacheService.isConfigured()) {
+        syncChargesFromServer().then((success) => {
+          if (success) {
+            // Reload after sync to show fresh data
+            loadCharges(true);
+            loadStats();
+          }
+        });
+      }
+    };
+
+    initializeData();
   }, [selectedStatus]);
+
+  // Re-sync when coming back online
+  useEffect(() => {
+    if (isOnline && isUsingCache && ChargesCacheService.isConfigured()) {
+      syncChargesFromServer().then((success) => {
+        if (success) {
+          loadCharges(true);
+          loadStats();
+        }
+      });
+    }
+  }, [isOnline]);
 
   // Debounced search
   useEffect(() => {
@@ -557,7 +762,18 @@ export const ChargesListScreen: React.FC<ChargesListScreenProps> = ({
 
   const hasFilter = searchQuery.trim() !== '' || selectedStatus !== 'ALL';
 
-  if (error && !loading) {
+  // Handle manual sync from banner
+  const handleManualSync = useCallback(async () => {
+    if (isOnline) {
+      const success = await syncChargesFromServer();
+      if (success) {
+        await loadCharges(true);
+        await loadStats();
+      }
+    }
+  }, [isOnline, syncChargesFromServer, loadCharges]);
+
+  if (error && !loading && !isUsingCache) {
     const isOfflineError = error === 'OFFLINE';
 
     return (
@@ -568,7 +784,7 @@ export const ChargesListScreen: React.FC<ChargesListScreenProps> = ({
         </Text>
         <Text variant="bodySmall" color="secondary" align="center" style={{ marginTop: spacing[2] }}>
           {isOfflineError
-            ? t('charges.offlineMessage')
+            ? t('charges.offlineNoCacheMessage')
             : t('charges.loadChargesErrorMessage')}
         </Text>
         <TouchableOpacity
@@ -585,6 +801,16 @@ export const ChargesListScreen: React.FC<ChargesListScreenProps> = ({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background.secondary }]}>
+      {/* Offline/Sync Banner */}
+      <OfflineBanner
+        isOffline={!isOnline || isUsingCache}
+        isSyncing={cacheSyncing}
+        lastSyncAt={lastSyncAt}
+        onSync={handleManualSync}
+        colors={colors}
+        t={t}
+      />
+
       <SearchBar
         value={searchQuery}
         onChangeText={setSearchQuery}
@@ -660,6 +886,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[6],
     paddingVertical: spacing[3],
     borderRadius: borderRadius.lg,
+  },
+  offlineBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[2],
+  },
+  offlineBannerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  offlineBannerText: {
+    marginLeft: spacing[2],
+    flex: 1,
+  },
+  offlineSyncButton: {
+    padding: spacing[2],
   },
   searchContainer: {
     paddingHorizontal: spacing[4],

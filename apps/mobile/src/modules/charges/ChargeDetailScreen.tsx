@@ -3,6 +3,10 @@
  *
  * Tela de detalhes de uma cobrança.
  * Exibe informações completas e ações disponíveis.
+ *
+ * OFFLINE-FIRST:
+ * - Carrega do cache quando offline
+ * - Mostra indicador de dados offline
  */
 
 import React, { useState, useCallback, useEffect } from 'react';
@@ -26,6 +30,8 @@ import { spacing, borderRadius, shadows } from '../../design-system/tokens';
 import { useColors } from '../../design-system/ThemeProvider';
 import { useTranslation } from '../../i18n';
 import { ChargeService } from './ChargeService';
+import { ChargesCacheService } from './ChargesCacheService';
+import { useSyncStatus } from '../../sync/useSyncStatus';
 import type { Charge, ChargeStatus, BillingType } from './types';
 import {
   chargeStatusLabels,
@@ -128,29 +134,66 @@ export const ChargeDetailScreen: React.FC<ChargeDetailScreenProps> = ({
 }) => {
   const { t, locale } = useTranslation();
   const colors = useColors();
+  const { isOnline } = useSyncStatus();
   const [charge, setCharge] = useState<Charge | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isFromCache, setIsFromCache] = useState(false);
 
-  // Load charge details
+  // Load charge details (from server or cache)
   const loadCharge = useCallback(async () => {
     try {
       setError(null);
       setLoading(true);
-      const data = await ChargeService.getChargeById(chargeId);
-      setCharge(data);
+
+      // Try to load from server first if online
+      if (isOnline) {
+        try {
+          const data = await ChargeService.getChargeById(chargeId);
+          setCharge(data);
+          setIsFromCache(false);
+
+          // Update cache with fresh data
+          if (ChargesCacheService.isConfigured()) {
+            await ChargesCacheService.saveToCache([data]);
+          }
+          return;
+        } catch (err) {
+          console.log('[ChargeDetailScreen] Server fetch failed, trying cache');
+        }
+      }
+
+      // Fallback to cache if offline or server failed
+      if (ChargesCacheService.isConfigured()) {
+        const cachedCharge = await ChargesCacheService.getCachedChargeById(chargeId);
+        if (cachedCharge) {
+          setCharge(cachedCharge);
+          setIsFromCache(true);
+          return;
+        }
+      }
+
+      // No data available
+      setError(isOnline ? t('charges.loadError') : t('charges.offlineNoCacheMessage'));
     } catch (err) {
       console.error('Error loading charge:', err);
       setError(err instanceof Error ? err.message : t('charges.loadError'));
     } finally {
       setLoading(false);
     }
-  }, [chargeId]);
+  }, [chargeId, isOnline]);
 
   useEffect(() => {
     loadCharge();
   }, [loadCharge]);
+
+  // Re-fetch when coming back online
+  useEffect(() => {
+    if (isOnline && isFromCache && charge) {
+      loadCharge();
+    }
+  }, [isOnline]);
 
   // Share payment link
   const handleSharePayment = useCallback(async () => {
@@ -319,17 +362,28 @@ export const ChargeDetailScreen: React.FC<ChargeDetailScreenProps> = ({
   const canManualPay = canRegisterManualPayment(charge);
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: colors.background.secondary }]}
-      contentContainerStyle={styles.scrollContent}
-    >
-      {actionLoading && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color={colors.primary[500]} />
+    <View style={[styles.container, { backgroundColor: colors.background.secondary }]}>
+      {/* Offline Banner */}
+      {isFromCache && (
+        <View style={[styles.offlineBanner, { backgroundColor: colors.warning[100] }]}>
+          <Ionicons name="cloud-offline-outline" size={16} color={colors.warning[700]} />
+          <Text variant="bodySmall" weight="medium" style={{ color: colors.warning[800], marginLeft: spacing[2] }}>
+            {t('charges.offlineMode')}
+          </Text>
         </View>
       )}
 
-      {/* Main Info Card */}
+      <ScrollView
+        style={styles.scrollContainer}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {actionLoading && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color={colors.primary[500]} />
+          </View>
+        )}
+
+        {/* Main Info Card */}
       <Card variant="elevated" style={styles.mainCard}>
         <View style={styles.statusRow}>
           <Badge
@@ -555,7 +609,8 @@ export const ChargeDetailScreen: React.FC<ChargeDetailScreenProps> = ({
           )}
         </Card>
       )}
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 };
 
@@ -567,6 +622,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  scrollContainer: {
+    flex: 1,
+  },
   centerContent: {
     justifyContent: 'center',
     alignItems: 'center',
@@ -575,6 +633,13 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: spacing[4],
     paddingBottom: spacing[8],
+  },
+  offlineBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[2],
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,

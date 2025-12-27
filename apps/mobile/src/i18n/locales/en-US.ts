@@ -1184,7 +1184,16 @@ export const enUS: Translations = {
     noConnection: 'No connection',
     loadChargesError: 'Error loading charges',
     offlineMessage: 'Charges require an internet connection',
+    offlineNoCacheMessage: 'You are offline and there is no saved data. Connect to the internet to load charges.',
     loadChargesErrorMessage: 'Could not load charges. Please try again.',
+    // Offline mode
+    offlineMode: 'Offline mode',
+    syncing: 'Syncing...',
+    lastSync: 'Last sync',
+    neverSynced: 'Never synced',
+    justNow: 'Just now',
+    minutesAgo: '{{count}} min ago',
+    hoursAgo: '{{count}}h ago',
     // Form screen
     client: 'Client',
     searchClient: 'Search client...',

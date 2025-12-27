@@ -7,6 +7,7 @@
 
 // Service
 export { ChargeService } from './ChargeService';
+export { ChargesCacheService } from './ChargesCacheService';
 
 // Screens
 export { ChargesListScreen } from './ChargesListScreen';

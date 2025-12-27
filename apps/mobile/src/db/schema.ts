@@ -1569,6 +1569,80 @@ export const MIGRATIONS = [
       INSERT OR IGNORE INTO sync_meta (entity, lastSyncAt, syncStatus) VALUES ('inventoryMovements', '1970-01-01T00:00:00Z', 'idle');
     `,
   },
+  // Migration 18: Add charges cache table for offline viewing
+  {
+    version: 18,
+    sql: `
+      -- ==========================================================================
+      -- CHARGES CACHE (cache local de cobranças para visualização offline)
+      -- As cobranças são criadas online (Asaas), mas cacheadas para leitura offline
+      -- ==========================================================================
+      CREATE TABLE IF NOT EXISTS charges_cache (
+        id TEXT PRIMARY KEY,
+        asaasId TEXT,
+        clientId TEXT NOT NULL,
+        clientName TEXT,
+        clientEmail TEXT,
+        clientPhone TEXT,
+        workOrderId TEXT,
+        quoteId TEXT,
+        value REAL NOT NULL,
+        netValue REAL,
+        billingType TEXT NOT NULL,       -- PIX | BOLETO | CREDIT_CARD | UNDEFINED
+        status TEXT NOT NULL,            -- PENDING | OVERDUE | CONFIRMED | RECEIVED | RECEIVED_IN_CASH | REFUNDED | CANCELED
+        dueDate TEXT NOT NULL,
+        paymentDate TEXT,
+        description TEXT,
+        externalReference TEXT,
+        discountValue REAL,
+        discountDueDateLimit TEXT,
+        discountType TEXT,
+        fineValue REAL,
+        fineType TEXT,
+        interestValue REAL,
+        invoiceUrl TEXT,
+        bankSlipUrl TEXT,
+        pixQrCodeUrl TEXT,
+        pixCopiaECola TEXT,
+        transactionReceiptUrl TEXT,
+        publicToken TEXT,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL,
+        syncedAt TEXT,
+        technicianId TEXT NOT NULL
+      );
+
+      -- Indexes for performance
+      CREATE INDEX IF NOT EXISTS idx_charges_cache_clientId ON charges_cache(clientId);
+      CREATE INDEX IF NOT EXISTS idx_charges_cache_status ON charges_cache(status);
+      CREATE INDEX IF NOT EXISTS idx_charges_cache_dueDate ON charges_cache(dueDate);
+      CREATE INDEX IF NOT EXISTS idx_charges_cache_billingType ON charges_cache(billingType);
+      CREATE INDEX IF NOT EXISTS idx_charges_cache_technicianId ON charges_cache(technicianId);
+      CREATE INDEX IF NOT EXISTS idx_charges_cache_updatedAt ON charges_cache(updatedAt);
+      CREATE INDEX IF NOT EXISTS idx_charges_cache_clientName ON charges_cache(clientName);
+
+      -- ==========================================================================
+      -- CHARGES STATS CACHE (cache de estatísticas para exibição rápida offline)
+      -- ==========================================================================
+      CREATE TABLE IF NOT EXISTS charges_stats_cache (
+        id INTEGER PRIMARY KEY CHECK (id = 1),  -- Singleton
+        total INTEGER DEFAULT 0,
+        pending INTEGER DEFAULT 0,
+        overdue INTEGER DEFAULT 0,
+        confirmed INTEGER DEFAULT 0,
+        canceled INTEGER DEFAULT 0,
+        totalValue REAL DEFAULT 0,
+        receivedValue REAL DEFAULT 0,
+        pendingValue REAL DEFAULT 0,
+        overdueValue REAL DEFAULT 0,
+        updatedAt TEXT NOT NULL,
+        technicianId TEXT NOT NULL
+      );
+
+      -- Initialize sync_meta for charges cache
+      INSERT OR IGNORE INTO sync_meta (entity, lastSyncAt, syncStatus) VALUES ('chargesCache', '1970-01-01T00:00:00Z', 'idle');
+    `,
+  },
 ];
 
-export const CURRENT_DB_VERSION = 17;
+export const CURRENT_DB_VERSION = 18;

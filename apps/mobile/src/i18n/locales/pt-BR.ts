@@ -1184,7 +1184,16 @@ export const ptBR = {
     noConnection: 'Sem conexao',
     loadChargesError: 'Erro ao carregar cobrancas',
     offlineMessage: 'Cobrancas requer conexao com a internet',
+    offlineNoCacheMessage: 'Voce esta offline e nao ha dados salvos. Conecte-se a internet para carregar as cobrancas.',
     loadChargesErrorMessage: 'Nao foi possivel carregar as cobrancas. Tente novamente.',
+    // Offline mode
+    offlineMode: 'Modo offline',
+    syncing: 'Sincronizando...',
+    lastSync: 'Ultima sincronizacao',
+    neverSynced: 'Nunca sincronizado',
+    justNow: 'Agora mesmo',
+    minutesAgo: 'ha {{count}} min',
+    hoursAgo: 'ha {{count}}h',
     // Form screen
     client: 'Cliente',
     searchClient: 'Buscar cliente...',

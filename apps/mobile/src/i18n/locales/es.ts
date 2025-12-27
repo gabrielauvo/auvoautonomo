@@ -1184,7 +1184,16 @@ export const es: Translations = {
     noConnection: 'Sin conexion',
     loadChargesError: 'Error al cargar cobros',
     offlineMessage: 'Los cobros requieren conexion a internet',
+    offlineNoCacheMessage: 'Estas sin conexion y no hay datos guardados. Conectate a internet para cargar los cobros.',
     loadChargesErrorMessage: 'No se pudieron cargar los cobros. Intentalo de nuevo.',
+    // Offline mode
+    offlineMode: 'Modo sin conexion',
+    syncing: 'Sincronizando...',
+    lastSync: 'Ultima sincronizacion',
+    neverSynced: 'Nunca sincronizado',
+    justNow: 'Ahora mismo',
+    minutesAgo: 'hace {{count}} min',
+    hoursAgo: 'hace {{count}}h',
     // Form screen
     client: 'Cliente',
     searchClient: 'Buscar cliente...',

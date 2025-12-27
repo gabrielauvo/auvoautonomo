@@ -27,15 +27,24 @@ export class RegionalService {
       },
     });
 
-    // Default to Brazil if no subscription or settings
-    const countryCode = subscription?.country || 'BR';
+    // Default to Brazil if no subscription or settings (handle empty string)
+    const countryCode = subscription?.country && subscription.country.length > 0
+      ? subscription.country
+      : 'BR';
     const countryInfo = this.regionalData.getCountryByCode(countryCode);
+
+    // Handle empty strings for currency and timezone too
+    const currency = subscription?.currency && subscription.currency.length > 0
+      ? subscription.currency
+      : (countryInfo?.currency || 'BRL');
+    const timezone = subscription?.timezone && subscription.timezone.length > 0
+      ? subscription.timezone
+      : (countryInfo?.timezone || 'America/Sao_Paulo');
 
     return {
       country: countryCode,
-      currency: subscription?.currency || countryInfo?.currency || 'BRL',
-      timezone:
-        subscription?.timezone || countryInfo?.timezone || 'America/Sao_Paulo',
+      currency,
+      timezone,
       countryInfo,
     };
   }

@@ -1011,7 +1011,8 @@
     "detailedClientsReportTitle": "Detailed Clients Report",
     "detailedClientsReportDescription": "Upgrade to access retention analysis, top clients and data export.",
     "active": "Active",
-    "inactive": "Inactive"
+    "inactive": "Inactive",
+    "noTypeSpecified": "No type specified"
   },
   "settings": {
     "title": "Settings",

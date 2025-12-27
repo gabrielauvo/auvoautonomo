@@ -122,9 +122,17 @@ function OperationsReportContent() {
   }));
 
   // Translate status names for pie chart
+  // Backend returns names in Portuguese ("Concluído", "Em Andamento", "Agendado")
+  // But mock data uses English keys, so we translate them if needed
+  const statusTranslations: Record<string, string> = {
+    completed: t('completed'),
+    inProgress: t('inProgress'),
+    scheduled: t('scheduled'),
+    DONE: t('completed'),
+  };
   const translatedWorkOrdersByStatus = operationsData.workOrdersByStatus.map((item) => ({
     ...item,
-    name: t(item.name),
+    name: statusTranslations[item.name] || item.name,
   }));
 
   const renderContent = () => (

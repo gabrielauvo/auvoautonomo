@@ -109,9 +109,14 @@ function ServicesReportContent() {
     }
   };
 
+  // Helper to translate type name from backend
+  const translateTypeName = (typeName: string): string => {
+    return typeName === 'Sem tipo definido' ? t('noTypeSpecified') : typeName;
+  };
+
   // Prepare pie chart data
   const typeDistributionData = servicesData.workOrdersByType.map((item) => ({
-    name: item.typeName,
+    name: translateTypeName(item.typeName),
     value: item.count,
     color: item.typeColor,
   }));
@@ -201,7 +206,7 @@ function ServicesReportContent() {
                         style={{ backgroundColor: type.typeColor }}
                       />
                       <div>
-                        <p className="font-medium text-sm">{type.typeName}</p>
+                        <p className="font-medium text-sm">{translateTypeName(type.typeName)}</p>
                         <p className="text-xs text-gray-500">{type.count} OS</p>
                       </div>
                     </div>
@@ -253,7 +258,7 @@ function ServicesReportContent() {
                       className="w-3 h-3 rounded-full"
                       style={{ backgroundColor: typeData.typeColor }}
                     />
-                    <h4 className="font-semibold text-sm">{typeData.typeName}</h4>
+                    <h4 className="font-semibold text-sm">{translateTypeName(typeData.typeName)}</h4>
                   </div>
                   <div className="space-y-2">
                     {typeData.clients.map((client, idx) => (
@@ -297,7 +302,7 @@ function ServicesReportContent() {
                     <span className="text-sm font-medium text-blue-800">{t('mostRequestedType')}</span>
                   </div>
                   <p className="text-xl font-bold text-blue-900">
-                    {servicesData.workOrdersByType[0].typeName}
+                    {translateTypeName(servicesData.workOrdersByType[0].typeName)}
                   </p>
                   <p className="text-xs text-blue-700">
                     {t('workOrdersCount', { count: servicesData.workOrdersByType[0].count })}
@@ -316,7 +321,7 @@ function ServicesReportContent() {
                       <CheckCircle className="h-4 w-4 text-success" />
                       <span className="text-sm font-medium text-success-800">{t('bestCompletionRate')}</span>
                     </div>
-                    <p className="text-xl font-bold text-success-900">{bestType.typeName}</p>
+                    <p className="text-xl font-bold text-success-900">{translateTypeName(bestType.typeName)}</p>
                     <p className="text-xs text-success-700">{bestType.completionRate}% {t('completedLower')}</p>
                   </div>
                 ) : null;
@@ -333,7 +338,7 @@ function ServicesReportContent() {
                       <TrendingUp className="h-4 w-4 text-amber-600" />
                       <span className="text-sm font-medium text-amber-800">{t('highestRevenue')}</span>
                     </div>
-                    <p className="text-xl font-bold text-amber-900">{highestValueType.typeName}</p>
+                    <p className="text-xl font-bold text-amber-900">{translateTypeName(highestValueType.typeName)}</p>
                     <p className="text-xs text-amber-700">{formatCurrency(highestValueType.totalValue)}</p>
                   </div>
                 ) : null;

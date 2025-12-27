@@ -136,9 +136,16 @@ function ClientsReportContent() {
   }));
 
   // Translate status names for pie chart
+  // Backend returns names in Portuguese ("Ativos", "Inativos", "Com atraso")
+  // But mock data uses English keys, so we translate them if needed
+  const statusTranslations: Record<string, string> = {
+    active: t('active'),
+    new: t('new'),
+    inactive: t('inactive'),
+  };
   const translatedClientsByStatus = clientsData.clientsByStatus.map((item) => ({
     ...item,
-    name: t(item.name),
+    name: statusTranslations[item.name] || item.name,
   }));
 
   const renderContent = () => (

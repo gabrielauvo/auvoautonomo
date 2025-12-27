@@ -675,6 +675,68 @@
       "product": "Produto",
       "service": "Serviço",
       "bundle": "Kit"
+    },
+    "form": {
+      "itemTypeTitle": "Tipo do Item",
+      "itemType": {
+        "product": "Produto",
+        "productDescription": "Item físico ou material",
+        "service": "Serviço",
+        "serviceDescription": "Mão de obra ou prestação de serviço",
+        "bundle": "Kit",
+        "bundleDescription": "Combinação de produtos e/ou serviços"
+      },
+      "units": {
+        "unit": "Unidade (un)",
+        "hour": "Hora (h)",
+        "meter": "Metro (m)",
+        "squareMeter": "Metro quadrado (m²)",
+        "cubicMeter": "Metro cúbico (m³)",
+        "kilogram": "Quilograma (kg)",
+        "liter": "Litro (L)",
+        "piece": "Peça (pç)",
+        "box": "Caixa (cx)",
+        "month": "Mês (mês)"
+      },
+      "validation": {
+        "nameRequired": "Nome é obrigatório",
+        "typeRequired": "Tipo é obrigatório",
+        "unitRequired": "Unidade é obrigatória",
+        "basePriceRequired": "Preço base é obrigatório e deve ser maior ou igual a 0",
+        "categoryNameRequired": "Nome da categoria é obrigatório"
+      },
+      "mainData": "Dados Principais",
+      "namePlaceholder": "Nome do item",
+      "skuCode": "SKU / Código",
+      "skuPlaceholder": "Código interno (opcional)",
+      "descriptionPlaceholder": "Descrição detalhada do item (opcional)",
+      "createNewCategory": "Criar nova categoria",
+      "otherUnit": "Outra...",
+      "customUnitPlaceholder": "Ex: pacote",
+      "basePrice": "Preço Base (Venda)",
+      "costPricePlaceholder": "0,00 (opcional)",
+      "defaultDurationHint": "Tempo estimado para execução do serviço",
+      "durationPlaceholder": "Em minutos (opcional)",
+      "minutes": "minutos",
+      "initialStockLabel": "Quantidade Inicial em Estoque",
+      "initialStockHint": "Define a quantidade inicial de estoque ao criar o produto (opcional)",
+      "initialStockNote": "Estoque inicial",
+      "bundleCompositionInfo": "Após criar o kit, você poderá adicionar os itens que o compõem.",
+      "itemActive": "Item ativo",
+      "itemActiveDescription": "Itens inativos não aparecem para seleção em orçamentos e OS",
+      "cancel": "Cancelar",
+      "saving": "Salvando...",
+      "saveChanges": "Salvar Alterações",
+      "createItem": "Criar Item",
+      "saveError": "Erro ao salvar item. Tente novamente.",
+      "categoryCreateError": "Erro ao criar categoria",
+      "newCategory": "Nova Categoria",
+      "newCategoryDescription": "Crie uma nova categoria para organizar seus produtos e serviços.",
+      "categoryName": "Nome da Categoria",
+      "categoryNamePlaceholder": "Ex: Manutenção, Instalação, Peças...",
+      "categoryDescription": "Descrição (opcional)",
+      "categoryDescriptionPlaceholder": "Descrição da categoria...",
+      "createCategory": "Criar Categoria"
     }
   },
   "checklists": {
@@ -1022,7 +1084,8 @@
     "detailedClientsReportTitle": "Relatório de Clientes Detalhado",
     "detailedClientsReportDescription": "Faça upgrade para acessar análises de retenção, top clientes e exportação de dados.",
     "active": "Ativos",
-    "inactive": "Inativos"
+    "inactive": "Inativos",
+    "noTypeSpecified": "Sem tipo definido"
   },
   "settings": {
     "title": "Configurações",

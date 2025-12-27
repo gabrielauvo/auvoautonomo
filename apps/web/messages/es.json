@@ -1011,7 +1011,8 @@
     "detailedClientsReportTitle": "Informe de Clientes Detallado",
     "detailedClientsReportDescription": "Actualice para acceder a análisis de retención, top clientes y exportación de datos.",
     "active": "Activos",
-    "inactive": "Inactivos"
+    "inactive": "Inactivos",
+    "noTypeSpecified": "Sin tipo definido"
   },
   "settings": {
     "title": "Configuración",

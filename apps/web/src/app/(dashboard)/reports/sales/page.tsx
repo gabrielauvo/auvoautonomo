@@ -129,9 +129,19 @@ function SalesReportContent() {
   }));
 
   // Translate status names for pie chart
+  // Backend returns names in Portuguese ("Rascunho", "Enviado", "Aprovado", etc.)
+  // But mock data uses English keys, so we translate them if needed
+  const statusTranslations: Record<string, string> = {
+    approved: t('approved'),
+    pending: t('pending'),
+    rejected: t('rejected'),
+    expired: t('expired'),
+    draft: t('quotes'),
+    sent: t('pending'),
+  };
   const translatedQuotesByStatus = salesData.quotesByStatus.map((item) => ({
     ...item,
-    name: t(item.name),
+    name: statusTranslations[item.name] || item.name,
   }));
 
   const renderContent = () => (

@@ -865,7 +865,16 @@ export default function PublicQuotePage() {
     if (shareKey) {
       fetchQuote();
     }
-  }, [shareKey]);
+  }, [shareKey, errorMessages]);
+
+  // Labels de status localizados - DEVE ficar antes dos returns condicionais
+  const statusLabels = useMemo(() => ({
+    DRAFT: t('status.draft'),
+    SENT: t('status.sent'),
+    APPROVED: t('status.approved'),
+    REJECTED: t('status.rejected'),
+    EXPIRED: t('status.expired'),
+  }), [t]);
 
   if (loading) {
     return (
@@ -892,15 +901,6 @@ export default function PublicQuotePage() {
 
   const statusStyle = statusStyles[quote.status] || statusStyles.DRAFT;
   const StatusIcon = statusStyle.icon;
-
-  // Labels de status localizados
-  const statusLabels = useMemo(() => ({
-    DRAFT: t('status.draft'),
-    SENT: t('status.sent'),
-    APPROVED: t('status.approved'),
-    REJECTED: t('status.rejected'),
-    EXPIRED: t('status.expired'),
-  }), [t]);
 
   // Cores do template (fallback para verde padrão)
   const primaryColor = quote.template?.primaryColor || '#16a34a';

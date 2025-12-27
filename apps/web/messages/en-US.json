@@ -2153,5 +2153,40 @@
       "rejected": "Rejected",
       "expired": "Expired"
     }
+  },
+  "publicWorkOrder": {
+    "title": "Work Order",
+    "invalidLink": "Invalid Link",
+    "notFound": "Work order not found or invalid link.",
+    "loadError": "Error loading work order.",
+    "connectionError": "Error connecting to server.",
+    "status": {
+      "scheduled": "Scheduled",
+      "inProgress": "In Progress",
+      "done": "Completed",
+      "canceled": "Canceled"
+    },
+    "client": "Client",
+    "execution": "Execution",
+    "technician": "Technician",
+    "start": "Start",
+    "end": "End",
+    "duration": "Duration",
+    "serviceDescription": "Service Description",
+    "executionReport": "Execution Report",
+    "itemsAndServices": "Items and Services",
+    "service": "Service",
+    "product": "Product",
+    "unitPrice": "Unit Price",
+    "qty": "Qty",
+    "attachments": "Attachments",
+    "clientSignature": "Client Signature",
+    "signedAt": "Signed at",
+    "signatureRegistered": "Signature registered",
+    "photos": "photo(s)",
+    "document": "Document",
+    "close": "Close",
+    "previous": "Previous",
+    "next": "Next"
   }
 }

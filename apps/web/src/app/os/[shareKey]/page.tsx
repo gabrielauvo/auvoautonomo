@@ -109,33 +109,48 @@ interface WorkOrderData {
   }>;
 }
 
-const statusConfig: Record<string, { label: string; color: string; bgColor: string; icon: any }> = {
-  SCHEDULED: { label: 'Agendada', color: 'text-blue-700', bgColor: 'bg-blue-100', icon: Calendar },
-  IN_PROGRESS: { label: 'Em Andamento', color: 'text-yellow-700', bgColor: 'bg-yellow-100', icon: Clock },
-  DONE: { label: 'Concluída', color: 'text-green-700', bgColor: 'bg-green-100', icon: CheckCircle2 },
-  CANCELED: { label: 'Cancelada', color: 'text-red-700', bgColor: 'bg-red-100', icon: AlertCircle },
+const statusConfig: Record<string, { labelKey: string; color: string; bgColor: string; icon: any }> = {
+  SCHEDULED: { labelKey: 'scheduled', color: 'text-blue-700', bgColor: 'bg-blue-100', icon: Calendar },
+  IN_PROGRESS: { labelKey: 'inProgress', color: 'text-yellow-700', bgColor: 'bg-yellow-100', icon: Clock },
+  DONE: { labelKey: 'done', color: 'text-green-700', bgColor: 'bg-green-100', icon: CheckCircle2 },
+  CANCELED: { labelKey: 'canceled', color: 'text-red-700', bgColor: 'bg-red-100', icon: AlertCircle },
 };
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
+function getLocaleCode(locale: string): string {
+  const localeMap: Record<string, string> = {
+    'pt-BR': 'pt-BR',
+    'en-US': 'en-US',
+    'es': 'es-ES',
+  };
+  return localeMap[locale] || 'pt-BR';
+}
+
+function formatCurrency(value: number, locale: string = 'pt-BR'): string {
+  const localeCode = getLocaleCode(locale);
+  const currencyMap: Record<string, string> = {
+    'pt-BR': 'BRL',
+    'en-US': 'USD',
+    'es': 'EUR',
+  };
+  return new Intl.NumberFormat(localeCode, {
     style: 'currency',
-    currency: 'BRL',
+    currency: currencyMap[locale] || 'BRL',
   }).format(value);
 }
 
-function formatDate(dateString: string | null): string {
+function formatDate(dateString: string | null, locale: string = 'pt-BR'): string {
   if (!dateString) return '-';
-  return new Date(dateString).toLocaleDateString('pt-BR');
+  return new Date(dateString).toLocaleDateString(getLocaleCode(locale));
 }
 
-function formatDateTime(dateString: string | null): string {
+function formatDateTime(dateString: string | null, locale: string = 'pt-BR'): string {
   if (!dateString) return '-';
-  return new Date(dateString).toLocaleString('pt-BR');
+  return new Date(dateString).toLocaleString(getLocaleCode(locale));
 }
 
-function formatTime(dateString: string | null): string {
+function formatTime(dateString: string | null, locale: string = 'pt-BR'): string {
   if (!dateString) return '-';
-  return new Date(dateString).toLocaleTimeString('pt-BR', {
+  return new Date(dateString).toLocaleTimeString(getLocaleCode(locale), {
     hour: '2-digit',
     minute: '2-digit',
   });
@@ -281,7 +296,8 @@ function ImageLightbox({
 export default function PublicWorkOrderPage() {
   const params = useParams();
   const shareKey = params.shareKey as string;
-  const { t } = useTranslations('common');
+  const { t, locale } = useTranslations('publicWorkOrder');
+  const { t: tCommon } = useTranslations('common');
 
   const [workOrder, setWorkOrder] = useState<WorkOrderData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -319,9 +335,9 @@ export default function PublicWorkOrderPage() {
 
         if (!response.ok) {
           if (response.status === 404) {
-            setError('Ordem de serviço não encontrada ou link inválido.');
+            setError('notFound');
           } else {
-            setError('Erro ao carregar ordem de serviço.');
+            setError('loadError');
           }
           return;
         }
@@ -330,7 +346,7 @@ export default function PublicWorkOrderPage() {
         setWorkOrder(data);
       } catch (err) {
         console.error('Error fetching work order:', err);
-        setError('Erro ao conectar com o servidor.');
+        setError('connectionError');
       } finally {
         setLoading(false);
       }
@@ -346,7 +362,7 @@ export default function PublicWorkOrderPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">{t('loading')}</p>
+          <p className="text-gray-600">{tCommon('loading')}</p>
         </div>
       </div>
     );
@@ -357,8 +373,8 @@ export default function PublicWorkOrderPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-8 text-center">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Link Inválido</h2>
-          <p className="text-gray-600">{error || 'Ordem de serviço não encontrada.'}</p>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">{t('invalidLink')}</h2>
+          <p className="text-gray-600">{error ? t(error) : t('notFound')}</p>
         </div>
       </div>
     );
@@ -430,19 +446,19 @@ export default function PublicWorkOrderPage() {
                 {/* Número e data da OS */}
                 <div className="text-left md:text-right">
                   <div className="inline-block">
-                    <p className="text-sm text-gray-500 uppercase tracking-wide">Ordem de Serviço</p>
+                    <p className="text-sm text-gray-500 uppercase tracking-wide">{t('title')}</p>
                     <p className="text-2xl font-bold text-gray-900">
                       #{workOrder.id.substring(0, 8).toUpperCase()}
                     </p>
                     <div className="mt-2 space-y-1">
                       <p className="text-sm text-gray-600 flex items-center gap-2 md:justify-end">
                         <Calendar className="h-4 w-4" />
-                        {formatDate(workOrder.scheduledDate || workOrder.createdAt)}
+                        {formatDate(workOrder.scheduledDate || workOrder.createdAt, locale)}
                       </p>
                     </div>
                     <Badge className={`mt-3 ${status.bgColor} ${status.color}`}>
                       <StatusIcon className="h-3 w-3 mr-1" />
-                      {status.label}
+                      {t(`status.${status.labelKey}`)}
                     </Badge>
                   </div>
                 </div>
@@ -463,7 +479,7 @@ export default function PublicWorkOrderPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Cliente */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Cliente</h3>
+                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">{t('client')}</h3>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-gray-400" />
@@ -492,30 +508,30 @@ export default function PublicWorkOrderPage() {
 
               {/* Técnico e Execução */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Execução</h3>
+                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">{t('execution')}</h3>
                 <div className="space-y-2">
                   {workOrder.company.technicianName && (
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-gray-400" />
-                      <span className="text-gray-700">Técnico: <span className="font-medium text-gray-900">{workOrder.company.technicianName}</span></span>
+                      <span className="text-gray-700">{t('technician')}: <span className="font-medium text-gray-900">{workOrder.company.technicianName}</span></span>
                     </div>
                   )}
                   {workOrder.executionStart && (
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Play className="h-4 w-4 text-green-500" />
-                      <span>Início: {formatDateTime(workOrder.executionStart)}</span>
+                      <span>{t('start')}: {formatDateTime(workOrder.executionStart, locale)}</span>
                     </div>
                   )}
                   {workOrder.executionEnd && (
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <CheckCircle2 className="h-4 w-4 text-blue-500" />
-                      <span>Término: {formatDateTime(workOrder.executionEnd)}</span>
+                      <span>{t('end')}: {formatDateTime(workOrder.executionEnd, locale)}</span>
                     </div>
                   )}
                   {workOrder.executionStart && workOrder.executionEnd && (
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Timer className="h-4 w-4 text-gray-400" />
-                      <span>Duração: <span className="font-medium">{calculateDuration(workOrder.executionStart, workOrder.executionEnd)}</span></span>
+                      <span>{t('duration')}: <span className="font-medium">{calculateDuration(workOrder.executionStart, workOrder.executionEnd)}</span></span>
                     </div>
                   )}
                 </div>
@@ -526,7 +542,7 @@ export default function PublicWorkOrderPage() {
           {/* Descrição/Orientação */}
           {workOrder.description && (
             <div className="px-6 py-4 md:px-8 border-b">
-              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Descrição do Serviço</h3>
+              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">{t('serviceDescription')}</h3>
               <p className="text-gray-700 whitespace-pre-wrap">{workOrder.description}</p>
             </div>
           )}
@@ -534,7 +550,7 @@ export default function PublicWorkOrderPage() {
           {/* Relato de Execução */}
           {workOrder.notes && (
             <div className="px-6 py-4 md:px-8 bg-blue-50 border-b">
-              <h3 className="text-sm font-semibold text-blue-800 uppercase tracking-wide mb-2">Relato de Execução</h3>
+              <h3 className="text-sm font-semibold text-blue-800 uppercase tracking-wide mb-2">{t('executionReport')}</h3>
               <p className="text-blue-900 whitespace-pre-wrap">{workOrder.notes}</p>
             </div>
           )}
@@ -542,7 +558,7 @@ export default function PublicWorkOrderPage() {
           {/* Itens/Serviços */}
           {workOrder.items.length > 0 && (
             <div className="px-6 py-6 md:px-8">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Itens e Serviços</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('itemsAndServices')}</h2>
 
               {/* Tabela desktop */}
               <div className="hidden md:block overflow-x-auto">
@@ -550,10 +566,10 @@ export default function PublicWorkOrderPage() {
                   <thead>
                     <tr className="border-b-2" style={{ borderColor: primaryColor }}>
                       <th className="text-left py-3 px-2 text-sm font-semibold text-gray-700 w-8"></th>
-                      <th className="text-left py-3 px-2 text-sm font-semibold text-gray-700">Descrição</th>
-                      <th className="text-center py-3 px-2 text-sm font-semibold text-gray-700 w-20">Qtd</th>
-                      <th className="text-right py-3 px-2 text-sm font-semibold text-gray-700 w-28">Valor Un.</th>
-                      <th className="text-right py-3 px-2 text-sm font-semibold text-gray-700 w-28">Total</th>
+                      <th className="text-left py-3 px-2 text-sm font-semibold text-gray-700">{tCommon('description')}</th>
+                      <th className="text-center py-3 px-2 text-sm font-semibold text-gray-700 w-20">{t('qty')}</th>
+                      <th className="text-right py-3 px-2 text-sm font-semibold text-gray-700 w-28">{t('unitPrice')}</th>
+                      <th className="text-right py-3 px-2 text-sm font-semibold text-gray-700 w-28">{tCommon('total')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -571,7 +587,7 @@ export default function PublicWorkOrderPage() {
                           <div>
                             <p className="font-medium text-gray-900">{item.name}</p>
                             <p className="text-xs text-gray-500">
-                              {item.type === 'SERVICE' ? 'Serviço' : 'Produto'} • {item.unit}
+                              {item.type === 'SERVICE' ? t('service') : t('product')} • {item.unit}
                             </p>
                           </div>
                         </td>
@@ -579,10 +595,10 @@ export default function PublicWorkOrderPage() {
                           {item.quantity % 1 === 0 ? item.quantity : item.quantity.toFixed(2)}
                         </td>
                         <td className="py-4 px-2 text-right text-gray-700">
-                          {formatCurrency(item.unitPrice)}
+                          {formatCurrency(item.unitPrice, locale)}
                         </td>
                         <td className="py-4 px-2 text-right font-semibold text-gray-900">
-                          {formatCurrency(item.totalPrice)}
+                          {formatCurrency(item.totalPrice, locale)}
                         </td>
                       </tr>
                     ))}
@@ -604,14 +620,14 @@ export default function PublicWorkOrderPage() {
                       <div className="flex-1">
                         <p className="font-medium text-gray-900">{item.name}</p>
                         <p className="text-xs text-gray-500 mt-1">
-                          {item.type === 'SERVICE' ? 'Serviço' : 'Produto'} • {item.unit}
+                          {item.type === 'SERVICE' ? t('service') : t('product')} • {item.unit}
                         </p>
                         <div className="flex justify-between mt-2">
                           <span className="text-sm text-gray-600">
-                            {item.quantity % 1 === 0 ? item.quantity : item.quantity.toFixed(2)} x {formatCurrency(item.unitPrice)}
+                            {item.quantity % 1 === 0 ? item.quantity : item.quantity.toFixed(2)} x {formatCurrency(item.unitPrice, locale)}
                           </span>
                           <span className="font-semibold text-gray-900">
-                            {formatCurrency(item.totalPrice)}
+                            {formatCurrency(item.totalPrice, locale)}
                           </span>
                         </div>
                       </div>
@@ -625,15 +641,15 @@ export default function PublicWorkOrderPage() {
                 <div className="w-full md:w-72">
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Subtotal:</span>
-                      <span className="text-gray-900">{formatCurrency(subtotal)}</span>
+                      <span className="text-gray-600">{tCommon('subtotal')}:</span>
+                      <span className="text-gray-900">{formatCurrency(subtotal, locale)}</span>
                     </div>
                     <div
                       className="flex justify-between pt-3 border-t-2 font-bold text-lg"
                       style={{ borderColor: primaryColor }}
                     >
-                      <span className="text-gray-900">Total:</span>
-                      <span style={{ color: primaryColor }}>{formatCurrency(workOrder.totalValue || subtotal)}</span>
+                      <span className="text-gray-900">{tCommon('total')}:</span>
+                      <span style={{ color: primaryColor }}>{formatCurrency(workOrder.totalValue || subtotal, locale)}</span>
                     </div>
                   </div>
                 </div>
@@ -676,7 +692,7 @@ export default function PublicWorkOrderPage() {
                         {isSignature ? (
                           <div className="flex items-center gap-2">
                             <CheckCircle2 className="h-4 w-4 text-green-500" />
-                            <span className="text-sm text-green-600">Assinatura registrada</span>
+                            <span className="text-sm text-green-600">{t('signatureRegistered')}</span>
                           </div>
                         ) : (
                           <span className="font-medium text-gray-900 text-right">{displayValue as string}</span>
@@ -743,7 +759,7 @@ export default function PublicWorkOrderPage() {
           {workOrder.attachments.length > 0 && (
             <div className="px-6 py-6 md:px-8 border-t">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                Anexos ({workOrder.attachments.length})
+                {t('attachments')} ({workOrder.attachments.length})
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {workOrder.attachments.map((attachment) => {
@@ -758,7 +774,7 @@ export default function PublicWorkOrderPage() {
                         onClick={() => {
                           const images = workOrder.attachments
                             .filter((att) => att.mimeType?.startsWith('image/') && att.url)
-                            .map((att) => ({ url: att.url!, caption: formatDateTime(att.createdAt) }));
+                            .map((att) => ({ url: att.url!, caption: formatDateTime(att.createdAt, locale) }));
                           const imageIndex = images.findIndex((img) => img.url === attachment.url);
                           openLightbox(images, imageIndex >= 0 ? imageIndex : 0);
                         }}
@@ -786,7 +802,7 @@ export default function PublicWorkOrderPage() {
                     >
                       <FileText className="h-10 w-10 text-gray-400" />
                       <span className="text-xs text-gray-500 mt-2">
-                        {attachment.mimeType === 'application/pdf' ? 'PDF' : 'Documento'}
+                        {attachment.mimeType === 'application/pdf' ? 'PDF' : t('document')}
                       </span>
                     </a>
                   );
@@ -798,7 +814,7 @@ export default function PublicWorkOrderPage() {
           {/* Área de assinatura */}
           {workOrder.signature && (
             <div className="px-6 py-6 md:px-8 border-t bg-gray-50">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Assinatura do Cliente</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('clientSignature')}</h2>
               <div className="flex flex-col md:flex-row md:items-end gap-6">
                 <div className="flex-1">
                   {workOrder.signature.imageUrl && (
@@ -806,19 +822,19 @@ export default function PublicWorkOrderPage() {
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={workOrder.signature.imageUrl}
-                        alt="Assinatura"
+                        alt={t('clientSignature')}
                         className="h-16 object-contain"
                       />
                     </div>
                   )}
                   <p className="font-medium text-gray-900">{workOrder.signature.signerName}</p>
                   {workOrder.signature.signerDocument && (
-                    <p className="text-sm text-gray-500">CPF/RG: {workOrder.signature.signerDocument}</p>
+                    <p className="text-sm text-gray-500">{t('document')}: {workOrder.signature.signerDocument}</p>
                   )}
                 </div>
                 <div className="text-sm text-gray-500">
-                  <p>Assinado em:</p>
-                  <p className="font-medium text-gray-700">{formatDateTime(workOrder.signature.signedAt)}</p>
+                  <p>{t('signedAt')}:</p>
+                  <p className="font-medium text-gray-700">{formatDateTime(workOrder.signature.signedAt, locale)}</p>
                 </div>
               </div>
             </div>

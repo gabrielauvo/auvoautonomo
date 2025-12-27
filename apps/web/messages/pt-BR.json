@@ -2184,5 +2184,40 @@
       "rejected": "Recusado",
       "expired": "Expirado"
     }
+  },
+  "publicWorkOrder": {
+    "title": "Ordem de Serviço",
+    "invalidLink": "Link Inválido",
+    "notFound": "Ordem de serviço não encontrada ou link inválido.",
+    "loadError": "Erro ao carregar ordem de serviço.",
+    "connectionError": "Erro ao conectar com o servidor.",
+    "status": {
+      "scheduled": "Agendada",
+      "inProgress": "Em Andamento",
+      "done": "Concluída",
+      "canceled": "Cancelada"
+    },
+    "client": "Cliente",
+    "execution": "Execução",
+    "technician": "Técnico",
+    "start": "Início",
+    "end": "Término",
+    "duration": "Duração",
+    "serviceDescription": "Descrição do Serviço",
+    "executionReport": "Relato de Execução",
+    "itemsAndServices": "Itens e Serviços",
+    "service": "Serviço",
+    "product": "Produto",
+    "unitPrice": "Valor Un.",
+    "qty": "Qtd",
+    "attachments": "Anexos",
+    "clientSignature": "Assinatura do Cliente",
+    "signedAt": "Assinado em",
+    "signatureRegistered": "Assinatura registrada",
+    "photos": "foto(s)",
+    "document": "Documento",
+    "close": "Fechar",
+    "previous": "Anterior",
+    "next": "Próximo"
   }
 }

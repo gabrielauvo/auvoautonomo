@@ -10,7 +10,7 @@
  * - Paginação
  */
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, Suspense, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { AppLayout } from '@/components/layout';
@@ -50,41 +50,19 @@ import {
 import { useExpenses, useExpenseSummary, useDeleteExpense } from '@/hooks/use-expenses';
 import { useExpenseCategories } from '@/hooks/use-expense-categories';
 import { useAuth } from '@/context/auth-context';
-import { Expense, ExpenseStatus, getStatusLabel, getStatusColor } from '@/services/expenses.service';
+import { Expense, ExpenseStatus, getStatusColor } from '@/services/expenses.service';
 import { useDebounce } from '@/hooks/use-debounce';
+import { useTranslations } from '@/i18n';
+import { useFormatting } from '@/context/company-settings-context';
 
 // Número de itens por página
 const PAGE_SIZE = 10;
 
-// Format currency
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
-}
-
-// Format date
-function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: 'short',
-  });
-}
-
-// Status options for filter
-const statusOptions: { value: ExpenseStatus | 'ALL'; label: string }[] = [
-  { value: 'ALL', label: 'Todos os status' },
-  { value: 'DRAFT', label: 'Rascunho' },
-  { value: 'PENDING', label: 'Pendente' },
-  { value: 'PAID', label: 'Pago' },
-  { value: 'CANCELED', label: 'Cancelado' },
-];
-
 // Status badge component
 function StatusBadge({ status }: { status: ExpenseStatus }) {
+  const { t } = useTranslations('expenses');
   const color = getStatusColor(status);
-  const label = getStatusLabel(status);
+  const statusKey = status.toLowerCase() as 'draft' | 'pending' | 'paid' | 'canceled';
 
   const variants: Record<string, 'default' | 'warning' | 'success' | 'error'> = {
     gray: 'default',
@@ -95,7 +73,7 @@ function StatusBadge({ status }: { status: ExpenseStatus }) {
 
   return (
     <Badge variant={variants[color] || 'default'} size="sm">
-      {label}
+      {t(`status.${statusKey}`)}
     </Badge>
   );
 }
@@ -141,6 +119,8 @@ function ExpensesListContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { billing } = useAuth();
+  const { t, locale } = useTranslations('expenses');
+  const { formatCurrency, formatDate } = useFormatting();
 
   // Ler estado inicial da URL
   const initialSearch = searchParams.get('q') || '';
@@ -160,6 +140,15 @@ function ExpensesListContent() {
   // Hooks
   const deleteExpense = useDeleteExpense();
   const { data: categories } = useExpenseCategories();
+
+  // Status options for filter (memoized with locale)
+  const statusOptions = useMemo(() => [
+    { value: 'ALL', label: t('allStatus') },
+    { value: 'DRAFT', label: t('status.draft') },
+    { value: 'PENDING', label: t('status.pending') },
+    { value: 'PAID', label: t('status.paid') },
+    { value: 'CANCELED', label: t('status.canceled') },
+  ], [t, locale]);
 
   // Build filters
   const filters = {
@@ -273,40 +262,40 @@ function ExpensesListContent() {
         {/* Header da página */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Despesas</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
             <p className="text-gray-500 mt-1">
-              Gerencie suas contas a pagar
+              {t('subtitle')}
             </p>
           </div>
           <Button onClick={handleNewExpense} leftIcon={<Plus className="h-4 w-4" />}>
-            Nova Despesa
+            {t('newExpense')}
           </Button>
         </div>
 
         {/* KPIs */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <KpiCard
-            label="Total"
+            label={t('kpi.total')}
             value={formatCurrency(summary?.total?.amount ?? 0)}
             icon={DollarSign}
             loading={summaryLoading}
           />
           <KpiCard
-            label="Pendente"
+            label={t('kpi.pending')}
             value={formatCurrency(summary?.pending?.amount ?? 0)}
             icon={Clock}
             variant="warning"
             loading={summaryLoading}
           />
           <KpiCard
-            label="Pago"
+            label={t('kpi.paid')}
             value={formatCurrency(summary?.paid?.amount ?? 0)}
             icon={CheckCircle2}
             variant="success"
             loading={summaryLoading}
           />
           <KpiCard
-            label="Em Atraso"
+            label={t('kpi.overdue')}
             value={formatCurrency(summary?.overdue?.amount ?? 0)}
             icon={AlertCircle}
             variant="error"
@@ -320,7 +309,7 @@ function ExpensesListContent() {
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1">
                 <Input
-                  placeholder="Buscar por descrição..."
+                  placeholder={t('searchPlaceholder')}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   leftIcon={<Search className="h-4 w-4" />}
@@ -342,7 +331,7 @@ function ExpensesListContent() {
                 onChange={(e) => setCategoryFilter(e.target.value)}
                 className="w-full md:w-48"
               >
-                <option value="">Todas as categorias</option>
+                <option value="">{t('allCategories')}</option>
                 {categories?.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.name}
@@ -358,7 +347,7 @@ function ExpensesListContent() {
           <Alert variant="error">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
-              Erro ao carregar despesas
+              {t('errorLoading')}
             </div>
           </Alert>
         )}
@@ -376,16 +365,16 @@ function ExpensesListContent() {
           ) : paginatedExpenses.length === 0 ? (
             <EmptyState
               icon={Receipt}
-              title={search || statusFilter !== 'ALL' || categoryFilter ? 'Nenhuma despesa encontrada' : 'Nenhuma despesa cadastrada'}
+              title={search || statusFilter !== 'ALL' || categoryFilter ? t('noExpensesFound') : t('noExpenses')}
               description={
                 search || statusFilter !== 'ALL' || categoryFilter
-                  ? 'Tente ajustar os filtros'
-                  : 'Cadastre sua primeira despesa para começar'
+                  ? t('tryAdjustFilters')
+                  : t('createFirstExpense')
               }
               action={
                 !(search || statusFilter !== 'ALL' || categoryFilter)
                   ? {
-                      label: 'Nova Despesa',
+                      label: t('newExpense'),
                       onClick: handleNewExpense,
                     }
                   : undefined
@@ -396,13 +385,13 @@ function ExpensesListContent() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead>Fornecedor</TableHead>
-                    <TableHead>Categoria</TableHead>
-                    <TableHead>Vencimento</TableHead>
+                    <TableHead>{t('description')}</TableHead>
+                    <TableHead>{t('supplier')}</TableHead>
+                    <TableHead>{t('category')}</TableHead>
+                    <TableHead>{t('dueDate')}</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Valor</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
+                    <TableHead className="text-right">{t('value')}</TableHead>
+                    <TableHead className="text-right">{t('actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -456,19 +445,19 @@ function ExpensesListContent() {
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
                           <Link href={`/expenses/${expense.id}`}>
-                            <Button variant="ghost" size="icon-sm" title="Ver detalhes">
+                            <Button variant="ghost" size="icon-sm" title={t('viewDetails')}>
                               <Eye className="h-4 w-4" />
                             </Button>
                           </Link>
                           <Link href={`/expenses/${expense.id}/edit`}>
-                            <Button variant="ghost" size="icon-sm" title="Editar">
+                            <Button variant="ghost" size="icon-sm" title={t('edit')}>
                               <Edit className="h-4 w-4" />
                             </Button>
                           </Link>
                           <Button
                             variant="ghost"
                             size="icon-sm"
-                            title="Excluir"
+                            title={t('delete')}
                             onClick={() => {
                               setExpenseToDelete(expense);
                               setShowDeleteConfirm(true);
@@ -487,7 +476,11 @@ function ExpensesListContent() {
               {totalPages > 1 && (
                 <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
                   <p className="text-sm text-gray-500">
-                    Mostrando {startIndex + 1} a {Math.min(startIndex + PAGE_SIZE, totalItems)} de {totalItems} despesas
+                    {t('showing', {
+                      start: startIndex + 1,
+                      end: Math.min(startIndex + PAGE_SIZE, totalItems),
+                      total: totalItems
+                    })}
                   </p>
                   <Pagination
                     currentPage={currentPage}
@@ -511,7 +504,7 @@ function ExpensesListContent() {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">
-                      Excluir despesa?
+                      {t('deleteExpense')}
                     </h3>
                     <p className="text-sm text-gray-500">
                       {expenseToDelete.description}
@@ -528,7 +521,7 @@ function ExpensesListContent() {
                     }}
                     disabled={deleteExpense.isPending}
                   >
-                    Cancelar
+                    {t('cancel')}
                   </Button>
                   <Button
                     variant="error"
@@ -536,7 +529,7 @@ function ExpensesListContent() {
                     loading={deleteExpense.isPending}
                     leftIcon={<Trash2 className="h-4 w-4" />}
                   >
-                    Excluir
+                    {t('deleteConfirm')}
                   </Button>
                 </div>
               </CardContent>

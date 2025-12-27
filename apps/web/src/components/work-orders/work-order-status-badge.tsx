@@ -9,6 +9,7 @@
 import { Badge } from '@/components/ui';
 import { Clock, Play, CheckCircle, XCircle } from 'lucide-react';
 import { WorkOrderStatus } from '@/services/work-orders.service';
+import { useTranslations } from '@/i18n';
 
 interface WorkOrderStatusBadgeProps {
   status: WorkOrderStatus;
@@ -19,28 +20,28 @@ interface WorkOrderStatusBadgeProps {
 const statusConfig: Record<
   WorkOrderStatus,
   {
-    label: string;
+    key: string;
     variant: 'soft-gray' | 'soft-info' | 'soft-success' | 'soft-error';
     icon: React.ElementType;
   }
 > = {
   SCHEDULED: {
-    label: 'Agendada',
+    key: 'scheduled',
     variant: 'soft-gray',
     icon: Clock,
   },
   IN_PROGRESS: {
-    label: 'Em Execução',
+    key: 'inProgress',
     variant: 'soft-info',
     icon: Play,
   },
   DONE: {
-    label: 'Concluída',
+    key: 'completed',
     variant: 'soft-success',
     icon: CheckCircle,
   },
   CANCELED: {
-    label: 'Cancelada',
+    key: 'cancelled',
     variant: 'soft-error',
     icon: XCircle,
   },
@@ -51,13 +52,14 @@ export function WorkOrderStatusBadge({
   size = 'default',
   showIcon = true,
 }: WorkOrderStatusBadgeProps) {
+  const { t } = useTranslations('workOrders');
   const config = statusConfig[status] || statusConfig.SCHEDULED;
   const Icon = config.icon;
 
   return (
     <Badge variant={config.variant} size={size}>
       {showIcon && <Icon className="h-3 w-3 mr-1" />}
-      {config.label}
+      {t(`status.${config.key}`)}
     </Badge>
   );
 }

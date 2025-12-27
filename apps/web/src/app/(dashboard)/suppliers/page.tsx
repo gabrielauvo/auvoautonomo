@@ -47,6 +47,7 @@ import { useAuth } from '@/context/auth-context';
 import { Supplier } from '@/services/suppliers.service';
 import { formatDocument } from '@/lib/utils';
 import { useDebounce } from '@/hooks/use-debounce';
+import { useTranslations } from '@/i18n';
 
 // Número de itens por página
 const PAGE_SIZE = 10;
@@ -94,6 +95,7 @@ function SuppliersListContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { billing } = useAuth();
+  const { t } = useTranslations('suppliers');
 
   // Ler estado inicial da URL
   const initialSearch = searchParams.get('q') || '';
@@ -201,13 +203,13 @@ function SuppliersListContent() {
         {/* Header da página */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Fornecedores</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
             <p className="text-gray-500 mt-1">
-              Gerencie seus fornecedores e parceiros
+              {t('subtitle')}
             </p>
           </div>
           <Button onClick={handleNewSupplier} leftIcon={<Plus className="h-4 w-4" />}>
-            Novo Fornecedor
+            {t('newSupplier')}
           </Button>
         </div>
 
@@ -221,7 +223,9 @@ function SuppliersListContent() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-medium text-primary">
-                    {selectedSuppliers.size} {selectedSuppliers.size === 1 ? 'fornecedor selecionado' : 'fornecedores selecionados'}
+                    {selectedSuppliers.size === 1
+                      ? t('suppliersSelected', { count: selectedSuppliers.size })
+                      : t('suppliersSelectedPlural', { count: selectedSuppliers.size })}
                   </span>
                   <Button
                     variant="ghost"
@@ -230,7 +234,7 @@ function SuppliersListContent() {
                     className="text-gray-600"
                   >
                     <X className="h-4 w-4 mr-1" />
-                    Limpar seleção
+                    {t('clearSelection')}
                   </Button>
                 </div>
               </div>
@@ -244,7 +248,7 @@ function SuppliersListContent() {
             <div className="flex gap-4">
               <div className="flex-1">
                 <Input
-                  placeholder="Buscar por nome, documento ou email..."
+                  placeholder={t('searchPlaceholder')}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   leftIcon={<Search className="h-4 w-4" />}
@@ -259,7 +263,7 @@ function SuppliersListContent() {
           <Alert variant="error">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
-              Erro ao carregar fornecedores
+              {t('errorLoading')}
             </div>
           </Alert>
         )}
@@ -284,16 +288,16 @@ function SuppliersListContent() {
           ) : paginatedSuppliers.length === 0 ? (
             <EmptyState
               icon={Building2}
-              title={search ? 'Nenhum fornecedor encontrado' : 'Nenhum fornecedor cadastrado'}
+              title={search ? t('noSuppliersFound') : t('noSuppliers')}
               description={
                 search
-                  ? 'Tente uma busca diferente'
-                  : 'Cadastre seu primeiro fornecedor para começar'
+                  ? t('tryDifferentSearch')
+                  : t('createFirstSupplier')
               }
               action={
                 !search
                   ? {
-                      label: 'Novo Fornecedor',
+                      label: t('newSupplier'),
                       onClick: handleNewSupplier,
                     }
                   : undefined
@@ -312,11 +316,11 @@ function SuppliersListContent() {
                         onChange={toggleSelectAll}
                       />
                     </TableHead>
-                    <TableHead>Fornecedor</TableHead>
-                    <TableHead>Documento</TableHead>
-                    <TableHead>Contato</TableHead>
-                    <TableHead>Despesas</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
+                    <TableHead>{t('supplier')}</TableHead>
+                    <TableHead>{t('document')}</TableHead>
+                    <TableHead>{t('contact')}</TableHead>
+                    <TableHead>{t('expenses')}</TableHead>
+                    <TableHead className="text-right">{t('actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -375,25 +379,25 @@ function SuppliersListContent() {
                       </TableCell>
                       <TableCell>
                         <span className="text-sm text-gray-600">
-                          {supplier._count?.expenses || 0} despesa(s)
+                          {t('expensesCount', { count: supplier._count?.expenses || 0 })}
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
                           <Link href={`/suppliers/${supplier.id}`}>
-                            <Button variant="ghost" size="icon-sm" title="Ver detalhes">
+                            <Button variant="ghost" size="icon-sm" title={t('viewDetails')}>
                               <Eye className="h-4 w-4" />
                             </Button>
                           </Link>
                           <Link href={`/suppliers/${supplier.id}/edit`}>
-                            <Button variant="ghost" size="icon-sm" title="Editar">
+                            <Button variant="ghost" size="icon-sm" title={t('edit')}>
                               <Edit className="h-4 w-4" />
                             </Button>
                           </Link>
                           <Button
                             variant="ghost"
                             size="icon-sm"
-                            title="Excluir"
+                            title={t('delete')}
                             onClick={() => {
                               setSupplierToDelete(supplier);
                               setShowDeleteConfirm(true);
@@ -412,7 +416,11 @@ function SuppliersListContent() {
               {totalPages > 1 && (
                 <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
                   <p className="text-sm text-gray-500">
-                    Mostrando {startIndex + 1} a {Math.min(startIndex + PAGE_SIZE, totalItems)} de {totalItems} fornecedores
+                    {t('showing', {
+                      start: startIndex + 1,
+                      end: Math.min(startIndex + PAGE_SIZE, totalItems),
+                      total: totalItems
+                    })}
                   </p>
                   <Pagination
                     currentPage={currentPage}
@@ -446,7 +454,7 @@ function SuppliersListContent() {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">
-                      Excluir fornecedor?
+                      {t('deleteSupplier')}
                     </h3>
                     <p className="text-sm text-gray-500">
                       {supplierToDelete.name}
@@ -459,10 +467,9 @@ function SuppliersListContent() {
                     <div className="flex items-start gap-2">
                       <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
                       <div className="text-sm">
-                        <p className="font-medium">Atenção</p>
+                        <p className="font-medium">{t('attention')}</p>
                         <p>
-                          Este fornecedor possui {supplierToDelete._count?.expenses} despesa(s) associada(s).
-                          As despesas permanecerão no sistema.
+                          {t('supplierHasExpenses', { count: supplierToDelete._count?.expenses })}
                         </p>
                       </div>
                     </div>
@@ -478,7 +485,7 @@ function SuppliersListContent() {
                     }}
                     disabled={deleteSupplier.isPending}
                   >
-                    Cancelar
+                    {t('cancel')}
                   </Button>
                   <Button
                     variant="error"
@@ -486,7 +493,7 @@ function SuppliersListContent() {
                     loading={deleteSupplier.isPending}
                     leftIcon={<Trash2 className="h-4 w-4" />}
                   >
-                    Excluir
+                    {t('deleteConfirm')}
                   </Button>
                 </div>
               </CardContent>

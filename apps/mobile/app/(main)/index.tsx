@@ -26,6 +26,7 @@ import { WorkOrder } from '../../src/db/schema';
 import { workOrderRepository } from '../../src/modules/workorders/WorkOrderRepository';
 import { QuoteRepository } from '../../src/modules/quotes/QuoteRepository';
 import { getTodayLocalDate, extractDatePart } from '../../src/utils/dateUtils';
+import { useTranslation } from '../../src/i18n';
 
 // =============================================================================
 // TYPES
@@ -191,15 +192,6 @@ const QuickStatCard = ({
 // PERIOD FILTER COMPONENT
 // =============================================================================
 
-const PERIOD_OPTIONS: { label: string; value: PeriodFilter }[] = [
-  { label: 'Hoje', value: 'today' },
-  { label: 'Ontem', value: 'yesterday' },
-  { label: '7 dias', value: '7days' },
-  { label: '30 dias', value: '30days' },
-  { label: 'Este mês', value: 'month' },
-  { label: 'Mês anterior', value: 'lastMonth' },
-];
-
 const PeriodFilterBar = ({
   selected,
   onSelect,
@@ -208,6 +200,16 @@ const PeriodFilterBar = ({
   onSelect: (period: PeriodFilter) => void;
 }) => {
   const colors = useColors();
+  const { t } = useTranslation();
+
+  const PERIOD_OPTIONS: { label: string; value: PeriodFilter }[] = [
+    { label: t('dashboard.today'), value: 'today' },
+    { label: t('dashboard.yesterday'), value: 'yesterday' },
+    { label: t('dashboard.days7'), value: '7days' },
+    { label: t('dashboard.days30'), value: '30days' },
+    { label: t('dashboard.thisMonth'), value: 'month' },
+    { label: t('dashboard.lastMonth'), value: 'lastMonth' },
+  ];
 
   return (
     <ScrollView
@@ -248,6 +250,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { isOnline, isSyncing, lastSyncAt, sync } = useSyncStatus();
+  const { t } = useTranslation();
 
   // State
   const [localStats, setLocalStats] = useState<LocalStats>({
@@ -430,13 +433,13 @@ export default function HomeScreen() {
   const getStatusLabel = (status: string): string => {
     switch (status) {
       case 'SCHEDULED':
-        return 'Agendada';
+        return t('workOrders.statuses.scheduled');
       case 'IN_PROGRESS':
-        return 'Em andamento';
+        return t('workOrders.statuses.inProgress');
       case 'DONE':
-        return 'Concluída';
+        return t('workOrders.statuses.done');
       case 'CANCELLED':
-        return 'Cancelada';
+        return t('workOrders.statuses.cancelled');
       default:
         return status;
     }
@@ -446,7 +449,7 @@ export default function HomeScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background.secondary }]}>
-      <AppHeader title="Início" />
+      <AppHeader title={t('dashboard.title')} />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={
@@ -463,9 +466,9 @@ export default function HomeScreen() {
           <Avatar name={user?.name} src={user?.avatarUrl} size="lg" />
           <View style={styles.welcomeText}>
             <Text variant="bodySmall" color="secondary">
-              Bem-vindo de volta,
+              {t('dashboard.welcome')}
             </Text>
-            <Text variant="h4">{user?.name || 'Técnico'}</Text>
+            <Text variant="h4">{user?.name || t('workOrders.technician')}</Text>
           </View>
         </View>
 
@@ -474,7 +477,7 @@ export default function HomeScreen() {
           <View style={styles.periodHeader}>
             <Ionicons name="calendar-outline" size={16} color={colors.text.secondary} />
             <Text variant="bodySmall" color="secondary" style={{ marginLeft: 6 }}>
-              Período:
+              {t('dashboard.period')}
             </Text>
           </View>
           <PeriodFilterBar selected={selectedPeriod} onSelect={setSelectedPeriod} />
@@ -501,7 +504,7 @@ export default function HomeScreen() {
         {/* Financial Summary Cards (Web-style) */}
         <View style={styles.financialGrid}>
           <FinancialCard
-            title="Receita Total"
+            title={t('dashboard.totalRevenue')}
             value={formatCurrency(financialData?.totalExpected)}
             icon="cash-outline"
             iconBgColor={colors.primary[100]}
@@ -509,7 +512,7 @@ export default function HomeScreen() {
             loading={showFinancialLoading}
           />
           <FinancialCard
-            title="Receita Recebida"
+            title={t('dashboard.receivedRevenue')}
             value={formatCurrency(financialData?.received)}
             icon="checkmark-circle-outline"
             iconBgColor={colors.success[100]}
@@ -517,7 +520,7 @@ export default function HomeScreen() {
             loading={showFinancialLoading}
           />
           <FinancialCard
-            title="Pendente"
+            title={t('dashboard.pending')}
             value={formatCurrency(financialData?.pending)}
             icon="time-outline"
             iconBgColor={colors.warning[100]}
@@ -525,7 +528,7 @@ export default function HomeScreen() {
             loading={showFinancialLoading}
           />
           <FinancialCard
-            title="Vencido"
+            title={t('dashboard.overdue')}
             value={formatCurrency(financialData?.overdue)}
             icon="alert-circle-outline"
             iconBgColor={colors.error[100]}
@@ -537,7 +540,7 @@ export default function HomeScreen() {
         {/* Quick Stats Grid (Local data) */}
         <View style={styles.quickStatsGrid}>
           <QuickStatCard
-            title="OS para hoje"
+            title={t('dashboard.workOrdersToday')}
             value={localStats.osHoje}
             icon="today"
             iconBgColor={colors.primary[100]}
@@ -545,7 +548,7 @@ export default function HomeScreen() {
             onPress={navigateToAgenda}
           />
           <QuickStatCard
-            title="OS atrasadas"
+            title={t('dashboard.overdueWorkOrders')}
             value={localStats.osAtrasadas}
             icon="alert-circle"
             iconBgColor={colors.error[100]}
@@ -553,7 +556,7 @@ export default function HomeScreen() {
             onPress={navigateToOS}
           />
           <QuickStatCard
-            title="Orçamentos"
+            title={t('dashboard.quotes')}
             value={localStats.orcamentos}
             icon="document-text"
             iconBgColor={colors.warning[100]}
@@ -561,7 +564,7 @@ export default function HomeScreen() {
             onPress={navigateToOrcamentos}
           />
           <QuickStatCard
-            title="A receber"
+            title={t('dashboard.toReceive')}
             value={localStats.aReceber}
             icon="cash"
             iconBgColor={colors.info[100]}
@@ -573,10 +576,10 @@ export default function HomeScreen() {
         {/* Today's Schedule */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text variant="h5">Agenda de Hoje</Text>
+            <Text variant="h5">{t('dashboard.todaysAgenda')}</Text>
             <TouchableOpacity onPress={navigateToAgenda}>
               <Text variant="bodySmall" style={{ color: colors.primary[600] }}>
-                Ver tudo
+                {t('dashboard.viewAll')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -586,11 +589,11 @@ export default function HomeScreen() {
               <View style={styles.emptySchedule}>
                 <Ionicons name="calendar-outline" size={32} color={colors.gray[400]} />
                 <Text variant="body" color="secondary" style={{ marginTop: spacing[2] }}>
-                  Nenhuma OS agendada para hoje
+                  {t('dashboard.noEventsToday')}
                 </Text>
                 <TouchableOpacity onPress={navigateToOS} style={styles.emptyButton}>
                   <Text variant="bodySmall" style={{ color: colors.primary[600] }}>
-                    Ver todas as OS
+                    {t('workOrders.viewAll')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -610,7 +613,7 @@ export default function HomeScreen() {
                         {wo.title}
                       </Text>
                       <Text variant="caption" color="secondary" numberOfLines={1}>
-                        {wo.clientName || 'Cliente'}
+                        {wo.clientName || t('common.client')}
                         {wo.address ? ` - ${wo.address}` : ''}
                       </Text>
                     </View>
@@ -630,14 +633,14 @@ export default function HomeScreen() {
             <Ionicons name={isSyncing ? 'sync' : 'cloud-done'} size={20} color={colors.text.secondary} />
             <Text variant="bodySmall" color="secondary" style={styles.syncText}>
               {isSyncing
-                ? 'Sincronizando...'
+                ? t('common.syncing')
                 : lastSyncAt
-                ? `Última sync: ${new Date(lastSyncAt).toLocaleTimeString('pt-BR')}`
-                : 'Não sincronizado'}
+                ? `${t('common.lastSync')}: ${new Date(lastSyncAt).toLocaleTimeString()}`
+                : t('common.notSynced')}
             </Text>
           </View>
           <Button variant="ghost" size="sm" onPress={sync} disabled={isSyncing || !isOnline}>
-            Sincronizar
+            {t('common.sync')}
           </Button>
         </Card>
       </ScrollView>

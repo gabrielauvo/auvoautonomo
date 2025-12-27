@@ -12,6 +12,7 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 export function ProgressBar() {
   const pathname = usePathname();
@@ -74,6 +75,8 @@ export function ProgressBar() {
  * Para operações assíncronas que não são navegação
  */
 export function GlobalLoadingSpinner({ show }: { show: boolean }) {
+  const t = useTranslations('common');
+
   if (!show) return null;
 
   return (
@@ -81,7 +84,7 @@ export function GlobalLoadingSpinner({ show }: { show: boolean }) {
       <div className="bg-white rounded-lg p-6 shadow-xl">
         <div className="flex items-center gap-3">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-          <p className="text-gray-700 font-medium">Carregando...</p>
+          <p className="text-gray-700 font-medium">{t('loading')}</p>
         </div>
       </div>
     </div>

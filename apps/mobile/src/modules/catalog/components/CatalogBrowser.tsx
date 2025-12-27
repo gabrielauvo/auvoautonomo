@@ -26,6 +26,7 @@ import { CatalogService } from '../CatalogService';
 import { ItemSearchBar } from './ItemSearchBar';
 import { CatalogItemCard } from './CatalogItemCard';
 import { useColors } from '../../../design-system/ThemeProvider';
+import { useTranslation } from '../../../i18n';
 
 // Type for colors from theme
 type ThemeColors = ReturnType<typeof useColors>;
@@ -57,25 +58,20 @@ type TypeFilterValue = 'ALL' | ItemType;
 // TYPE FILTER
 // =============================================================================
 
-const TYPE_FILTERS: { value: TypeFilterValue; label: string }[] = [
-  { value: 'ALL', label: 'Todos' },
-  { value: 'PRODUCT', label: 'Produtos' },
-  { value: 'SERVICE', label: 'Serviços' },
-  { value: 'BUNDLE', label: 'Kits' },
-];
-
 function TypeFilter({
   selected,
   onSelect,
   colors,
+  filters,
 }: {
   selected: TypeFilterValue;
   onSelect: (value: TypeFilterValue) => void;
   colors?: ThemeColors;
+  filters: { value: TypeFilterValue; label: string }[];
 }) {
   return (
     <View style={styles.typeFilterContainer}>
-      {TYPE_FILTERS.map((filter) => {
+      {filters.map((filter) => {
         const isSelected = selected === filter.value;
         return (
           <TouchableOpacity
@@ -123,9 +119,19 @@ interface QuantityModalProps {
   onClose: () => void;
   onConfirm: (quantity: number, unitPrice: number, discount?: number) => void;
   colors?: ThemeColors;
+  translations: {
+    addItem: string;
+    basePrice: string;
+    quantity: string;
+    unitPrice: string;
+    discount: string;
+    itemTotal: string;
+    cancel: string;
+    add: string;
+  };
 }
 
-function QuantityModal({ visible, item, onClose, onConfirm, colors }: QuantityModalProps) {
+function QuantityModal({ visible, item, onClose, onConfirm, colors, translations }: QuantityModalProps) {
   const [quantity, setQuantity] = useState('1');
   const [unitPrice, setUnitPrice] = useState('');
   const [discount, setDiscount] = useState('');
@@ -171,7 +177,7 @@ function QuantityModal({ visible, item, onClose, onConfirm, colors }: QuantityMo
           <View style={[styles.quantityModalContent, { backgroundColor: colors?.background.primary || '#FFFFFF' }]}>
             {/* Header */}
             <View style={styles.quantityModalHeader}>
-              <Text style={[styles.quantityModalTitle, { color: colors?.text.primary || '#111827' }]}>Adicionar Item</Text>
+              <Text style={[styles.quantityModalTitle, { color: colors?.text.primary || '#111827' }]}>{translations.addItem}</Text>
               <TouchableOpacity onPress={onClose}>
                 <Ionicons name="close" size={24} color={colors?.text.secondary || '#6B7280'} />
               </TouchableOpacity>
@@ -181,7 +187,7 @@ function QuantityModal({ visible, item, onClose, onConfirm, colors }: QuantityMo
             <View style={[styles.quantityItemInfo, { backgroundColor: colors?.background.secondary || '#F9FAFB' }]}>
               <Text style={[styles.quantityItemName, { color: colors?.text.primary || '#111827' }]}>{item.name}</Text>
               <Text style={[styles.quantityItemPrice, { color: colors?.text.secondary || '#6B7280' }]}>
-                Preço base: {formatPrice(item.basePrice)}
+                {translations.basePrice}: {formatPrice(item.basePrice)}
                 {item.unit ? `/${item.unit}` : ''}
               </Text>
             </View>
@@ -190,7 +196,7 @@ function QuantityModal({ visible, item, onClose, onConfirm, colors }: QuantityMo
             <View style={styles.quantityInputs}>
               {/* Quantidade */}
               <View style={styles.quantityInputGroup}>
-                <Text style={[styles.quantityInputLabel, { color: colors?.text.secondary || '#374151' }]}>Quantidade</Text>
+                <Text style={[styles.quantityInputLabel, { color: colors?.text.secondary || '#374151' }]}>{translations.quantity}</Text>
                 <View style={styles.quantityInputRow}>
                   <TouchableOpacity
                     style={[styles.quantityButton, { backgroundColor: colors?.primary[50] || '#EFF6FF' }]}
@@ -222,7 +228,7 @@ function QuantityModal({ visible, item, onClose, onConfirm, colors }: QuantityMo
 
               {/* Preço Unitário */}
               <View style={styles.quantityInputGroup}>
-                <Text style={[styles.quantityInputLabel, { color: colors?.text.secondary || '#374151' }]}>Preço Unitário</Text>
+                <Text style={[styles.quantityInputLabel, { color: colors?.text.secondary || '#374151' }]}>{translations.unitPrice}</Text>
                 <View style={[styles.priceInputContainer, { borderColor: colors?.border.default || '#D1D5DB' }]}>
                   <Text style={[styles.currencyPrefix, { color: colors?.text.secondary || '#6B7280' }]}>R$</Text>
                   <TextInput
@@ -237,7 +243,7 @@ function QuantityModal({ visible, item, onClose, onConfirm, colors }: QuantityMo
 
               {/* Desconto */}
               <View style={styles.quantityInputGroup}>
-                <Text style={[styles.quantityInputLabel, { color: colors?.text.secondary || '#374151' }]}>Desconto (R$)</Text>
+                <Text style={[styles.quantityInputLabel, { color: colors?.text.secondary || '#374151' }]}>{translations.discount}</Text>
                 <View style={[styles.priceInputContainer, { borderColor: colors?.border.default || '#D1D5DB' }]}>
                   <Text style={[styles.currencyPrefix, { color: colors?.text.secondary || '#6B7280' }]}>R$</Text>
                   <TextInput
@@ -255,7 +261,7 @@ function QuantityModal({ visible, item, onClose, onConfirm, colors }: QuantityMo
 
             {/* Total */}
             <View style={[styles.quantityTotalContainer, { borderTopColor: colors?.border.light || '#E5E7EB' }]}>
-              <Text style={[styles.quantityTotalLabel, { color: colors?.text.secondary || '#374151' }]}>Total do Item:</Text>
+              <Text style={[styles.quantityTotalLabel, { color: colors?.text.secondary || '#374151' }]}>{translations.itemTotal}:</Text>
               <Text style={[styles.quantityTotalValue, { color: colors?.text.primary || '#111827' }]}>
                 {formatPrice(calculateTotal())}
               </Text>
@@ -267,14 +273,14 @@ function QuantityModal({ visible, item, onClose, onConfirm, colors }: QuantityMo
                 style={[styles.quantityCancelButton, { backgroundColor: colors?.gray[100] || '#F3F4F6' }]}
                 onPress={onClose}
               >
-                <Text style={[styles.quantityCancelText, { color: colors?.text.secondary || '#6B7280' }]}>Cancelar</Text>
+                <Text style={[styles.quantityCancelText, { color: colors?.text.secondary || '#6B7280' }]}>{translations.cancel}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.quantityConfirmButton, { backgroundColor: colors?.primary[600] || '#3B82F6' }]}
                 onPress={handleConfirm}
               >
                 <Ionicons name="checkmark" size={20} color={colors?.white || '#FFFFFF'} />
-                <Text style={[styles.quantityConfirmText, { color: colors?.white || '#FFFFFF' }]}>Adicionar</Text>
+                <Text style={[styles.quantityConfirmText, { color: colors?.white || '#FFFFFF' }]}>{translations.add}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -292,12 +298,36 @@ export function CatalogBrowser({
   visible,
   onClose,
   onSelect,
-  title = 'Selecionar Item',
+  title,
   allowManualItem = true,
   technicianId,
 }: CatalogBrowserProps) {
   // Theme
   const colors = useColors();
+  const { t } = useTranslation();
+
+  // Use provided title or default from translations
+  const modalTitle = title || t('catalog.selectItem');
+
+  // Translation-based type filters
+  const TYPE_FILTERS: { value: TypeFilterValue; label: string }[] = [
+    { value: 'ALL', label: t('catalog.filterAll') },
+    { value: 'PRODUCT', label: t('catalog.filterProducts') },
+    { value: 'SERVICE', label: t('catalog.filterServices') },
+    { value: 'BUNDLE', label: t('catalog.filterBundles') },
+  ];
+
+  // Translations for QuantityModal
+  const quantityModalTranslations = {
+    addItem: t('catalog.addItem'),
+    basePrice: t('catalog.basePrice'),
+    quantity: t('catalog.quantity'),
+    unitPrice: t('catalog.unitPrice'),
+    discount: t('catalog.discount'),
+    itemTotal: t('catalog.itemTotal'),
+    cancel: t('common.cancel'),
+    add: t('catalog.add'),
+  };
 
   // Configurar o serviço com technicianId quando o modal abrir
   useEffect(() => {
@@ -387,11 +417,11 @@ export function CatalogBrowser({
     return (
       <View style={styles.emptyContainer}>
         <Ionicons name="search" size={48} color="#D1D5DB" />
-        <Text style={styles.emptyTitle}>Nenhum item encontrado</Text>
+        <Text style={styles.emptyTitle}>{t('catalog.emptyTitle')}</Text>
         <Text style={styles.emptyText}>
           {searchQuery
-            ? `Não encontramos resultados para "${searchQuery}"`
-            : 'Não há itens cadastrados no catálogo'}
+            ? t('catalog.noResultsFor', { query: searchQuery })
+            : t('catalog.noCatalogItems')}
         </Text>
       </View>
     );
@@ -410,7 +440,7 @@ export function CatalogBrowser({
           <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
             <Ionicons name="close" size={24} color={colors.text.secondary} />
           </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.text.primary }]}>{title}</Text>
+          <Text style={[styles.title, { color: colors.text.primary }]}>{modalTitle}</Text>
           <View style={styles.headerRight} />
         </View>
 
@@ -424,13 +454,13 @@ export function CatalogBrowser({
         </View>
 
         {/* Type Filter */}
-        <TypeFilter selected={selectedType} onSelect={setSelectedType} colors={colors} />
+        <TypeFilter selected={selectedType} onSelect={setSelectedType} colors={colors} filters={TYPE_FILTERS} />
 
         {/* Items List */}
         {isLoading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.primary[600]} />
-            <Text style={[styles.loadingText, { color: colors.text.secondary }]}>Carregando catálogo...</Text>
+            <Text style={[styles.loadingText, { color: colors.text.secondary }]}>{t('catalog.loading')}</Text>
           </View>
         ) : (
           <FlatList
@@ -450,7 +480,7 @@ export function CatalogBrowser({
               // Criar item manual vazio
               const manualItem: CatalogItem = {
                 id: `manual-${Date.now()}`,
-                name: 'Item Manual',
+                name: t('catalog.manualItem'),
                 type: 'PRODUCT',
                 basePrice: 0,
                 unit: 'UN',
@@ -464,7 +494,7 @@ export function CatalogBrowser({
             }}
           >
             <Ionicons name="add-circle-outline" size={20} color={colors.primary[600]} />
-            <Text style={[styles.manualItemText, { color: colors.primary[600] }]}>Adicionar Item Manual</Text>
+            <Text style={[styles.manualItemText, { color: colors.primary[600] }]}>{t('catalog.addManualItem')}</Text>
           </TouchableOpacity>
         )}
 
@@ -478,6 +508,7 @@ export function CatalogBrowser({
           }}
           onConfirm={handleQuantityConfirm}
           colors={colors}
+          translations={quantityModalTranslations}
         />
       </SafeAreaView>
     </Modal>

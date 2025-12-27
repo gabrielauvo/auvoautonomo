@@ -16,19 +16,18 @@ import { workOrderService } from '../../src/modules/workorders/WorkOrderService'
 import { useSyncStatus } from '../../src/sync';
 import { WorkOrder, WorkOrderStatus, resetDatabase } from '../../src/db';
 import { formatLocalDate, extractDatePart } from '../../src/utils/dateUtils';
+import { useTranslation, useLocale } from '../../src/i18n';
 
 // =============================================================================
 // CONSTANTS
 // =============================================================================
 
-const STATUS_CONFIG: Record<WorkOrderStatus, { color: string; label: string }> = {
-  SCHEDULED: { color: 'primary', label: 'Agendada' },
-  IN_PROGRESS: { color: 'warning', label: 'Em Andamento' },
-  DONE: { color: 'success', label: 'Concluída' },
-  CANCELED: { color: 'error', label: 'Cancelada' },
+const STATUS_COLORS: Record<WorkOrderStatus, string> = {
+  SCHEDULED: 'primary',
+  IN_PROGRESS: 'warning',
+  DONE: 'success',
+  CANCELED: 'error',
 };
-
-const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
 
 // =============================================================================
 // HELPER FUNCTIONS
@@ -65,11 +64,13 @@ const DayButton = React.memo(function DayButton({
   isSelected,
   hasWorkOrders,
   onPress,
+  weekdayLabels,
 }: {
   date: Date;
   isSelected: boolean;
   hasWorkOrders: boolean;
   onPress: () => void;
+  weekdayLabels: string[];
 }) {
   const colors = useColors();
   const isToday = isSameDay(date, new Date());
@@ -90,7 +91,7 @@ const DayButton = React.memo(function DayButton({
           { color: isSelected ? '#FFFFFF' : colors.text.secondary },
         ]}
       >
-        {WEEKDAYS[date.getDay()]}
+        {weekdayLabels[date.getDay()]}
       </Text>
       <Text
         variant="h5"
@@ -114,21 +115,27 @@ const DayButton = React.memo(function DayButton({
 const AgendaItem = React.memo(function AgendaItem({
   workOrder,
   onPress,
+  allDayLabel,
+  statusLabel,
 }: {
   workOrder: WorkOrder;
   onPress: () => void;
+  allDayLabel: string;
+  statusLabel: string;
 }) {
   const colors = useColors();
-  const statusConfig = STATUS_CONFIG[workOrder.status];
+  const { locale } = useLocale();
+  const statusColor = STATUS_COLORS[workOrder.status];
 
   const formattedTime = useMemo(() => {
-    if (!workOrder.scheduledStartTime) return 'Dia todo';
+    if (!workOrder.scheduledStartTime) return allDayLabel;
     const time = new Date(workOrder.scheduledStartTime);
-    return time.toLocaleTimeString('pt-BR', {
+    const localeCode = locale === 'pt-BR' ? 'pt-BR' : locale === 'es' ? 'es' : 'en-US';
+    return time.toLocaleTimeString(localeCode, {
       hour: '2-digit',
       minute: '2-digit',
     });
-  }, [workOrder.scheduledStartTime]);
+  }, [workOrder.scheduledStartTime, allDayLabel, locale]);
 
   return (
     <Pressable onPress={onPress}>
@@ -136,7 +143,7 @@ const AgendaItem = React.memo(function AgendaItem({
         style={[
           styles.agendaItem,
           {
-            borderLeftColor: colors[statusConfig.color][500],
+            borderLeftColor: colors[statusColor][500],
             backgroundColor: colors.background.secondary,
           },
         ]}
@@ -151,8 +158,8 @@ const AgendaItem = React.memo(function AgendaItem({
             <Text variant="body" weight="medium" numberOfLines={1} style={styles.agendaTitle}>
               {workOrder.title}
             </Text>
-            <Badge variant={statusConfig.color as any} size="sm">
-              {statusConfig.label}
+            <Badge variant={statusColor as any} size="sm">
+              {statusLabel}
             </Badge>
           </View>
           {workOrder.clientName && (
@@ -182,6 +189,8 @@ export default function AgendaScreen() {
   const colors = useColors();
   const spacing = useSpacing();
   const { isSyncing, isOnline, sync } = useSyncStatus();
+  const { t } = useTranslation();
+  const { locale } = useLocale();
 
   // State
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -189,6 +198,28 @@ export default function AgendaScreen() {
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [weekWorkOrders, setWeekWorkOrders] = useState<Record<string, WorkOrder[]>>({});
   const [isLoading, setIsLoading] = useState(true);
+
+  // Weekday labels from translations
+  const weekdayLabels = useMemo(() => [
+    t('agenda.weekdays.sun'),
+    t('agenda.weekdays.mon'),
+    t('agenda.weekdays.tue'),
+    t('agenda.weekdays.wed'),
+    t('agenda.weekdays.thu'),
+    t('agenda.weekdays.fri'),
+    t('agenda.weekdays.sat'),
+  ], [t, locale]);
+
+  // Get status label
+  const getStatusLabel = useCallback((status: WorkOrderStatus): string => {
+    switch (status) {
+      case 'SCHEDULED': return t('workOrders.statuses.scheduled');
+      case 'IN_PROGRESS': return t('workOrders.statuses.inProgress');
+      case 'DONE': return t('workOrders.statuses.done');
+      case 'CANCELED': return t('workOrders.statuses.canceled');
+      default: return status;
+    }
+  }, [t, locale]);
 
   // Load work orders for selected day
   const loadDayWorkOrders = useCallback(async (date: Date) => {
@@ -298,26 +329,27 @@ export default function AgendaScreen() {
 
   // Format month/year header
   const monthYearHeader = useMemo(() => {
-    const months = [
-      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-    ];
-    return `${months[selectedDate.getMonth()]} ${selectedDate.getFullYear()}`;
-  }, [selectedDate]);
+    const localeCode = locale === 'pt-BR' ? 'pt-BR' : locale === 'es' ? 'es' : 'en-US';
+    return selectedDate.toLocaleDateString(localeCode, {
+      month: 'long',
+      year: 'numeric',
+    });
+  }, [selectedDate, locale]);
 
   // Format selected date
   const selectedDateFormatted = useMemo(() => {
+    const localeCode = locale === 'pt-BR' ? 'pt-BR' : locale === 'es' ? 'es' : 'en-US';
     const options: Intl.DateTimeFormatOptions = {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
     };
-    return selectedDate.toLocaleDateString('pt-BR', options);
-  }, [selectedDate]);
+    return selectedDate.toLocaleDateString(localeCode, options);
+  }, [selectedDate, locale]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
-      <AppHeader title="Agenda" />
+      <AppHeader title={t('agenda.title')} />
 
       {/* Calendar Header */}
       <View style={[styles.calendarHeader, { backgroundColor: colors.background.secondary }]}>
@@ -340,6 +372,7 @@ export default function AgendaScreen() {
               isSelected={isSameDay(date, selectedDate)}
               hasWorkOrders={!!weekWorkOrders[formatDateKey(date)]?.length}
               onPress={() => handleDayPress(date)}
+              weekdayLabels={weekdayLabels}
             />
           ))}
         </View>
@@ -350,7 +383,7 @@ export default function AgendaScreen() {
           style={[styles.todayButton, { borderColor: colors.primary[500] }]}
         >
           <Text variant="caption" style={{ color: colors.primary[500] }}>
-            Hoje
+            {t('agenda.today')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -361,7 +394,7 @@ export default function AgendaScreen() {
           {selectedDateFormatted}
         </Text>
         <Text variant="caption" color="secondary">
-          {workOrders.length} agendamento{workOrders.length !== 1 ? 's' : ''}
+          {t('agenda.appointmentCount', { count: workOrders.length })}
         </Text>
       </View>
 
@@ -372,13 +405,13 @@ export default function AgendaScreen() {
       >
         {isLoading ? (
           <View style={styles.emptyContainer}>
-            <Text variant="body" color="secondary">Carregando...</Text>
+            <Text variant="body" color="secondary">{t('common.loading')}</Text>
           </View>
         ) : workOrders.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Ionicons name="calendar-outline" size={48} color={colors.text.tertiary} />
             <Text variant="body" color="secondary" style={{ marginTop: 12 }}>
-              Nenhum agendamento para este dia
+              {t('agenda.noAppointments')}
             </Text>
           </View>
         ) : (
@@ -387,6 +420,8 @@ export default function AgendaScreen() {
               key={wo.id}
               workOrder={wo}
               onPress={() => handleWorkOrderPress(wo)}
+              allDayLabel={t('agenda.allDay')}
+              statusLabel={getStatusLabel(wo.status)}
             />
           ))
         )}
@@ -402,7 +437,7 @@ export default function AgendaScreen() {
             ]}
           />
           <Text variant="caption" color="secondary">
-            {isSyncing ? 'Sincronizando...' : isOnline ? 'Online' : 'Offline'}
+            {isSyncing ? t('common.syncing') : isOnline ? t('common.online') : t('common.offline')}
           </Text>
         </View>
         <TouchableOpacity onPress={handleRefresh} disabled={isSyncing}>

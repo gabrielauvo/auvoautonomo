@@ -4,7 +4,7 @@
  * Tela para selecionar o idioma do aplicativo
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -19,11 +19,12 @@ import { router } from 'expo-router';
 import { Text, Card } from '../../src/design-system';
 import { useColors, useSpacing } from '../../src/design-system/ThemeProvider';
 import { AuthService } from '../../src/services/AuthService';
+import { useTranslation, useLocale, Locale } from '../../src/i18n';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 
 interface Language {
-  code: string;
+  code: Locale;
   name: string;
   nativeName: string;
   flag: string;
@@ -32,85 +33,50 @@ interface Language {
 const LANGUAGES: Language[] = [
   { code: 'pt-BR', name: 'Portuguese (Brazil)', nativeName: 'Português (Brasil)', flag: '🇧🇷' },
   { code: 'en-US', name: 'English (US)', nativeName: 'English (US)', flag: '🇺🇸' },
-  { code: 'es-ES', name: 'Spanish', nativeName: 'Español', flag: '🇪🇸' },
+  { code: 'es', name: 'Spanish', nativeName: 'Español', flag: '🇪🇸' },
 ];
 
 export default function IdiomaScreen() {
   const colors = useColors();
   const spacing = useSpacing();
+  const { t } = useTranslation();
+  const { locale, setLocale } = useLocale();
 
-  const [currentLanguage, setCurrentLanguage] = useState('pt-BR');
-  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  useEffect(() => {
-    loadLanguage();
-  }, []);
-
-  const loadLanguage = async () => {
-    try {
-      const token = await AuthService.getAccessToken();
-      if (!token) return;
-
-      const response = await fetch(`${API_URL}/settings/profile`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setCurrentLanguage(data.language || 'pt-BR');
-      }
-    } catch (error) {
-      console.error('[Idioma] Error loading language:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSelectLanguage = async (languageCode: string) => {
-    if (languageCode === currentLanguage) return;
+  const handleSelectLanguage = async (languageCode: Locale) => {
+    if (languageCode === locale) return;
 
     setIsSaving(true);
     try {
+      // Update i18n locale first (this updates the UI immediately)
+      await setLocale(languageCode);
+
+      // Also save to backend for sync across devices
       const token = await AuthService.getAccessToken();
-      if (!token) return;
-
-      const response = await fetch(`${API_URL}/settings/profile`, {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ language: languageCode }),
-      });
-
-      if (response.ok) {
-        setCurrentLanguage(languageCode);
-        Alert.alert(
-          'Idioma Alterado',
-          'O idioma foi alterado com sucesso. Reinicie o app para aplicar as mudanças.',
-          [{ text: 'OK' }]
-        );
-      } else {
-        Alert.alert('Erro', 'Falha ao alterar idioma');
+      if (token) {
+        await fetch(`${API_URL}/settings/profile`, {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ language: languageCode }),
+        });
       }
+
+      Alert.alert(
+        t('common.success'),
+        t('settings.languageChanged'),
+        [{ text: t('common.confirm') }]
+      );
     } catch (error) {
       console.error('[Idioma] Error saving language:', error);
-      Alert.alert('Erro', 'Falha ao alterar idioma');
+      Alert.alert(t('common.error'), t('errors.generic'));
     } finally {
       setIsSaving(false);
     }
   };
-
-  if (isLoading) {
-    return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background.secondary }]}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary[500]} />
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background.secondary }]}>
@@ -120,7 +86,7 @@ export default function IdiomaScreen() {
           <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
         </TouchableOpacity>
         <Text variant="h4" weight="semibold">
-          Idioma
+          {t('settings.language')}
         </Text>
         <View style={styles.headerSpacer} />
       </View>
@@ -136,7 +102,7 @@ export default function IdiomaScreen() {
               style={[
                 styles.languageItem,
                 index > 0 && { borderTopWidth: 1, borderTopColor: colors.border.light },
-                currentLanguage === language.code && { backgroundColor: colors.primary[50] },
+                locale === language.code && { backgroundColor: colors.primary[50] },
               ]}
               onPress={() => handleSelectLanguage(language.code)}
               disabled={isSaving}
@@ -144,7 +110,7 @@ export default function IdiomaScreen() {
               <View style={styles.languageInfo}>
                 <Text style={styles.flag}>{language.flag}</Text>
                 <View style={styles.languageText}>
-                  <Text variant="body" weight={currentLanguage === language.code ? 'semibold' : 'regular'}>
+                  <Text variant="body" weight={locale === language.code ? 'semibold' : 'normal'}>
                     {language.nativeName}
                   </Text>
                   <Text variant="caption" color="secondary">
@@ -152,10 +118,10 @@ export default function IdiomaScreen() {
                   </Text>
                 </View>
               </View>
-              {currentLanguage === language.code && (
+              {locale === language.code && (
                 <Ionicons name="checkmark-circle" size={24} color={colors.primary[500]} />
               )}
-              {isSaving && currentLanguage !== language.code && (
+              {isSaving && locale !== language.code && (
                 <ActivityIndicator size="small" color={colors.primary[500]} />
               )}
             </TouchableOpacity>
@@ -163,7 +129,7 @@ export default function IdiomaScreen() {
         </Card>
 
         <Text variant="caption" color="tertiary" style={{ marginTop: spacing[4], paddingHorizontal: spacing[2] }}>
-          O idioma afeta a interface do aplicativo e as notificações. Alguns conteúdos podem não estar traduzidos para todos os idiomas.
+          {t('settings.languageNote')}
         </Text>
       </ScrollView>
     </SafeAreaView>
@@ -173,11 +139,6 @@ export default function IdiomaScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   header: {
     flexDirection: 'row',

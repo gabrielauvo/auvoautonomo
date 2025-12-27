@@ -21,6 +21,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Text, Card, Avatar, Badge, Button } from '../../src/design-system';
 import { useColors, useSpacing } from '../../src/design-system/ThemeProvider';
 import { useAuth } from '../../src/services';
+import { useTranslation } from '../../src/i18n';
 import { AuthService } from '../../src/services/AuthService';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
@@ -71,6 +72,7 @@ export default function ProfileScreen() {
   const colors = useColors();
   const spacing = useSpacing();
   const { user, logout, updateUser } = useAuth();
+  const { t } = useTranslation();
 
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
@@ -116,7 +118,7 @@ export default function ProfileScreen() {
     try {
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permissionResult.granted) {
-        Alert.alert('Permissão necessária', 'Permita o acesso à galeria para escolher uma foto.');
+        Alert.alert(t('profile.permissionRequired'), t('profile.galleryPermissionMessage'));
         return;
       }
 
@@ -132,7 +134,7 @@ export default function ProfileScreen() {
       }
     } catch (error) {
       console.error('[Profile] Error picking image:', error);
-      Alert.alert('Erro', 'Falha ao selecionar imagem');
+      Alert.alert(t('common.error'), t('profile.imageSelectError'));
     }
   };
 
@@ -165,14 +167,14 @@ export default function ProfileScreen() {
         // Atualizar o contexto de autenticação para propagar para outras telas
         await updateUser({ avatarUrl: data.avatarUrl });
 
-        Alert.alert('Sucesso', 'Foto atualizada com sucesso');
+        Alert.alert(t('common.success'), t('profile.avatarUpdated'));
       } else {
         const error = await response.json();
-        Alert.alert('Erro', error.message || 'Falha ao atualizar foto');
+        Alert.alert(t('common.error'), error.message || t('profile.avatarUpdateError'));
       }
     } catch (error) {
       console.error('[Profile] Error uploading avatar:', error);
-      Alert.alert('Erro', 'Falha ao enviar foto');
+      Alert.alert(t('common.error'), t('profile.avatarUploadError'));
     } finally {
       setIsUploadingAvatar(false);
     }
@@ -180,12 +182,12 @@ export default function ProfileScreen() {
 
   const handleDeleteAccount = () => {
     Alert.alert(
-      'Excluir Conta',
-      'Tem certeza que deseja excluir sua conta? Esta ação é irreversível e todos os seus dados serão perdidos.',
+      t('profile.deleteAccount'),
+      t('profile.deleteAccountConfirm'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Excluir',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -199,12 +201,12 @@ export default function ProfileScreen() {
 
               if (response.ok) {
                 await logout();
-                Alert.alert('Conta excluída', 'Sua conta foi excluída com sucesso.');
+                Alert.alert(t('profile.accountDeleted'), t('profile.accountDeletedMessage'));
               } else {
-                Alert.alert('Erro', 'Falha ao excluir conta. Tente novamente.');
+                Alert.alert(t('common.error'), t('profile.deleteAccountError'));
               }
             } catch (error) {
-              Alert.alert('Erro', 'Falha ao excluir conta. Tente novamente.');
+              Alert.alert(t('common.error'), t('profile.deleteAccountError'));
             }
           },
         },
@@ -214,12 +216,12 @@ export default function ProfileScreen() {
 
   const handleLogout = () => {
     Alert.alert(
-      'Sair',
-      'Deseja realmente sair do aplicativo?',
+      t('profile.logout'),
+      t('profile.logoutConfirm'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Sair',
+          text: t('profile.logout'),
           style: 'destructive',
           onPress: () => logout(),
         },
@@ -231,32 +233,32 @@ export default function ProfileScreen() {
     {
       id: 'dados-pessoais',
       icon: 'person-outline',
-      label: 'Dados Pessoais',
-      description: 'Nome, email e telefone',
+      label: t('profile.menu.personalData'),
+      description: t('profile.menu.personalDataDesc'),
       route: '/perfil/dados-pessoais',
       showChevron: true,
     },
     {
       id: 'alterar-senha',
       icon: 'lock-closed-outline',
-      label: 'Alterar Senha',
-      description: 'Atualize sua senha de acesso',
+      label: t('profile.menu.changePassword'),
+      description: t('profile.menu.changePasswordDesc'),
       route: '/perfil/alterar-senha',
       showChevron: true,
     },
     {
       id: 'empresa',
       icon: 'business-outline',
-      label: 'Dados da Empresa',
-      description: 'CNPJ, endereço e logo',
+      label: t('profile.menu.companyData'),
+      description: t('profile.menu.companyDataDesc'),
       route: '/perfil/empresa',
       showChevron: true,
     },
     {
       id: 'plano',
       icon: 'star-outline',
-      label: 'Meu Plano',
-      description: subscription?.plan?.name || 'Carregando...',
+      label: t('profile.menu.myPlan'),
+      description: subscription?.plan?.name || t('common.loading'),
       route: '/perfil/plano',
       badge: subscription?.plan?.type === 'PRO' ? 'PRO' : 'FREE',
       badgeVariant: subscription?.plan?.type === 'PRO' ? 'primary' : 'warning',
@@ -265,8 +267,8 @@ export default function ProfileScreen() {
     {
       id: 'indicacoes',
       icon: 'gift-outline',
-      label: 'Indique e Ganhe',
-      description: 'Ganhe meses grátis indicando amigos',
+      label: t('profile.menu.referral'),
+      description: t('profile.menu.referralDesc'),
       route: '/perfil/indicacoes',
       badge: 'NOVO',
       badgeVariant: 'success',
@@ -275,32 +277,32 @@ export default function ProfileScreen() {
     {
       id: 'crescimento',
       icon: 'trending-up-outline',
-      label: 'Crescimento',
-      description: 'Métricas do Google Meu Negócio',
+      label: t('profile.menu.growth'),
+      description: t('profile.menu.growthDesc'),
       route: '/perfil/crescimento',
       showChevron: true,
     },
     {
       id: 'preferencias',
       icon: 'settings-outline',
-      label: 'Preferências',
-      description: 'Contatos e automações',
+      label: t('profile.menu.preferences'),
+      description: t('profile.menu.preferencesDesc'),
       route: '/perfil/preferencias',
       showChevron: true,
     },
     {
       id: 'idioma',
       icon: 'language-outline',
-      label: 'Idioma',
-      description: profile?.language === 'pt-BR' ? 'Português (Brasil)' : profile?.language || 'Português (Brasil)',
+      label: t('profile.menu.language'),
+      description: profile?.language || t('profile.menu.language'),
       route: '/perfil/idioma',
       showChevron: true,
     },
     {
       id: 'regional',
       icon: 'globe-outline',
-      label: 'Configurações Regionais',
-      description: 'País, moeda e fuso horário',
+      label: t('profile.menu.regionalSettings'),
+      description: t('profile.menu.regionalSettingsDesc'),
       route: '/perfil/regional',
       showChevron: true,
     },
@@ -319,7 +321,7 @@ export default function ProfileScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary[500]} />
           <Text variant="body" color="secondary" style={{ marginTop: spacing[3] }}>
-            Carregando...
+            {t('common.loading')}
           </Text>
         </View>
       </SafeAreaView>
@@ -334,7 +336,7 @@ export default function ProfileScreen() {
           <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
         </TouchableOpacity>
         <Text variant="h4" weight="semibold">
-          Meu Perfil
+          {t('profile.title')}
         </Text>
         <View style={styles.headerSpacer} />
       </View>
@@ -367,7 +369,7 @@ export default function ProfileScreen() {
 
           <View style={styles.profileInfo}>
             <Text variant="h4" weight="bold" style={{ marginBottom: spacing[1] }}>
-              {profile?.name || user?.name || 'Usuário'}
+              {profile?.name || user?.name || t('profile.user')}
             </Text>
             <Text variant="body" color="secondary">
               {profile?.email || user?.email}
@@ -384,7 +386,7 @@ export default function ProfileScreen() {
                   weight="semibold"
                   style={{ color: getPlanBadgeColor(), marginLeft: 4 }}
                 >
-                  Plano {subscription.plan.name}
+                  {t('profile.plan')} {subscription.plan.name}
                 </Text>
               </View>
             )}
@@ -394,7 +396,7 @@ export default function ProfileScreen() {
         {/* Menu Items */}
         <View style={{ marginTop: spacing[4], paddingHorizontal: spacing[4] }}>
           <Text variant="caption" weight="semibold" color="tertiary" style={{ marginBottom: spacing[2], marginLeft: spacing[2] }}>
-            CONFIGURAÇÕES
+            {t('profile.settings')}
           </Text>
           <Card style={styles.menuCard}>
             {menuItems.map((item, index) => (
@@ -443,7 +445,7 @@ export default function ProfileScreen() {
         {/* Danger Zone */}
         <View style={{ marginTop: spacing[6], paddingHorizontal: spacing[4] }}>
           <Text variant="caption" weight="semibold" color="tertiary" style={{ marginBottom: spacing[2], marginLeft: spacing[2] }}>
-            ZONA DE PERIGO
+            {t('profile.dangerZone')}
           </Text>
           <Card style={styles.menuCard}>
             <TouchableOpacity
@@ -456,10 +458,10 @@ export default function ProfileScreen() {
               <View style={styles.menuContent}>
                 <View style={styles.menuTextContainer}>
                   <Text variant="body" weight="medium" style={{ color: colors.warning[600] }}>
-                    Sair da Conta
+                    {t('profile.logoutAccount')}
                   </Text>
                   <Text variant="caption" color="secondary">
-                    Desconectar do aplicativo
+                    {t('profile.disconnectApp')}
                   </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={colors.text.tertiary} />
@@ -476,10 +478,10 @@ export default function ProfileScreen() {
               <View style={styles.menuContent}>
                 <View style={styles.menuTextContainer}>
                   <Text variant="body" weight="medium" style={{ color: colors.error[600] }}>
-                    Excluir Conta
+                    {t('profile.deleteAccount')}
                   </Text>
                   <Text variant="caption" color="secondary">
-                    Remover permanentemente seus dados
+                    {t('profile.permanentlyDeleteData')}
                   </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={colors.text.tertiary} />

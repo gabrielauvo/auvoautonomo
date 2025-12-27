@@ -20,6 +20,7 @@ import { SignaturePad, SignatureData } from '../../checklists/components/Signatu
 import { WorkOrderSignatureService } from '../services/WorkOrderSignatureService';
 import { Signature } from '../../../db/schema';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from '../../../i18n';
 
 // =============================================================================
 // TYPES
@@ -46,6 +47,7 @@ export function SignatureSection({
   onSignatureCaptured,
   readOnly = false,
 }: SignatureSectionProps) {
+  const { t } = useTranslation();
   const [signature, setSignature] = useState<Signature | null>(null);
   const [loading, setLoading] = useState(true);
   const [showPad, setShowPad] = useState(false);
@@ -85,52 +87,52 @@ export function SignatureSection({
       setSignature(newSignature);
       onSignatureCaptured?.(newSignature);
 
-      Alert.alert('Sucesso', 'Assinatura capturada com sucesso!');
+      Alert.alert(t('common.success'), t('workOrders.signatureCaptured'));
     } catch (error) {
       console.error('[SignatureSection] Error capturing signature:', error);
-      Alert.alert('Erro', 'Falha ao salvar assinatura. Tente novamente.');
+      Alert.alert(t('common.error'), t('workOrders.signatureSaveError'));
     } finally {
       setSaving(false);
       setShowPad(false);
     }
-  }, [workOrderId, clientId, onSignatureCaptured]);
+  }, [workOrderId, clientId, onSignatureCaptured, t]);
 
   // Deletar assinatura (apenas se não sincronizada)
   const handleDelete = useCallback(async () => {
     if (!signature) return;
 
     if (signature.syncedAt) {
-      Alert.alert('Aviso', 'Não é possível excluir uma assinatura já sincronizada.');
+      Alert.alert(t('workOrders.warning'), t('workOrders.cannotDeleteSyncedSignature'));
       return;
     }
 
     Alert.alert(
-      'Excluir Assinatura',
-      'Tem certeza que deseja excluir esta assinatura?',
+      t('workOrders.deleteSignature'),
+      t('workOrders.deleteSignatureConfirm'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Excluir',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               await WorkOrderSignatureService.deleteSignature(signature.id);
               setSignature(null);
             } catch (error) {
-              Alert.alert('Erro', 'Falha ao excluir assinatura.');
+              Alert.alert(t('common.error'), t('workOrders.signatureDeleteError'));
             }
           },
         },
       ]
     );
-  }, [signature]);
+  }, [signature, t]);
 
   // Renderizar estado de carregamento
   if (loading) {
     return (
       <Card style={styles.card}>
         <View style={styles.header}>
-          <Text variant="subtitle" weight="semibold">Assinatura Digital</Text>
+          <Text variant="subtitle" weight="semibold">{t('signature.title')}</Text>
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="small" color={colors.primary[500]} />
@@ -151,14 +153,14 @@ export function SignatureSection({
           <View style={styles.headerLeft}>
             <Ionicons name="create-outline" size={20} color={colors.gray[600]} />
             <Text variant="subtitle" weight="semibold" style={styles.headerTitle}>
-              Assinatura Digital
+              {t('signature.title')}
             </Text>
           </View>
           {signature?.syncedAt && (
             <View style={styles.syncBadge}>
               <Ionicons name="cloud-done" size={14} color={colors.success[600]} />
               <Text variant="caption" color="success" style={styles.syncText}>
-                Sincronizado
+                {t('workOrders.synced')}
               </Text>
             </View>
           )}
@@ -166,7 +168,7 @@ export function SignatureSection({
             <View style={[styles.syncBadge, styles.pendingBadge]}>
               <Ionicons name="cloud-offline" size={14} color={colors.warning[600]} />
               <Text variant="caption" style={[styles.syncText, { color: colors.warning[600] }]}>
-                Pendente
+                {t('common.pending')}
               </Text>
             </View>
           )}
@@ -186,7 +188,7 @@ export function SignatureSection({
               ) : (
                 <View style={styles.noImagePlaceholder}>
                   <Ionicons name="image-outline" size={32} color={colors.gray[400]} />
-                  <Text variant="caption" color="tertiary">Imagem não disponível</Text>
+                  <Text variant="caption" color="tertiary">{t('workOrders.imageNotAvailable')}</Text>
                 </View>
               )}
             </View>
@@ -224,7 +226,7 @@ export function SignatureSection({
               <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
                 <Ionicons name="trash-outline" size={18} color={colors.error[500]} />
                 <Text variant="caption" style={{ color: colors.error[500], marginLeft: 4 }}>
-                  Excluir
+                  {t('common.delete')}
                 </Text>
               </TouchableOpacity>
             )}
@@ -236,7 +238,7 @@ export function SignatureSection({
               <>
                 <Ionicons name="create" size={48} color={colors.gray[300]} />
                 <Text variant="body" color="secondary" style={styles.emptyText}>
-                  Nenhuma assinatura coletada
+                  {t('workOrders.noSignatureCollected')}
                 </Text>
                 <TouchableOpacity
                   style={styles.captureButton}
@@ -249,7 +251,7 @@ export function SignatureSection({
                     <>
                       <Ionicons name="pencil" size={18} color={colors.white} />
                       <Text variant="body" weight="semibold" style={styles.captureButtonText}>
-                        Coletar Assinatura
+                        {t('workOrders.collectSignature')}
                       </Text>
                     </>
                   )}
@@ -260,8 +262,8 @@ export function SignatureSection({
                 <Ionicons name="create-outline" size={48} color={colors.gray[300]} />
                 <Text variant="body" color="tertiary" style={styles.emptyText}>
                   {isCompleted
-                    ? 'OS finalizada sem assinatura'
-                    : 'Assinatura não disponível'}
+                    ? t('workOrders.completedWithoutSignature')
+                    : t('workOrders.signatureNotAvailable')}
                 </Text>
               </>
             )}
@@ -275,9 +277,9 @@ export function SignatureSection({
         onClose={() => setShowPad(false)}
         onCapture={handleCapture}
         defaultSignerName={clientName || ''}
-        defaultSignerRole="Cliente"
+        defaultSignerRole={t('signature.client')}
         requireDocument={false}
-        title="Assinatura de Finalização"
+        title={t('workOrders.finalizationSignature')}
       />
     </>
   );

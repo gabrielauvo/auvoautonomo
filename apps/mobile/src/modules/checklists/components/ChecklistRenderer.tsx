@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
+import { useTranslation, useLocale } from '../../../i18n';
 import {
   ChecklistTemplate,
   ChecklistInstance,
@@ -151,12 +152,12 @@ function useChecklistData(instance: ChecklistInstance, answers: ChecklistAnswer[
 // COMPONENTS
 // =============================================================================
 
-const ProgressBar: React.FC<{ progress: number }> = ({ progress }) => (
+const ProgressBar: React.FC<{ progress: number; progressLabel: string }> = ({ progress, progressLabel }) => (
   <View style={styles.progressContainer}>
     <View style={styles.progressBar}>
       <View style={[styles.progressFill, { width: `${progress}%` }]} />
     </View>
-    <Text style={styles.progressText}>{progress}% completo</Text>
+    <Text style={styles.progressText}>{progressLabel}</Text>
   </View>
 );
 
@@ -164,7 +165,8 @@ const QuestionItem: React.FC<{
   item: QuestionWithVisibility;
   onAnswerChange: (value: unknown) => void;
   disabled: boolean;
-}> = ({ item, onAnswerChange, disabled }) => {
+  unsupportedTypeMessage: string;
+}> = ({ item, onAnswerChange, disabled, unsupportedTypeMessage }) => {
   const { question, visibility, answer, error } = item;
 
   // Get renderer for question type
@@ -173,7 +175,7 @@ const QuestionItem: React.FC<{
     return (
       <View style={styles.unsupportedQuestion}>
         <Text style={styles.unsupportedText}>
-          Tipo não suportado: {question.type}
+          {unsupportedTypeMessage}
         </Text>
       </View>
     );
@@ -207,6 +209,8 @@ export const ChecklistRenderer: React.FC<ChecklistRendererProps> = ({
   disabled = false,
   showProgress = true,
 }) => {
+  const { t } = useTranslation();
+  const locale = useLocale();
   const [errors, setErrors] = useState<Map<string, string>>(new Map());
   const data = useChecklistData(instance, answers);
 
@@ -229,7 +233,7 @@ export const ChecklistRenderer: React.FC<ChecklistRendererProps> = ({
     // Validate all required questions
     const newErrors = new Map<string, string>();
     for (const q of data.missingQuestions) {
-      newErrors.set(q.id, 'Campo obrigatório');
+      newErrors.set(q.id, t('checklists.requiredField'));
     }
 
     if (newErrors.size > 0) {
@@ -238,14 +242,14 @@ export const ChecklistRenderer: React.FC<ChecklistRendererProps> = ({
     }
 
     onComplete?.();
-  }, [data, onComplete]);
+  }, [data, onComplete, t]);
 
   // Loading or error state
   if (!data) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#2196F3" />
-        <Text style={styles.loadingText}>Carregando checklist...</Text>
+        <Text style={styles.loadingText}>{t('checklists.loadingChecklist')}</Text>
       </View>
     );
   }
@@ -261,12 +265,12 @@ export const ChecklistRenderer: React.FC<ChecklistRendererProps> = ({
           <Text style={styles.subtitle}>{template.description}</Text>
         )}
         <Text style={styles.stats}>
-          {answeredQuestions} de {totalQuestions} perguntas respondidas
+          {t('checklists.questionsAnswered', { answered: answeredQuestions, total: totalQuestions })}
         </Text>
       </View>
 
       {/* Progress */}
-      {showProgress && <ProgressBar progress={progress} />}
+      {showProgress && <ProgressBar progress={progress} progressLabel={t('checklists.progressComplete', { progress })} />}
 
       {/* Questions */}
       <ScrollView style={styles.questionsContainer}>
@@ -305,6 +309,7 @@ export const ChecklistRenderer: React.FC<ChecklistRendererProps> = ({
                   }}
                   onAnswerChange={(value) => handleAnswerChange(item.question.id, value)}
                   disabled={disabled || instance.status === 'COMPLETED' || instance.status === 'CANCELLED'}
+                  unsupportedTypeMessage={t('checklists.unsupportedType', { type: item.question.type })}
                 />
               );
             })}
@@ -324,7 +329,7 @@ export const ChecklistRenderer: React.FC<ChecklistRendererProps> = ({
               onPress={onSave}
               disabled={disabled}
             >
-              <Text style={styles.saveButtonText}>Salvar Rascunho</Text>
+              <Text style={styles.saveButtonText}>{t('checklists.saveDraft')}</Text>
             </TouchableOpacity>
           )}
 
@@ -339,7 +344,7 @@ export const ChecklistRenderer: React.FC<ChecklistRendererProps> = ({
               disabled={disabled}
             >
               <Text style={styles.completeButtonText}>
-                {isComplete ? 'Finalizar Checklist' : 'Preencha os campos obrigatórios'}
+                {isComplete ? t('checklists.finishChecklist') : t('checklists.fillRequiredFields')}
               </Text>
             </TouchableOpacity>
           )}
@@ -349,10 +354,10 @@ export const ChecklistRenderer: React.FC<ChecklistRendererProps> = ({
       {/* Completed Badge */}
       {instance.status === 'COMPLETED' && (
         <View style={styles.completedBadge}>
-          <Text style={styles.completedText}>✓ Checklist Finalizado</Text>
+          <Text style={styles.completedText}>{t('checklists.checklistCompleted')}</Text>
           {instance.completedAt && (
             <Text style={styles.completedDate}>
-              {new Date(instance.completedAt).toLocaleDateString('pt-BR')}
+              {new Date(instance.completedAt).toLocaleDateString(locale)}
             </Text>
           )}
         </View>

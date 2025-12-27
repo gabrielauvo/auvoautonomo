@@ -15,6 +15,7 @@ import { OptimizedList, AppHeader } from '../../src/components';
 import { workOrderService } from '../../src/modules/workorders/WorkOrderService';
 import { useSyncStatus } from '../../src/sync';
 import { WorkOrder, WorkOrderStatus } from '../../src/db';
+import { useTranslation, useLocale } from '../../src/i18n';
 
 // =============================================================================
 // TYPES
@@ -26,20 +27,11 @@ type SortOrder = 'newest' | 'oldest';
 // CONSTANTS
 // =============================================================================
 
-const STATUS_FILTERS: { label: string; value: WorkOrderStatus | 'ALL' | 'OVERDUE' }[] = [
-  { label: 'Todas', value: 'ALL' },
-  { label: 'Atrasadas', value: 'OVERDUE' },
-  { label: 'Agendadas', value: 'SCHEDULED' },
-  { label: 'Em Andamento', value: 'IN_PROGRESS' },
-  { label: 'Concluídas', value: 'DONE' },
-  { label: 'Canceladas', value: 'CANCELED' },
-];
-
-const STATUS_CONFIG: Record<WorkOrderStatus, { color: string; label: string; icon: string }> = {
-  SCHEDULED: { color: 'primary', label: 'Agendada', icon: 'calendar' },
-  IN_PROGRESS: { color: 'warning', label: 'Em Andamento', icon: 'play-circle' },
-  DONE: { color: 'success', label: 'Concluída', icon: 'checkmark-circle' },
-  CANCELED: { color: 'error', label: 'Cancelada', icon: 'close-circle' },
+const STATUS_COLORS: Record<WorkOrderStatus, string> = {
+  SCHEDULED: 'primary',
+  IN_PROGRESS: 'warning',
+  DONE: 'success',
+  CANCELED: 'error',
 };
 
 // =============================================================================
@@ -49,33 +41,40 @@ const STATUS_CONFIG: Record<WorkOrderStatus, { color: string; label: string; ico
 const WorkOrderCard = React.memo(function WorkOrderCard({
   workOrder,
   onPress,
+  statusLabel,
+  noDateLabel,
 }: {
   workOrder: WorkOrder;
   onPress: () => void;
+  statusLabel: string;
+  noDateLabel: string;
 }) {
   const colors = useColors();
   const spacing = useSpacing();
+  const { locale } = useLocale();
 
-  const statusConfig = STATUS_CONFIG[workOrder.status];
+  const statusColor = STATUS_COLORS[workOrder.status];
 
   const formattedDate = useMemo(() => {
-    if (!workOrder.scheduledDate) return 'Sem data';
+    if (!workOrder.scheduledDate) return noDateLabel;
     const date = new Date(workOrder.scheduledDate);
-    return date.toLocaleDateString('pt-BR', {
+    const localeCode = locale === 'pt-BR' ? 'pt-BR' : locale === 'es' ? 'es' : 'en-US';
+    return date.toLocaleDateString(localeCode, {
       weekday: 'short',
       day: '2-digit',
       month: 'short',
     });
-  }, [workOrder.scheduledDate]);
+  }, [workOrder.scheduledDate, noDateLabel, locale]);
 
   const formattedTime = useMemo(() => {
     if (!workOrder.scheduledStartTime) return '';
     const time = new Date(workOrder.scheduledStartTime);
-    return time.toLocaleTimeString('pt-BR', {
+    const localeCode = locale === 'pt-BR' ? 'pt-BR' : locale === 'es' ? 'es' : 'en-US';
+    return time.toLocaleTimeString(localeCode, {
       hour: '2-digit',
       minute: '2-digit',
     });
-  }, [workOrder.scheduledStartTime]);
+  }, [workOrder.scheduledStartTime, locale]);
 
   return (
     <Pressable onPress={onPress}>
@@ -88,8 +87,8 @@ const WorkOrderCard = React.memo(function WorkOrderCard({
             <Text variant="body" weight="medium" numberOfLines={1} style={styles.cardTitle}>
               {workOrder.title}
             </Text>
-            <Badge variant={statusConfig.color as any} size="sm">
-              {statusConfig.label}
+            <Badge variant={statusColor as any} size="sm">
+              {statusLabel}
             </Badge>
           </View>
           {workOrder.clientName && (
@@ -135,9 +134,13 @@ const WorkOrderCard = React.memo(function WorkOrderCard({
 const SortToggle = React.memo(function SortToggle({
   sortOrder,
   onToggle,
+  newestLabel,
+  oldestLabel,
 }: {
   sortOrder: SortOrder;
   onToggle: () => void;
+  newestLabel: string;
+  oldestLabel: string;
 }) {
   const colors = useColors();
 
@@ -152,7 +155,7 @@ const SortToggle = React.memo(function SortToggle({
         color={colors.primary[600]}
       />
       <Text variant="caption" weight="medium" style={{ color: colors.primary[600], marginLeft: 4 }}>
-        {sortOrder === 'newest' ? 'Mais recentes' : 'Mais antigos'}
+        {sortOrder === 'newest' ? newestLabel : oldestLabel}
       </Text>
     </TouchableOpacity>
   );
@@ -202,6 +205,8 @@ export default function OSScreen() {
   const colors = useColors();
   const spacing = useSpacing();
   const { isSyncing, isOnline, sync } = useSyncStatus();
+  const { t } = useTranslation();
+  const { locale } = useLocale();
 
   // State
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
@@ -222,6 +227,27 @@ export default function OSScreen() {
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
 
   const PAGE_SIZE = 30;
+
+  // Status filters with translations
+  const STATUS_FILTERS = useMemo(() => [
+    { label: t('workOrders.all'), value: 'ALL' as const },
+    { label: t('workOrders.overdue'), value: 'OVERDUE' as const },
+    { label: t('workOrders.scheduled'), value: 'SCHEDULED' as const },
+    { label: t('workOrders.inProgress'), value: 'IN_PROGRESS' as const },
+    { label: t('workOrders.completed'), value: 'DONE' as const },
+    { label: t('workOrders.cancelled'), value: 'CANCELED' as const },
+  ], [t, locale]);
+
+  // Get status label
+  const getStatusLabel = useCallback((status: WorkOrderStatus): string => {
+    switch (status) {
+      case 'SCHEDULED': return t('workOrders.statuses.scheduled');
+      case 'IN_PROGRESS': return t('workOrders.statuses.inProgress');
+      case 'DONE': return t('workOrders.statuses.done');
+      case 'CANCELED': return t('workOrders.statuses.canceled');
+      default: return status;
+    }
+  }, [t, locale]);
 
   // Toggle sort order
   const handleSortToggle = useCallback(() => {
@@ -326,9 +352,14 @@ export default function OSScreen() {
   // Render work order item
   const renderItem = useCallback(
     ({ item }: { item: WorkOrder }) => (
-      <WorkOrderCard workOrder={item} onPress={() => handleWorkOrderPress(item)} />
+      <WorkOrderCard
+        workOrder={item}
+        onPress={() => handleWorkOrderPress(item)}
+        statusLabel={getStatusLabel(item.status)}
+        noDateLabel={t('workOrders.noDate')}
+      />
     ),
-    [handleWorkOrderPress]
+    [handleWorkOrderPress, getStatusLabel, t]
   );
 
   // Key extractor
@@ -345,9 +376,20 @@ export default function OSScreen() {
     return statusCounts[value] || 0;
   };
 
+  // Get empty text based on filter
+  const getEmptyText = useCallback(() => {
+    if (statusFilter === 'OVERDUE') {
+      return t('workOrders.noOverdueOrders');
+    }
+    if (statusFilter !== 'ALL') {
+      return t('workOrders.noOrdersWithStatus', { status: getStatusLabel(statusFilter as WorkOrderStatus).toLowerCase() });
+    }
+    return t('workOrders.noOrders');
+  }, [statusFilter, t, getStatusLabel]);
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
-      <AppHeader title="Ordens de Serviço" />
+      <AppHeader title={t('workOrders.title')} />
 
       {/* Header with filters */}
       <View style={[styles.header, { paddingHorizontal: spacing[4], paddingVertical: spacing[3] }]}>
@@ -373,10 +415,15 @@ export default function OSScreen() {
               ]}
             />
             <Text variant="caption" color="secondary">
-              {isSyncing ? 'Sincronizando...' : isOnline ? 'Online' : 'Offline'}
+              {isSyncing ? t('common.syncing') : isOnline ? t('common.online') : t('common.offline')}
             </Text>
           </View>
-          <SortToggle sortOrder={sortOrder} onToggle={handleSortToggle} />
+          <SortToggle
+            sortOrder={sortOrder}
+            onToggle={handleSortToggle}
+            newestLabel={t('workOrders.sortNewest')}
+            oldestLabel={t('workOrders.sortOldest')}
+          />
         </View>
       </View>
 
@@ -392,13 +439,7 @@ export default function OSScreen() {
         isLoadingMore={isLoadingMore}
         hasMore={hasMore}
         estimatedItemSize={120}
-        emptyText={
-          statusFilter === 'OVERDUE'
-            ? 'Nenhuma OS atrasada'
-            : statusFilter !== 'ALL'
-            ? `Nenhuma OS ${STATUS_CONFIG[statusFilter as WorkOrderStatus].label.toLowerCase()}`
-            : 'Nenhuma ordem de serviço'
-        }
+        emptyText={getEmptyText()}
         contentContainerStyle={{ paddingTop: spacing[2], paddingBottom: spacing[20] }}
       />
 
@@ -406,7 +447,7 @@ export default function OSScreen() {
       {!isLoading && total > 0 && (
         <View style={[styles.footer, { backgroundColor: colors.background.secondary }]}>
           <Text variant="caption" color="secondary">
-            {total} ordem{total > 1 ? 'ns' : ''} de serviço
+            {t('workOrders.totalCount', { count: total })}
           </Text>
         </View>
       )}

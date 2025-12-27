@@ -17,6 +17,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from '../../../i18n';
 import { InventoryBalance } from '../InventoryRepository';
 
 interface Props {
@@ -34,6 +35,7 @@ export function AdjustStockModal({
   onClose,
   onConfirm,
 }: Props) {
+  const { t } = useTranslation();
   const [newQuantity, setNewQuantity] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -64,7 +66,7 @@ export function AdjustStockModal({
     const current = parseFloat(newQuantity) || 0;
     const newValue = current - 1;
     if (newValue < 0 && !allowNegativeStock) {
-      setError('Estoque negativo não permitido');
+      setError(t('inventory.negativeStockNotAllowed'));
       return;
     }
     setNewQuantity(newValue.toString());
@@ -75,17 +77,17 @@ export function AdjustStockModal({
     const qty = parseFloat(newQuantity);
 
     if (isNaN(qty)) {
-      setError('Quantidade inválida');
+      setError(t('inventory.invalidQuantity'));
       return;
     }
 
     if (qty < 0 && !allowNegativeStock) {
-      setError('Estoque negativo não permitido');
+      setError(t('inventory.negativeStockNotAllowed'));
       return;
     }
 
     if (balance && qty === balance.quantity) {
-      setError('Novo saldo igual ao atual');
+      setError(t('inventory.sameBalance'));
       return;
     }
 
@@ -96,7 +98,7 @@ export function AdjustStockModal({
       await onConfirm(qty, notes.trim() || undefined);
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Erro ao ajustar estoque');
+      setError(err.message || t('inventory.adjustError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -125,7 +127,7 @@ export function AdjustStockModal({
       >
         <View style={styles.container}>
           <View style={styles.header}>
-            <Text style={styles.title}>Ajustar Estoque</Text>
+            <Text style={styles.title}>{t('inventory.adjustStock')}</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <Ionicons name="close" size={24} color="#6b7280" />
             </TouchableOpacity>
@@ -137,13 +139,13 @@ export function AdjustStockModal({
               <Text style={styles.sku}>SKU: {balance.itemSku}</Text>
             )}
             <Text style={styles.currentStock}>
-              Estoque atual: <Text style={styles.currentValue}>{balance.quantity}</Text>
+              {t('inventory.currentStock')} <Text style={styles.currentValue}>{balance.quantity}</Text>
               {balance.itemUnit && ` ${balance.itemUnit}`}
             </Text>
           </View>
 
           <View style={styles.inputSection}>
-            <Text style={styles.label}>Novo saldo</Text>
+            <Text style={styles.label}>{t('inventory.newBalance')}</Text>
             <View style={styles.quantityInputContainer}>
               <TouchableOpacity
                 style={styles.stepButton}
@@ -190,12 +192,12 @@ export function AdjustStockModal({
           </View>
 
           <View style={styles.inputSection}>
-            <Text style={styles.label}>Observação (opcional)</Text>
+            <Text style={styles.label}>{t('inventory.notesOptional')}</Text>
             <TextInput
               style={styles.notesInput}
               value={notes}
               onChangeText={setNotes}
-              placeholder="Ex: Contagem física, ajuste de inventário..."
+              placeholder={t('inventory.notesPlaceholder')}
               placeholderTextColor="#9ca3af"
               multiline
               numberOfLines={2}
@@ -215,7 +217,7 @@ export function AdjustStockModal({
               onPress={onClose}
               disabled={isSubmitting}
             >
-              <Text style={styles.cancelButtonText}>Cancelar</Text>
+              <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -231,7 +233,7 @@ export function AdjustStockModal({
               ) : (
                 <>
                   <Ionicons name="checkmark" size={20} color="#fff" />
-                  <Text style={styles.confirmButtonText}>Confirmar</Text>
+                  <Text style={styles.confirmButtonText}>{t('common.confirm')}</Text>
                 </>
               )}
             </TouchableOpacity>

@@ -33,6 +33,7 @@ import {
 } from 'react-native-gesture-handler';
 import ViewShot from 'react-native-view-shot';
 import { SIGNER_ROLES, SignerRole, validateSignature } from '../SignatureSyncConfig';
+import { useTranslation } from '../../../i18n';
 
 // =============================================================================
 // TYPES
@@ -91,6 +92,7 @@ interface SignatureCanvasProps {
   viewShotRef: React.RefObject<ViewShot>;
   onDrawStart?: () => void;
   onDrawEnd?: () => void;
+  signHereLabel: string;
 }
 
 const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
@@ -103,6 +105,7 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
   viewShotRef,
   onDrawStart,
   onDrawEnd,
+  signHereLabel,
 }) => {
   const handleGestureStart = useCallback(() => {
     onDrawStart?.();
@@ -214,7 +217,7 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
 
           {/* Signing line - overlay */}
           <View style={styles.signLine} />
-          <Text style={styles.signLineLabel}>Assine aqui</Text>
+          <Text style={styles.signLineLabel}>{signHereLabel}</Text>
         </View>
       </PanGestureHandler>
     </GestureHandlerRootView>
@@ -232,8 +235,10 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
   defaultSignerName = '',
   defaultSignerRole = SIGNER_ROLES.CLIENT,
   requireDocument = false,
-  title = 'Assinatura Digital',
+  title,
 }) => {
+  const { t } = useTranslation();
+
   // Refs
   const viewShotRef = useRef<ViewShot>(null);
 
@@ -245,6 +250,9 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
   const [signerRole, setSignerRole] = useState<SignerRole>(defaultSignerRole);
   const [errors, setErrors] = useState<string[]>([]);
   const [isDrawing, setIsDrawing] = useState(false);
+
+  // Use translated title if not provided
+  const displayTitle = title || t('signature.title');
 
   // Reset state when modal opens
   useEffect(() => {
@@ -280,15 +288,15 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
     const newErrors: string[] = [];
 
     if (!signerName.trim() || signerName.trim().length < 2) {
-      newErrors.push('Nome é obrigatório (mínimo 2 caracteres)');
+      newErrors.push(t('signature.nameRequired'));
     }
 
     if (requireDocument && !signerDocument.trim()) {
-      newErrors.push('Documento é obrigatório');
+      newErrors.push(t('signature.documentRequired'));
     }
 
     if (paths.length === 0) {
-      newErrors.push('Assinatura é obrigatória');
+      newErrors.push(t('signature.signatureRequired'));
     }
 
     if (newErrors.length > 0) {
@@ -335,17 +343,17 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
   const handleClose = useCallback(() => {
     if (paths.length > 0) {
       Alert.alert(
-        'Descartar assinatura?',
-        'Você tem uma assinatura não salva. Deseja descartá-la?',
+        t('signature.discardSignatureTitle'),
+        t('signature.discardSignatureMessage'),
         [
-          { text: 'Cancelar', style: 'cancel' },
-          { text: 'Descartar', style: 'destructive', onPress: onClose },
+          { text: t('common.cancel'), style: 'cancel' },
+          { text: t('signature.discard'), style: 'destructive', onPress: onClose },
         ]
       );
     } else {
       onClose();
     }
-  }, [paths.length, onClose]);
+  }, [paths.length, onClose, t]);
 
   return (
     <Modal
@@ -360,7 +368,7 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
           <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
             <Text style={styles.closeButtonText}>✕</Text>
           </TouchableOpacity>
-          <Text style={styles.title} numberOfLines={1}>{title}</Text>
+          <Text style={styles.title} numberOfLines={1}>{displayTitle}</Text>
           <View style={styles.placeholder} />
         </View>
 
@@ -379,12 +387,12 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
             <View style={styles.form}>
               {/* Signer Name */}
               <View style={styles.field}>
-                <Text style={styles.label}>Nome do Assinante *</Text>
+                <Text style={styles.label}>{t('signature.signerNameLabel')} *</Text>
                 <TextInput
                   style={styles.input}
                   value={signerName}
                   onChangeText={setSignerName}
-                  placeholder="Digite o nome completo"
+                  placeholder={t('signature.enterFullName')}
                   autoCapitalize="words"
                 />
               </View>
@@ -392,20 +400,20 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
               {/* Signer Document */}
               <View style={styles.field}>
                 <Text style={styles.label}>
-                  Documento (CPF/RG) {requireDocument ? '*' : '(opcional)'}
+                  {t('signature.documentLabel')} {requireDocument ? '*' : t('signature.optional')}
                 </Text>
                 <TextInput
                   style={styles.input}
                   value={signerDocument}
                   onChangeText={setSignerDocument}
-                  placeholder="Digite o documento"
+                  placeholder={t('signature.enterDocument')}
                   keyboardType="default"
                 />
               </View>
 
               {/* Signer Role */}
               <View style={styles.field}>
-                <Text style={styles.label}>Papel *</Text>
+                <Text style={styles.label}>{t('signature.roleLabel')} *</Text>
                 <View style={styles.roleOptions}>
                   {Object.values(SIGNER_ROLES).map((role) => (
                     <TouchableOpacity
@@ -443,7 +451,7 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
 
             {/* Signature Canvas */}
             <View style={styles.canvasContainer}>
-              <Text style={styles.canvasLabel}>Assinatura *</Text>
+              <Text style={styles.canvasLabel}>{t('signature.signatureLabel')} *</Text>
               <SignatureCanvas
                 paths={paths}
                 currentPath={currentPath}
@@ -454,9 +462,10 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
                 viewShotRef={viewShotRef}
                 onDrawStart={handleDrawStart}
                 onDrawEnd={handleDrawEnd}
+                signHereLabel={t('signature.signHere')}
               />
               <TouchableOpacity onPress={handleClear} style={styles.clearButton}>
-                <Text style={styles.clearButtonText}>🗑️ Limpar</Text>
+                <Text style={styles.clearButtonText}>{t('signature.clearSignature')}</Text>
               </TouchableOpacity>
             </View>
 
@@ -466,14 +475,14 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
                 style={[styles.button, styles.cancelButton]}
                 onPress={handleClose}
               >
-                <Text style={styles.cancelButtonText}>Cancelar</Text>
+                <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[styles.button, styles.confirmButton]}
                 onPress={handleCapture}
               >
-                <Text style={styles.confirmButtonText}>Confirmar Assinatura</Text>
+                <Text style={styles.confirmButtonText}>{t('signature.confirmSignature')}</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>

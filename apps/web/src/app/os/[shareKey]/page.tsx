@@ -7,6 +7,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   Card,
   CardContent,
@@ -313,6 +314,7 @@ function ImageLightbox({
 export default function PublicWorkOrderPage() {
   const params = useParams();
   const shareKey = params.shareKey as string;
+  const t = useTranslations('common');
 
   const [workOrder, setWorkOrder] = useState<WorkOrderData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -378,7 +380,7 @@ export default function PublicWorkOrderPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-gray-600">Carregando ordem de serviço...</p>
+          <p className="text-gray-600">{t('loading')}</p>
         </div>
       </div>
     );

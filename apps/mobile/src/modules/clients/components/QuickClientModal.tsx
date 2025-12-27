@@ -25,6 +25,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ClientService, CreateClientInput } from '../ClientService';
 import { Client } from '../../../db/schema';
 import { useColors } from '../../../design-system/ThemeProvider';
+import { useTranslation } from '../../../i18n';
 
 // =============================================================================
 // TYPES
@@ -81,6 +82,7 @@ export function QuickClientModal({
 }: QuickClientModalProps) {
   // Theme
   const colors = useColors();
+  const { t } = useTranslation();
 
   // Form state
   const [name, setName] = useState('');
@@ -143,20 +145,20 @@ export function QuickClientModal({
 
     // Nome é obrigatório
     if (!name.trim()) {
-      newErrors.name = 'Nome é obrigatório';
+      newErrors.name = t('clients.validation.nameRequired');
     } else if (name.trim().length < 2) {
-      newErrors.name = 'Nome deve ter pelo menos 2 caracteres';
+      newErrors.name = t('clients.validation.nameMinLength');
     }
 
     // Email opcional, mas se preenchido deve ser válido
     if (email && !isValidEmail(email)) {
-      newErrors.email = 'Email inválido';
+      newErrors.email = t('clients.validation.emailInvalid');
     }
 
     // Telefone opcional, mas se preenchido deve ter formato válido
     const phoneNumbers = phone.replace(/\D/g, '');
     if (phone && phoneNumbers.length < 10) {
-      newErrors.phone = 'Telefone inválido';
+      newErrors.phone = t('clients.validation.phoneInvalid');
     }
 
     setErrors(newErrors);
@@ -195,8 +197,8 @@ export function QuickClientModal({
     } catch (error) {
       console.error('[QuickClientModal] Error creating client:', error);
       Alert.alert(
-        'Erro',
-        'Não foi possível criar o cliente. Tente novamente.',
+        t('common.error'),
+        t('clients.createError'),
         [{ text: 'OK' }]
       );
     } finally {
@@ -210,11 +212,11 @@ export function QuickClientModal({
     // Verificar se tem dados preenchidos
     if (name || phone || email) {
       Alert.alert(
-        'Descartar alterações?',
-        'Os dados preenchidos serão perdidos.',
+        t('clients.discardChangesTitle'),
+        t('clients.discardChangesMessage'),
         [
-          { text: 'Continuar editando', style: 'cancel' },
-          { text: 'Descartar', style: 'destructive', onPress: onClose },
+          { text: t('clients.continueEditing'), style: 'cancel' },
+          { text: t('clients.discard'), style: 'destructive', onPress: onClose },
         ]
       );
     } else {
@@ -242,7 +244,7 @@ export function QuickClientModal({
           >
             <Ionicons name="close" size={24} color={colors.text.secondary} />
           </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.text.primary }]}>Novo Cliente</Text>
+          <Text style={[styles.title, { color: colors.text.primary }]}>{t('clients.newClient')}</Text>
           <TouchableOpacity
             onPress={handleSubmit}
             style={[styles.saveButton, { backgroundColor: colors.primary[600] }, isLoading && styles.saveButtonDisabled]}
@@ -251,7 +253,7 @@ export function QuickClientModal({
             {isLoading ? (
               <ActivityIndicator size="small" color={colors.white} />
             ) : (
-              <Text style={[styles.saveButtonText, { color: colors.white }]}>Salvar</Text>
+              <Text style={[styles.saveButtonText, { color: colors.white }]}>{t('common.save')}</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -264,13 +266,13 @@ export function QuickClientModal({
           {/* Nome */}
           <View style={styles.inputGroup}>
             <Text style={[styles.label, { color: colors.text.secondary }]}>
-              Nome <Text style={[styles.required, { color: colors.error[500] }]}>*</Text>
+              {t('clients.name')} <Text style={[styles.required, { color: colors.error[500] }]}>*</Text>
             </Text>
             <TextInput
               style={[styles.input, { borderColor: colors.border.default, color: colors.text.primary, backgroundColor: colors.background.primary }, errors.name && { borderColor: colors.error[500], backgroundColor: colors.error[50] }]}
               value={name}
               onChangeText={handleNameChange}
-              placeholder="Nome do cliente"
+              placeholder={t('clients.placeholders.name')}
               placeholderTextColor={colors.gray[400]}
               autoFocus
               autoCapitalize="words"
@@ -284,13 +286,13 @@ export function QuickClientModal({
 
           {/* Telefone */}
           <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: colors.text.secondary }]}>Telefone</Text>
+            <Text style={[styles.label, { color: colors.text.secondary }]}>{t('clients.phone')}</Text>
             <TextInput
               ref={phoneRef}
               style={[styles.input, { borderColor: colors.border.default, color: colors.text.primary, backgroundColor: colors.background.primary }, errors.phone && { borderColor: colors.error[500], backgroundColor: colors.error[50] }]}
               value={phone}
               onChangeText={handlePhoneChange}
-              placeholder="(00) 00000-0000"
+              placeholder={t('clients.placeholders.phone')}
               placeholderTextColor={colors.gray[400]}
               keyboardType="phone-pad"
               returnKeyType="next"
@@ -303,13 +305,13 @@ export function QuickClientModal({
 
           {/* Email */}
           <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: colors.text.secondary }]}>Email</Text>
+            <Text style={[styles.label, { color: colors.text.secondary }]}>{t('clients.email')}</Text>
             <TextInput
               ref={emailRef}
               style={[styles.input, { borderColor: colors.border.default, color: colors.text.primary, backgroundColor: colors.background.primary }, errors.email && { borderColor: colors.error[500], backgroundColor: colors.error[50] }]}
               value={email}
               onChangeText={handleEmailChange}
-              placeholder="email@exemplo.com"
+              placeholder={t('clients.placeholders.email')}
               placeholderTextColor={colors.gray[400]}
               keyboardType="email-address"
               autoCapitalize="none"
@@ -337,7 +339,7 @@ export function QuickClientModal({
               color={colors.text.secondary}
             />
             <Text style={[styles.advancedToggleText, { color: colors.text.secondary }]}>
-              {showAdvanced ? 'Ocultar campos adicionais' : 'Mais campos (opcional)'}
+              {showAdvanced ? t('clients.hideAdditionalFields') : t('clients.moreFieldsOptional')}
             </Text>
           </TouchableOpacity>
 
@@ -346,13 +348,13 @@ export function QuickClientModal({
             <>
               {/* Endereço */}
               <View style={styles.inputGroup}>
-                <Text style={[styles.label, { color: colors.text.secondary }]}>Endereço</Text>
+                <Text style={[styles.label, { color: colors.text.secondary }]}>{t('clients.address')}</Text>
                 <TextInput
                   ref={addressRef}
                   style={[styles.input, { borderColor: colors.border.default, color: colors.text.primary, backgroundColor: colors.background.primary }]}
                   value={address}
                   onChangeText={setAddress}
-                  placeholder="Rua, número, complemento"
+                  placeholder={t('clients.placeholders.address')}
                   placeholderTextColor={colors.gray[400]}
                   autoCapitalize="words"
                   returnKeyType="next"
@@ -362,13 +364,13 @@ export function QuickClientModal({
 
               {/* Cidade */}
               <View style={styles.inputGroup}>
-                <Text style={[styles.label, { color: colors.text.secondary }]}>Cidade</Text>
+                <Text style={[styles.label, { color: colors.text.secondary }]}>{t('clients.city')}</Text>
                 <TextInput
                   ref={cityRef}
                   style={[styles.input, { borderColor: colors.border.default, color: colors.text.primary, backgroundColor: colors.background.primary }]}
                   value={city}
                   onChangeText={setCity}
-                  placeholder="Nome da cidade"
+                  placeholder={t('clients.placeholders.city')}
                   placeholderTextColor={colors.gray[400]}
                   autoCapitalize="words"
                   returnKeyType="next"
@@ -378,13 +380,13 @@ export function QuickClientModal({
 
               {/* Observações */}
               <View style={styles.inputGroup}>
-                <Text style={[styles.label, { color: colors.text.secondary }]}>Observações</Text>
+                <Text style={[styles.label, { color: colors.text.secondary }]}>{t('clients.notes')}</Text>
                 <TextInput
                   ref={notesRef}
                   style={[styles.input, styles.textArea, { borderColor: colors.border.default, color: colors.text.primary, backgroundColor: colors.background.primary }]}
                   value={notes}
                   onChangeText={setNotes}
-                  placeholder="Informações adicionais sobre o cliente"
+                  placeholder={t('clients.placeholders.notes')}
                   placeholderTextColor={colors.gray[400]}
                   multiline
                   numberOfLines={3}
@@ -398,7 +400,7 @@ export function QuickClientModal({
           <View style={[styles.offlineInfo, { backgroundColor: colors.background.secondary }]}>
             <Ionicons name="cloud-offline-outline" size={16} color={colors.text.tertiary} />
             <Text style={[styles.offlineInfoText, { color: colors.text.secondary }]}>
-              Cliente será salvo localmente e sincronizado quando houver conexão
+              {t('clients.offlineSaveMessage')}
             </Text>
           </View>
         </ScrollView>

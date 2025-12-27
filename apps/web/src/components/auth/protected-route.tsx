@@ -8,6 +8,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/auth-context';
 import { Spinner } from '@/components/ui';
 
@@ -19,6 +20,7 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+  const t = useTranslations('common');
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -33,7 +35,7 @@ export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
         <div className="min-h-screen flex items-center justify-center bg-background">
           <div className="flex flex-col items-center gap-4">
             <Spinner size="lg" />
-            <p className="text-gray-500">Carregando...</p>
+            <p className="text-gray-500">{t('loading')}</p>
           </div>
         </div>
       )

@@ -241,7 +241,7 @@ function ClientsListContent() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-medium text-primary">
-                    {selectedClients.size} {selectedClients.size === 1 ? 'cliente selecionado' : 'clientes selecionados'}
+                    {t('clientsSelected', { count: selectedClients.size })}
                   </span>
                   <Button
                     variant="ghost"
@@ -250,7 +250,7 @@ function ClientsListContent() {
                     className="text-gray-600"
                   >
                     <X className="h-4 w-4 mr-1" />
-                    Limpar seleção
+                    {t('clearSelection')}
                   </Button>
                 </div>
                 <Button
@@ -259,7 +259,7 @@ function ClientsListContent() {
                   onClick={() => setShowDeleteConfirm(true)}
                   leftIcon={<Trash2 className="h-4 w-4" />}
                 >
-                  Excluir selecionados
+                  {t('deleteSelected')}
                 </Button>
               </div>
             </CardContent>
@@ -473,10 +473,10 @@ function ClientsListContent() {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">
-                      Excluir {selectedClients.size} {selectedClients.size === 1 ? 'cliente' : 'clientes'}?
+                      {t('deleteClientsTitle', { count: selectedClients.size })}
                     </h3>
                     <p className="text-sm text-gray-500">
-                      Esta ação não pode ser desfeita.
+                      {t('deleteClientsWarning')}
                     </p>
                   </div>
                 </div>
@@ -485,10 +485,9 @@ function ClientsListContent() {
                   <div className="flex items-start gap-2">
                     <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
                     <div className="text-sm">
-                      <p className="font-medium">Atenção</p>
+                      <p className="font-medium">{t('attentionLabel')}</p>
                       <p>
-                        Todos os dados associados a estes clientes (orçamentos, OS, cobranças)
-                        permanecerão no sistema, mas ficarão órfãos.
+                        {t('deleteClientsOrphans')}
                       </p>
                     </div>
                   </div>
@@ -500,7 +499,7 @@ function ClientsListContent() {
                     onClick={() => setShowDeleteConfirm(false)}
                     disabled={deleteClients.isPending}
                   >
-                    Cancelar
+                    {tCommon('cancel')}
                   </Button>
                   <Button
                     variant="error"
@@ -508,7 +507,7 @@ function ClientsListContent() {
                     loading={deleteClients.isPending}
                     leftIcon={<Trash2 className="h-4 w-4" />}
                   >
-                    Excluir {selectedClients.size} {selectedClients.size === 1 ? 'cliente' : 'clientes'}
+                    {t('deleteClientsTitle', { count: selectedClients.size })}
                   </Button>
                 </div>
               </CardContent>

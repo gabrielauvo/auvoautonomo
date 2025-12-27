@@ -28,6 +28,7 @@ import { Text, Button, Badge } from '../../../design-system';
 import { useColors, useSpacing } from '../../../design-system/ThemeProvider';
 import { ClientService, CreateClientInput } from '../ClientService';
 import { BillingService, QuotaInfo } from '../../../services/BillingService';
+import { useTranslation } from '../../../i18n';
 
 // =============================================================================
 // TYPES
@@ -149,6 +150,7 @@ export function ImportContactsModal({
 }: ImportContactsModalProps) {
   const colors = useColors();
   const spacing = useSpacing();
+  const { t } = useTranslation();
 
   // State
   const [permissionStatus, setPermissionStatus] = useState<
@@ -212,7 +214,7 @@ export function ImportContactsModal({
         )
         .map((c, index) => ({
           id: c.id ? `${c.id}_${index}` : `contact_${index}_${Date.now()}`,
-          name: c.name || 'Sem nome',
+          name: c.name || t('clients.import.noName'),
           phone: c.phoneNumbers?.[0]?.number || null,
           email: c.emails?.[0]?.email || null,
           address: c.addresses?.[0]
@@ -231,7 +233,7 @@ export function ImportContactsModal({
       setContacts(validContacts);
     } catch (error) {
       console.error('[ImportContacts] Error loading contacts:', error);
-      Alert.alert('Erro', 'Não foi possível carregar os contatos.');
+      Alert.alert(t('common.error'), t('clients.import.loadError'));
     } finally {
       setIsLoading(false);
     }
@@ -280,8 +282,8 @@ export function ImportContactsModal({
         const currentSelected = prev.filter(c => c.selected).length;
         if (maxSelectable !== Infinity && currentSelected >= maxSelectable) {
           Alert.alert(
-            'Limite Atingido',
-            `Você só pode importar mais ${maxSelectable} cliente${maxSelectable !== 1 ? 's' : ''} no plano gratuito.\n\nFaça upgrade para o plano PRO para clientes ilimitados.`
+            t('clients.import.limitReached'),
+            t('clients.import.limitReachedMessage', { count: maxSelectable })
           );
           return prev;
         }
@@ -289,7 +291,7 @@ export function ImportContactsModal({
 
       return prev.map((c) => (c.id === id ? { ...c, selected: !c.selected } : c));
     });
-  }, [maxSelectable]);
+  }, [maxSelectable, t]);
 
   // Select/deselect all
   const toggleAll = useCallback(() => {
@@ -303,8 +305,8 @@ export function ImportContactsModal({
       // Select all (respecting quota)
       if (maxSelectable !== Infinity && contacts.length > maxSelectable) {
         Alert.alert(
-          'Limite do Plano',
-          `No plano gratuito, você pode ter até ${quota?.max || 10} clientes.\nVocê pode importar mais ${maxSelectable} cliente${maxSelectable !== 1 ? 's' : ''}.\n\nOs primeiros ${maxSelectable} contatos foram selecionados.`,
+          t('clients.import.planLimit'),
+          t('clients.import.planLimitMessage', { max: quota?.max || 10, remaining: maxSelectable }),
           [{ text: 'OK' }]
         );
         // Select only up to maxSelectable
@@ -313,7 +315,7 @@ export function ImportContactsModal({
         setContacts((prev) => prev.map((c) => ({ ...c, selected: true })));
       }
     }
-  }, [contacts, maxSelectable, quota?.max]);
+  }, [contacts, maxSelectable, quota?.max, t]);
 
   // Filter contacts by search
   const filteredContacts = useMemo(() => {
@@ -339,17 +341,17 @@ export function ImportContactsModal({
     const selected = contacts.filter((c) => c.selected);
 
     if (selected.length === 0) {
-      Alert.alert('Atenção', 'Selecione pelo menos um contato para importar.');
+      Alert.alert(t('clients.import.attention'), t('clients.import.selectAtLeastOne'));
       return;
     }
 
     Alert.alert(
-      'Importar Contatos',
-      `Deseja importar ${selected.length} contato${selected.length > 1 ? 's' : ''} como cliente${selected.length > 1 ? 's' : ''}?`,
+      t('clients.import.title'),
+      t('clients.import.confirmMessage', { count: selected.length }),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Importar',
+          text: t('common.import'),
           onPress: async () => {
             setIsImporting(true);
             let importedCount = 0;
@@ -379,13 +381,13 @@ export function ImportContactsModal({
 
             if (errorCount > 0) {
               Alert.alert(
-                'Importação Parcial',
-                `${importedCount} cliente${importedCount > 1 ? 's' : ''} importado${importedCount > 1 ? 's' : ''} com sucesso.\n${errorCount} falha${errorCount > 1 ? 's' : ''}.`
+                t('clients.import.partialImport'),
+                t('clients.import.partialImportMessage', { imported: importedCount, errors: errorCount })
               );
             } else {
               Alert.alert(
-                'Sucesso',
-                `${importedCount} cliente${importedCount > 1 ? 's' : ''} importado${importedCount > 1 ? 's' : ''} com sucesso!`
+                t('common.success'),
+                t('clients.import.successMessage', { count: importedCount })
               );
             }
 
@@ -395,7 +397,7 @@ export function ImportContactsModal({
         },
       ]
     );
-  }, [contacts, onImportComplete, onClose]);
+  }, [contacts, onImportComplete, onClose, t]);
 
   // Render permission denied
   const renderPermissionDenied = () => (
@@ -405,22 +407,21 @@ export function ImportContactsModal({
         variant="h5"
         style={{ textAlign: 'center', marginTop: spacing[4] }}
       >
-        Acesso Negado
+        {t('clients.import.accessDenied')}
       </Text>
       <Text
         variant="body"
         color="secondary"
         style={{ textAlign: 'center', marginTop: spacing[2] }}
       >
-        Para importar contatos, é necessário permitir o acesso aos contatos nas
-        configurações do dispositivo.
+        {t('clients.import.accessDeniedMessage')}
       </Text>
       <Button
         variant="primary"
         onPress={onClose}
         style={{ marginTop: spacing[6] }}
       >
-        Fechar
+        {t('common.close')}
       </Button>
     </View>
   );
@@ -430,7 +431,7 @@ export function ImportContactsModal({
     <View style={styles.emptyContainer}>
       <ActivityIndicator size="large" color={colors.primary[500]} />
       <Text variant="body" color="secondary" style={{ marginTop: spacing[4] }}>
-        Carregando contatos...
+        {t('clients.import.loading')}
       </Text>
     </View>
   );
@@ -444,7 +445,7 @@ export function ImportContactsModal({
         color="secondary"
         style={{ textAlign: 'center', marginTop: spacing[4] }}
       >
-        Nenhum contato encontrado com telefone ou email.
+        {t('clients.import.noContacts')}
       </Text>
     </View>
   );
@@ -457,28 +458,28 @@ export function ImportContactsModal({
         variant="h5"
         style={{ textAlign: 'center', marginTop: spacing[4] }}
       >
-        Limite Atingido
+        {t('clients.import.limitReached')}
       </Text>
       <Text
         variant="body"
         color="secondary"
         style={{ textAlign: 'center', marginTop: spacing[2], paddingHorizontal: spacing[4] }}
       >
-        Você atingiu o limite de {quota?.max || 10} clientes do plano gratuito.
+        {t('clients.import.quotaReachedMessage', { max: quota?.max || 10 })}
       </Text>
       <Text
         variant="body"
         color="secondary"
         style={{ textAlign: 'center', marginTop: spacing[2], paddingHorizontal: spacing[4] }}
       >
-        Faça upgrade para o plano PRO para cadastrar clientes ilimitados.
+        {t('clients.import.upgradeMessage')}
       </Text>
       <Button
         variant="primary"
         onPress={onClose}
         style={{ marginTop: spacing[6] }}
       >
-        Entendi
+        {t('clients.import.understood')}
       </Button>
     </View>
   );
@@ -500,10 +501,10 @@ export function ImportContactsModal({
         <Ionicons name="information-circle" size={20} color={colors.warning[600]} />
         <View style={styles.quotaBannerText}>
           <Text variant="bodySmall" weight="medium" style={{ color: colors.warning[800] }}>
-            Plano Gratuito
+            {t('clients.import.freePlan')}
           </Text>
           <Text variant="caption" style={{ color: colors.warning[700] }}>
-            Você pode importar mais {maxSelectable} cliente{maxSelectable !== 1 ? 's' : ''} ({quota.current}/{quota.max} usado{quota.current !== 1 ? 's' : ''})
+            {t('clients.import.quotaBannerMessage', { remaining: maxSelectable, current: quota.current, max: quota.max })}
           </Text>
         </View>
       </View>
@@ -541,7 +542,7 @@ export function ImportContactsModal({
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <Ionicons name="close" size={24} color={colors.text.primary} />
           </TouchableOpacity>
-          <Text variant="h5">Importar Contatos</Text>
+          <Text variant="h5">{t('clients.import.title')}</Text>
           <View style={styles.headerRight}>
             {selectedCount > 0 && (
               <Badge variant="primary" size="sm">
@@ -583,7 +584,7 @@ export function ImportContactsModal({
                 />
                 <TextInput
                   style={[styles.searchTextInput, { color: colors.text.primary }]}
-                  placeholder="Buscar contato..."
+                  placeholder={t('clients.import.searchPlaceholder')}
                   placeholderTextColor={colors.text.tertiary}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
@@ -637,13 +638,12 @@ export function ImportContactsModal({
                 </View>
                 <Text variant="body" style={{ marginLeft: spacing[3] }}>
                   {selectedCount === contacts.length && contacts.length > 0
-                    ? 'Desmarcar todos'
-                    : 'Selecionar todos'}
+                    ? t('clients.import.deselectAll')
+                    : t('clients.import.selectAll')}
                 </Text>
               </TouchableOpacity>
               <Text variant="caption" color="secondary">
-                {filteredContacts.length} contato
-                {filteredContacts.length !== 1 ? 's' : ''}
+                {t('clients.import.contactCount', { count: filteredContacts.length })}
               </Text>
             </View>
 
@@ -674,8 +674,8 @@ export function ImportContactsModal({
                 style={{ flex: 1 }}
               >
                 {isImporting
-                  ? 'Importando...'
-                  : `Importar ${selectedCount > 0 ? `(${selectedCount})` : ''}`}
+                  ? t('clients.import.importing')
+                  : `${t('common.import')} ${selectedCount > 0 ? `(${selectedCount})` : ''}`}
               </Button>
             </View>
           </>

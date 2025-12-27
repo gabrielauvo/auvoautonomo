@@ -8,6 +8,7 @@
  */
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Card,
   CardContent,
@@ -533,6 +534,8 @@ export function ChecklistResponseForm({
   onComplete,
   readOnly = false,
 }: ChecklistResponseFormProps) {
+  const t = useTranslations('checklists');
+  const tCommon = useTranslations('common');
   const { data: instance, isLoading, error } = useChecklistInstance(instanceId);
   const submitAnswerMutation = useSubmitChecklistAnswer();
   const submitBatchMutation = useSubmitChecklistAnswersBatch();
@@ -808,7 +811,7 @@ export function ChecklistResponseForm({
         <CardContent className="py-8">
           <div className="flex items-center justify-center gap-2 text-gray-500">
             <Clock className="h-5 w-5 animate-spin" />
-            <span>Carregando checklist...</span>
+            <span>{tCommon('loading')}</span>
           </div>
         </CardContent>
       </Card>

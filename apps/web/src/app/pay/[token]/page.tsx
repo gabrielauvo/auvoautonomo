@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   Card,
   CardContent,
@@ -97,6 +98,7 @@ function isToday(dateString: string): boolean {
 export default function PublicPaymentPage() {
   const params = useParams();
   const token = params.token as string;
+  const t = useTranslations('common');
 
   const [payment, setPayment] = useState<PaymentData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -200,7 +202,7 @@ export default function PublicPaymentPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-          <p className="mt-2 text-gray-600">Carregando...</p>
+          <p className="mt-2 text-gray-600">{t('loading')}</p>
         </div>
       </div>
     );

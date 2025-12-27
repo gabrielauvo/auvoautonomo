@@ -16,6 +16,7 @@ import { ClientService } from '../../src/modules/clients/ClientService';
 import { useSyncStatus } from '../../src/sync';
 import { Client } from '../../src/db/schema';
 import { ImportContactsModal } from '../../src/modules/clients/components/ImportContactsModal';
+import { useTranslation } from '../../src/i18n';
 
 // =============================================================================
 // TYPES
@@ -38,6 +39,7 @@ const ClientCard = React.memo(function ClientCard({
 }) {
   const colors = useColors();
   const spacing = useSpacing();
+  const { t } = useTranslation();
 
   const initials = useMemo(() => {
     const parts = client.name.split(' ');
@@ -62,7 +64,7 @@ const ClientCard = React.memo(function ClientCard({
               </Text>
               {client.hasPending && (
                 <Badge variant="warning" size="sm">
-                  Pendente
+                  {t('common.pending')}
                 </Badge>
               )}
             </View>
@@ -92,6 +94,7 @@ export default function ClientesScreen() {
   const colors = useColors();
   const spacing = useSpacing();
   const { isSyncing, isOnline, sync, pendingCount } = useSyncStatus();
+  const { t } = useTranslation();
 
   // State
   const [clients, setClients] = useState<ClientListItem[]>([]);
@@ -236,7 +239,7 @@ export default function ClientesScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
-      <AppHeader title="Clientes" />
+      <AppHeader title={t('clients.title')} />
 
       {/* Header with search and sync status */}
       <View style={[styles.header, { paddingHorizontal: spacing[4], paddingVertical: spacing[3] }]}>
@@ -253,7 +256,7 @@ export default function ClientesScreen() {
           <Ionicons name="search" size={20} color={colors.text.tertiary} />
           <TextInput
             style={[styles.searchInput, { color: colors.text.primary }]}
-            placeholder="Buscar clientes..."
+            placeholder={t('clients.searchPlaceholder')}
             placeholderTextColor={colors.text.tertiary}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -276,12 +279,12 @@ export default function ClientesScreen() {
               ]}
             />
             <Text variant="caption" color="secondary">
-              {isSyncing ? 'Sincronizando...' : isOnline ? 'Online' : 'Offline'}
+              {isSyncing ? t('common.syncing') : isOnline ? t('common.online') : t('common.offline')}
             </Text>
           </View>
           {pendingCount > 0 && (
             <Badge variant="warning" size="sm">
-              {pendingCount} pendente{pendingCount > 1 ? 's' : ''}
+              {t('clients.pendingCount', { count: pendingCount })}
             </Badge>
           )}
         </View>
@@ -299,7 +302,7 @@ export default function ClientesScreen() {
         isLoadingMore={isLoadingMore}
         hasMore={hasMore && !searchQuery}
         estimatedItemSize={80}
-        emptyText={searchQuery ? 'Nenhum cliente encontrado' : 'Nenhum cliente cadastrado'}
+        emptyText={searchQuery ? t('clients.noClientsFound') : t('clients.noClients')}
         contentContainerStyle={{ paddingTop: spacing[2], paddingBottom: spacing[20] }}
       />
 
@@ -307,8 +310,7 @@ export default function ClientesScreen() {
       {!isLoading && total > 0 && (
         <View style={[styles.footer, { backgroundColor: colors.background.secondary }]}>
           <Text variant="caption" color="secondary">
-            {total} cliente{total > 1 ? 's' : ''} {searchQuery ? 'encontrado' : 'no total'}
-            {searchQuery ? `s para "${searchQuery}"` : ''}
+            {t('clients.totalCount', { count: total })}
           </Text>
         </View>
       )}

@@ -8,6 +8,16 @@ jest.mock('next/navigation', () => ({
   }),
 }));
 
+// Mock next-intl
+jest.mock('next-intl', () => ({
+  useTranslations: () => (key: string) => {
+    const translations: Record<string, string> = {
+      loading: 'Carregando...',
+    };
+    return translations[key] || key;
+  },
+}));
+
 // Mock js-cookie
 jest.mock('js-cookie', () => ({
   get: jest.fn(() => undefined), // No token = unauthenticated

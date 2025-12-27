@@ -10,6 +10,7 @@ import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../../../../design-system';
 import { useColors } from '../../../../design-system/ThemeProvider';
+import { useTranslation } from '../../../../i18n';
 
 // =============================================================================
 // TYPES
@@ -33,6 +34,7 @@ export function RatingQuestion({
   readOnly = false,
 }: RatingQuestionProps) {
   const colors = useColors();
+  const { t } = useTranslation();
 
   const handleSelect = useCallback(
     (rating: number) => {
@@ -70,7 +72,7 @@ export function RatingQuestion({
 
       {/* Label de valor */}
       <Text variant="caption" color="secondary" style={styles.label}>
-        {value ? `${value} de ${maxRating}` : 'Nenhuma avaliacao'}
+        {value ? t('checklists.ratingOf', { value, max: maxRating }) : t('checklists.noRating')}
       </Text>
     </View>
   );

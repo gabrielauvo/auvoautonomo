@@ -2,11 +2,13 @@
 
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/auth-context';
 import { Spinner } from '@/components/ui';
 
 export default function Home() {
   const router = useRouter();
+  const t = useTranslations('common');
   const { isAuthenticated, isLoading } = useAuth();
   const hasRedirectedRef = useRef(false);
 
@@ -25,7 +27,7 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center">
       <Spinner size="lg" />
-      <p className="mt-4 text-gray-500">Carregando...</p>
+      <p className="mt-4 text-gray-500">{t('loading')}</p>
     </main>
   );
 }

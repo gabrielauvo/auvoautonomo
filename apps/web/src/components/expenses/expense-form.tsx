@@ -8,6 +8,7 @@
 
 import { useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   Card,
   CardHeader,
@@ -75,6 +76,7 @@ const paymentMethodOptions: { value: ExpensePaymentMethod; label: string }[] = [
 export function ExpenseForm({ expense, onSuccess, onCancel }: ExpenseFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const t = useTranslations('common');
   const { billing } = useAuth();
   const createExpense = useCreateExpense();
   const updateExpense = useUpdateExpense();
@@ -409,7 +411,7 @@ export function ExpenseForm({ expense, onSuccess, onCancel }: ExpenseFormProps) 
                 {workOrdersLoading ? (
                   <div className="flex items-center gap-2 h-10 px-3 border rounded-md bg-gray-50">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-sm text-gray-500">Carregando...</span>
+                    <span className="text-sm text-gray-500">{t('loading')}</span>
                   </div>
                 ) : (
                   <Select
@@ -440,7 +442,7 @@ export function ExpenseForm({ expense, onSuccess, onCancel }: ExpenseFormProps) 
                   {isDataLoading ? (
                     <div className="flex items-center gap-2 h-10 px-3 border rounded-md bg-gray-50">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      <span className="text-sm text-gray-500">Carregando...</span>
+                      <span className="text-sm text-gray-500">{t('loading')}</span>
                     </div>
                   ) : (
                     <Select
@@ -462,7 +464,7 @@ export function ExpenseForm({ expense, onSuccess, onCancel }: ExpenseFormProps) 
                   {categoriesLoading ? (
                     <div className="flex items-center gap-2 h-10 px-3 border rounded-md bg-gray-50">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      <span className="text-sm text-gray-500">Carregando...</span>
+                      <span className="text-sm text-gray-500">{t('loading')}</span>
                     </div>
                   ) : showNewCategoryInput ? (
                     <div className="flex gap-2">

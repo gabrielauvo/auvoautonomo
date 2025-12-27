@@ -23,6 +23,7 @@ import { Text, Card, Button } from '../../src/design-system';
 import { useColors, useSpacing } from '../../src/design-system/ThemeProvider';
 import { AuthService } from '../../src/services/AuthService';
 import { useAuth } from '../../src/services/AuthProvider';
+import { useTranslation } from '../../src/i18n';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -30,6 +31,7 @@ export default function DadosPessoaisScreen() {
   const colors = useColors();
   const spacing = useSpacing();
   const { updateUser } = useAuth();
+  const { t } = useTranslation();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -70,7 +72,7 @@ export default function DadosPessoaisScreen() {
     }
 
     if (!name.trim()) {
-      Alert.alert('Erro', 'O nome é obrigatório');
+      Alert.alert(t('common.error'), t('profile.personalData.nameRequired'));
       return;
     }
 
@@ -92,16 +94,16 @@ export default function DadosPessoaisScreen() {
         // Update local auth context with new data
         await updateUser({ name, phone });
 
-        Alert.alert('Sucesso', 'Dados atualizados com sucesso', [
+        Alert.alert(t('common.success'), t('profile.personalData.updateSuccess'), [
           { text: 'OK', onPress: () => router.back() },
         ]);
       } else {
         const error = await response.json();
-        Alert.alert('Erro', error.message || 'Falha ao atualizar dados');
+        Alert.alert(t('common.error'), error.message || t('profile.personalData.updateError'));
       }
     } catch (error) {
       console.error('[DadosPessoais] Error saving:', error);
-      Alert.alert('Erro', 'Falha ao salvar dados');
+      Alert.alert(t('common.error'), t('profile.personalData.saveError'));
     } finally {
       setIsSaving(false);
     }

@@ -55,6 +55,7 @@ import {
 
 export default function InventoryPage() {
   const { t } = useTranslations('inventory');
+  const { t: tCommon } = useTranslations('common');
   const queryClient = useQueryClient();
 
   // State
@@ -137,7 +138,7 @@ export default function InventoryPage() {
               <div className="text-center">
                 <Package className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Controle de Estoque
+                  {t('inventoryControl')}
                 </h3>
                 <p className="text-gray-500 max-w-md mx-auto">
                   {t('settings.featureDisabled')}
@@ -160,14 +161,14 @@ export default function InventoryPage() {
               <div className="text-center">
                 <Package className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Controle de Estoque Desativado
+                  {t('inventoryDisabled')}
                 </h3>
                 <p className="text-gray-500 max-w-md mx-auto mb-6">
-                  Ative o controle de estoque nas configuracoes para comecar a rastrear seus produtos.
+                  {t('inventoryDisabledDescription')}
                 </p>
                 <Link href="/settings/inventory">
                   <Button leftIcon={<Settings className="h-4 w-4" />}>
-                    Configurar Estoque
+                    {t('configureInventory')}
                   </Button>
                 </Link>
               </div>
@@ -207,7 +208,7 @@ export default function InventoryPage() {
           </div>
           <Link href="/settings/inventory">
             <Button variant="outline" leftIcon={<Settings className="h-4 w-4" />}>
-              Configuracoes
+              {t('configurations')}
             </Button>
           </Link>
         </div>
@@ -279,7 +280,7 @@ export default function InventoryPage() {
             <div className="relative w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Buscar produto..."
+                placeholder={t('searchProduct')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -290,7 +291,7 @@ export default function InventoryPage() {
         <CardContent>
           {filteredProducts.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              {searchTerm ? 'Nenhum produto encontrado' : t('balances.noProducts')}
+              {searchTerm ? t('noProductFound') : t('balances.noProducts')}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -368,7 +369,7 @@ export default function InventoryPage() {
               </CardTitle>
               <Link href="/inventory/movements">
                 <Button variant="ghost" size="sm">
-                  Ver todas
+                  {t('dashboard.viewAll')}
                 </Button>
               </Link>
             </div>
@@ -403,7 +404,7 @@ export default function InventoryPage() {
                       {mov.quantity.toFixed(mov.quantity % 1 === 0 ? 0 : 2)}
                     </p>
                     <p className="text-xs text-gray-500">
-                      Saldo: {mov.balanceAfter.toFixed(0)}
+                      {t('balanceAfter')}: {mov.balanceAfter.toFixed(0)}
                     </p>
                   </div>
                 </div>
@@ -499,14 +500,14 @@ export default function InventoryPage() {
                   resetAdjustForm();
                 }}
               >
-                Cancelar
+                {tCommon('cancel')}
               </Button>
               <Button
                 onClick={handleSubmitAdjust}
                 loading={createMovement.isPending}
                 disabled={!adjustQuantity || parseFloat(adjustQuantity) <= 0}
               >
-                Confirmar
+                {tCommon('confirm')}
               </Button>
             </div>
           </div>

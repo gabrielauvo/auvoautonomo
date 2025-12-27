@@ -8,6 +8,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   Card,
   CardContent,
@@ -726,6 +727,7 @@ function ImageLightbox({
 export default function PublicQuotePage() {
   const params = useParams();
   const shareKey = params.shareKey as string;
+  const t = useTranslations('common');
 
   const [quote, setQuote] = useState<QuoteData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -894,7 +896,7 @@ export default function PublicQuotePage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-gray-600">Carregando orçamento...</p>
+          <p className="text-gray-600">{t('loading')}</p>
         </div>
       </div>
     );

@@ -84,8 +84,12 @@ function getAttachmentUrl(attachment: Attachment): string {
     // Se é URL relativa, adicionar baseUrl
     return `${baseUrl}${attachment.publicUrl}`;
   }
-  // Senão, construir URL a partir do storagePath
-  return `${baseUrl}/uploads/${attachment.storagePath}`;
+  // Se tem storagePath, construir URL a partir dele
+  if (attachment.storagePath) {
+    return `${baseUrl}/uploads/${attachment.storagePath}`;
+  }
+  // Fallback: buscar via endpoint de download pelo ID
+  return `${baseUrl}/attachments/${attachment.id}/download`;
 }
 
 // Card de anexo
@@ -113,7 +117,13 @@ function AttachmentCard({
   };
 
   const handleImageError = () => {
-    console.warn(`[AttachmentsSection] Failed to load image: ${attachment.publicUrl || attachment.storagePath}`);
+    const url = getAttachmentUrl(attachment);
+    console.warn(`[AttachmentsSection] Failed to load image:`, {
+      id: attachment.id,
+      publicUrl: attachment.publicUrl,
+      storagePath: attachment.storagePath,
+      computedUrl: url,
+    });
     setImageError(true);
   };
 

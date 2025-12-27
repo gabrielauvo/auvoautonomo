@@ -290,20 +290,34 @@ export function WorkOrderForm({ workOrder, onSuccess, onCancel, preselectedClien
       setSelectedClient(quote.client as unknown as Client);
       setTitle(`OS - ${quote.client?.name || 'Cliente'}`);
 
-      // Converter itens do orçamento
+      // Converter itens do orçamento - garantir valores válidos
       if (quote.items) {
         setItems(
-          quote.items.map((item) => ({
-            id: `temp-${item.id}`,
-            name: item.name,
-            type: item.type,
-            unit: item.unit,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            discountValue: item.discountValue,
-            totalPrice: item.totalPrice,
-            itemId: item.productServiceItemId,
-          }))
+          quote.items.map((item) => {
+            // Garantir que quantity seja pelo menos 0.001
+            const quantity = Number(item.quantity) || 0;
+            const safeQuantity = quantity > 0 ? quantity : 1;
+
+            // Garantir que unitPrice seja >= 0
+            const unitPrice = Number(item.unitPrice) || 0;
+            const safeUnitPrice = unitPrice >= 0 ? unitPrice : 0;
+
+            // Garantir que discountValue seja >= 0
+            const discountValue = Number(item.discountValue) || 0;
+            const safeDiscountValue = discountValue >= 0 ? discountValue : 0;
+
+            return {
+              id: `temp-${item.id}`,
+              name: item.name || 'Item',
+              type: item.type || 'SERVICE',
+              unit: item.unit || 'un',
+              quantity: safeQuantity,
+              unitPrice: safeUnitPrice,
+              discountValue: safeDiscountValue,
+              totalPrice: (safeQuantity * safeUnitPrice) - safeDiscountValue,
+              itemId: item.productServiceItemId,
+            };
+          })
         );
       }
     }
@@ -495,18 +509,28 @@ export function WorkOrderForm({ workOrder, onSuccess, onCancel, preselectedClien
         };
         result = await createWorkOrder.mutateAsync(createData);
 
-        // Adicionar itens após criar
+        // Adicionar itens após criar - garantir valores válidos
         for (const item of items) {
+          // Validar e sanitizar valores antes de enviar
+          const quantity = Number(item.quantity) || 0;
+          const safeQuantity = quantity > 0 ? quantity : 1;
+
+          const unitPrice = Number(item.unitPrice) || 0;
+          const safeUnitPrice = unitPrice >= 0 ? unitPrice : 0;
+
+          const discountValue = Number(item.discountValue) || 0;
+          const safeDiscountValue = discountValue >= 0 ? discountValue : 0;
+
           await addItem.mutateAsync({
             workOrderId: result.id,
             data: {
               itemId: item.itemId || undefined,
-              name: item.itemId ? undefined : item.name,
-              type: item.itemId ? undefined : item.type,
-              unit: item.itemId ? undefined : item.unit,
-              quantity: item.quantity,
-              unitPrice: item.itemId ? undefined : item.unitPrice,
-              discountValue: item.discountValue || undefined,
+              name: item.itemId ? undefined : (item.name || 'Item'),
+              type: item.itemId ? undefined : (item.type || 'SERVICE'),
+              unit: item.itemId ? undefined : (item.unit || 'un'),
+              quantity: safeQuantity,
+              unitPrice: item.itemId ? undefined : safeUnitPrice,
+              discountValue: safeDiscountValue > 0 ? safeDiscountValue : undefined,
             },
           });
         }

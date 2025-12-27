@@ -704,7 +704,7 @@ export const es: Translations = {
   },
 
   signature: {
-    title: 'Firma Digital',
+    title: 'Firma del Cliente',
     subtitle: 'Firma en el campo de abajo',
     signerName: 'Nombre del Firmante',
     signerDocument: 'Documento (DNI)',
@@ -716,6 +716,30 @@ export const es: Translations = {
     required: 'Firma obligatoria',
     pleaseSign: 'Por favor, firma en el campo de arriba',
     signatureCollected: 'Firma recolectada',
+    // Nuevas claves para SignaturePad
+    signerNameLabel: 'Nombre Completo',
+    enterFullName: 'Ingresa el nombre completo',
+    documentLabel: 'Documento',
+    optional: '(opcional)',
+    enterDocument: 'Ingresa el documento (DNI/NIF)',
+    roleLabel: 'Cargo',
+    signatureLabel: 'Firma',
+    signHere: 'Firma aqui',
+    clearSignature: 'Borrar firma',
+    confirmSignature: 'Confirmar Firma',
+    nameRequired: 'El nombre es obligatorio (minimo 2 caracteres)',
+    documentRequired: 'El documento es obligatorio',
+    signatureRequired: 'Es necesario dibujar la firma',
+    discardSignatureTitle: 'Descartar firma?',
+    discardSignatureMessage: 'Tienes una firma en progreso. Realmente quieres salir?',
+    discard: 'Descartar',
+    // Cargos
+    roles: {
+      client: 'Cliente',
+      technician: 'Tecnico',
+      responsible: 'Responsable',
+      witness: 'Testigo',
+    },
   },
 
   sync: {

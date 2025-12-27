@@ -311,6 +311,7 @@ export const ptBR = {
     noClients: 'Nenhum cliente cadastrado',
     noClientsFound: 'Nenhum cliente encontrado',
     totalCount: '{count} cliente(s)',
+    pendingCount: '{count} pendente(s)',
     name: 'Nome',
     email: 'Email',
     phone: 'Telefone',
@@ -703,7 +704,7 @@ export const ptBR = {
   },
 
   signature: {
-    title: 'Assinatura Digital',
+    title: 'Assinatura do Cliente',
     subtitle: 'Assine no campo abaixo',
     signerName: 'Nome do Assinante',
     signerDocument: 'Documento (CPF/CNPJ)',
@@ -715,6 +716,30 @@ export const ptBR = {
     required: 'Assinatura obrigatoria',
     pleaseSign: 'Por favor, assine no campo acima',
     signatureCollected: 'Assinatura coletada',
+    // Novas chaves para SignaturePad
+    signerNameLabel: 'Nome Completo',
+    enterFullName: 'Digite o nome completo',
+    documentLabel: 'Documento',
+    optional: '(opcional)',
+    enterDocument: 'Digite o documento (CPF/CNPJ)',
+    roleLabel: 'Funcao',
+    signatureLabel: 'Assinatura',
+    signHere: 'Assine aqui',
+    clearSignature: 'Limpar assinatura',
+    confirmSignature: 'Confirmar Assinatura',
+    nameRequired: 'Nome e obrigatorio (minimo 2 caracteres)',
+    documentRequired: 'Documento e obrigatorio',
+    signatureRequired: 'E necessario desenhar a assinatura',
+    discardSignatureTitle: 'Descartar assinatura?',
+    discardSignatureMessage: 'Voce tem uma assinatura em andamento. Deseja realmente sair?',
+    discard: 'Descartar',
+    // Roles/Funcoes
+    roles: {
+      client: 'Cliente',
+      technician: 'Tecnico',
+      responsible: 'Responsavel',
+      witness: 'Testemunha',
+    },
   },
 
   sync: {

@@ -704,7 +704,7 @@ export const enUS: Translations = {
   },
 
   signature: {
-    title: 'Digital Signature',
+    title: 'Client Signature',
     subtitle: 'Sign in the field below',
     signerName: 'Signer Name',
     signerDocument: 'Document (ID)',
@@ -716,6 +716,30 @@ export const enUS: Translations = {
     required: 'Signature required',
     pleaseSign: 'Please sign in the field above',
     signatureCollected: 'Signature collected',
+    // New keys for SignaturePad
+    signerNameLabel: 'Full Name',
+    enterFullName: 'Enter full name',
+    documentLabel: 'Document',
+    optional: '(optional)',
+    enterDocument: 'Enter document (ID/Tax ID)',
+    roleLabel: 'Role',
+    signatureLabel: 'Signature',
+    signHere: 'Sign here',
+    clearSignature: 'Clear signature',
+    confirmSignature: 'Confirm Signature',
+    nameRequired: 'Name is required (minimum 2 characters)',
+    documentRequired: 'Document is required',
+    signatureRequired: 'Signature is required',
+    discardSignatureTitle: 'Discard signature?',
+    discardSignatureMessage: 'You have a signature in progress. Do you really want to exit?',
+    discard: 'Discard',
+    // Roles
+    roles: {
+      client: 'Client',
+      technician: 'Technician',
+      responsible: 'Responsible',
+      witness: 'Witness',
+    },
   },
 
   sync: {

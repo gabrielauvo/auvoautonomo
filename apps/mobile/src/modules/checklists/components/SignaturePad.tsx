@@ -27,12 +27,12 @@ import {
   Rect,
 } from 'react-native-svg';
 import {
-  PanGestureHandler,
-  PanGestureHandlerGestureEvent,
+  Gesture,
+  GestureDetector,
   GestureHandlerRootView,
 } from 'react-native-gesture-handler';
 import ViewShot from 'react-native-view-shot';
-import { SIGNER_ROLES, SignerRole, validateSignature } from '../SignatureSyncConfig';
+import { SIGNER_ROLES, SignerRole } from '../SignatureSyncConfig';
 import { useTranslation } from '../../../i18n';
 
 // =============================================================================
@@ -107,50 +107,18 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
   onDrawEnd,
   signHereLabel,
 }) => {
-  const handleGestureStart = useCallback(() => {
-    onDrawStart?.();
-  }, [onDrawStart]);
+  // Referência local para acumular pontos durante o gesto
+  const currentPathRef = useRef<PathData | null>(null);
+  const pathsRef = useRef<PathData[]>(paths);
 
-  const handleGestureEvent = useCallback(
-    (event: PanGestureHandlerGestureEvent) => {
-      const { x, y } = event.nativeEvent;
+  // Manter refs atualizadas
+  useEffect(() => {
+    pathsRef.current = paths;
+  }, [paths]);
 
-      if (x < 0 || x > width || y < 0 || y > height) {
-        // Out of bounds - finish current path
-        if (currentPath && currentPath.points.length > 0) {
-          onPathsChange([...paths, currentPath]);
-          onCurrentPathChange(null);
-        }
-        return;
-      }
-
-      const point: Point = { x, y };
-
-      if (!currentPath) {
-        // Start new path
-        onCurrentPathChange({
-          points: [point],
-          color: STROKE_COLOR,
-          strokeWidth: STROKE_WIDTH,
-        });
-      } else {
-        // Continue path
-        onCurrentPathChange({
-          ...currentPath,
-          points: [...currentPath.points, point],
-        });
-      }
-    },
-    [currentPath, paths, onPathsChange, onCurrentPathChange, width, height]
-  );
-
-  const handleGestureEnd = useCallback(() => {
-    if (currentPath && currentPath.points.length > 0) {
-      onPathsChange([...paths, currentPath]);
-      onCurrentPathChange(null);
-    }
-    onDrawEnd?.();
-  }, [currentPath, paths, onPathsChange, onCurrentPathChange, onDrawEnd]);
+  useEffect(() => {
+    currentPathRef.current = currentPath;
+  }, [currentPath]);
 
   const pathToSvgPath = (pathData: PathData): string => {
     if (pathData.points.length === 0) return '';
@@ -167,15 +135,55 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
     return d;
   };
 
+  // Usar a nova API de Gestos
+  const panGesture = Gesture.Pan()
+    .minDistance(0)
+    .onStart((event) => {
+      onDrawStart?.();
+      const { x, y } = event;
+      if (x >= 0 && x <= width && y >= 0 && y <= height) {
+        const newPath: PathData = {
+          points: [{ x, y }],
+          color: STROKE_COLOR,
+          strokeWidth: STROKE_WIDTH,
+        };
+        currentPathRef.current = newPath;
+        onCurrentPathChange(newPath);
+      }
+    })
+    .onUpdate((event) => {
+      const { x, y } = event;
+      if (x >= 0 && x <= width && y >= 0 && y <= height) {
+        if (currentPathRef.current) {
+          const updatedPath: PathData = {
+            ...currentPathRef.current,
+            points: [...currentPathRef.current.points, { x, y }],
+          };
+          currentPathRef.current = updatedPath;
+          onCurrentPathChange(updatedPath);
+        }
+      }
+    })
+    .onEnd(() => {
+      if (currentPathRef.current && currentPathRef.current.points.length > 0) {
+        onPathsChange([...pathsRef.current, currentPathRef.current]);
+        currentPathRef.current = null;
+        onCurrentPathChange(null);
+      }
+      onDrawEnd?.();
+    })
+    .onFinalize(() => {
+      if (currentPathRef.current && currentPathRef.current.points.length > 0) {
+        onPathsChange([...pathsRef.current, currentPathRef.current]);
+        currentPathRef.current = null;
+        onCurrentPathChange(null);
+      }
+      onDrawEnd?.();
+    });
+
   return (
     <GestureHandlerRootView style={{ width, height }}>
-      <PanGestureHandler
-        onGestureEvent={handleGestureEvent}
-        onBegan={handleGestureStart}
-        onEnded={handleGestureEnd}
-        onCancelled={handleGestureEnd}
-        onFailed={handleGestureEnd}
-      >
+      <GestureDetector gesture={panGesture}>
         <View style={[styles.canvas, { width, height }]}>
           {/* ViewShot para capturar a assinatura como PNG */}
           <ViewShot
@@ -219,7 +227,7 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
           <View style={styles.signLine} />
           <Text style={styles.signLineLabel}>{signHereLabel}</Text>
         </View>
-      </PanGestureHandler>
+      </GestureDetector>
     </GestureHandlerRootView>
   );
 };
@@ -227,6 +235,14 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
 // =============================================================================
 // MAIN COMPONENT
 // =============================================================================
+
+// Mapeamento de roles para chaves de tradução
+const ROLE_TRANSLATION_KEYS: Record<SignerRole, string> = {
+  [SIGNER_ROLES.CLIENT]: 'signature.roles.client',
+  [SIGNER_ROLES.TECHNICIAN]: 'signature.roles.technician',
+  [SIGNER_ROLES.RESPONSIBLE]: 'signature.roles.responsible',
+  [SIGNER_ROLES.WITNESS]: 'signature.roles.witness',
+};
 
 export const SignaturePad: React.FC<SignaturePadProps> = ({
   visible,
@@ -430,7 +446,7 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
                           signerRole === role && styles.roleButtonTextSelected,
                         ]}
                       >
-                        {role}
+                        {t(ROLE_TRANSLATION_KEYS[role])}
                       </Text>
                     </TouchableOpacity>
                   ))}

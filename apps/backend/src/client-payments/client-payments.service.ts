@@ -655,4 +655,76 @@ export class ClientPaymentsService {
       updatedAt: updatedPayment.updatedAt,
     };
   }
+
+  /**
+   * Send payment email to client manually
+   */
+  async sendPaymentEmail(userId: string, paymentId: string) {
+    const payment = await this.prisma.clientPayment.findUnique({
+      where: { id: paymentId, userId },
+      include: {
+        client: true,
+        quote: true,
+        workOrder: true,
+      },
+    });
+
+    if (!payment) {
+      throw new NotFoundException('Payment not found');
+    }
+
+    if (!payment.client.email) {
+      throw new BadRequestException('Client does not have an email address');
+    }
+
+    const billingTypeMap: Record<string, string> = {
+      BOLETO: 'Boleto',
+      PIX: 'PIX',
+      CREDIT_CARD: 'Cartão de Crédito',
+    };
+
+    // Fetch user to get company Pix key info
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        pixKey: true,
+        pixKeyType: true,
+        pixKeyOwnerName: true,
+        pixKeyEnabled: true,
+      },
+    });
+
+    const context: PaymentCreatedContext = {
+      clientName: payment.client.name,
+      clientEmail: payment.client.email || undefined,
+      clientPhone: payment.client.phone || undefined,
+      paymentId: payment.id,
+      value: payment.value.toNumber(),
+      billingType: billingTypeMap[payment.billingType] || payment.billingType,
+      dueDate: new Date(payment.dueDate).toLocaleDateString('pt-BR'),
+      paymentLink: payment.asaasInvoiceUrl || undefined,
+      pixCode: payment.asaasPixCode || undefined,
+      workOrderNumber: payment.workOrder?.id?.substring(0, 8).toUpperCase(),
+      quoteNumber: payment.quote?.id?.substring(0, 8).toUpperCase(),
+      // Include company Pix key if enabled
+      companyPixKey: user?.pixKeyEnabled && user?.pixKey ? user.pixKey : undefined,
+      companyPixKeyType: user?.pixKeyEnabled && user?.pixKeyType ? user.pixKeyType : undefined,
+      companyPixKeyOwnerName: user?.pixKeyEnabled && user?.pixKeyOwnerName ? user.pixKeyOwnerName : undefined,
+    };
+
+    // Send notification
+    await this.notificationsService.sendNotification({
+      userId,
+      clientId: payment.clientId,
+      clientPaymentId: payment.id,
+      quoteId: payment.quoteId || undefined,
+      workOrderId: payment.workOrderId || undefined,
+      type: NotificationType.PAYMENT_CREATED,
+      contextData: context,
+    });
+
+    this.logger.log(`Payment email sent manually for payment ${paymentId}`);
+
+    return { success: true, message: 'Email sent successfully' };
+  }
 }

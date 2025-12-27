@@ -1,0 +1,170 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Template Previews - Auvo Autônomo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      line-height: 1.5;
+    }
+    header {
+      background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+      color: white;
+      padding: 2rem;
+      text-align: center;
+    }
+    header h1 {
+      font-size: 1.75rem;
+      margin-bottom: 0.5rem;
+    }
+    header p {
+      opacity: 0.9;
+      font-size: 0.9rem;
+    }
+    main {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      background: white;
+      border-radius: 8px;
+      padding: 1.25rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .card h3 {
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+      color: #1f2937;
+    }
+    .card a {
+      display: inline-block;
+      color: #7c3aed;
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+    .card a:hover {
+      text-decoration: underline;
+    }
+    .category {
+      margin-bottom: 2rem;
+    }
+    .category h2 {
+      font-size: 1.1rem;
+      color: #6b7280;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #e5e7eb;
+    }
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: #9ca3af;
+      font-size: 0.875rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📧 Email Templates</h1>
+    <p>Auvo Autônomo - Preview dos templates de email</p>
+  </header>
+  <main>
+    <div class="category">
+      <h2>Orçamentos</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>📋 Orçamento Enviado</h3>
+          <a href="quote-sent.html" target="_blank">Visualizar →</a>
+        </div>
+        <div class="card">
+          <h3>✅ Orçamento Aprovado</h3>
+          <a href="quote-approved.html" target="_blank">Visualizar →</a>
+        </div>
+        <div class="card">
+          <h3>🔔 Follow-up de Orçamento</h3>
+          <a href="quote-follow-up.html" target="_blank">Visualizar →</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="category">
+      <h2>Ordens de Serviço</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>📅 OS Criada/Agendada</h3>
+          <a href="work-order-created.html" target="_blank">Visualizar →</a>
+        </div>
+        <div class="card">
+          <h3>🎉 OS Concluída</h3>
+          <a href="work-order-completed.html" target="_blank">Visualizar →</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="category">
+      <h2>Cobranças e Pagamentos</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>💳 Cobrança Criada</h3>
+          <a href="payment-created.html" target="_blank">Visualizar →</a>
+        </div>
+        <div class="card">
+          <h3>✓ Pagamento Confirmado</h3>
+          <a href="payment-confirmed.html" target="_blank">Visualizar →</a>
+        </div>
+        <div class="card">
+          <h3>⚠️ Pagamento em Atraso</h3>
+          <a href="payment-overdue.html" target="_blank">Visualizar →</a>
+        </div>
+        <div class="card">
+          <h3>⏰ Lembrete Pré-Vencimento</h3>
+          <a href="payment-reminder-before.html" target="_blank">Visualizar →</a>
+        </div>
+        <div class="card">
+          <h3>🚨 Lembrete Pós-Vencimento</h3>
+          <a href="payment-reminder-after.html" target="_blank">Visualizar →</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="category">
+      <h2>Autenticação</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>🔐 Redefinir Senha</h3>
+          <a href="password-reset.html" target="_blank">Visualizar →</a>
+        </div>
+        <div class="card">
+          <h3>👋 Boas-vindas</h3>
+          <a href="welcome.html" target="_blank">Visualizar →</a>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer>
+    Gerado em 27/12/2025, 14:07:22
+  </footer>
+</body>
+</html>

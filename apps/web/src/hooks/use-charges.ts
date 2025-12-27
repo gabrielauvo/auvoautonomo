@@ -179,15 +179,22 @@ export function useRegisterManualPayment() {
 }
 
 /**
- * Hook para reenviar email da cobrança
+ * Hook para enviar email da cobrança
  */
-export function useResendChargeEmail() {
+export function useSendChargeEmail() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => chargesService.resendChargeEmail(id),
+    mutationFn: (id: string) => chargesService.sendChargeEmail(id),
     onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ['charge', id] });
       queryClient.invalidateQueries({ queryKey: ['charge', id, 'events'] });
+      queryClient.invalidateQueries({ queryKey: ['charges'] });
     },
   });
 }
+
+/**
+ * @deprecated Use useSendChargeEmail instead
+ */
+export const useResendChargeEmail = useSendChargeEmail;

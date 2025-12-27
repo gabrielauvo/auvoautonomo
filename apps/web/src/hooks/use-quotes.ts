@@ -286,3 +286,18 @@ export function useQuoteAttachments(quoteId: string | undefined) {
     enabled: !!quoteId,
   });
 }
+
+/**
+ * Hook para enviar orçamento por email
+ */
+export function useSendQuoteEmail() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (quoteId: string) => quotesService.sendQuoteEmail(quoteId),
+    onSuccess: (_, quoteId) => {
+      queryClient.invalidateQueries({ queryKey: ['quote', quoteId] });
+      queryClient.invalidateQueries({ queryKey: ['quotes'] });
+    },
+  });
+}

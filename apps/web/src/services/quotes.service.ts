@@ -526,6 +526,18 @@ export async function getQuoteShareLink(quoteId: string): Promise<{ shareKey: st
   }
 }
 
+/**
+ * Envia o orçamento por email para o cliente
+ */
+export async function sendQuoteEmail(quoteId: string): Promise<{ success: boolean; message: string }> {
+  try {
+    const response = await api.post<{ success: boolean; message: string }>(`/quotes/${quoteId}/send-email`);
+    return response.data;
+  } catch (error) {
+    throw new Error(getErrorMessage(error));
+  }
+}
+
 export const quotesService = {
   // Quotes
   listQuotes,
@@ -547,6 +559,8 @@ export const quotesService = {
   createPublicLink,
   getQuoteAttachments,
   getQuoteShareLink,
+  // Email
+  sendQuoteEmail,
   // Helpers
   canEditQuote,
   canSendQuote,

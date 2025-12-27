@@ -18,10 +18,12 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType, QuoteSentContext, QuoteApprovedContext } from '../notifications/notifications.types';
 import { ItemType } from '@prisma/client';
 import { DomainEventsService } from '../domain-events/domain-events.service';
+import { randomBytes } from 'crypto';
 
 @Injectable()
 export class QuotesService {
   private readonly logger = new Logger(QuotesService.name);
+  private readonly frontendUrl: string;
 
   constructor(
     private prisma: PrismaService,
@@ -29,7 +31,37 @@ export class QuotesService {
     private planLimitsService: PlanLimitsService,
     private domainEventsService: DomainEventsService,
     private regionalService: RegionalService,
-  ) {}
+  ) {
+    this.frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+  }
+
+  /**
+   * Ensures a quote has a shareKey, creating one if it doesn't exist.
+   * Returns the public URL for the quote.
+   */
+  private async ensureShareKeyAndGetUrl(quoteId: string): Promise<string> {
+    const quote = await this.prisma.quote.findUnique({
+      where: { id: quoteId },
+      select: { shareKey: true },
+    });
+
+    if (!quote) {
+      return '';
+    }
+
+    let shareKey = quote.shareKey;
+
+    if (!shareKey) {
+      shareKey = randomBytes(16).toString('base64url');
+      await this.prisma.quote.update({
+        where: { id: quoteId },
+        data: { shareKey },
+      });
+      this.logger.log(`Generated shareKey for quote ${quoteId}`);
+    }
+
+    return `${this.frontendUrl}/p/quotes/${shareKey}`;
+  }
 
   async create(userId: string, createQuoteDto: CreateQuoteDto) {
     // Check plan limit before creating
@@ -569,6 +601,9 @@ export class QuotesService {
   ): Promise<void> {
     try {
       if (newStatus === QuoteStatus.SENT) {
+        // Get or create public URL for the quote
+        const quotePublicUrl = await this.ensureShareKeyAndGetUrl(quote.id);
+
         const context: QuoteSentContext = {
           clientName: quote.client.name,
           clientEmail: quote.client.email,
@@ -581,6 +616,7 @@ export class QuotesService {
             quantity: Number(qi.quantity),
             unitPrice: Number(qi.unitPrice),
           })),
+          quotePublicUrl,
         };
 
         await this.notificationsService.sendNotification({
@@ -618,6 +654,69 @@ export class QuotesService {
         `Failed to send quote notification: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
+  }
+
+  /**
+   * Send quote email to client manually
+   */
+  async sendQuoteEmail(userId: string, quoteId: string) {
+    const quote = await this.prisma.quote.findFirst({
+      where: { id: quoteId, userId },
+      include: {
+        client: true,
+        items: true,
+      },
+    });
+
+    if (!quote) {
+      throw new NotFoundException(`Quote with ID ${quoteId} not found`);
+    }
+
+    if (!quote.client.email) {
+      throw new BadRequestException('Client does not have an email address');
+    }
+
+    // Get or create public URL for the quote
+    const quotePublicUrl = await this.ensureShareKeyAndGetUrl(quoteId);
+
+    const context: QuoteSentContext = {
+      clientName: quote.client.name,
+      clientEmail: quote.client.email || undefined,
+      clientPhone: quote.client.phone || undefined,
+      quoteId: quote.id,
+      quoteNumber: quote.id.substring(0, 8).toUpperCase(),
+      totalValue: Number(quote.totalValue),
+      items: quote.items.map((qi: any) => ({
+        name: qi.name,
+        quantity: Number(qi.quantity),
+        unitPrice: Number(qi.unitPrice),
+      })),
+      quotePublicUrl,
+    };
+
+    // Send notification (will use email channel since client has email)
+    await this.notificationsService.sendNotification({
+      userId,
+      clientId: quote.client.id,
+      quoteId: quote.id,
+      type: NotificationType.QUOTE_SENT,
+      contextData: context,
+    });
+
+    // If quote is still DRAFT, mark it as SENT
+    if (quote.status === 'DRAFT') {
+      await this.prisma.quote.update({
+        where: { id: quoteId },
+        data: {
+          status: 'SENT',
+          sentAt: new Date(),
+        },
+      });
+    }
+
+    this.logger.log(`Quote email sent manually for quote ${quoteId}`);
+
+    return { success: true, message: 'Email sent successfully' };
   }
 
   private validateStatusTransition(currentStatus: QuoteStatus, newStatus: QuoteStatus) {

@@ -44,6 +44,7 @@ import {
   Check,
   Tag,
   Receipt,
+  Mail,
 } from 'lucide-react';
 import {
   Button,
@@ -78,6 +79,7 @@ import {
   useCompleteWorkOrder,
   useDeleteWorkOrder,
   useClientTimelineFlow,
+  useSendWorkOrderEmail,
 } from '@/hooks/use-work-orders';
 import {
   WorkOrderStatus,
@@ -368,6 +370,7 @@ export default function WorkOrderDetailsPage() {
   const updateStatus = useUpdateWorkOrderStatus();
   const completeWorkOrder = useCompleteWorkOrder();
   const deleteWorkOrder = useDeleteWorkOrder();
+  const sendEmail = useSendWorkOrderEmail();
 
   // Modal states
   const [showPauseModal, setShowPauseModal] = useState(false);
@@ -379,6 +382,7 @@ export default function WorkOrderDetailsPage() {
   const [isSharing, setIsSharing] = useState(false);
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
   const [publicLinkCopied, setPublicLinkCopied] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   // Auth context para nome da empresa
   const { user } = useAuth();
@@ -467,6 +471,27 @@ export default function WorkOrderDetailsPage() {
       alert('Erro ao copiar link. Tente novamente.');
     } finally {
       setIsGeneratingLink(false);
+    }
+  };
+
+  const handleSendEmail = async () => {
+    if (!workOrder) return;
+
+    // Verifica se o cliente tem email
+    if (!workOrder.client?.email) {
+      alert(t('clientHasNoEmail'));
+      return;
+    }
+
+    setIsSendingEmail(true);
+    try {
+      await sendEmail.mutateAsync(workOrder.id);
+      refetch();
+      alert(t('emailSentSuccessfully'));
+    } catch (error) {
+      alert(error instanceof Error ? error.message : t('emailSendError'));
+    } finally {
+      setIsSendingEmail(false);
     }
   };
 
@@ -657,6 +682,18 @@ export default function WorkOrderDetailsPage() {
               className="text-green-600 border-green-600 hover:bg-green-50"
             >
               {isSharing ? 'Gerando...' : 'WhatsApp'}
+            </Button>
+
+            {/* Botão Enviar por Email */}
+            <Button
+              variant="outline"
+              onClick={handleSendEmail}
+              disabled={isSendingEmail || !workOrder.client?.email}
+              leftIcon={isSendingEmail ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+              className="text-blue-600 border-blue-600 hover:bg-blue-50"
+              title={!workOrder.client?.email ? t('clientHasNoEmail') : undefined}
+            >
+              Email
             </Button>
 
             {/* Menu de mais ações */}

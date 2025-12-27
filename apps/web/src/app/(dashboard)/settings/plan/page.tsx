@@ -5,11 +5,11 @@
  *
  * Modelo simplificado:
  * - 14 dias de trial com tudo liberado
- * - Plano PRO: R$ 99,90/mês ou R$ 89,90/mês (anual)
+ * - Preços dinâmicos baseados no país/moeda do usuário
  */
 
-import { useState } from 'react';
-import { useTranslations } from '@/i18n';
+import { useState, useEffect, useMemo } from 'react';
+import { useTranslations, useLocale } from '@/i18n';
 import {
   CreditCard,
   Check,
@@ -41,7 +41,16 @@ import {
   TRIAL_DURATION_DAYS,
   calculateTrialDaysRemaining,
   BillingPeriod,
+  getGatewayInfo,
+  GatewayInfo,
 } from '@/services/billing.service';
+
+// Mapeia locale para país
+const LOCALE_TO_COUNTRY: Record<string, string> = {
+  'pt-BR': 'BR',
+  'en-US': 'US',
+  'es': 'MX', // Default para espanhol é México
+};
 
 // Feature keys for PRO plan
 const PRO_FEATURE_KEYS = [

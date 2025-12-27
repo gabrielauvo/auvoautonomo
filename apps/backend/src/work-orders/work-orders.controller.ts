@@ -338,6 +338,28 @@ export class WorkOrdersController {
     return this.workOrdersService.removeItem(user.id, workOrderId, itemId);
   }
 
+  // ==================== SEND EMAIL ====================
+
+  @Post(':id/send-email')
+  @ApiOperation({
+    summary: 'Send work order notification email to client',
+    description: 'Sends the work order details via email to the client.',
+  })
+  @ApiParam({ name: 'id', description: 'Work order UUID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Email sent successfully',
+  })
+  @ApiResponse({ status: 400, description: 'Client does not have an email address' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Work order not found' })
+  async sendEmail(
+    @CurrentUser() user: any,
+    @Param('id') workOrderId: string,
+  ) {
+    return this.workOrdersService.sendWorkOrderEmail(user.id, workOrderId);
+  }
+
   // ==================== SHARE LINK ====================
 
   @Post(':id/share')

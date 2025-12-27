@@ -21,13 +21,24 @@ import {
 @Injectable()
 export class FinancialAutomationsService {
   private readonly logger = new Logger(FinancialAutomationsService.name);
+  private readonly frontendUrl: string;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
     private readonly asaasIntegrationService: AsaasIntegrationService,
     private readonly asaasClient: AsaasHttpClient,
-  ) {}
+  ) {
+    this.frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+  }
+
+  /**
+   * Build public URL for a quote based on its shareKey
+   */
+  private buildQuotePublicUrl(shareKey: string | null): string | undefined {
+    if (!shareKey) return undefined;
+    return `${this.frontendUrl}/p/quotes/${shareKey}`;
+  }
 
   /**
    * Get or create automation settings for a user
@@ -487,7 +498,10 @@ export class FinancialAutomationsService {
             lt: new Date(targetDate.getTime() + 24 * 60 * 60 * 1000),
           },
         },
-        include: {
+        select: {
+          id: true,
+          totalValue: true,
+          shareKey: true,
           client: { select: { id: true, name: true, email: true, phone: true } },
         },
       });
@@ -524,6 +538,7 @@ export class FinancialAutomationsService {
             quoteNumber: quote.id.substring(0, 8).toUpperCase(),
             totalValue: Number(quote.totalValue),
             daysSinceSent,
+            quotePublicUrl: this.buildQuotePublicUrl(quote.shareKey),
           };
 
           await this.notificationsService.sendNotification({

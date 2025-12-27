@@ -63,7 +63,7 @@ import {
   useChargeEvents,
   useRegisterManualPayment,
   useCancelCharge,
-  useResendChargeEmail,
+  useSendChargeEmail,
 } from '@/hooks/use-charges';
 import {
   canEditCharge,
@@ -91,7 +91,7 @@ export default function ChargeDetailsPage() {
   // Mutations
   const registerManualPayment = useRegisterManualPayment();
   const cancelCharge = useCancelCharge();
-  const resendEmail = useResendChargeEmail();
+  const sendEmail = useSendChargeEmail();
 
   // Estados
   const [showPixModal, setShowPixModal] = useState(false);
@@ -143,10 +143,22 @@ export default function ChargeDetailsPage() {
     refetch();
   };
 
-  const handleResendEmail = async () => {
+  const handleSendEmail = async () => {
     if (!charge) return;
-    await resendEmail.mutateAsync(charge.id);
-    refetch();
+
+    // Verifica se o cliente tem email
+    if (!charge.client?.email) {
+      alert(t('clientHasNoEmail'));
+      return;
+    }
+
+    try {
+      await sendEmail.mutateAsync(charge.id);
+      refetch();
+      alert(t('emailSentSuccessfully'));
+    } catch (error) {
+      alert(error instanceof Error ? error.message : t('emailSendError'));
+    }
   };
 
   // Loading state
@@ -274,11 +286,11 @@ export default function ChargeDetailsPage() {
                         className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                         onClick={() => {
                           setShowActionsMenu(false);
-                          handleResendEmail();
+                          handleSendEmail();
                         }}
                       >
                         <Mail className="h-4 w-4" />
-                        {t('resendEmail')}
+                        {t('sendEmail')}
                       </button>
                     )}
                     {canManualPayment && (

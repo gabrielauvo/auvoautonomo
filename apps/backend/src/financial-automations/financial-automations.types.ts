@@ -69,6 +69,8 @@ export interface QuoteFollowUpContext {
   quoteNumber: string;
   totalValue: number;
   daysSinceSent: number;
+  /** Public URL for client to view and approve the quote */
+  quotePublicUrl?: string;
 }
 
 // Default settings values

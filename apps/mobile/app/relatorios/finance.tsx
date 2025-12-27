@@ -493,11 +493,11 @@ export default function FinanceReportScreen() {
             <View style={styles.clientsList}>
               {data.topClients.slice(0, 5).map((client, index) => (
                 <TopClientRow
-                  key={client.id}
+                  key={client.id || `client-${index}`}
                   rank={index + 1}
-                  name={client.name}
-                  revenue={client.revenue}
-                  chargesCount={client.chargesCount}
+                  name={client.name || '-'}
+                  revenue={client.revenue || 0}
+                  chargesCount={client.chargesCount || 0}
                   locale={locale}
                   t={t}
                 />

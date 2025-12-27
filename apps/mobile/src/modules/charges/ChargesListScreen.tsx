@@ -33,7 +33,7 @@ import { useTranslation } from '../../i18n';
 import { ChargeService } from './ChargeService';
 import { ChargesCacheService } from './ChargesCacheService';
 import { useSyncStatus } from '../../sync/useSyncStatus';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../services';
 import type {
   Charge,
   ChargeStatus,

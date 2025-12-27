@@ -534,7 +534,12 @@
     "rejectionReasonOptional": "Motivo da recusa (opcional)",
     "rejectionReasonPlaceholder": "Ex: Preço alto, prazo inadequado, etc.",
     "unit": "Unidade",
-    "item": "Item"
+    "item": "Item",
+    "clientHasNoEmail": "Cliente não possui email cadastrado",
+    "emailSentSuccessfully": "Email enviado com sucesso!",
+    "emailSendError": "Erro ao enviar email. Tente novamente.",
+    "quoteNotFound": "Orçamento não encontrado",
+    "actionCannotBeUndone": "Esta ação não pode ser desfeita."
   },
   "workOrders": {
     "title": "Ordens de Serviço",
@@ -641,7 +646,10 @@
     "quote": "Orçamento",
     "reopenOrder": "Reabrir OS",
     "signatureTab": "Assinatura",
-    "discount": "Desconto"
+    "discount": "Desconto",
+    "clientHasNoEmail": "Cliente não possui email cadastrado",
+    "emailSentSuccessfully": "Email enviado com sucesso!",
+    "emailSendError": "Erro ao enviar email. Tente novamente."
   },
   "schedule": {
     "title": "Agenda",
@@ -1003,6 +1011,10 @@
     "edit": "Editar",
     "linkCopied": "Link Copiado!",
     "resendEmail": "Reenviar por Email",
+    "sendEmail": "Enviar por Email",
+    "clientHasNoEmail": "Cliente não possui email cadastrado",
+    "emailSentSuccessfully": "Email enviado com sucesso!",
+    "emailSendError": "Erro ao enviar email. Tente novamente.",
     "registerPayment": "Registrar Pagamento",
     "cancelCharge": "Cancelar Cobrança",
     "information": "Informações",

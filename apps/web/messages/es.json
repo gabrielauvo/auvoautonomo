@@ -533,7 +533,12 @@
     "rejectionReasonOptional": "Motivo del rechazo (opcional)",
     "rejectionReasonPlaceholder": "Ej: Precio alto, plazo inadecuado, etc.",
     "unit": "Unidad",
-    "item": "Ítem"
+    "item": "Ítem",
+    "clientHasNoEmail": "El cliente no tiene email registrado",
+    "emailSentSuccessfully": "¡Email enviado con éxito!",
+    "emailSendError": "Error al enviar email. Por favor, intente nuevamente.",
+    "quoteNotFound": "Presupuesto no encontrado",
+    "actionCannotBeUndone": "Esta acción no se puede deshacer."
   },
   "workOrders": {
     "title": "Órdenes de Trabajo",
@@ -630,7 +635,10 @@
     "quote": "Presupuesto",
     "reopenOrder": "Reabrir OT",
     "signatureTab": "Firma",
-    "discount": "Descuento"
+    "discount": "Descuento",
+    "clientHasNoEmail": "El cliente no tiene email registrado",
+    "emailSentSuccessfully": "¡Email enviado con éxito!",
+    "emailSendError": "Error al enviar email. Por favor, intente nuevamente."
   },
   "schedule": {
     "title": "Agenda",
@@ -992,6 +1000,10 @@
     "edit": "Editar",
     "linkCopied": "¡Enlace Copiado!",
     "resendEmail": "Reenviar por Email",
+    "sendEmail": "Enviar por Email",
+    "clientHasNoEmail": "El cliente no tiene email registrado",
+    "emailSentSuccessfully": "¡Email enviado con éxito!",
+    "emailSendError": "Error al enviar email. Por favor, intente nuevamente.",
     "registerPayment": "Registrar Pago",
     "cancelCharge": "Cancelar Cobro",
     "information": "Información",

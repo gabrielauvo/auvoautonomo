@@ -51,6 +51,7 @@ import {
   useDownloadQuotePdf,
   useSendWhatsApp,
   useQuoteAttachments,
+  useSendQuoteEmail,
 } from '@/hooks/use-quotes';
 import { useTemplateSettings } from '@/hooks/use-settings';
 import { DEFAULT_QUOTE_TEMPLATE } from '@/services/settings.service';
@@ -130,6 +131,7 @@ export default function QuoteDetailsPage({ params }: QuoteDetailsPageProps) {
   const generatePdf = useGenerateQuotePdf();
   const downloadPdf = useDownloadQuotePdf();
   const sendWhatsApp = useSendWhatsApp();
+  const sendEmail = useSendQuoteEmail();
 
   // Local state
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -193,6 +195,27 @@ export default function QuoteDetailsPage({ params }: QuoteDetailsPageProps) {
         await updateStatus.mutateAsync({ id, status: 'SENT' });
         refetch();
       }
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleSendEmail = async () => {
+    if (!quote) return;
+
+    // Verifica se o cliente tem email
+    if (!quote.client?.email) {
+      alert(t('clientHasNoEmail'));
+      return;
+    }
+
+    setActionLoading('email');
+    try {
+      await sendEmail.mutateAsync(id);
+      refetch();
+      alert(t('emailSentSuccessfully'));
+    } catch (error) {
+      alert(error instanceof Error ? error.message : t('emailSendError'));
     } finally {
       setActionLoading(null);
     }
@@ -395,6 +418,24 @@ export default function QuoteDetailsPage({ params }: QuoteDetailsPageProps) {
               className="bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20"
             >
               WhatsApp
+            </Button>
+
+            {/* Email */}
+            <Button
+              variant="soft"
+              leftIcon={
+                actionLoading === 'email' ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Mail className="h-4 w-4" />
+                )
+              }
+              onClick={handleSendEmail}
+              disabled={!!actionLoading || !quote.client?.email}
+              className="bg-blue-50 text-blue-600 hover:bg-blue-100"
+              title={!quote.client?.email ? t('clientHasNoEmail') : undefined}
+            >
+              Email
             </Button>
 
             {/* Enviar */}

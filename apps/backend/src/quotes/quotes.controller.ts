@@ -202,6 +202,28 @@ export class QuotesController {
     return this.quotesService.updateStatus(user.id, id, updateQuoteStatusDto.status);
   }
 
+  // ==================== SEND EMAIL ====================
+
+  @Post(':id/send-email')
+  @ApiOperation({
+    summary: 'Send quote notification email to client',
+    description: 'Sends the quote details via email to the client. Also marks quote as SENT if still in DRAFT status.',
+  })
+  @ApiParam({ name: 'id', description: 'Quote UUID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Email sent successfully',
+  })
+  @ApiResponse({ status: 400, description: 'Client does not have an email address' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Quote not found' })
+  async sendEmail(
+    @CurrentUser() user: any,
+    @Param('id') quoteId: string,
+  ) {
+    return this.quotesService.sendQuoteEmail(user.id, quoteId);
+  }
+
   // ==================== SHARE LINK ====================
 
   @Post(':id/share')

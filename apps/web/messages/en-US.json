@@ -533,7 +533,12 @@
     "rejectionReasonOptional": "Rejection reason (optional)",
     "rejectionReasonPlaceholder": "Ex: High price, inadequate deadline, etc.",
     "unit": "Unit",
-    "item": "Item"
+    "item": "Item",
+    "clientHasNoEmail": "Client does not have an email address",
+    "emailSentSuccessfully": "Email sent successfully!",
+    "emailSendError": "Error sending email. Please try again.",
+    "quoteNotFound": "Quote not found",
+    "actionCannotBeUndone": "This action cannot be undone."
   },
   "workOrders": {
     "title": "Work Orders",
@@ -630,7 +635,10 @@
     "quote": "Quote",
     "reopenOrder": "Reopen Work Order",
     "signatureTab": "Signature",
-    "discount": "Discount"
+    "discount": "Discount",
+    "clientHasNoEmail": "Client does not have an email address",
+    "emailSentSuccessfully": "Email sent successfully!",
+    "emailSendError": "Error sending email. Please try again."
   },
   "schedule": {
     "title": "Schedule",
@@ -992,6 +1000,10 @@
     "edit": "Edit",
     "linkCopied": "Link Copied!",
     "resendEmail": "Resend by Email",
+    "sendEmail": "Send by Email",
+    "clientHasNoEmail": "Client does not have an email address",
+    "emailSentSuccessfully": "Email sent successfully!",
+    "emailSendError": "Error sending email. Please try again.",
     "registerPayment": "Register Payment",
     "cancelCharge": "Cancel Charge",
     "information": "Information",

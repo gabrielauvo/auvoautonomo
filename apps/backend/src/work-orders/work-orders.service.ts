@@ -20,10 +20,12 @@ import { Decimal } from '@prisma/client/runtime/library';
 import { ItemType, ChecklistInstanceStatus, WorkOrderStatus as PrismaWorkOrderStatus } from '@prisma/client';
 import { DomainEventsService } from '../domain-events/domain-events.service';
 import { InventoryService } from '../inventory/inventory.service';
+import { randomBytes } from 'crypto';
 
 @Injectable()
 export class WorkOrdersService {
   private readonly logger = new Logger(WorkOrdersService.name);
+  private readonly frontendUrl: string;
 
   constructor(
     private prisma: PrismaService,
@@ -32,7 +34,37 @@ export class WorkOrdersService {
     private domainEventsService: DomainEventsService,
     private inventoryService: InventoryService,
     private regionalService: RegionalService,
-  ) {}
+  ) {
+    this.frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+  }
+
+  /**
+   * Ensures a work order has a shareKey, creating one if it doesn't exist.
+   * Returns the public URL for the work order.
+   */
+  private async ensureShareKeyAndGetUrl(workOrderId: string): Promise<string> {
+    const workOrder = await this.prisma.workOrder.findUnique({
+      where: { id: workOrderId },
+      select: { shareKey: true },
+    });
+
+    if (!workOrder) {
+      return '';
+    }
+
+    let shareKey = workOrder.shareKey;
+
+    if (!shareKey) {
+      shareKey = randomBytes(16).toString('base64url');
+      await this.prisma.workOrder.update({
+        where: { id: workOrderId },
+        data: { shareKey },
+      });
+      this.logger.log(`Generated shareKey for work order ${workOrderId}`);
+    }
+
+    return `${this.frontendUrl}/os/${shareKey}`;
+  }
 
   async create(userId: string, createWorkOrderDto: CreateWorkOrderDto) {
     // Check plan limit before creating
@@ -908,6 +940,9 @@ export class WorkOrdersService {
     workOrder: any,
   ): Promise<void> {
     try {
+      // Get or create public URL for the work order
+      const workOrderPublicUrl = await this.ensureShareKeyAndGetUrl(workOrder.id);
+
       const context: WorkOrderCreatedContext = {
         clientName: workOrder.client.name,
         clientEmail: workOrder.client.email,
@@ -925,6 +960,7 @@ export class WorkOrdersService {
             })
           : undefined,
         address: workOrder.address || undefined,
+        workOrderPublicUrl,
       };
 
       await this.notificationsService.sendNotification({
@@ -941,6 +977,62 @@ export class WorkOrdersService {
         `Failed to send work order created notification: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
+  }
+
+  /**
+   * Send work order email to client manually
+   */
+  async sendWorkOrderEmail(userId: string, workOrderId: string) {
+    const workOrder = await this.prisma.workOrder.findFirst({
+      where: { id: workOrderId, userId },
+      include: {
+        client: true,
+      },
+    });
+
+    if (!workOrder) {
+      throw new NotFoundException(`Work order with ID ${workOrderId} not found`);
+    }
+
+    if (!workOrder.client.email) {
+      throw new BadRequestException('Client does not have an email address');
+    }
+
+    // Get or create public URL for the work order
+    const workOrderPublicUrl = await this.ensureShareKeyAndGetUrl(workOrderId);
+
+    const context: WorkOrderCreatedContext = {
+      clientName: workOrder.client.name,
+      clientEmail: workOrder.client.email || undefined,
+      clientPhone: workOrder.client.phone || undefined,
+      workOrderId: workOrder.id,
+      workOrderNumber: workOrder.id.substring(0, 8).toUpperCase(),
+      title: workOrder.title,
+      scheduledDate: workOrder.scheduledDate
+        ? new Date(workOrder.scheduledDate).toLocaleDateString('pt-BR')
+        : undefined,
+      scheduledTime: workOrder.scheduledStartTime
+        ? new Date(workOrder.scheduledStartTime).toLocaleTimeString('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+        : undefined,
+      address: workOrder.address || undefined,
+      workOrderPublicUrl,
+    };
+
+    // Send notification
+    await this.notificationsService.sendNotification({
+      userId,
+      clientId: workOrder.client.id,
+      workOrderId: workOrder.id,
+      type: NotificationType.WORK_ORDER_CREATED,
+      contextData: context,
+    });
+
+    this.logger.log(`Work order email sent manually for WO ${workOrderId}`);
+
+    return { success: true, message: 'Email sent successfully' };
   }
 
   /**

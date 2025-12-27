@@ -951,6 +951,22 @@ export function shareWorkOrderViaWhatsApp(
 }
 
 // ============================================
+// EMAIL
+// ============================================
+
+/**
+ * Envia a ordem de serviço por email para o cliente
+ */
+export async function sendWorkOrderEmail(workOrderId: string): Promise<{ success: boolean; message: string }> {
+  try {
+    const response = await api.post<{ success: boolean; message: string }>(`/work-orders/${workOrderId}/send-email`);
+    return response.data;
+  } catch (error) {
+    throw new Error(getErrorMessage(error));
+  }
+}
+
+// ============================================
 // EXPORT SERVICE OBJECT
 // ============================================
 
@@ -990,6 +1006,8 @@ export const workOrdersService = {
   // Share
   getWorkOrderShareLink,
   shareWorkOrderViaWhatsApp,
+  // Email
+  sendWorkOrderEmail,
   // Helpers
   canEditWorkOrder,
   canStartWorkOrder,

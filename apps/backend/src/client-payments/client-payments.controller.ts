@@ -58,4 +58,13 @@ export class ClientPaymentsController {
   async getPayment(@Request() req, @Param('paymentId') paymentId: string) {
     return this.clientPaymentsService.getPayment(req.user.userId, paymentId);
   }
+
+  /**
+   * POST /clients/payments/:paymentId/send-email
+   * Send payment notification email to client
+   */
+  @Post('payments/:paymentId/send-email')
+  async sendPaymentEmail(@Request() req, @Param('paymentId') paymentId: string) {
+    return this.clientPaymentsService.sendPaymentEmail(req.user.userId, paymentId);
+  }
 }

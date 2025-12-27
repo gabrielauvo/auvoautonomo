@@ -403,15 +403,21 @@ export async function listClientCharges(
 }
 
 /**
- * Reenviar cobrança por email
+ * Enviar cobrança por email
  */
-export async function resendChargeEmail(id: string): Promise<void> {
+export async function sendChargeEmail(id: string): Promise<{ success: boolean; message: string }> {
   try {
-    await api.post(`/billing/charges/${id}/resend-email`);
+    const response = await api.post<{ success: boolean; message: string }>(`/clients/payments/${id}/send-email`);
+    return response.data;
   } catch (error) {
     throw new Error(getErrorMessage(error));
   }
 }
+
+/**
+ * @deprecated Use sendChargeEmail instead
+ */
+export const resendChargeEmail = sendChargeEmail;
 
 /**
  * Obter histórico de eventos da cobrança
@@ -439,6 +445,7 @@ export const chargesService = {
   registerManualPayment,
   getChargeStats,
   listClientCharges,
+  sendChargeEmail,
   resendChargeEmail,
   getChargeEvents,
   // Helpers

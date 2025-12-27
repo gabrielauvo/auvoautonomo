@@ -503,3 +503,18 @@ export function useGenerateWorkOrderPayment() {
     },
   });
 }
+
+/**
+ * Hook para enviar OS por email
+ */
+export function useSendWorkOrderEmail() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (workOrderId: string) => workOrdersService.sendWorkOrderEmail(workOrderId),
+    onSuccess: (_, workOrderId) => {
+      queryClient.invalidateQueries({ queryKey: ['work-order', workOrderId] });
+      queryClient.invalidateQueries({ queryKey: ['work-orders'] });
+    },
+  });
+}

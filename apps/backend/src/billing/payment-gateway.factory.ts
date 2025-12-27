@@ -52,10 +52,10 @@ export const PRICING: Record<string, { MONTHLY: number; YEARLY: number }> = {
     MONTHLY: 799,
     YEARLY: 679 * 12,
   },
-  // América do Norte
+  // América do Norte / Internacional (Stripe)
   USD: {
-    MONTHLY: 19.90,
-    YEARLY: 16.90 * 12, // ~15% desconto anual
+    MONTHLY: 49.90,
+    YEARLY: 39.90 * 12, // ~20% desconto anual
   },
   CAD: {
     MONTHLY: 26.90,

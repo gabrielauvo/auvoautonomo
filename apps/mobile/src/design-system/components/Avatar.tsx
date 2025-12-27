@@ -111,21 +111,35 @@ export function Avatar({ size = 'md', src, name, status = 'none' }: AvatarProps)
 
   const showIndicator = status !== 'none';
 
+  const indicatorSize = sizeConfig.indicator;
+
   return (
-    <View style={{ position: 'relative' }}>
+    <View
+      style={{
+        width: sizeConfig.container + 4,
+        height: sizeConfig.container + 4,
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+    >
       <View style={containerStyle}>{renderContent()}</View>
       {showIndicator && (
         <View
           style={{
             position: 'absolute',
-            width: 14,
-            height: 14,
-            borderRadius: 7,
+            width: indicatorSize,
+            height: indicatorSize,
+            borderRadius: indicatorSize / 2,
             backgroundColor: getStatusColor(status),
             borderWidth: 2,
             borderColor: '#FFFFFF',
-            bottom: -2,
-            right: -2,
+            bottom: 0,
+            right: 0,
+            elevation: 2,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.2,
+            shadowRadius: 1,
           }}
         />
       )}

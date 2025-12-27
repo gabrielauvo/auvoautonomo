@@ -17,6 +17,8 @@ export interface QuoteSentContext {
   quoteNumber: string;
   totalValue: number;
   items?: Array<{ name: string; quantity: number; unitPrice: number }>;
+  /** Public URL for client to view and approve the quote */
+  quotePublicUrl?: string;
 }
 
 export interface QuoteApprovedContext {
@@ -38,6 +40,8 @@ export interface WorkOrderCreatedContext {
   scheduledDate?: string;
   scheduledTime?: string;
   address?: string;
+  /** Public URL for client to view the work order details */
+  workOrderPublicUrl?: string;
 }
 
 export interface WorkOrderCompletedContext {
@@ -138,6 +142,8 @@ export interface QuoteFollowUpContext {
   quoteNumber: string;
   totalValue: number;
   daysSinceSent: number;
+  /** Public URL for client to view and approve the quote */
+  quotePublicUrl?: string;
 }
 
 // Union type for all context types

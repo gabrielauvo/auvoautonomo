@@ -8,7 +8,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations } from '@/i18n';
 import { useAuth } from '@/context/auth-context';
 import { Spinner } from '@/components/ui';
 
@@ -20,7 +20,7 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
-  const t = useTranslations('common');
+  const { t } = useTranslations('common');
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {

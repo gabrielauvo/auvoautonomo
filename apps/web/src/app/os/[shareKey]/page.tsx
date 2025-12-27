@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations } from '@/i18n';
 import {
   Card,
   CardContent,
@@ -314,7 +314,7 @@ function ImageLightbox({
 export default function PublicWorkOrderPage() {
   const params = useParams();
   const shareKey = params.shareKey as string;
-  const t = useTranslations('common');
+  const { t } = useTranslations('common');
 
   const [workOrder, setWorkOrder] = useState<WorkOrderData | null>(null);
   const [loading, setLoading] = useState(true);

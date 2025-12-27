@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations } from '@/i18n';
 import {
   Card,
   CardContent,
@@ -98,7 +98,7 @@ function isToday(dateString: string): boolean {
 export default function PublicPaymentPage() {
   const params = useParams();
   const token = params.token as string;
-  const t = useTranslations('common');
+  const { t } = useTranslations('common');
 
   const [payment, setPayment] = useState<PaymentData | null>(null);
   const [loading, setLoading] = useState(true);

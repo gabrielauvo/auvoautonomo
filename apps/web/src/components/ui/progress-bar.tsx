@@ -12,7 +12,7 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations } from '@/i18n';
 
 export function ProgressBar() {
   const pathname = usePathname();
@@ -75,7 +75,7 @@ export function ProgressBar() {
  * Para operações assíncronas que não são navegação
  */
 export function GlobalLoadingSpinner({ show }: { show: boolean }) {
-  const t = useTranslations('common');
+  const { t } = useTranslations('common');
 
   if (!show) return null;
 

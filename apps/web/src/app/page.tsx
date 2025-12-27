@@ -2,13 +2,13 @@
 
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations } from '@/i18n';
 import { useAuth } from '@/context/auth-context';
 import { Spinner } from '@/components/ui';
 
 export default function Home() {
   const router = useRouter();
-  const t = useTranslations('common');
+  const { t } = useTranslations('common');
   const { isAuthenticated, isLoading } = useAuth();
   const hasRedirectedRef = useRef(false);
 

@@ -8,7 +8,7 @@
 
 import { useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations } from '@/i18n';
 import {
   Card,
   CardHeader,
@@ -76,7 +76,7 @@ const paymentMethodOptions: { value: ExpensePaymentMethod; label: string }[] = [
 export function ExpenseForm({ expense, onSuccess, onCancel }: ExpenseFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const t = useTranslations('common');
+  const { t } = useTranslations('common');
   const { billing } = useAuth();
   const createExpense = useCreateExpense();
   const updateExpense = useUpdateExpense();

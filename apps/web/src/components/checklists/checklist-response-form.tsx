@@ -8,7 +8,7 @@
  */
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations } from '@/i18n';
 import {
   Card,
   CardContent,
@@ -534,8 +534,8 @@ export function ChecklistResponseForm({
   onComplete,
   readOnly = false,
 }: ChecklistResponseFormProps) {
-  const t = useTranslations('checklists');
-  const tCommon = useTranslations('common');
+  const { t } = useTranslations('checklists');
+  const { t: tCommon } = useTranslations('common');
   const { data: instance, isLoading, error } = useChecklistInstance(instanceId);
   const submitAnswerMutation = useSubmitChecklistAnswer();
   const submitBatchMutation = useSubmitChecklistAnswersBatch();

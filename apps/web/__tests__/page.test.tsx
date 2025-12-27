@@ -8,14 +8,19 @@ jest.mock('next/navigation', () => ({
   }),
 }));
 
-// Mock next-intl
-jest.mock('next-intl', () => ({
-  useTranslations: () => (key: string) => {
-    const translations: Record<string, string> = {
-      loading: 'Carregando...',
-    };
-    return translations[key] || key;
-  },
+// Mock @/i18n
+jest.mock('@/i18n', () => ({
+  useTranslations: () => ({
+    t: (key: string) => {
+      const translations: Record<string, string> = {
+        loading: 'Carregando...',
+      };
+      return translations[key] || key;
+    },
+    locale: 'pt-BR',
+    setLocale: jest.fn(),
+    isLoading: false,
+  }),
 }));
 
 // Mock js-cookie

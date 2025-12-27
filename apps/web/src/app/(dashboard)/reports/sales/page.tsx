@@ -12,14 +12,15 @@
 
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useTranslations } from '@/i18n';
 import { useAuth } from '@/context/auth-context';
+import { useFormatting } from '@/context/company-settings-context';
 import { useSalesReport, useReportFilters } from '@/hooks/use-reports';
 import { reportsService } from '@/services/reports.service';
 import {
   KpiCard,
   ReportFilterBar,
   TimeSeriesChart,
-  BarChart,
   PieChart,
   ProFeatureOverlay,
 } from '@/components/reports';
@@ -48,16 +49,6 @@ import {
 } from 'lucide-react';
 
 /**
- * Formatar valor em moeda
- */
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
-}
-
-/**
  * Mock data para demonstração
  */
 const MOCK_SALES_DATA = {
@@ -77,10 +68,10 @@ const MOCK_SALES_DATA = {
     { date: '2024-10', label: 'Out', total: 41, approved: 24, value: 80000 },
   ],
   quotesByStatus: [
-    { name: 'Aprovados', value: 89, color: '#10B981' },
-    { name: 'Pendentes', value: 32, color: '#F59E0B' },
-    { name: 'Rejeitados', value: 28, color: '#EF4444' },
-    { name: 'Expirados', value: 7, color: '#6B7280' },
+    { name: 'approved', value: 89, color: '#10B981' },
+    { name: 'pending', value: 32, color: '#F59E0B' },
+    { name: 'rejected', value: 28, color: '#EF4444' },
+    { name: 'expired', value: 7, color: '#6B7280' },
   ],
   conversionByPeriod: [
     { period: 'Jul', total: 35, approved: 18, rate: 51.4 },
@@ -104,6 +95,8 @@ function SalesReportContent() {
   const searchParams = useSearchParams();
   const filters = useReportFilters(searchParams);
   const { billing } = useAuth();
+  const { t } = useTranslations('reports');
+  const { formatCurrency } = useFormatting();
 
   const isPro = true;
 
@@ -118,11 +111,11 @@ function SalesReportContent() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `relatorio-vendas.${format}`;
+      a.download = `sales-report.${format}`;
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      console.error('Erro ao exportar:', err);
+      console.error('Error exporting:', err);
     }
   };
 
@@ -135,19 +128,25 @@ function SalesReportContent() {
     approved: item.approved,
   }));
 
+  // Translate status names for pie chart
+  const translatedQuotesByStatus = salesData.quotesByStatus.map((item) => ({
+    ...item,
+    name: t(item.name),
+  }));
+
   const renderContent = () => (
     <div className="space-y-6">
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
-          title="Total de Orçamentos"
+          title={t('totalQuotes')}
           value={salesData.summary.totalQuotes}
           format="number"
           icon={<FileText className="h-6 w-6" />}
           loading={isLoading}
         />
         <KpiCard
-          title="Valor Total"
+          title={t('totalValue')}
           value={salesData.summary.totalValue}
           format="currency"
           icon={<DollarSign className="h-6 w-6" />}
@@ -155,7 +154,7 @@ function SalesReportContent() {
           loading={isLoading}
         />
         <KpiCard
-          title="Taxa de Conversão"
+          title={t('conversionRateEvolution')}
           value={salesData.summary.conversionRate}
           format="percent"
           icon={<Target className="h-6 w-6" />}
@@ -163,7 +162,7 @@ function SalesReportContent() {
           loading={isLoading}
         />
         <KpiCard
-          title="Ticket Médio"
+          title={t('avgTicket')}
           value={salesData.summary.avgTicket}
           format="currency"
           icon={<TrendingUp className="h-6 w-6" />}
@@ -180,10 +179,10 @@ function SalesReportContent() {
               <Clock className="h-5 w-5 text-info" />
               <div>
                 <p className="text-sm font-medium text-info-800">
-                  Tempo médio para aprovação: <strong>{salesData.summary.avgTimeToApproval} dias</strong>
+                  {t('avgTimeToApproval')}: <strong>{t('avgTimeToApprovalDays', { days: salesData.summary.avgTimeToApproval })}</strong>
                 </p>
                 <p className="text-xs text-info-600">
-                  Baseado nos orçamentos aprovados no período selecionado
+                  {t('basedOnApprovedQuotes')}
                 </p>
               </div>
             </div>
@@ -194,8 +193,8 @@ function SalesReportContent() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <TimeSeriesChart
-          title="Orçamentos por Período"
-          subtitle="Evolução mensal"
+          title={t('quotesByPeriod')}
+          subtitle={t('monthlyEvolution')}
           data={salesData.quotesByPeriod.map((item) => ({
             date: item.date,
             label: item.label,
@@ -203,17 +202,17 @@ function SalesReportContent() {
             approved: item.approved,
           }))}
           series={[
-            { key: 'total', name: 'Total', color: '#3B82F6', type: 'line' },
-            { key: 'approved', name: 'Aprovados', color: '#10B981', type: 'area' },
+            { key: 'total', name: t('total'), color: '#3B82F6', type: 'line' },
+            { key: 'approved', name: t('approved'), color: '#10B981', type: 'area' },
           ]}
           height={300}
           loading={isLoading}
         />
 
         <PieChart
-          title="Distribuição por Status"
-          subtitle="Orçamentos atuais"
-          data={salesData.quotesByStatus}
+          title={t('distributionByStatus')}
+          subtitle={t('currentQuotes')}
+          data={translatedQuotesByStatus}
           height={300}
           loading={isLoading}
           donut
@@ -223,11 +222,11 @@ function SalesReportContent() {
       {/* Second Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <TimeSeriesChart
-          title="Taxa de Conversão"
-          subtitle="Evolução mensal"
+          title={t('conversionRateEvolution')}
+          subtitle={t('monthlyEvolution')}
           data={conversionChartData}
           series={[
-            { key: 'rate', name: 'Taxa (%)', color: '#8B5CF6', type: 'area' },
+            { key: 'rate', name: `${t('conversionRateEvolution')} (%)`, color: '#8B5CF6', type: 'area' },
           ]}
           height={300}
           loading={isLoading}
@@ -239,7 +238,7 @@ function SalesReportContent() {
           <CardHeader>
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-primary" />
-              Top Serviços Vendidos
+              {t('topServicesSold')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -253,9 +252,9 @@ function SalesReportContent() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Serviço</TableHead>
-                    <TableHead className="text-right">Qtd</TableHead>
-                    <TableHead className="text-right">Valor</TableHead>
+                    <TableHead>{t('service')}</TableHead>
+                    <TableHead className="text-right">{t('qty')}</TableHead>
+                    <TableHead className="text-right">{t('value')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -301,7 +300,7 @@ function SalesReportContent() {
         <Alert variant="error">
           <div className="flex items-center gap-2">
             <AlertCircle className="h-4 w-4" />
-            Erro ao carregar relatório de vendas. Tente novamente.
+            {t('errorLoadingSalesReport')}
           </div>
         </Alert>
       )}
@@ -311,8 +310,8 @@ function SalesReportContent() {
         renderContent()
       ) : (
         <ProFeatureOverlay
-          title="Relatório de Vendas Detalhado"
-          description="Faça upgrade para acessar análises de conversão, serviços mais vendidos e exportação de dados."
+          title={t('detailedSalesReportTitle')}
+          description={t('detailedSalesReportDescription')}
         >
           {renderContent()}
         </ProFeatureOverlay>

@@ -1647,5 +1647,28 @@
     "yearlyPlan": "no plano anual",
     "subscribeNow": "Assinar agora",
     "close": "Fechar banner"
+  },
+  "referralLanding": {
+    "title": "{name} te convidou!",
+    "subtitle": "Experimente o Auvo Autônomo e gerencie seu negócio de forma profissional",
+    "benefitsTitle": "Com o Auvo Autônomo você pode:",
+    "benefit1": "Criar orçamentos profissionais em segundos",
+    "benefit2": "Gerenciar ordens de serviço no celular",
+    "benefit3": "Controlar clientes, equipamentos e histórico",
+    "benefit4": "Acompanhar finanças e relatórios",
+    "trialDays": "14 dias grátis",
+    "trialDescription": "Teste todas as funcionalidades sem compromisso",
+    "downloadAppStore": "Baixar na App Store",
+    "downloadPlayStore": "Baixar no Google Play",
+    "createAccountFree": "Criar conta grátis",
+    "continueInBrowser": "Continuar no navegador",
+    "referralCode": "Código de indicação:",
+    "useCodeHint": "Use este código ao criar sua conta para ativar o benefício",
+    "termsAgreement": "Ao criar uma conta, você concorda com nossos",
+    "termsOfUse": "Termos de Uso",
+    "and": "e",
+    "privacyPolicy": "Política de Privacidade",
+    "metaTitle": "{name} te convidou para o Auvo Autônomo",
+    "metaDescription": "Gerencie seu negócio de prestação de serviços de forma simples e profissional. Orçamentos, ordens de serviço, clientes e muito mais."
   }
 }

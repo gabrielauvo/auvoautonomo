@@ -1566,5 +1566,28 @@
     "yearlyPlan": "on the yearly plan",
     "subscribeNow": "Subscribe now",
     "close": "Close banner"
+  },
+  "referralLanding": {
+    "title": "{name} invited you!",
+    "subtitle": "Try Auvo Autônomo and manage your business professionally",
+    "benefitsTitle": "With Auvo Autônomo you can:",
+    "benefit1": "Create professional quotes in seconds",
+    "benefit2": "Manage work orders on your phone",
+    "benefit3": "Track clients, equipment and history",
+    "benefit4": "Monitor finances and reports",
+    "trialDays": "14 days free",
+    "trialDescription": "Try all features with no commitment",
+    "downloadAppStore": "Download on App Store",
+    "downloadPlayStore": "Get it on Google Play",
+    "createAccountFree": "Create free account",
+    "continueInBrowser": "Continue in browser",
+    "referralCode": "Referral code:",
+    "useCodeHint": "Use this code when creating your account to activate the benefit",
+    "termsAgreement": "By creating an account, you agree to our",
+    "termsOfUse": "Terms of Use",
+    "and": "and",
+    "privacyPolicy": "Privacy Policy",
+    "metaTitle": "{name} invited you to Auvo Autônomo",
+    "metaDescription": "Manage your service business simply and professionally. Quotes, work orders, clients and more."
   }
 }

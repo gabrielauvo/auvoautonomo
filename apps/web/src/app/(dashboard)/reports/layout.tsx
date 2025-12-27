@@ -7,9 +7,11 @@
  * Inclui navegação lateral com links para cada relatório
  */
 
+import { useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { AppLayout } from '@/components/layout';
+import { useTranslations } from '@/i18n';
 import {
   BarChart3,
   DollarSign,
@@ -24,50 +26,51 @@ interface ReportsLayoutProps {
   children: React.ReactNode;
 }
 
-const REPORT_LINKS = [
-  {
-    href: '/reports',
-    label: 'Visão Geral',
-    icon: BarChart3,
-  },
-  {
-    href: '/reports/finance',
-    label: 'Financeiro',
-    icon: DollarSign,
-  },
-  {
-    href: '/reports/sales',
-    label: 'Vendas',
-    icon: FileText,
-  },
-  {
-    href: '/reports/operations',
-    label: 'Operacional',
-    icon: Wrench,
-  },
-  {
-    href: '/reports/services',
-    label: 'Serviços',
-    icon: Tag,
-  },
-  {
-    href: '/reports/clients',
-    label: 'Clientes',
-    icon: Users,
-  },
-];
-
 export default function ReportsLayout({ children }: ReportsLayoutProps) {
   const pathname = usePathname();
+  const { t, locale } = useTranslations('reports');
+
+  const REPORT_LINKS = useMemo(() => [
+    {
+      href: '/reports',
+      label: t('overview'),
+      icon: BarChart3,
+    },
+    {
+      href: '/reports/finance',
+      label: t('finance'),
+      icon: DollarSign,
+    },
+    {
+      href: '/reports/sales',
+      label: t('sales'),
+      icon: FileText,
+    },
+    {
+      href: '/reports/operations',
+      label: t('operations'),
+      icon: Wrench,
+    },
+    {
+      href: '/reports/services',
+      label: t('services'),
+      icon: Tag,
+    },
+    {
+      href: '/reports/clients',
+      label: t('clients'),
+      icon: Users,
+    },
+  ], [t, locale]);
 
   return (
     <AppLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="page-header">
-          <h1 className="page-title">Relatórios</h1>
+          <h1 className="page-title">{t('title')}</h1>
           <p className="page-subtitle">
-            Análises detalhadas do seu negócio
+            {t('subtitle')}
           </p>
         </div>
 

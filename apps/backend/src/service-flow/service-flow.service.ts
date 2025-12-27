@@ -546,19 +546,19 @@ export class ServiceFlowService {
       where: { id: workOrderId, userId },
       include: {
         client: { select: { name: true } },
-        checklists: {
+        checklistInstances: {
           select: {
             id: true,
-            title: true,
             status: true,
             createdAt: true,
             updatedAt: true,
+            template: { select: { title: true } },
           },
         },
         attachments: {
           select: {
             id: true,
-            fileName: true,
+            fileNameOriginal: true,
             createdAt: true,
           },
         },
@@ -660,13 +660,13 @@ export class ServiceFlowService {
     }
 
     // 5. Checklists
-    for (const checklist of workOrder.checklists) {
+    for (const checklist of workOrder.checklistInstances) {
       timeline.push({
         type: 'CHECKLIST_CREATED',
         date: checklist.createdAt,
         data: {
           id: checklist.id,
-          title: checklist.title,
+          title: checklist.template?.title || 'Checklist',
           workOrderId: workOrder.id,
         },
       });
@@ -678,7 +678,7 @@ export class ServiceFlowService {
           date: checklist.updatedAt,
           data: {
             id: checklist.id,
-            title: checklist.title,
+            title: checklist.template?.title || 'Checklist',
             workOrderId: workOrder.id,
           },
         });
@@ -692,7 +692,7 @@ export class ServiceFlowService {
         date: attachment.createdAt,
         data: {
           id: attachment.id,
-          fileName: attachment.fileName,
+          fileName: attachment.fileNameOriginal,
           workOrderId: workOrder.id,
         },
       });

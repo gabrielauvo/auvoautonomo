@@ -273,14 +273,14 @@ export function Sidebar({ className }: SidebarProps) {
           className={cn(
             'group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
             pathname === '/referral'
-              ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg'
-              : 'bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 hover:from-amber-100 hover:to-orange-100 border border-amber-200'
+              ? 'bg-gradient-to-r from-primary to-primary-600 text-white shadow-auvo'
+              : 'bg-gradient-to-r from-primary-50 to-primary-100 text-primary hover:from-primary-100 hover:to-primary-200 border border-primary-200'
           )}
           title={collapsed ? t('referral') : undefined}
         >
           <span className={cn(
             'transition-colors duration-200 flex-shrink-0',
-            pathname === '/referral' ? 'text-white' : 'text-amber-600'
+            pathname === '/referral' ? 'text-white' : 'text-primary'
           )}>
             <Gift className="h-5 w-5" />
           </span>

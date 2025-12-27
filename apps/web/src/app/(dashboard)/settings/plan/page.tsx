@@ -68,6 +68,7 @@ const PRO_FEATURE_KEYS = [
 
 export default function PlanSettingsPage() {
   const { t } = useTranslations('plan');
+  const { locale } = useLocale();
   const { data: subscription, isLoading, refetch } = useSubscription();
   const cancelSubscription = useCancelSubscription();
   const queryClient = useQueryClient();
@@ -75,6 +76,29 @@ export default function PlanSettingsPage() {
   const [showCheckout, setShowCheckout] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState<BillingPeriod>('YEARLY');
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [gatewayInfo, setGatewayInfo] = useState<GatewayInfo | null>(null);
+  const [loadingPrices, setLoadingPrices] = useState(true);
+
+  // Detecta o país baseado no locale
+  const country = useMemo(() => LOCALE_TO_COUNTRY[locale] || 'BR', [locale]);
+  const isBrazil = country === 'BR';
+
+  // Busca informações de preço do gateway
+  useEffect(() => {
+    setLoadingPrices(true);
+    getGatewayInfo(country)
+      .then((info) => {
+        setGatewayInfo(info);
+      })
+      .catch((err) => {
+        console.error('Error fetching gateway info:', err);
+        // Fallback para preços BRL se erro
+        setGatewayInfo(null);
+      })
+      .finally(() => {
+        setLoadingPrices(false);
+      });
+  }, [country]);
 
   // Status da assinatura
   const status = subscription?.subscriptionStatus || 'TRIALING';
@@ -87,10 +111,41 @@ export default function PlanSettingsPage() {
     ? calculateTrialDaysRemaining(subscription.trialEndAt)
     : subscription?.trialDaysRemaining || 0;
 
+  // Preços dinâmicos baseados no país
+  const pricing = useMemo(() => {
+    if (gatewayInfo?.pricing) {
+      return {
+        monthly: gatewayInfo.pricing.monthly,
+        yearly: gatewayInfo.pricing.yearly,
+        yearlyTotal: gatewayInfo.pricing.yearlyTotal || gatewayInfo.pricing.yearly * 12,
+        yearlySavings: gatewayInfo.pricing.yearlySavings || (gatewayInfo.pricing.monthly * 12) - (gatewayInfo.pricing.yearly * 12),
+        currency: gatewayInfo.currency,
+        symbol: gatewayInfo.currencySymbol || (gatewayInfo.currency === 'BRL' ? 'R$' : '$'),
+      };
+    }
+    // Fallback para preços BRL
+    return {
+      monthly: PRO_PLAN_PRICING.MONTHLY,
+      yearly: PRO_PLAN_PRICING.YEARLY,
+      yearlyTotal: PRO_PLAN_PRICING.YEARLY_TOTAL,
+      yearlySavings: PRO_PLAN_PRICING.YEARLY_SAVINGS,
+      currency: 'BRL',
+      symbol: 'R$',
+    };
+  }, [gatewayInfo]);
+
+  // Formata preço de acordo com a moeda
+  const formatPrice = (amount: number) => {
+    if (pricing.currency === 'BRL') {
+      return `${pricing.symbol} ${amount.toFixed(2).replace('.', ',')}`;
+    }
+    return `${pricing.symbol}${amount.toFixed(2)}`;
+  };
+
   // Preço baseado no período selecionado
   const selectedPrice = selectedPeriod === 'YEARLY'
-    ? PRO_PLAN_PRICING.YEARLY
-    : PRO_PLAN_PRICING.MONTHLY;
+    ? pricing.yearly
+    : pricing.monthly;
 
   const handleUpgradeClick = (period: BillingPeriod) => {
     setSelectedPeriod(period);
@@ -114,7 +169,7 @@ export default function PlanSettingsPage() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || loadingPrices) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-48 w-full" />
@@ -164,7 +219,7 @@ export default function PlanSettingsPage() {
                 <p className="text-gray-500 mt-1">
                   {isActive ? (
                     <>
-                      R$ {selectedPrice.toFixed(2).replace('.', ',')}{t('perMonth')}
+                      {formatPrice(selectedPrice)}{t('perMonth')}
                       {subscription?.billingPeriod === 'YEARLY' && ` (${t('yearlyPlan')})`}
                     </>
                   ) : isExpired ? (
@@ -253,7 +308,7 @@ export default function PlanSettingsPage() {
                   <h3 className="text-lg font-bold text-gray-900">{t('monthly')}</h3>
                   <div className="mt-2">
                     <span className="text-4xl font-bold text-gray-900">
-                      R$ {PRO_PLAN_PRICING.MONTHLY.toFixed(2).replace('.', ',')}
+                      {formatPrice(pricing.monthly)}
                     </span>
                     <span className="text-gray-500">{t('perMonth')}</span>
                   </div>
@@ -295,15 +350,15 @@ export default function PlanSettingsPage() {
                   <h3 className="text-lg font-bold text-gray-900">{t('yearly')}</h3>
                   <div className="mt-2">
                     <span className="text-4xl font-bold text-gray-900">
-                      R$ {PRO_PLAN_PRICING.YEARLY.toFixed(2).replace('.', ',')}
+                      {formatPrice(pricing.yearly)}
                     </span>
                     <span className="text-gray-500">{t('perMonth')}</span>
                   </div>
                   <p className="text-sm text-gray-500 mt-1">
-                    {t('totalPerYear', { amount: `R$ ${PRO_PLAN_PRICING.YEARLY_TOTAL.toFixed(2).replace('.', ',')}` })}
+                    {t('totalPerYear', { amount: formatPrice(pricing.yearlyTotal) })}
                   </p>
                   <Badge variant="success" className="mt-2">
-                    {t('savings', { amount: `R$ ${PRO_PLAN_PRICING.YEARLY_SAVINGS.toFixed(2).replace('.', ',')}` })}
+                    {t('savings', { amount: formatPrice(pricing.yearlySavings) })}
                   </Badge>
                 </div>
 
@@ -371,8 +426,9 @@ export default function PlanSettingsPage() {
         onClose={() => setShowCheckout(false)}
         onSuccess={handleCheckoutSuccess}
         planName="PRO"
-        planPrice={selectedPeriod === 'YEARLY' ? PRO_PLAN_PRICING.YEARLY_TOTAL : PRO_PLAN_PRICING.MONTHLY}
+        planPrice={selectedPeriod === 'YEARLY' ? pricing.yearlyTotal : pricing.monthly}
         billingPeriod={selectedPeriod}
+        country={country}
       />
 
       {/* Modal de cancelamento */}

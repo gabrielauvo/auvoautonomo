@@ -26,6 +26,7 @@ import { UpdateProfileDto, ChangePasswordDto } from './dto/update-profile.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { PlanLimitsService } from '../billing/plan-limits.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { ZApiService } from '../notifications/channels/zapi.service';
 import * as bcrypt from 'bcrypt';
 import {
   StorageProvider,
@@ -88,6 +89,7 @@ export class SettingsController {
     private readonly prisma: PrismaService,
     private readonly planLimitsService: PlanLimitsService,
     private readonly notificationsService: NotificationsService,
+    private readonly zapiService: ZApiService,
     @Inject(STORAGE_PROVIDER)
     private readonly storageProvider: StorageProvider,
   ) {}
@@ -886,6 +888,291 @@ export class SettingsController {
       paymentOverdue: dto.paymentOverdue || 'Olá {nome_cliente}, identificamos que o pagamento no valor de {valor} está em atraso desde {data}. Entre em contato conosco.',
       workOrderReminder: dto.workOrderReminder || 'Olá {nome_cliente}, sua ordem de serviço está agendada para {data}. Confirma o atendimento?',
       quoteFollowUp: dto.quoteFollowUp || 'Olá {nome_cliente}, enviamos um orçamento no valor de {valor}. Teve alguma dúvida? Estamos à disposição!',
+    };
+  }
+
+  // ==================== Z-API WHATSAPP SETTINGS ====================
+
+  /**
+   * GET /settings/whatsapp/zapi
+   * Get Z-API configuration and connection status
+   */
+  @Get('whatsapp/zapi')
+  async getZApiConfig(@Req() req: AuthRequest) {
+    const userId = req.user.userId;
+    this.logger.log(`[GET ZAPI CONFIG] Fetching for userId: ${userId}`);
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        zapiInstanceId: true,
+        zapiToken: true,
+        zapiClientToken: true,
+        zapiEnabled: true,
+        zapiConnectedAt: true,
+      },
+    });
+
+    // Check connection status if credentials exist
+    let connectionStatus = 'disconnected';
+    let phoneNumber: string | null = null;
+
+    if (user?.zapiInstanceId && user?.zapiToken && user?.zapiClientToken) {
+      try {
+        const status = await this.zapiService.checkConnection({
+          instanceId: user.zapiInstanceId,
+          token: user.zapiToken,
+          clientToken: user.zapiClientToken,
+        });
+        connectionStatus = status.connected ? 'connected' : 'disconnected';
+        phoneNumber = status.phoneNumber || null;
+      } catch (error) {
+        this.logger.warn(`[GET ZAPI CONFIG] Error checking connection: ${error}`);
+        connectionStatus = 'error';
+      }
+    }
+
+    return {
+      configured: !!(user?.zapiInstanceId && user?.zapiToken && user?.zapiClientToken),
+      enabled: user?.zapiEnabled || false,
+      instanceId: user?.zapiInstanceId || null,
+      // Don't expose tokens, just indicate if they're set
+      hasToken: !!user?.zapiToken,
+      hasClientToken: !!user?.zapiClientToken,
+      connectionStatus,
+      phoneNumber,
+      connectedAt: user?.zapiConnectedAt?.toISOString() || null,
+    };
+  }
+
+  /**
+   * PUT /settings/whatsapp/zapi
+   * Save Z-API credentials
+   */
+  @Put('whatsapp/zapi')
+  async updateZApiConfig(
+    @Req() req: AuthRequest,
+    @Body() dto: {
+      instanceId?: string;
+      token?: string;
+      clientToken?: string;
+      enabled?: boolean;
+    },
+  ) {
+    const userId = req.user.userId;
+    this.logger.log(`[UPDATE ZAPI CONFIG] Updating for userId: ${userId}`);
+
+    // Validate that all credentials are provided together
+    const hasAllCredentials = dto.instanceId && dto.token && dto.clientToken;
+    const hasNoCredentials = !dto.instanceId && !dto.token && !dto.clientToken;
+
+    if (!hasAllCredentials && !hasNoCredentials && dto.enabled !== false) {
+      throw new BadRequestException(
+        'Forneça todas as credenciais (instanceId, token, clientToken) ou nenhuma',
+      );
+    }
+
+    // If credentials provided, verify they work
+    if (hasAllCredentials) {
+      try {
+        const status = await this.zapiService.checkConnection({
+          instanceId: dto.instanceId!,
+          token: dto.token!,
+          clientToken: dto.clientToken!,
+        });
+        // Connection test passed (doesn't mean WhatsApp is connected, just API works)
+        this.logger.log(`[UPDATE ZAPI CONFIG] Credentials verified, status: ${status.connected}`);
+      } catch (error) {
+        this.logger.error(`[UPDATE ZAPI CONFIG] Invalid credentials: ${error}`);
+        throw new BadRequestException(
+          'Credenciais Z-API inválidas. Verifique o Instance ID, Token e Client Token.',
+        );
+      }
+    }
+
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(dto.instanceId !== undefined && { zapiInstanceId: dto.instanceId || null }),
+        ...(dto.token !== undefined && { zapiToken: dto.token || null }),
+        ...(dto.clientToken !== undefined && { zapiClientToken: dto.clientToken || null }),
+        ...(dto.enabled !== undefined && { zapiEnabled: dto.enabled }),
+        // Update connectedAt timestamp if enabling with credentials
+        ...(hasAllCredentials && dto.enabled && { zapiConnectedAt: new Date() }),
+        // Clear connectedAt if disabling or removing credentials
+        ...((dto.enabled === false || hasNoCredentials) && { zapiConnectedAt: null }),
+      },
+      select: {
+        zapiInstanceId: true,
+        zapiEnabled: true,
+        zapiConnectedAt: true,
+      },
+    });
+
+    return {
+      configured: !!user.zapiInstanceId,
+      enabled: user.zapiEnabled,
+      connectedAt: user.zapiConnectedAt?.toISOString() || null,
+      message: hasAllCredentials ? 'Credenciais Z-API salvas com sucesso' : 'Configuração atualizada',
+    };
+  }
+
+  /**
+   * GET /settings/whatsapp/zapi/status
+   * Check Z-API connection status in real-time
+   */
+  @Get('whatsapp/zapi/status')
+  async getZApiStatus(@Req() req: AuthRequest) {
+    const userId = req.user.userId;
+    this.logger.log(`[ZAPI STATUS] Checking for userId: ${userId}`);
+
+    const credentials = await this.zapiService.getCredentials(userId);
+
+    if (!credentials) {
+      return {
+        configured: false,
+        connected: false,
+        status: 'not_configured',
+        message: 'Z-API não configurado. Configure suas credenciais primeiro.',
+      };
+    }
+
+    try {
+      const status = await this.zapiService.checkConnection(credentials);
+
+      if (status.connected) {
+        // Update connectedAt if newly connected
+        await this.prisma.user.update({
+          where: { id: userId },
+          data: { zapiConnectedAt: new Date() },
+        });
+      }
+
+      return {
+        configured: true,
+        connected: status.connected,
+        status: status.connected ? 'connected' : 'disconnected',
+        phoneNumber: status.phoneNumber || null,
+        message: status.connected
+          ? `WhatsApp conectado: ${status.phoneNumber}`
+          : 'WhatsApp desconectado. Escaneie o QR Code para conectar.',
+      };
+    } catch (error) {
+      this.logger.error(`[ZAPI STATUS] Error: ${error}`);
+      return {
+        configured: true,
+        connected: false,
+        status: 'error',
+        message: 'Erro ao verificar status da conexão',
+      };
+    }
+  }
+
+  /**
+   * GET /settings/whatsapp/zapi/qrcode
+   * Get QR Code for WhatsApp connection
+   */
+  @Get('whatsapp/zapi/qrcode')
+  async getZApiQrCode(@Req() req: AuthRequest) {
+    const userId = req.user.userId;
+    this.logger.log(`[ZAPI QRCODE] Fetching for userId: ${userId}`);
+
+    const credentials = await this.zapiService.getCredentials(userId);
+
+    if (!credentials) {
+      throw new BadRequestException(
+        'Z-API não configurado. Configure suas credenciais primeiro.',
+      );
+    }
+
+    const result = await this.zapiService.getQrCode(credentials);
+
+    if (result.error) {
+      throw new BadRequestException(result.error);
+    }
+
+    return {
+      qrCode: result.qrCode,
+      message: 'Escaneie o QR Code com seu WhatsApp para conectar',
+    };
+  }
+
+  /**
+   * POST /settings/whatsapp/zapi/disconnect
+   * Disconnect WhatsApp session
+   */
+  @Post('whatsapp/zapi/disconnect')
+  async disconnectZApi(@Req() req: AuthRequest) {
+    const userId = req.user.userId;
+    this.logger.log(`[ZAPI DISCONNECT] Disconnecting for userId: ${userId}`);
+
+    const credentials = await this.zapiService.getCredentials(userId);
+
+    if (!credentials) {
+      throw new BadRequestException('Z-API não configurado');
+    }
+
+    const result = await this.zapiService.disconnect(credentials);
+
+    if (result.success) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { zapiConnectedAt: null },
+      });
+    }
+
+    return {
+      success: result.success,
+      message: result.success
+        ? 'WhatsApp desconectado com sucesso'
+        : result.error || 'Erro ao desconectar',
+    };
+  }
+
+  /**
+   * POST /settings/whatsapp/zapi/test
+   * Send a test message via Z-API
+   */
+  @Post('whatsapp/zapi/test')
+  async testZApiMessage(
+    @Req() req: AuthRequest,
+    @Body() dto: { phone: string },
+  ) {
+    const userId = req.user.userId;
+    this.logger.log(`[ZAPI TEST] Sending test to ${dto.phone} for userId: ${userId}`);
+
+    if (!dto.phone) {
+      throw new BadRequestException('Número de telefone é obrigatório');
+    }
+
+    const credentials = await this.zapiService.getCredentials(userId);
+
+    if (!credentials) {
+      throw new BadRequestException('Z-API não configurado');
+    }
+
+    // Check connection first
+    const status = await this.zapiService.checkConnection(credentials);
+    if (!status.connected) {
+      throw new BadRequestException(
+        'WhatsApp não está conectado. Escaneie o QR Code primeiro.',
+      );
+    }
+
+    const result = await this.zapiService.sendText(credentials, {
+      phone: dto.phone,
+      message: '✅ Mensagem de teste enviada com sucesso! Sua integração Z-API está funcionando.',
+      delayTyping: 2,
+    });
+
+    if (!result.success) {
+      throw new BadRequestException(result.error || 'Erro ao enviar mensagem');
+    }
+
+    return {
+      success: true,
+      messageId: result.messageId,
+      message: 'Mensagem de teste enviada com sucesso',
     };
   }
 

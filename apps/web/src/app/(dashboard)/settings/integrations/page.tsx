@@ -46,6 +46,7 @@ import {
   useConnectMercadoPago,
   useDisconnectMercadoPago,
 } from '@/hooks/use-integrations';
+import { ZApiIntegrationCard } from '@/components/settings/zapi-integration-card';
 import {
   AsaasEnvironment,
   StripeEnvironment,
@@ -641,6 +642,9 @@ export default function IntegrationsSettingsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Z-API WhatsApp Integration */}
+      <ZApiIntegrationCard />
 
       {/* Asaas Disconnect Modal */}
       {showAsaasDisconnect && (

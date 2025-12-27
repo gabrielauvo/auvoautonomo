@@ -33,6 +33,12 @@ model User {
   pixKeyEnabled               Boolean                      @default(false)
   pixKeyOwnerName             String?
   pixKeyType                  String?
+  // Z-API WhatsApp Integration (cliente configura suas credenciais)
+  zapiInstanceId              String?
+  zapiToken                   String?
+  zapiClientToken             String?
+  zapiEnabled                 Boolean                      @default(false)
+  zapiConnectedAt             DateTime?
   passwordResetExpires        DateTime?
   passwordResetToken          String?
   aiConversations             AiConversation[]

@@ -113,6 +113,45 @@ export interface ConnectMercadoPagoResponse {
 }
 
 // ============================================
+// Z-API (WhatsApp)
+// ============================================
+
+export interface ZApiStatus {
+  configured: boolean;
+  enabled: boolean;
+  instanceId: string | null;
+  hasToken: boolean;
+  hasClientToken: boolean;
+  connectionStatus: 'connected' | 'disconnected' | 'error' | 'not_configured';
+  phoneNumber: string | null;
+  connectedAt: string | null;
+}
+
+export interface ZApiConnectionStatus {
+  configured: boolean;
+  connected: boolean;
+  status: 'connected' | 'disconnected' | 'error' | 'not_configured';
+  phoneNumber: string | null;
+  message: string;
+}
+
+export interface ZApiQrCodeResponse {
+  qrCode: string;
+  message: string;
+}
+
+export interface ConnectZApiDto {
+  instanceId: string;
+  token: string;
+  clientToken: string;
+  enabled?: boolean;
+}
+
+export interface ZApiTestMessageDto {
+  phone: string;
+}
+
+// ============================================
 // SERVICE
 // ============================================
 
@@ -162,6 +201,45 @@ export const integrationsService = {
 
   async disconnectMercadoPago(): Promise<{ message: string }> {
     const response = await api.delete<{ message: string }>('/integrations/mercadopago/disconnect');
+    return response.data;
+  },
+
+  // Z-API (WhatsApp)
+  async getZApiStatus(): Promise<ZApiStatus> {
+    const response = await api.get<ZApiStatus>('/settings/whatsapp/zapi');
+    return response.data;
+  },
+
+  async getZApiConnectionStatus(): Promise<ZApiConnectionStatus> {
+    const response = await api.get<ZApiConnectionStatus>('/settings/whatsapp/zapi/status');
+    return response.data;
+  },
+
+  async connectZApi(dto: ConnectZApiDto): Promise<{ configured: boolean; enabled: boolean; message: string }> {
+    const response = await api.put<{ configured: boolean; enabled: boolean; message: string }>(
+      '/settings/whatsapp/zapi',
+      dto,
+    );
+    return response.data;
+  },
+
+  async getZApiQrCode(): Promise<ZApiQrCodeResponse> {
+    const response = await api.get<ZApiQrCodeResponse>('/settings/whatsapp/zapi/qrcode');
+    return response.data;
+  },
+
+  async disconnectZApi(): Promise<{ success: boolean; message: string }> {
+    const response = await api.post<{ success: boolean; message: string }>(
+      '/settings/whatsapp/zapi/disconnect',
+    );
+    return response.data;
+  },
+
+  async testZApiMessage(dto: ZApiTestMessageDto): Promise<{ success: boolean; message: string }> {
+    const response = await api.post<{ success: boolean; message: string }>(
+      '/settings/whatsapp/zapi/test',
+      dto,
+    );
     return response.data;
   },
 };

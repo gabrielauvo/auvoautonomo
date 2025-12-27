@@ -79,7 +79,7 @@ import {
   useUpdateWorkOrderStatus,
   useCompleteWorkOrder,
   useDeleteWorkOrder,
-  useClientTimelineFlow,
+  useWorkOrderTimeline,
   useSendWorkOrderEmail,
 } from '@/hooks/use-work-orders';
 import {
@@ -376,7 +376,7 @@ export default function WorkOrderDetailsPage() {
 
   // Queries
   const { data: workOrder, isLoading, error, refetch } = useWorkOrder(id);
-  const { data: timeline } = useClientTimelineFlow(workOrder?.clientId);
+  const { data: timeline } = useWorkOrderTimeline(id);
 
   // Mutations
   const updateStatus = useUpdateWorkOrderStatus();
@@ -563,10 +563,8 @@ export default function WorkOrderDetailsPage() {
   const isInProgress = workOrder.status === 'IN_PROGRESS';
   const isScheduled = workOrder.status === 'SCHEDULED';
 
-  // Filtrar timeline para esta OS
-  const workOrderTimeline = timeline?.filter(
-    (event) => event.workOrderId === workOrder.id
-  ) || [];
+  // Timeline da OS (já vem filtrada do backend)
+  const workOrderTimeline = timeline || [];
 
   return (
     <AppLayout>

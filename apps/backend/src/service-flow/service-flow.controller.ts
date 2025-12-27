@@ -82,6 +82,18 @@ export class ServiceFlowController {
   }
 
   /**
+   * Get work order timeline with all events
+   * GET /service-flow/work-order/:workOrderId/timeline
+   */
+  @Get('work-order/:workOrderId/timeline')
+  async getWorkOrderTimeline(
+    @Request() req,
+    @Param('workOrderId') workOrderId: string,
+  ) {
+    return this.serviceFlowService.getWorkOrderTimeline(req.user.sub, workOrderId);
+  }
+
+  /**
    * Get work order extract (financial summary)
    * GET /service-flow/work-order/:workOrderId/extract
    */

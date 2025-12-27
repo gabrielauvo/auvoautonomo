@@ -534,6 +534,221 @@ export class ServiceFlowService {
   }
 
   // ============================================
+  // WORK ORDER TIMELINE
+  // GET /service-flow/work-order/:workOrderId/timeline
+  // ============================================
+
+  async getWorkOrderTimeline(userId: string, workOrderId: string): Promise<TimelineEvent[]> {
+    this.logger.log(`Getting timeline for work order ${workOrderId}`);
+
+    // 1. Verify work order belongs to user
+    const workOrder = await this.prisma.workOrder.findFirst({
+      where: { id: workOrderId, userId },
+      include: {
+        client: { select: { name: true } },
+        checklists: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+        attachments: {
+          select: {
+            id: true,
+            fileName: true,
+            createdAt: true,
+          },
+        },
+        executionSessions: {
+          select: {
+            id: true,
+            sessionType: true,
+            startedAt: true,
+            endedAt: true,
+            pauseReason: true,
+            notes: true,
+          },
+          orderBy: { startedAt: 'asc' },
+        },
+      },
+    });
+
+    if (!workOrder) {
+      throw new ForbiddenException(
+        `Work order with ID ${workOrderId} not found or does not belong to you`,
+      );
+    }
+
+    const timeline: TimelineEvent[] = [];
+
+    // 2. Work order created
+    timeline.push({
+      type: 'WORK_ORDER_CREATED',
+      date: workOrder.createdAt,
+      data: {
+        id: workOrder.id,
+        title: workOrder.title,
+        status: 'SCHEDULED',
+        clientName: workOrder.client?.name,
+      },
+    });
+
+    // 3. Execution sessions (start, pause, resume)
+    for (const session of workOrder.executionSessions) {
+      if (session.sessionType === 'WORK') {
+        // First work session = started, subsequent = resumed
+        const existingWorkSessions = timeline.filter(
+          (e) => e.type === 'WORK_ORDER_STARTED' || e.type === 'WORK_ORDER_RESUMED'
+        );
+
+        if (existingWorkSessions.length === 0) {
+          timeline.push({
+            type: 'WORK_ORDER_STARTED',
+            date: session.startedAt,
+            data: {
+              id: workOrder.id,
+              title: workOrder.title,
+            },
+          });
+        } else {
+          timeline.push({
+            type: 'WORK_ORDER_RESUMED',
+            date: session.startedAt,
+            data: {
+              id: workOrder.id,
+              title: workOrder.title,
+            },
+          });
+        }
+      } else if (session.sessionType === 'PAUSE') {
+        timeline.push({
+          type: 'WORK_ORDER_PAUSED',
+          date: session.startedAt,
+          data: {
+            id: workOrder.id,
+            title: workOrder.title,
+            reason: session.pauseReason || null,
+          },
+        });
+      }
+    }
+
+    // 4. Work order completed or canceled
+    if (workOrder.status === WorkOrderStatus.DONE && workOrder.executionEnd) {
+      timeline.push({
+        type: 'WORK_ORDER_COMPLETED',
+        date: workOrder.executionEnd,
+        data: {
+          id: workOrder.id,
+          title: workOrder.title,
+        },
+      });
+    }
+
+    if (workOrder.status === WorkOrderStatus.CANCELED) {
+      timeline.push({
+        type: 'WORK_ORDER_CANCELED',
+        date: workOrder.updatedAt,
+        data: {
+          id: workOrder.id,
+          title: workOrder.title,
+        },
+      });
+    }
+
+    // 5. Checklists
+    for (const checklist of workOrder.checklists) {
+      timeline.push({
+        type: 'CHECKLIST_CREATED',
+        date: checklist.createdAt,
+        data: {
+          id: checklist.id,
+          title: checklist.title,
+          workOrderId: workOrder.id,
+        },
+      });
+
+      // If checklist was answered
+      if (checklist.status === 'ANSWERED' && checklist.updatedAt > checklist.createdAt) {
+        timeline.push({
+          type: 'CHECKLIST_ANSWERED',
+          date: checklist.updatedAt,
+          data: {
+            id: checklist.id,
+            title: checklist.title,
+            workOrderId: workOrder.id,
+          },
+        });
+      }
+    }
+
+    // 6. Attachments
+    for (const attachment of workOrder.attachments) {
+      timeline.push({
+        type: 'ATTACHMENT_ADDED',
+        date: attachment.createdAt,
+        data: {
+          id: attachment.id,
+          fileName: attachment.fileName,
+          workOrderId: workOrder.id,
+        },
+      });
+    }
+
+    // 7. Get payments for this work order
+    const payments = await this.prisma.clientPayment.findMany({
+      where: { workOrderId, userId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    for (const payment of payments) {
+      timeline.push({
+        type: 'PAYMENT_CREATED',
+        date: payment.createdAt,
+        data: {
+          id: payment.id,
+          value: payment.value.toNumber(),
+          billingType: payment.billingType,
+          status: payment.status,
+          dueDate: payment.dueDate,
+          workOrderId: payment.workOrderId,
+        },
+      });
+
+      if (payment.paidAt) {
+        timeline.push({
+          type: 'PAYMENT_CONFIRMED',
+          date: payment.paidAt,
+          data: {
+            id: payment.id,
+            value: payment.value.toNumber(),
+            billingType: payment.billingType,
+          },
+        });
+      }
+
+      if (payment.status === PaymentStatus.OVERDUE) {
+        timeline.push({
+          type: 'PAYMENT_OVERDUE',
+          date: payment.dueDate,
+          data: {
+            id: payment.id,
+            value: payment.value.toNumber(),
+          },
+        });
+      }
+    }
+
+    // 8. Sort by date descending (newest first)
+    timeline.sort((a, b) => b.date.getTime() - a.date.getTime());
+
+    return timeline;
+  }
+
+  // ============================================
   // WORK ORDER EXTRACT (FINANCIAL)
   // GET /service-flow/work-order/:workOrderId/extract
   // ============================================

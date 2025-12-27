@@ -15,7 +15,7 @@ import { NotificationChannelBase } from './notification-channel.interface';
 @Injectable()
 export class EmailChannelService extends NotificationChannelBase {
   private readonly logger = new Logger(EmailChannelService.name);
-  private readonly resend: Resend;
+  private readonly resend: Resend | null = null;
   readonly channel = NotificationChannel.EMAIL;
 
   constructor() {
@@ -23,8 +23,9 @@ export class EmailChannelService extends NotificationChannelBase {
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
       this.logger.warn('RESEND_API_KEY not configured - emails will not be sent');
+    } else {
+      this.resend = new Resend(apiKey);
     }
-    this.resend = new Resend(apiKey);
   }
 
   /**
@@ -40,8 +41,8 @@ export class EmailChannelService extends NotificationChannelBase {
         };
       }
 
-      // Check if API key is configured
-      if (!process.env.RESEND_API_KEY) {
+      // Check if Resend is configured
+      if (!this.resend) {
         this.logger.warn('RESEND_API_KEY not configured - skipping email send');
         return {
           success: false,

@@ -477,6 +477,17 @@ export function useClientTimelineFlow(clientId: string | undefined) {
 }
 
 /**
+ * Hook para obter timeline da OS
+ */
+export function useWorkOrderTimeline(workOrderId: string | undefined) {
+  return useQuery<TimelineEvent[]>({
+    queryKey: ['work-order', workOrderId, 'timeline'],
+    queryFn: () => workOrdersService.getWorkOrderTimeline(workOrderId!),
+    enabled: !!workOrderId,
+  });
+}
+
+/**
  * Hook para gerar pagamento da OS
  */
 export function useGenerateWorkOrderPayment() {

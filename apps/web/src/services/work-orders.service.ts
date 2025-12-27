@@ -848,6 +848,20 @@ export async function getClientTimeline(clientId: string): Promise<TimelineEvent
 }
 
 /**
+ * Obter timeline da OS
+ */
+export async function getWorkOrderTimeline(workOrderId: string): Promise<TimelineEvent[]> {
+  try {
+    const response = await api.get<TimelineEvent[]>(
+      `/service-flow/work-order/${workOrderId}/timeline`
+    );
+    return response.data;
+  } catch (error) {
+    throw new Error(getErrorMessage(error));
+  }
+}
+
+/**
  * Obter extrato da OS
  */
 export async function getWorkOrderExtract(workOrderId: string): Promise<WorkOrderExtract> {
@@ -1002,6 +1016,7 @@ export const workOrdersService = {
   convertQuoteToWorkOrder,
   completeWorkOrder,
   getClientTimeline,
+  getWorkOrderTimeline,
   getWorkOrderExtract,
   generateWorkOrderPayment,
   // Share

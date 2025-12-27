@@ -53,8 +53,8 @@ import {
 import { useZApiStatus } from '@/hooks/use-integrations';
 import { useCompanySettings } from '@/context/company-settings-context';
 
-// Countries where WhatsApp is commonly used for business messaging
-const WHATSAPP_COUNTRIES = ['BR', 'MX', 'AR', 'CO', 'CL', 'PE', 'ES', 'PT', 'IN'];
+// Countries where WhatsApp is NOT commonly used for business messaging
+const NON_WHATSAPP_COUNTRIES = ['US', 'CA'];
 
 export default function NotificationsSettingsPage() {
   const { t } = useTranslations('notifications');
@@ -65,10 +65,9 @@ export default function NotificationsSettingsPage() {
   const updatePreferences = useUpdateNotificationPreferences();
   const updateMessages = useUpdateNotificationMessages();
 
-  // WhatsApp is popular in Latin America, Spain, Portugal, India - not in US/CA
-  // Use 'BR' as fallback if country is not set or empty
-  const userCountry = companySettings?.country?.toUpperCase();
-  const showWhatsApp = WHATSAPP_COUNTRIES.includes(userCountry && userCountry.length > 0 ? userCountry : 'BR');
+  // Show WhatsApp by default, only hide for US/CA where it's not common for business
+  const userCountry = companySettings?.country?.toUpperCase() || '';
+  const showWhatsApp = !NON_WHATSAPP_COUNTRIES.includes(userCountry);
 
   // Z-API connection status
   const isZApiConnected = zapiStatus?.configured && zapiStatus?.connectionStatus === 'connected';

@@ -54,8 +54,8 @@ import {
 } from '@/services/integrations.service';
 import { useCompanySettings } from '@/context/company-settings-context';
 
-// Countries where WhatsApp is commonly used for business messaging
-const WHATSAPP_COUNTRIES = ['BR', 'MX', 'AR', 'CO', 'CL', 'PE', 'ES', 'PT', 'IN'];
+// Countries where WhatsApp is NOT commonly used for business messaging
+const NON_WHATSAPP_COUNTRIES = ['US', 'CA'];
 
 // Stripe Icon SVG Component
 const StripeIcon = ({ className }: { className?: string }) => (
@@ -75,10 +75,9 @@ export default function IntegrationsSettingsPage() {
   const { t } = useTranslations('integrations');
   const { settings: companySettings } = useCompanySettings();
 
-  // WhatsApp is popular in Latin America, Spain, Portugal, India - not in US/CA
-  // Use 'BR' as fallback if country is not set or empty
-  const userCountry = companySettings?.country?.toUpperCase();
-  const showWhatsApp = WHATSAPP_COUNTRIES.includes(userCountry && userCountry.length > 0 ? userCountry : 'BR');
+  // Show WhatsApp by default, only hide for US/CA where it's not common for business
+  const userCountry = companySettings?.country?.toUpperCase() || '';
+  const showWhatsApp = !NON_WHATSAPP_COUNTRIES.includes(userCountry);
 
   // Asaas hooks
   const { data: asaasStatus, isLoading: asaasLoading } = useAsaasStatus();

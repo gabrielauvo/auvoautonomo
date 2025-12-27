@@ -713,8 +713,9 @@ export default function WorkOrderDetailsPage() {
                 Email
               </Button>
               {workOrder.sentAt && (
-                <span className="text-xs text-gray-500" title={formatDateTime(workOrder.sentAt)}>
-                  {t('emailSentAt', { date: formatDate(workOrder.sentAt) })}
+                <span className="text-xs text-green-600 flex items-center gap-1" title={formatDateTime(workOrder.sentAt)}>
+                  <Check className="h-3 w-3" />
+                  {formatDate(workOrder.sentAt)}
                 </span>
               )}
             </div>

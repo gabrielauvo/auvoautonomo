@@ -12,7 +12,9 @@
 
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useTranslations } from '@/i18n';
 import { useAuth } from '@/context/auth-context';
+import { useFormatting } from '@/context/company-settings-context';
 import { useServicesReport, useReportFilters } from '@/hooks/use-reports';
 import { reportsService } from '@/services/reports.service';
 import {
@@ -82,22 +84,14 @@ const MOCK_SERVICES_DATA = {
 };
 
 /**
- * Formata valor em moeda brasileira
- */
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
-}
-
-/**
  * Services Report Content - Componente interno
  */
 function ServicesReportContent() {
   const searchParams = useSearchParams();
   const filters = useReportFilters(searchParams);
   const { billing } = useAuth();
+  const { t } = useTranslations('reports');
+  const { formatCurrency } = useFormatting();
 
   const isPro = true;
 
@@ -127,14 +121,14 @@ function ServicesReportContent() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
-          title="Total de OS"
+          title={t('totalWorkOrders')}
           value={servicesData.summary.totalWorkOrders}
           format="number"
           icon={<Wrench className="h-6 w-6" />}
           loading={isLoading}
         />
         <KpiCard
-          title="Concluídas"
+          title={t('completed')}
           value={servicesData.summary.completedWorkOrders}
           format="number"
           icon={<CheckCircle className="h-6 w-6" />}
@@ -142,7 +136,7 @@ function ServicesReportContent() {
           loading={isLoading}
         />
         <KpiCard
-          title="Tipos Utilizados"
+          title={t('typesUsed')}
           value={servicesData.summary.typesUsed}
           format="number"
           icon={<Tag className="h-6 w-6" />}
@@ -150,7 +144,7 @@ function ServicesReportContent() {
           loading={isLoading}
         />
         <KpiCard
-          title="Taxa Média"
+          title={t('avgRate')}
           value={
             servicesData.workOrdersByType.length > 0
               ? Math.round(
@@ -170,8 +164,8 @@ function ServicesReportContent() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pie Chart */}
         <PieChart
-          title="Distribuição por Tipo"
-          subtitle="OS por tipo de serviço"
+          title={t('distributionByType')}
+          subtitle={t('workOrdersByServiceType')}
           data={typeDistributionData}
           height={350}
           loading={isLoading}
@@ -183,7 +177,7 @@ function ServicesReportContent() {
           <CardHeader>
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <BarChart3 className="h-5 w-5 text-primary" />
-              Ranking de Tipos
+              {t('typesRanking')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -215,7 +209,7 @@ function ServicesReportContent() {
                       <Badge
                         variant={type.completionRate >= 80 ? 'success' : type.completionRate >= 50 ? 'warning' : 'error'}
                       >
-                        {type.completionRate}% concluídas
+                        {type.completionRate}% {t('completedLower')}
                       </Badge>
                       <p className="text-xs text-gray-500 mt-1">{formatCurrency(type.totalValue)}</p>
                     </div>
@@ -232,7 +226,7 @@ function ServicesReportContent() {
         <CardHeader>
           <CardTitle className="text-base font-semibold flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" />
-            Top Clientes por Tipo
+            {t('topClientsByType')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -244,7 +238,7 @@ function ServicesReportContent() {
             </div>
           ) : servicesData.topClientsByType.length === 0 ? (
             <p className="text-sm text-gray-500 text-center py-8">
-              Nenhum dado de clientes por tipo disponível.
+              {t('noClientsByTypeData')}
             </p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -283,7 +277,7 @@ function ServicesReportContent() {
         <CardHeader>
           <CardTitle className="text-base font-semibold flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-primary" />
-            Insights de Serviços
+            {t('servicesInsights')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -300,13 +294,13 @@ function ServicesReportContent() {
                 <div className="p-4 bg-blue-50 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
                     <Tag className="h-4 w-4 text-blue-600" />
-                    <span className="text-sm font-medium text-blue-800">Tipo mais solicitado</span>
+                    <span className="text-sm font-medium text-blue-800">{t('mostRequestedType')}</span>
                   </div>
                   <p className="text-xl font-bold text-blue-900">
                     {servicesData.workOrdersByType[0].typeName}
                   </p>
                   <p className="text-xs text-blue-700">
-                    {servicesData.workOrdersByType[0].count} ordens de serviço
+                    {t('workOrdersCount', { count: servicesData.workOrdersByType[0].count })}
                   </p>
                 </div>
               )}
@@ -320,10 +314,10 @@ function ServicesReportContent() {
                   <div className="p-4 bg-success-50 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
                       <CheckCircle className="h-4 w-4 text-success" />
-                      <span className="text-sm font-medium text-success-800">Melhor taxa de conclusão</span>
+                      <span className="text-sm font-medium text-success-800">{t('bestCompletionRate')}</span>
                     </div>
                     <p className="text-xl font-bold text-success-900">{bestType.typeName}</p>
-                    <p className="text-xs text-success-700">{bestType.completionRate}% concluídas</p>
+                    <p className="text-xs text-success-700">{bestType.completionRate}% {t('completedLower')}</p>
                   </div>
                 ) : null;
               })()}
@@ -337,7 +331,7 @@ function ServicesReportContent() {
                   <div className="p-4 bg-amber-50 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
                       <TrendingUp className="h-4 w-4 text-amber-600" />
-                      <span className="text-sm font-medium text-amber-800">Maior faturamento</span>
+                      <span className="text-sm font-medium text-amber-800">{t('highestRevenue')}</span>
                     </div>
                     <p className="text-xl font-bold text-amber-900">{highestValueType.typeName}</p>
                     <p className="text-xs text-amber-700">{formatCurrency(highestValueType.totalValue)}</p>
@@ -366,7 +360,7 @@ function ServicesReportContent() {
         <Alert variant="error">
           <div className="flex items-center gap-2">
             <AlertCircle className="h-4 w-4" />
-            Erro ao carregar relatório de serviços. Tente novamente.
+            {t('errorLoadingServicesReport')}
           </div>
         </Alert>
       )}
@@ -376,8 +370,8 @@ function ServicesReportContent() {
         renderContent()
       ) : (
         <ProFeatureOverlay
-          title="Relatório de Serviços por Tipo"
-          description="Faça upgrade para acessar métricas detalhadas por tipo de serviço, ranking de clientes e exportação de dados."
+          title={t('detailedServicesReportTitle')}
+          description={t('detailedServicesReportDescription')}
         >
           {renderContent()}
         </ProFeatureOverlay>

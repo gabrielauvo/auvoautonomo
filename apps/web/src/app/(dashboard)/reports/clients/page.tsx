@@ -12,7 +12,9 @@
 
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useTranslations } from '@/i18n';
 import { useAuth } from '@/context/auth-context';
+import { useFormatting } from '@/context/company-settings-context';
 import { useClientsReport, useReportFilters } from '@/hooks/use-reports';
 import { reportsService } from '@/services/reports.service';
 import {
@@ -50,16 +52,6 @@ import {
 } from 'lucide-react';
 
 /**
- * Formatar valor em moeda
- */
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
-}
-
-/**
  * Mock data para demonstração
  */
 const MOCK_CLIENTS_DATA = {
@@ -78,9 +70,9 @@ const MOCK_CLIENTS_DATA = {
     { date: '2024-10', label: 'Out', total: 156, new: 6 },
   ],
   clientsByStatus: [
-    { name: 'Ativos', value: 128, color: '#10B981' },
-    { name: 'Novos', value: 23, color: '#3B82F6' },
-    { name: 'Inativos', value: 28, color: '#6B7280' },
+    { name: 'active', value: 128, color: '#10B981' },
+    { name: 'new', value: 23, color: '#3B82F6' },
+    { name: 'inactive', value: 28, color: '#6B7280' },
   ],
   topClientsByRevenue: [
     { clientId: '1', clientName: 'Empresa ABC Ltda', totalRevenue: 35000, quotesCount: 15, workOrdersCount: 28 },
@@ -112,6 +104,8 @@ function ClientsReportContent() {
   const searchParams = useSearchParams();
   const filters = useReportFilters(searchParams);
   const { billing } = useAuth();
+  const { t } = useTranslations('reports');
+  const { formatCurrency } = useFormatting();
 
   const isPro = true;
 
@@ -126,11 +120,11 @@ function ClientsReportContent() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `relatorio-clientes.${format}`;
+      a.download = `clients-report.${format}`;
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      console.error('Erro ao exportar:', err);
+      console.error('Error exporting:', err);
     }
   };
 
@@ -141,19 +135,25 @@ function ClientsReportContent() {
     rate: item.rate,
   }));
 
+  // Translate status names for pie chart
+  const translatedClientsByStatus = clientsData.clientsByStatus.map((item) => ({
+    ...item,
+    name: t(item.name),
+  }));
+
   const renderContent = () => (
     <div className="space-y-6">
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
-          title="Total de Clientes"
+          title={t('totalClients')}
           value={clientsData.summary.totalClients}
           format="number"
           icon={<Users className="h-6 w-6" />}
           loading={isLoading}
         />
         <KpiCard
-          title="Clientes Ativos"
+          title={t('activeClients')}
           value={clientsData.summary.activeClients}
           format="number"
           icon={<UserCheck className="h-6 w-6" />}
@@ -161,7 +161,7 @@ function ClientsReportContent() {
           loading={isLoading}
         />
         <KpiCard
-          title="Novos Clientes"
+          title={t('newClients')}
           value={clientsData.summary.newClients}
           format="number"
           icon={<UserPlus className="h-6 w-6" />}
@@ -169,7 +169,7 @@ function ClientsReportContent() {
           loading={isLoading}
         />
         <KpiCard
-          title="Receita Média"
+          title={t('avgRevenue')}
           value={clientsData.summary.avgRevenuePerClient}
           format="currency"
           icon={<TrendingUp className="h-6 w-6" />}
@@ -184,10 +184,10 @@ function ClientsReportContent() {
           <div className="flex items-center gap-2">
             <AlertCircle className="h-4 w-4" />
             <span>
-              <strong>{clientsData.summary.withOverdue}</strong> cliente(s) com pagamentos em atraso.
+              <strong>{clientsData.summary.withOverdue}</strong> {t('clientsWithOverduePayments')}
               {' '}
               <a href="/payments?status=OVERDUE" className="underline font-medium">
-                Ver detalhes
+                {t('viewDetails')}
               </a>
             </span>
           </div>
@@ -197,8 +197,8 @@ function ClientsReportContent() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <TimeSeriesChart
-          title="Evolução da Base de Clientes"
-          subtitle="Crescimento mensal"
+          title={t('clientBaseEvolution')}
+          subtitle={t('monthlyGrowth')}
           data={clientsData.clientsByPeriod.map((item) => ({
             date: item.date,
             label: item.label,
@@ -206,17 +206,17 @@ function ClientsReportContent() {
             new: item.new,
           }))}
           series={[
-            { key: 'total', name: 'Total', color: '#3B82F6', type: 'area' },
-            { key: 'new', name: 'Novos', color: '#10B981', type: 'line' },
+            { key: 'total', name: t('total'), color: '#3B82F6', type: 'area' },
+            { key: 'new', name: t('new'), color: '#10B981', type: 'line' },
           ]}
           height={300}
           loading={isLoading}
         />
 
         <PieChart
-          title="Distribuição por Status"
-          subtitle="Base atual"
-          data={clientsData.clientsByStatus}
+          title={t('distributionByStatus')}
+          subtitle={t('currentBase')}
+          data={translatedClientsByStatus}
           height={300}
           loading={isLoading}
           donut
@@ -226,11 +226,11 @@ function ClientsReportContent() {
       {/* Second Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <TimeSeriesChart
-          title="Taxa de Retenção"
-          subtitle="Evolução mensal"
+          title={t('retentionRate')}
+          subtitle={t('monthlyEvolution')}
           data={retentionChartData}
           series={[
-            { key: 'rate', name: 'Taxa (%)', color: '#8B5CF6', type: 'area' },
+            { key: 'rate', name: `${t('rate')} (%)`, color: '#8B5CF6', type: 'area' },
           ]}
           height={300}
           loading={isLoading}
@@ -238,8 +238,8 @@ function ClientsReportContent() {
         />
 
         <BarChart
-          title="Clientes por Cidade"
-          subtitle="Distribuição geográfica"
+          title={t('clientsByCity')}
+          subtitle={t('geographicDistribution')}
           data={clientsData.clientsByCity}
           height={300}
           horizontal
@@ -252,7 +252,7 @@ function ClientsReportContent() {
         <CardHeader>
           <CardTitle className="text-base font-semibold flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-primary" />
-            Top Clientes por Receita
+            {t('topClientsByRevenue')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -267,10 +267,10 @@ function ClientsReportContent() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12">#</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead className="text-center">Orçamentos</TableHead>
+                  <TableHead>{t('client')}</TableHead>
+                  <TableHead className="text-center">{t('quotes')}</TableHead>
                   <TableHead className="text-center">OS</TableHead>
-                  <TableHead className="text-right">Receita Total</TableHead>
+                  <TableHead className="text-right">{t('totalRevenue')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -312,7 +312,7 @@ function ClientsReportContent() {
         <CardHeader>
           <CardTitle className="text-base font-semibold flex items-center gap-2">
             <MapPin className="h-5 w-5 text-primary" />
-            Insights da Base de Clientes
+            {t('clientBaseInsights')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -327,34 +327,34 @@ function ClientsReportContent() {
               <div className="p-4 bg-success-50 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
                   <UserCheck className="h-4 w-4 text-success" />
-                  <span className="text-sm font-medium text-success-800">Ativação</span>
+                  <span className="text-sm font-medium text-success-800">{t('activation')}</span>
                 </div>
                 <p className="text-2xl font-bold text-success-900">
                   {((clientsData.summary.activeClients / clientsData.summary.totalClients) * 100).toFixed(1)}%
                 </p>
-                <p className="text-xs text-success-700">Clientes ativos</p>
+                <p className="text-xs text-success-700">{t('activeClients')}</p>
               </div>
 
               <div className="p-4 bg-blue-50 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
                   <UserPlus className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm font-medium text-blue-800">Crescimento</span>
+                  <span className="text-sm font-medium text-blue-800">{t('growth')}</span>
                 </div>
                 <p className="text-2xl font-bold text-blue-900">
                   +{clientsData.summary.newClients}
                 </p>
-                <p className="text-xs text-blue-700">Novos no período</p>
+                <p className="text-xs text-blue-700">{t('newInPeriod')}</p>
               </div>
 
               <div className="p-4 bg-gray-50 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
                   <UserX className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm font-medium text-gray-800">Churn</span>
+                  <span className="text-sm font-medium text-gray-800">{t('churn')}</span>
                 </div>
                 <p className="text-2xl font-bold text-gray-900">
                   {clientsData.summary.inactiveClients}
                 </p>
-                <p className="text-xs text-gray-700">Clientes inativos</p>
+                <p className="text-xs text-gray-700">{t('inactiveClients')}</p>
               </div>
             </div>
           )}
@@ -378,7 +378,7 @@ function ClientsReportContent() {
         <Alert variant="error">
           <div className="flex items-center gap-2">
             <AlertCircle className="h-4 w-4" />
-            Erro ao carregar relatório de clientes. Tente novamente.
+            {t('errorLoadingClientsReport')}
           </div>
         </Alert>
       )}
@@ -388,8 +388,8 @@ function ClientsReportContent() {
         renderContent()
       ) : (
         <ProFeatureOverlay
-          title="Relatório de Clientes Detalhado"
-          description="Faça upgrade para acessar análises de retenção, top clientes e exportação de dados."
+          title={t('detailedClientsReportTitle')}
+          description={t('detailedClientsReportDescription')}
         >
           {renderContent()}
         </ProFeatureOverlay>

@@ -52,6 +52,7 @@ import {
   StripeEnvironment,
   MercadoPagoEnvironment,
 } from '@/services/integrations.service';
+import { useFormatting } from '@/hooks/use-formatting';
 
 // Stripe Icon SVG Component
 const StripeIcon = ({ className }: { className?: string }) => (
@@ -69,6 +70,10 @@ const MercadoPagoIcon = ({ className }: { className?: string }) => (
 
 export default function IntegrationsSettingsPage() {
   const { t } = useTranslations('integrations');
+  const { locale } = useFormatting();
+
+  // WhatsApp/Z-API is not commonly used in English-speaking countries
+  const showWhatsApp = !locale.startsWith('en');
 
   // Asaas hooks
   const { data: asaasStatus, isLoading: asaasLoading } = useAsaasStatus();
@@ -643,8 +648,8 @@ export default function IntegrationsSettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Z-API WhatsApp Integration */}
-      <ZApiIntegrationCard />
+      {/* Z-API WhatsApp Integration - Hidden for English locales */}
+      {showWhatsApp && <ZApiIntegrationCard />}
 
       {/* Asaas Disconnect Modal */}
       {showAsaasDisconnect && (

@@ -51,14 +51,19 @@ import {
   NotificationMessages,
 } from '@/services/settings.service';
 import { useZApiStatus } from '@/hooks/use-integrations';
+import { useFormatting } from '@/hooks/use-formatting';
 
 export default function NotificationsSettingsPage() {
   const { t } = useTranslations('notifications');
   const tIntegrations = useTranslations('integrations');
+  const { locale } = useFormatting();
   const { data: settings, isLoading } = useNotificationSettings();
   const { data: zapiStatus } = useZApiStatus();
   const updatePreferences = useUpdateNotificationPreferences();
   const updateMessages = useUpdateNotificationMessages();
+
+  // WhatsApp is not commonly used in English-speaking countries
+  const showWhatsApp = !locale.startsWith('en');
 
   // Z-API connection status
   const isZApiConnected = zapiStatus?.configured && zapiStatus?.connectionStatus === 'connected';
@@ -207,10 +212,12 @@ export default function NotificationsSettingsPage() {
                 <Mail className="h-4 w-4 mr-2" />
                 {t('tabs.email')}
               </TabsTrigger>
-              <TabsTrigger value="whatsapp">
-                <MessageCircle className="h-4 w-4 mr-2" />
-                {t('tabs.whatsapp')}
-              </TabsTrigger>
+              {showWhatsApp && (
+                <TabsTrigger value="whatsapp">
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  {t('tabs.whatsapp')}
+                </TabsTrigger>
+              )}
               <TabsTrigger value="reminders">
                 <Clock className="h-4 w-4 mr-2" />
                 {t('tabs.reminders')}
@@ -320,88 +327,90 @@ export default function NotificationsSettingsPage() {
               </div>
             </TabsContent>
 
-            {/* WhatsApp Tab */}
-            <TabsContent value="whatsapp">
-              <div className="space-y-6">
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div>
-                    <h4 className="font-medium text-gray-900">
-                      {t('whatsapp.title')}
-                    </h4>
-                    <p className="text-sm text-gray-500">
-                      {t('whatsapp.description')}
-                    </p>
+            {/* WhatsApp Tab - Hidden for English locales */}
+            {showWhatsApp && (
+              <TabsContent value="whatsapp">
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div>
+                      <h4 className="font-medium text-gray-900">
+                        {t('whatsapp.title')}
+                      </h4>
+                      <p className="text-sm text-gray-500">
+                        {t('whatsapp.description')}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={whatsappEnabled}
+                      onCheckedChange={setWhatsappEnabled}
+                    />
                   </div>
-                  <Switch
-                    checked={whatsappEnabled}
-                    onCheckedChange={setWhatsappEnabled}
-                  />
-                </div>
 
-                <Alert variant={isZApiConnected ? 'success' : 'warning'} className="mb-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-2">
-                      <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                      <div className="text-sm">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-medium">{t('whatsapp.integrationTitle')}</p>
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                            isZApiConnected
-                              ? 'bg-success/10 text-success'
-                              : 'bg-warning/10 text-warning'
-                          }`}>
-                            {isZApiConnected ? tIntegrations.t('zapiConnected') : tIntegrations.t('zapiNotConfigured')}
-                          </span>
+                  <Alert variant={isZApiConnected ? 'success' : 'warning'} className="mb-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-2">
+                        <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                        <div className="text-sm">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-medium">{t('whatsapp.integrationTitle')}</p>
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                              isZApiConnected
+                                ? 'bg-success/10 text-success'
+                                : 'bg-warning/10 text-warning'
+                            }`}>
+                              {isZApiConnected ? tIntegrations.t('zapiConnected') : tIntegrations.t('zapiNotConfigured')}
+                            </span>
+                          </div>
+                          <p className="mt-1">
+                            {t('whatsapp.integrationDescription')}
+                          </p>
                         </div>
-                        <p className="mt-1">
-                          {t('whatsapp.integrationDescription')}
-                        </p>
                       </div>
+                      <Link
+                        href="/settings/integrations"
+                        className="flex-shrink-0 inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                      >
+                        {t('whatsapp.configureIntegration')}
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </Link>
                     </div>
-                    <Link
-                      href="/settings/integrations"
-                      className="flex-shrink-0 inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-                    >
-                      {t('whatsapp.configureIntegration')}
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </Link>
-                  </div>
-                </Alert>
+                  </Alert>
 
-                <div className={whatsappEnabled ? '' : 'opacity-50 pointer-events-none'}>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-sm font-medium text-gray-700">
-                          {t('whatsapp.paymentReminder')}
-                        </span>
-                        <p className="text-xs text-gray-500">
-                          {t('whatsapp.paymentReminderDescription')}
-                        </p>
+                  <div className={whatsappEnabled ? '' : 'opacity-50 pointer-events-none'}>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-sm font-medium text-gray-700">
+                            {t('whatsapp.paymentReminder')}
+                          </span>
+                          <p className="text-xs text-gray-500">
+                            {t('whatsapp.paymentReminderDescription')}
+                          </p>
+                        </div>
+                        <Switch
+                          checked={whatsappPaymentReminder}
+                          onCheckedChange={setWhatsappPaymentReminder}
+                        />
                       </div>
-                      <Switch
-                        checked={whatsappPaymentReminder}
-                        onCheckedChange={setWhatsappPaymentReminder}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-sm font-medium text-gray-700">
-                          {t('whatsapp.scheduleReminder')}
-                        </span>
-                        <p className="text-xs text-gray-500">
-                          {t('whatsapp.scheduleReminderDescription')}
-                        </p>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-sm font-medium text-gray-700">
+                            {t('whatsapp.scheduleReminder')}
+                          </span>
+                          <p className="text-xs text-gray-500">
+                            {t('whatsapp.scheduleReminderDescription')}
+                          </p>
+                        </div>
+                        <Switch
+                          checked={whatsappWorkOrderReminder}
+                          onCheckedChange={setWhatsappWorkOrderReminder}
+                        />
                       </div>
-                      <Switch
-                        checked={whatsappWorkOrderReminder}
-                        onCheckedChange={setWhatsappWorkOrderReminder}
-                      />
                     </div>
                   </div>
                 </div>
-              </div>
-            </TabsContent>
+              </TabsContent>
+            )}
 
             {/* Reminders Tab */}
             <TabsContent value="reminders">

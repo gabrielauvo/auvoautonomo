@@ -6,7 +6,7 @@
  * Permite gerenciar categorias de despesas com edição inline
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { AppLayout } from '@/components/layout';
 import {
   Card,
@@ -35,20 +35,23 @@ import {
   useDeleteExpenseCategory,
 } from '@/hooks/use-expense-categories';
 import { ExpenseCategory } from '@/services/expense-categories.service';
-
-// Cores predefinidas para categorias
-const CATEGORY_COLORS = [
-  { value: '#3B82F6', label: 'Azul' },
-  { value: '#10B981', label: 'Verde' },
-  { value: '#F59E0B', label: 'Amarelo' },
-  { value: '#EF4444', label: 'Vermelho' },
-  { value: '#8B5CF6', label: 'Roxo' },
-  { value: '#EC4899', label: 'Rosa' },
-  { value: '#6B7280', label: 'Cinza' },
-  { value: '#F97316', label: 'Laranja' },
-];
+import { useTranslations } from '@/i18n';
 
 export default function ExpenseCategoriesPage() {
+  const { t } = useTranslations('expenseCategories');
+
+  // Cores predefinidas para categorias (memoized with translations)
+  const CATEGORY_COLORS = useMemo(() => [
+    { value: '#3B82F6', label: t('colors.blue') },
+    { value: '#10B981', label: t('colors.green') },
+    { value: '#F59E0B', label: t('colors.yellow') },
+    { value: '#EF4444', label: t('colors.red') },
+    { value: '#8B5CF6', label: t('colors.purple') },
+    { value: '#EC4899', label: t('colors.pink') },
+    { value: '#6B7280', label: t('colors.gray') },
+    { value: '#F97316', label: t('colors.orange') },
+  ], [t]);
+
   // Hooks de dados
   const { data: categories, isLoading, error: loadError } = useExpenseCategories();
   const createCategory = useCreateExpenseCategory();
@@ -58,7 +61,7 @@ export default function ExpenseCategoriesPage() {
   // Estados de edição
   const [showNewForm, setShowNewForm] = useState(false);
   const [newName, setNewName] = useState('');
-  const [newColor, setNewColor] = useState(CATEGORY_COLORS[0].value);
+  const [newColor, setNewColor] = useState('#3B82F6');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editColor, setEditColor] = useState('');
@@ -71,7 +74,7 @@ export default function ExpenseCategoriesPage() {
   // Handler para criar categoria
   const handleCreate = useCallback(async () => {
     if (!newName.trim()) {
-      setError('Nome é obrigatório');
+      setError(t('nameRequired'));
       return;
     }
 
@@ -82,18 +85,18 @@ export default function ExpenseCategoriesPage() {
         color: newColor,
       });
       setNewName('');
-      setNewColor(CATEGORY_COLORS[0].value);
+      setNewColor('#3B82F6');
       setShowNewForm(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao criar categoria');
+      setError(err instanceof Error ? err.message : t('errorCreating'));
     }
-  }, [newName, newColor, createCategory]);
+  }, [newName, newColor, createCategory, t]);
 
   // Handler para iniciar edição
   const handleStartEdit = useCallback((category: ExpenseCategory) => {
     setEditingId(category.id);
     setEditName(category.name);
-    setEditColor(category.color || CATEGORY_COLORS[0].value);
+    setEditColor(category.color || '#3B82F6');
     setError(null);
   }, []);
 
@@ -108,7 +111,7 @@ export default function ExpenseCategoriesPage() {
   // Handler para salvar edição
   const handleSaveEdit = useCallback(async () => {
     if (!editingId || !editName.trim()) {
-      setError('Nome é obrigatório');
+      setError(t('nameRequired'));
       return;
     }
 
@@ -125,9 +128,9 @@ export default function ExpenseCategoriesPage() {
       setEditName('');
       setEditColor('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao atualizar categoria');
+      setError(err instanceof Error ? err.message : t('errorUpdating'));
     }
-  }, [editingId, editName, editColor, updateCategory]);
+  }, [editingId, editName, editColor, updateCategory, t]);
 
   // Handler para deletar categoria
   const handleDelete = useCallback(async () => {
@@ -138,9 +141,9 @@ export default function ExpenseCategoriesPage() {
       setCategoryToDelete(null);
       setShowDeleteConfirm(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao excluir categoria');
+      setError(err instanceof Error ? err.message : t('errorDeleting'));
     }
-  }, [categoryToDelete, deleteCategory]);
+  }, [categoryToDelete, deleteCategory, t]);
 
   const isProcessing = createCategory.isPending || updateCategory.isPending || deleteCategory.isPending;
 
@@ -150,9 +153,9 @@ export default function ExpenseCategoriesPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Categorias de Despesas</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
             <p className="text-gray-500 mt-1">
-              Organize suas despesas por categoria
+              {t('subtitle')}
             </p>
           </div>
           {!showNewForm && (
@@ -160,7 +163,7 @@ export default function ExpenseCategoriesPage() {
               onClick={() => setShowNewForm(true)}
               leftIcon={<Plus className="h-4 w-4" />}
             >
-              Nova Categoria
+              {t('newCategory')}
             </Button>
           )}
         </div>
@@ -170,7 +173,7 @@ export default function ExpenseCategoriesPage() {
           <Alert variant="error">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
-              {error || 'Erro ao carregar categorias'}
+              {error || t('errorLoading')}
             </div>
           </Alert>
         )}
@@ -179,7 +182,7 @@ export default function ExpenseCategoriesPage() {
         {showNewForm && (
           <Card>
             <CardHeader>
-              <CardTitle>Nova Categoria</CardTitle>
+              <CardTitle>{t('newCategory')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col sm:flex-row gap-4">
@@ -187,7 +190,7 @@ export default function ExpenseCategoriesPage() {
                   <Input
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
-                    placeholder="Nome da categoria"
+                    placeholder={t('categoryNamePlaceholder')}
                     disabled={isProcessing}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
@@ -201,7 +204,7 @@ export default function ExpenseCategoriesPage() {
                   />
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500">Cor:</span>
+                  <span className="text-sm text-gray-500">{t('color')}:</span>
                   <div className="flex gap-1">
                     {CATEGORY_COLORS.map((color) => (
                       <button
@@ -226,7 +229,7 @@ export default function ExpenseCategoriesPage() {
                     disabled={!newName.trim() || isProcessing}
                     loading={createCategory.isPending}
                   >
-                    Criar
+                    {t('create')}
                   </Button>
                   <Button
                     variant="ghost"
@@ -237,7 +240,7 @@ export default function ExpenseCategoriesPage() {
                     }}
                     disabled={isProcessing}
                   >
-                    Cancelar
+                    {t('cancel')}
                   </Button>
                 </div>
               </div>
@@ -262,10 +265,10 @@ export default function ExpenseCategoriesPage() {
           ) : !categories || categories.length === 0 ? (
             <EmptyState
               icon={Folder}
-              title="Nenhuma categoria cadastrada"
-              description="Crie categorias para organizar suas despesas"
+              title={t('noCategories')}
+              description={t('createCategoriesDescription')}
               action={{
-                label: 'Nova Categoria',
+                label: t('newCategory'),
                 onClick: () => setShowNewForm(true),
               }}
             />
@@ -322,7 +325,7 @@ export default function ExpenseCategoriesPage() {
                           size="icon-sm"
                           onClick={handleSaveEdit}
                           disabled={!editName.trim() || isProcessing}
-                          title="Salvar"
+                          title={t('save')}
                         >
                           <Check className="h-4 w-4 text-success" />
                         </Button>
@@ -331,7 +334,7 @@ export default function ExpenseCategoriesPage() {
                           size="icon-sm"
                           onClick={handleCancelEdit}
                           disabled={isProcessing}
-                          title="Cancelar"
+                          title={t('cancel')}
                         >
                           <X className="h-4 w-4 text-gray-500" />
                         </Button>
@@ -347,7 +350,7 @@ export default function ExpenseCategoriesPage() {
                       <div className="flex-1">
                         <p className="font-medium text-gray-900">{category.name}</p>
                         <p className="text-xs text-gray-500">
-                          {category._count?.expenses || 0} despesa(s)
+                          {t('expensesCount', { count: category._count?.expenses || 0 })}
                         </p>
                       </div>
                       <div className="flex gap-1">
@@ -356,7 +359,7 @@ export default function ExpenseCategoriesPage() {
                           size="icon-sm"
                           onClick={() => handleStartEdit(category)}
                           disabled={isProcessing}
-                          title="Editar"
+                          title={t('edit')}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -368,7 +371,7 @@ export default function ExpenseCategoriesPage() {
                             setShowDeleteConfirm(true);
                           }}
                           disabled={isProcessing}
-                          title="Excluir"
+                          title={t('delete')}
                         >
                           <Trash2 className="h-4 w-4 text-error" />
                         </Button>
@@ -392,7 +395,7 @@ export default function ExpenseCategoriesPage() {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">
-                      Excluir categoria?
+                      {t('deleteCategory')}
                     </h3>
                     <p className="text-sm text-gray-500">
                       {categoryToDelete.name}
@@ -405,10 +408,9 @@ export default function ExpenseCategoriesPage() {
                     <div className="flex items-start gap-2">
                       <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
                       <div className="text-sm">
-                        <p className="font-medium">Atenção</p>
+                        <p className="font-medium">{t('attention')}</p>
                         <p>
-                          Esta categoria possui {categoryToDelete._count?.expenses} despesa(s) associada(s).
-                          As despesas ficarão sem categoria.
+                          {t('categoryHasExpenses', { count: categoryToDelete._count?.expenses })}
                         </p>
                       </div>
                     </div>
@@ -424,7 +426,7 @@ export default function ExpenseCategoriesPage() {
                     }}
                     disabled={deleteCategory.isPending}
                   >
-                    Cancelar
+                    {t('cancel')}
                   </Button>
                   <Button
                     variant="error"
@@ -432,7 +434,7 @@ export default function ExpenseCategoriesPage() {
                     loading={deleteCategory.isPending}
                     leftIcon={<Trash2 className="h-4 w-4" />}
                   >
-                    Excluir
+                    {t('deleteConfirm')}
                   </Button>
                 </div>
               </CardContent>

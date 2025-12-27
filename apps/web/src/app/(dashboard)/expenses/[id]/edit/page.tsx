@@ -40,6 +40,7 @@ function EditExpenseLoading() {
 }
 
 function EditExpenseContent() {
+  const { t } = useTranslations('expenses');
   const params = useParams();
   const id = params.id as string;
 
@@ -60,13 +61,13 @@ function EditExpenseContent() {
               </Button>
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Editar Despesa</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{t('editExpense')}</h1>
             </div>
           </div>
           <Alert variant="error">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
-              Despesa não encontrada
+              {t('expenseNotFound')}
             </div>
           </Alert>
         </div>
@@ -85,7 +86,7 @@ function EditExpenseContent() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Editar Despesa</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('editExpense')}</h1>
             <p className="text-gray-500 mt-1">
               {expense.description}
             </p>

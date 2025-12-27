@@ -8,7 +8,7 @@
  * - Ações (editar, marcar como pago, excluir)
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { AppLayout } from '@/components/layout';
@@ -37,37 +37,13 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useExpense, useDeleteExpense, useMarkExpenseAsPaid } from '@/hooks/use-expenses';
-import { getStatusLabel, getStatusColor } from '@/services/expenses.service';
-
-// Format currency
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
-}
-
-// Format date
-function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-  });
-}
-
-// Payment method labels
-const paymentMethodLabels: Record<string, string> = {
-  CASH: 'Dinheiro',
-  PIX: 'PIX',
-  CREDIT_CARD: 'Cartão de Crédito',
-  DEBIT_CARD: 'Cartão de Débito',
-  BANK_TRANSFER: 'Transferência Bancária',
-  BOLETO: 'Boleto',
-  OTHER: 'Outro',
-};
+import { getStatusColor } from '@/services/expenses.service';
+import { useTranslations } from '@/i18n';
+import { useFormatting } from '@/hooks/use-formatting';
 
 export default function ExpenseDetailsPage() {
+  const { t } = useTranslations('expenses');
+  const { formatCurrency, formatDate, locale } = useFormatting();
   const params = useParams();
   const id = params.id as string;
   const router = useRouter();
@@ -78,6 +54,28 @@ export default function ExpenseDetailsPage() {
   const { data: expense, isLoading, error } = useExpense(id);
   const deleteExpense = useDeleteExpense();
   const markAsPaid = useMarkExpenseAsPaid();
+
+  // Payment method labels (memoized with locale)
+  const paymentMethodLabels = useMemo(() => ({
+    CASH: t('paymentMethod.cash'),
+    PIX: t('paymentMethod.pix'),
+    CREDIT_CARD: t('paymentMethod.creditCard'),
+    DEBIT_CARD: t('paymentMethod.debitCard'),
+    BANK_TRANSFER: t('paymentMethod.bankTransfer'),
+    BOLETO: t('paymentMethod.boleto'),
+    OTHER: t('paymentMethod.other'),
+  }), [t, locale]);
+
+  // Status labels (memoized with locale)
+  const getStatusLabel = (status: string) => {
+    const statusMap: Record<string, string> = {
+      DRAFT: t('status.draft'),
+      PENDING: t('status.pending'),
+      PAID: t('status.paid'),
+      CANCELED: t('status.canceled'),
+    };
+    return statusMap[status] || status;
+  };
 
   // Handler para deletar despesa
   const handleDelete = async () => {
@@ -180,12 +178,12 @@ export default function ExpenseDetailsPage() {
                 leftIcon={<CheckCircle2 className="h-4 w-4" />}
                 onClick={() => setShowPayConfirm(true)}
               >
-                Marcar como Pago
+                {t('markAsPaid')}
               </Button>
             )}
             <Link href={`/expenses/${id}/edit`}>
               <Button variant="outline" leftIcon={<Edit className="h-4 w-4" />}>
-                Editar
+                {t('edit')}
               </Button>
             </Link>
             <Button
@@ -193,7 +191,7 @@ export default function ExpenseDetailsPage() {
               leftIcon={<Trash2 className="h-4 w-4 text-error" />}
               onClick={() => setShowDeleteConfirm(true)}
             >
-              Excluir
+              {t('delete')}
             </Button>
           </div>
         </div>
@@ -203,7 +201,7 @@ export default function ExpenseDetailsPage() {
           <Alert variant="error">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
-              Erro ao carregar despesa
+              {t('errorLoading')}
             </div>
           </Alert>
         )}
@@ -215,7 +213,7 @@ export default function ExpenseDetailsPage() {
             {/* Dados da despesa */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Informações da Despesa</CardTitle>
+                <CardTitle className="text-base">{t('expenseInfo')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {isLoading ? (
@@ -228,17 +226,17 @@ export default function ExpenseDetailsPage() {
                   <>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">Valor</p>
+                        <p className="text-xs text-gray-500 mb-1">{t('amount')}</p>
                         <p className="text-2xl font-bold text-gray-900">
                           {formatCurrency(expense?.amount || 0)}
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">Vencimento</p>
+                        <p className="text-xs text-gray-500 mb-1">{t('dueDate')}</p>
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-gray-400" />
                           <span className="text-lg font-medium">
-                            {expense?.dueDate ? formatDate(expense.dueDate) : '-'}
+                            {expense?.dueDate ? formatDate(new Date(expense.dueDate)) : '-'}
                           </span>
                         </div>
                       </div>
@@ -246,27 +244,27 @@ export default function ExpenseDetailsPage() {
 
                     <div className="border-t pt-4 grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">Status</p>
+                        <p className="text-xs text-gray-500 mb-1">{t('statusLabel')}</p>
                         <div className="flex items-center gap-2">
                           <StatusIcon />
                           <span className="font-medium">{getStatusLabel(expense?.status || 'DRAFT')}</span>
                         </div>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">Forma de Pagamento</p>
+                        <p className="text-xs text-gray-500 mb-1">{t('paymentMethodLabel')}</p>
                         <span className="font-medium">
-                          {expense?.paymentMethod ? paymentMethodLabels[expense.paymentMethod] : '-'}
+                          {expense?.paymentMethod ? paymentMethodLabels[expense.paymentMethod as keyof typeof paymentMethodLabels] : '-'}
                         </span>
                       </div>
                     </div>
 
                     {expense?.paymentDate && (
                       <div className="border-t pt-4">
-                        <p className="text-xs text-gray-500 mb-1">Data do Pagamento</p>
+                        <p className="text-xs text-gray-500 mb-1">{t('paymentDate')}</p>
                         <div className="flex items-center gap-2">
                           <CheckCircle2 className="h-4 w-4 text-success" />
                           <span className="font-medium text-success">
-                            {formatDate(expense.paymentDate)}
+                            {formatDate(new Date(expense.paymentDate))}
                           </span>
                         </div>
                       </div>
@@ -280,7 +278,7 @@ export default function ExpenseDetailsPage() {
             {expense?.notes && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Observações</CardTitle>
+                  <CardTitle className="text-base">{t('notes')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-gray-600 whitespace-pre-wrap">
@@ -298,7 +296,7 @@ export default function ExpenseDetailsPage() {
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
                   <Building2 className="h-4 w-4" />
-                  Fornecedor
+                  {t('supplier')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -323,7 +321,7 @@ export default function ExpenseDetailsPage() {
                   </Link>
                 ) : (
                   <p className="text-sm text-gray-400 text-center py-4">
-                    Nenhum fornecedor associado
+                    {t('noSupplierAssociated')}
                   </p>
                 )}
               </CardContent>
@@ -334,7 +332,7 @@ export default function ExpenseDetailsPage() {
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
                   <Folder className="h-4 w-4" />
-                  Categoria
+                  {t('category')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -352,7 +350,7 @@ export default function ExpenseDetailsPage() {
                   </div>
                 ) : (
                   <p className="text-sm text-gray-400 text-center py-4">
-                    Sem categoria
+                    {t('noCategory')}
                   </p>
                 )}
               </CardContent>
@@ -361,19 +359,19 @@ export default function ExpenseDetailsPage() {
             {/* Informações adicionais */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Informações Adicionais</CardTitle>
+                <CardTitle className="text-base">{t('additionalInfo')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {expense?.createdAt && (
                   <div>
-                    <p className="text-xs text-gray-500">Criada em</p>
-                    <p className="text-sm">{formatDate(expense.createdAt)}</p>
+                    <p className="text-xs text-gray-500">{t('createdAt')}</p>
+                    <p className="text-sm">{formatDate(new Date(expense.createdAt))}</p>
                   </div>
                 )}
                 {expense?.updatedAt && (
                   <div>
-                    <p className="text-xs text-gray-500">Atualizada em</p>
-                    <p className="text-sm">{formatDate(expense.updatedAt)}</p>
+                    <p className="text-xs text-gray-500">{t('updatedAt')}</p>
+                    <p className="text-sm">{formatDate(new Date(expense.updatedAt))}</p>
                   </div>
                 )}
               </CardContent>
@@ -392,7 +390,7 @@ export default function ExpenseDetailsPage() {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">
-                      Excluir despesa?
+                      {t('deleteExpense')}
                     </h3>
                     <p className="text-sm text-gray-500">
                       {expense?.description}
@@ -406,7 +404,7 @@ export default function ExpenseDetailsPage() {
                     onClick={() => setShowDeleteConfirm(false)}
                     disabled={deleteExpense.isPending}
                   >
-                    Cancelar
+                    {t('cancel')}
                   </Button>
                   <Button
                     variant="error"
@@ -414,7 +412,7 @@ export default function ExpenseDetailsPage() {
                     loading={deleteExpense.isPending}
                     leftIcon={<Trash2 className="h-4 w-4" />}
                   >
-                    Excluir
+                    {t('deleteConfirm')}
                   </Button>
                 </div>
               </CardContent>
@@ -433,7 +431,7 @@ export default function ExpenseDetailsPage() {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">
-                      Marcar como pago?
+                      {t('markAsPaidQuestion')}
                     </h3>
                     <p className="text-sm text-gray-500">
                       {expense?.description} - {formatCurrency(expense?.amount || 0)}
@@ -447,7 +445,7 @@ export default function ExpenseDetailsPage() {
                     onClick={() => setShowPayConfirm(false)}
                     disabled={markAsPaid.isPending}
                   >
-                    Cancelar
+                    {t('cancel')}
                   </Button>
                   <Button
                     variant="soft"
@@ -455,7 +453,7 @@ export default function ExpenseDetailsPage() {
                     loading={markAsPaid.isPending}
                     leftIcon={<CheckCircle2 className="h-4 w-4" />}
                   >
-                    Confirmar Pagamento
+                    {t('confirmPayment')}
                   </Button>
                 </div>
               </CardContent>

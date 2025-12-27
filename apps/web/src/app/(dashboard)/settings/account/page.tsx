@@ -30,6 +30,7 @@ import {
   useChangePassword,
 } from '@/hooks/use-settings';
 import { useTranslations, useLocale, localeNames, type Locale } from '@/i18n';
+import { useAuth } from '@/context/auth-context';
 
 // Idiomas
 const LANGUAGES = Object.entries(localeNames).map(([value, label]) => ({
@@ -42,6 +43,7 @@ export default function AccountSettingsPage() {
   const { t: tCommon } = useTranslations('common');
   const { t: tAuth } = useTranslations('auth');
   const { locale, setLocale } = useLocale();
+  const { refreshUser } = useAuth();
   const { data: profile, isLoading } = useProfile();
   const updateProfile = useUpdateProfile();
   const changePassword = useChangePassword();
@@ -86,6 +88,9 @@ export default function AccountSettingsPage() {
       if (language !== locale) {
         setLocale(language);
       }
+
+      // Refresh user data in AuthContext to update header
+      await refreshUser();
 
       setProfileSaved(true);
       setTimeout(() => setProfileSaved(false), 3000);

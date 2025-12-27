@@ -292,20 +292,22 @@ export class ChargesController {
     // Generate virtual events based on existing fields
     const events: Array<{
       id: string;
+      chargeId: string;
       type: string;
       description: string;
-      timestamp: Date;
-      metadata?: Record<string, any>;
+      createdAt: string;
+      data?: Record<string, any>;
     }> = [];
 
     // Event: Created
     if (payment.createdAt) {
       events.push({
         id: `${id}-created`,
-        type: 'CREATED',
+        chargeId: id,
+        type: 'CHARGE_CREATED',
         description: 'Cobrança criada',
-        timestamp: new Date(payment.createdAt),
-        metadata: {
+        createdAt: new Date(payment.createdAt).toISOString(),
+        data: {
           value: payment.value,
           billingType: payment.billingType,
         },
@@ -316,9 +318,10 @@ export class ChargesController {
     if (payment.sentAt) {
       events.push({
         id: `${id}-sent`,
-        type: 'SENT',
+        chargeId: id,
+        type: 'CHARGE_SENT',
         description: 'Cobrança enviada por email',
-        timestamp: new Date(payment.sentAt),
+        createdAt: new Date(payment.sentAt).toISOString(),
       });
     }
 
@@ -326,13 +329,14 @@ export class ChargesController {
     if (payment.paidAt) {
       events.push({
         id: `${id}-paid`,
-        type: 'PAID',
+        chargeId: id,
+        type: payment.status === 'RECEIVED_IN_CASH' ? 'MANUAL_PAYMENT' : 'PAYMENT_CONFIRMED',
         description:
           payment.status === 'RECEIVED_IN_CASH'
             ? 'Pagamento recebido em dinheiro'
             : 'Pagamento confirmado',
-        timestamp: new Date(payment.paidAt),
-        metadata: {
+        createdAt: new Date(payment.paidAt).toISOString(),
+        data: {
           status: payment.status,
         },
       });
@@ -342,9 +346,10 @@ export class ChargesController {
     if (payment.canceledAt) {
       events.push({
         id: `${id}-canceled`,
-        type: 'CANCELED',
+        chargeId: id,
+        type: 'CHARGE_CANCELED',
         description: 'Cobrança cancelada',
-        timestamp: new Date(payment.canceledAt),
+        createdAt: new Date(payment.canceledAt).toISOString(),
       });
     }
 
@@ -352,14 +357,15 @@ export class ChargesController {
     if (payment.status === 'OVERDUE' && payment.dueDate) {
       events.push({
         id: `${id}-overdue`,
-        type: 'OVERDUE',
+        chargeId: id,
+        type: 'PAYMENT_OVERDUE',
         description: 'Cobrança vencida',
-        timestamp: new Date(payment.dueDate),
+        createdAt: new Date(payment.dueDate).toISOString(),
       });
     }
 
-    // Sort events by timestamp (newest first)
-    events.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    // Sort events by createdAt (newest first)
+    events.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return events;
   }

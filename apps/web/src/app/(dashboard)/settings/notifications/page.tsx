@@ -69,6 +69,9 @@ export default function NotificationsSettingsPage() {
   const userCountry = companySettings?.country?.toUpperCase() || '';
   const showWhatsApp = !NON_WHATSAPP_COUNTRIES.includes(userCountry);
 
+  // Debug: log country value to understand the issue
+  console.log('[NotificationsPage] companySettings:', companySettings, 'userCountry:', userCountry, 'showWhatsApp:', showWhatsApp);
+
   // Z-API connection status
   const isZApiConnected = zapiStatus?.configured && zapiStatus?.connectionStatus === 'connected';
 

@@ -52,7 +52,10 @@ import {
   StripeEnvironment,
   MercadoPagoEnvironment,
 } from '@/services/integrations.service';
-import { useFormatting } from '@/hooks/use-formatting';
+import { useCompanySettings } from '@/context/company-settings-context';
+
+// Countries where WhatsApp is commonly used for business messaging
+const WHATSAPP_COUNTRIES = ['BR', 'MX', 'AR', 'CO', 'CL', 'PE', 'ES', 'PT', 'IN'];
 
 // Stripe Icon SVG Component
 const StripeIcon = ({ className }: { className?: string }) => (
@@ -70,10 +73,10 @@ const MercadoPagoIcon = ({ className }: { className?: string }) => (
 
 export default function IntegrationsSettingsPage() {
   const { t } = useTranslations('integrations');
-  const { locale } = useFormatting();
+  const { settings: companySettings } = useCompanySettings();
 
-  // WhatsApp/Z-API is not commonly used in English-speaking countries
-  const showWhatsApp = !locale.startsWith('en');
+  // WhatsApp is popular in Latin America, Spain, Portugal, India - not in US/CA
+  const showWhatsApp = WHATSAPP_COUNTRIES.includes(companySettings?.country?.toUpperCase() || 'BR');
 
   // Asaas hooks
   const { data: asaasStatus, isLoading: asaasLoading } = useAsaasStatus();

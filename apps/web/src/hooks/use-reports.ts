@@ -106,13 +106,101 @@ export function useServicesReport(filters?: ReportFilters, enabled = true) {
 }
 
 /**
+ * Converte um período em datas de início e fim
+ */
+function getPeriodDates(period: ReportFilters['period']): { startDate: string; endDate: string } {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const formatDate = (date: Date): string => {
+    return date.toISOString().split('T')[0];
+  };
+
+  switch (period) {
+    case 'today': {
+      return {
+        startDate: formatDate(today),
+        endDate: formatDate(today),
+      };
+    }
+    case 'yesterday': {
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      return {
+        startDate: formatDate(yesterday),
+        endDate: formatDate(yesterday),
+      };
+    }
+    case 'last7days': {
+      const start = new Date(today);
+      start.setDate(start.getDate() - 6); // 7 days including today
+      return {
+        startDate: formatDate(start),
+        endDate: formatDate(today),
+      };
+    }
+    case 'last30days': {
+      const start = new Date(today);
+      start.setDate(start.getDate() - 29); // 30 days including today
+      return {
+        startDate: formatDate(start),
+        endDate: formatDate(today),
+      };
+    }
+    case 'thisMonth': {
+      const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      return {
+        startDate: formatDate(firstOfMonth),
+        endDate: formatDate(today),
+      };
+    }
+    case 'lastMonth': {
+      const firstOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const lastOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+      return {
+        startDate: formatDate(firstOfLastMonth),
+        endDate: formatDate(lastOfLastMonth),
+      };
+    }
+    case 'thisYear': {
+      const firstOfYear = new Date(today.getFullYear(), 0, 1);
+      return {
+        startDate: formatDate(firstOfYear),
+        endDate: formatDate(today),
+      };
+    }
+    default:
+      // For 'custom' or unknown, return last 30 days as fallback
+      const start = new Date(today);
+      start.setDate(start.getDate() - 29);
+      return {
+        startDate: formatDate(start),
+        endDate: formatDate(today),
+      };
+  }
+}
+
+/**
  * Hook para gerenciar filtros de período via URL
  */
 export function useReportFilters(searchParams: URLSearchParams): ReportFilters {
   const period = (searchParams.get('period') as ReportFilters['period']) || 'last30days';
-  const startDate = searchParams.get('startDate') || undefined;
-  const endDate = searchParams.get('endDate') || undefined;
   const groupBy = (searchParams.get('groupBy') as ReportFilters['groupBy']) || undefined;
+
+  // For custom period, use URL dates; otherwise compute from period
+  if (period === 'custom') {
+    const startDate = searchParams.get('startDate') || undefined;
+    const endDate = searchParams.get('endDate') || undefined;
+    return {
+      period,
+      startDate,
+      endDate,
+      groupBy,
+    };
+  }
+
+  // Compute dates based on period
+  const { startDate, endDate } = getPeriodDates(period);
 
   return {
     period,

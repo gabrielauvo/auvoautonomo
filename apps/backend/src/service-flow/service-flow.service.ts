@@ -10,7 +10,7 @@ import { ClientPaymentsService } from '../client-payments/client-payments.servic
 import { ConvertToWorkOrderDto } from './dto/convert-to-work-order.dto';
 import { CompleteWorkOrderDto } from './dto/complete-work-order.dto';
 import { GeneratePaymentDto } from './dto/generate-payment.dto';
-import { QuoteStatus, WorkOrderStatus, PaymentStatus } from '@prisma/client';
+import { QuoteStatus, WorkOrderStatus, PaymentStatus, ChecklistInstanceStatus } from '@prisma/client';
 
 export interface TimelineEvent {
   type: string;
@@ -654,8 +654,8 @@ export class ServiceFlowService {
         },
       });
 
-      // If checklist was answered
-      if (checklist.status === 'ANSWERED' && checklist.updatedAt > checklist.createdAt) {
+      // If checklist was completed
+      if (checklist.status === ChecklistInstanceStatus.COMPLETED && checklist.updatedAt > checklist.createdAt) {
         timeline.push({
           type: 'CHECKLIST_ANSWERED',
           date: checklist.updatedAt,

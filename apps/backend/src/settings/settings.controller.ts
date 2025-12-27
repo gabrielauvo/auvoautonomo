@@ -25,6 +25,7 @@ import {
 import { UpdateProfileDto, ChangePasswordDto } from './dto/update-profile.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { PlanLimitsService } from '../billing/plan-limits.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import * as bcrypt from 'bcrypt';
 import {
   StorageProvider,
@@ -86,6 +87,7 @@ export class SettingsController {
     private readonly settingsService: SettingsService,
     private readonly prisma: PrismaService,
     private readonly planLimitsService: PlanLimitsService,
+    private readonly notificationsService: NotificationsService,
     @Inject(STORAGE_PROVIDER)
     private readonly storageProvider: StorageProvider,
   ) {}
@@ -730,6 +732,161 @@ export class SettingsController {
 
     this.logger.log(`[LOGO DELETE] Logo deleted successfully`);
     return { success: true, message: 'Logo removida com sucesso' };
+  }
+
+  // ==================== NOTIFICATION SETTINGS ====================
+
+  /**
+   * GET /settings/notifications
+   * Get notification settings (preferences + messages)
+   * Returns format expected by frontend NotificationSettings interface
+   */
+  @Get('notifications')
+  async getNotificationSettings(@Req() req: AuthRequest) {
+    const userId = req.user.userId;
+    this.logger.log(`[GET NOTIFICATIONS] Fetching settings for userId: ${userId}`);
+
+    const prefs = await this.notificationsService.getOrCreatePreferences(userId);
+
+    // Transform backend format to frontend expected format
+    return {
+      preferences: {
+        email: {
+          enabled: prefs.defaultChannelEmail,
+          newQuote: prefs.notifyOnQuoteSent,
+          quoteApproved: prefs.notifyOnQuoteApproved,
+          quoteRejected: false, // Not in backend model yet
+          newWorkOrder: prefs.notifyOnWorkOrderCreated,
+          workOrderCompleted: prefs.notifyOnWorkOrderCompleted,
+          paymentReceived: prefs.notifyOnPaymentConfirmed,
+          paymentOverdue: prefs.notifyOnPaymentOverdue,
+        },
+        whatsapp: {
+          enabled: prefs.defaultChannelWhatsApp,
+          paymentReminder: true, // Default
+          workOrderReminder: true, // Default
+        },
+        reminders: {
+          paymentDaysBefore: 3,
+          paymentOnDueDate: true,
+          paymentDaysAfter: 3,
+          workOrderDaysBefore: 1,
+        },
+      },
+      messages: {
+        paymentReminder: 'Olá {nome_cliente}, lembramos que seu pagamento no valor de {valor} vence em {data}. Se já pagou, desconsidere.',
+        paymentOverdue: 'Olá {nome_cliente}, identificamos que o pagamento no valor de {valor} está em atraso desde {data}. Entre em contato conosco.',
+        workOrderReminder: 'Olá {nome_cliente}, sua ordem de serviço está agendada para {data}. Confirma o atendimento?',
+        quoteFollowUp: 'Olá {nome_cliente}, enviamos um orçamento no valor de {valor}. Teve alguma dúvida? Estamos à disposição!',
+      },
+    };
+  }
+
+  /**
+   * PUT /settings/notifications/preferences
+   * Update notification preferences
+   */
+  @Put('notifications/preferences')
+  async updateNotificationPreferences(
+    @Req() req: AuthRequest,
+    @Body() dto: {
+      email?: {
+        enabled?: boolean;
+        newQuote?: boolean;
+        quoteApproved?: boolean;
+        quoteRejected?: boolean;
+        newWorkOrder?: boolean;
+        workOrderCompleted?: boolean;
+        paymentReceived?: boolean;
+        paymentOverdue?: boolean;
+      };
+      whatsapp?: {
+        enabled?: boolean;
+        paymentReminder?: boolean;
+        workOrderReminder?: boolean;
+      };
+      reminders?: {
+        paymentDaysBefore?: number;
+        paymentOnDueDate?: boolean;
+        paymentDaysAfter?: number;
+        workOrderDaysBefore?: number;
+      };
+    },
+  ) {
+    const userId = req.user.userId;
+    this.logger.log(`[UPDATE NOTIFICATIONS] Updating preferences for userId: ${userId}`);
+
+    // Transform frontend format to backend format
+    const updateData: Record<string, boolean> = {};
+
+    if (dto.email) {
+      if (dto.email.enabled !== undefined) updateData.defaultChannelEmail = dto.email.enabled;
+      if (dto.email.newQuote !== undefined) updateData.notifyOnQuoteSent = dto.email.newQuote;
+      if (dto.email.quoteApproved !== undefined) updateData.notifyOnQuoteApproved = dto.email.quoteApproved;
+      if (dto.email.newWorkOrder !== undefined) updateData.notifyOnWorkOrderCreated = dto.email.newWorkOrder;
+      if (dto.email.workOrderCompleted !== undefined) updateData.notifyOnWorkOrderCompleted = dto.email.workOrderCompleted;
+      if (dto.email.paymentReceived !== undefined) updateData.notifyOnPaymentConfirmed = dto.email.paymentReceived;
+      if (dto.email.paymentOverdue !== undefined) updateData.notifyOnPaymentOverdue = dto.email.paymentOverdue;
+    }
+
+    if (dto.whatsapp?.enabled !== undefined) {
+      updateData.defaultChannelWhatsApp = dto.whatsapp.enabled;
+    }
+
+    const prefs = await this.notificationsService.updatePreferences(userId, updateData);
+
+    // Return in frontend format
+    return {
+      email: {
+        enabled: prefs.defaultChannelEmail,
+        newQuote: prefs.notifyOnQuoteSent,
+        quoteApproved: prefs.notifyOnQuoteApproved,
+        quoteRejected: false,
+        newWorkOrder: prefs.notifyOnWorkOrderCreated,
+        workOrderCompleted: prefs.notifyOnWorkOrderCompleted,
+        paymentReceived: prefs.notifyOnPaymentConfirmed,
+        paymentOverdue: prefs.notifyOnPaymentOverdue,
+      },
+      whatsapp: {
+        enabled: prefs.defaultChannelWhatsApp,
+        paymentReminder: true,
+        workOrderReminder: true,
+      },
+      reminders: dto.reminders || {
+        paymentDaysBefore: 3,
+        paymentOnDueDate: true,
+        paymentDaysAfter: 3,
+        workOrderDaysBefore: 1,
+      },
+    };
+  }
+
+  /**
+   * PUT /settings/notifications/messages
+   * Update notification messages (custom templates)
+   * Note: Currently returns defaults as backend doesn't store custom messages yet
+   */
+  @Put('notifications/messages')
+  async updateNotificationMessages(
+    @Req() req: AuthRequest,
+    @Body() dto: {
+      paymentReminder?: string;
+      paymentOverdue?: string;
+      workOrderReminder?: string;
+      quoteFollowUp?: string;
+    },
+  ) {
+    const userId = req.user.userId;
+    this.logger.log(`[UPDATE NOTIFICATION MESSAGES] Updating for userId: ${userId}`);
+
+    // TODO: Add custom message storage to NotificationPreferences model
+    // For now, just return what was sent (acknowledging the update)
+    return {
+      paymentReminder: dto.paymentReminder || 'Olá {nome_cliente}, lembramos que seu pagamento no valor de {valor} vence em {data}. Se já pagou, desconsidere.',
+      paymentOverdue: dto.paymentOverdue || 'Olá {nome_cliente}, identificamos que o pagamento no valor de {valor} está em atraso desde {data}. Entre em contato conosco.',
+      workOrderReminder: dto.workOrderReminder || 'Olá {nome_cliente}, sua ordem de serviço está agendada para {data}. Confirma o atendimento?',
+      quoteFollowUp: dto.quoteFollowUp || 'Olá {nome_cliente}, enviamos um orçamento no valor de {valor}. Teve alguma dúvida? Estamos à disposição!',
+    };
   }
 
   // ==================== HELPERS ====================

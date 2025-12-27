@@ -16,6 +16,7 @@ import {
 import { renderTemplate } from './templates/notification-templates';
 import { EmailChannelService } from './channels/email-channel.service';
 import { WhatsAppChannelService } from './channels/whatsapp-channel.service';
+import { ZApiService } from './channels/zapi.service';
 
 @Injectable()
 export class NotificationsService {
@@ -26,6 +27,7 @@ export class NotificationsService {
     private readonly emailChannel: EmailChannelService,
     private readonly whatsAppChannel: WhatsAppChannelService,
     private readonly planLimitsService: PlanLimitsService,
+    private readonly zapiService: ZApiService,
   ) {}
 
   /**
@@ -140,7 +142,15 @@ export class NotificationsService {
           result = await this.emailChannel.send(message);
           break;
         case NotificationChannel.WHATSAPP:
-          result = await this.whatsAppChannel.send(message);
+          // Configure Z-API credentials for this user before sending
+          try {
+            const zapiCredentials = await this.zapiService.getCredentials(request.userId);
+            this.whatsAppChannel.setUserContext(zapiCredentials);
+            result = await this.whatsAppChannel.send(message);
+          } finally {
+            // Always clear the context after sending
+            this.whatsAppChannel.clearUserContext();
+          }
           break;
         default:
           result = { success: false, error: `Unknown channel: ${channel}` };

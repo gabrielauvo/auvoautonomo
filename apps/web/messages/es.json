@@ -1767,8 +1767,8 @@
     "whatsapp": {
       "title": "Notificaciones vía WhatsApp",
       "description": "Envíe recordatorios automáticos a sus clientes",
-      "integrationTitle": "Integración WhatsApp Business",
-      "integrationDescription": "Los recordatorios serán enviados a través de la API oficial de WhatsApp Business. Asegúrese de que sus clientes hayan autorizado el recibo de mensajes.",
+      "integrationTitle": "Integración Z-API (WhatsApp)",
+      "integrationDescription": "Configure su integración Z-API en la página de Integraciones para enviar mensajes automáticos por WhatsApp. Los recordatorios serán enviados a través de su número conectado.",
       "paymentReminder": "Recordatorios de pago",
       "paymentReminderDescription": "Enviar recordatorios antes y después del vencimiento",
       "scheduleReminder": "Recordatorios de agenda",

@@ -1798,8 +1798,8 @@
     "whatsapp": {
       "title": "Notificações via WhatsApp",
       "description": "Envie lembretes automáticos para seus clientes",
-      "integrationTitle": "Integração WhatsApp Business",
-      "integrationDescription": "Os lembretes serão enviados através da API oficial do WhatsApp Business. Certifique-se de que seus clientes autorizaram o recebimento de mensagens.",
+      "integrationTitle": "Integração Z-API (WhatsApp)",
+      "integrationDescription": "Configure sua integração Z-API na página de Integrações para enviar mensagens automáticas via WhatsApp. Os lembretes serão enviados através do seu número conectado.",
       "paymentReminder": "Lembretes de pagamento",
       "paymentReminderDescription": "Enviar lembretes antes e após o vencimento",
       "scheduleReminder": "Lembretes de agendamento",

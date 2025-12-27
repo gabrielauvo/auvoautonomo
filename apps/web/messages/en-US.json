@@ -1767,8 +1767,8 @@
     "whatsapp": {
       "title": "WhatsApp Notifications",
       "description": "Send automatic reminders to your clients",
-      "integrationTitle": "WhatsApp Business Integration",
-      "integrationDescription": "Reminders will be sent through the official WhatsApp Business API. Make sure your clients have authorized receiving messages.",
+      "integrationTitle": "Z-API Integration (WhatsApp)",
+      "integrationDescription": "Configure your Z-API integration on the Integrations page to send automatic messages via WhatsApp. Reminders will be sent through your connected phone number.",
       "paymentReminder": "Payment reminders",
       "paymentReminderDescription": "Send reminders before and after due date",
       "scheduleReminder": "Schedule reminders",

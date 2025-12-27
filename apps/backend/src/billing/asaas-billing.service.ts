@@ -887,7 +887,7 @@ export class AsaasBillingService {
       // Verificar se é o primeiro pagamento (para programa de indicação)
       const paymentCount = await tx.subscriptionPaymentHistory.count({
         where: {
-          userId,
+          subscription: { userId },
           status: PaymentStatus.CONFIRMED,
         },
       });

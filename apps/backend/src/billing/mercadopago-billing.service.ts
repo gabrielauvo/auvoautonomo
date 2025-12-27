@@ -862,7 +862,7 @@ export class MercadoPagoBillingService implements IPaymentGateway {
     // Verificar se é o primeiro pagamento confirmado
     const previousPayments = await this.prisma.subscriptionPaymentHistory.count({
       where: {
-        userId,
+        subscription: { userId },
         status: PaymentStatus.CONFIRMED,
       },
     });

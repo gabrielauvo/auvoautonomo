@@ -49,7 +49,7 @@ import {
 const LOCALE_TO_COUNTRY: Record<string, string> = {
   'pt-BR': 'BR',
   'en-US': 'US',
-  'es': 'MX', // Default para espanhol é México
+  'es': 'US', // Espanhol também cobra em USD
 };
 
 // Feature keys for PRO plan

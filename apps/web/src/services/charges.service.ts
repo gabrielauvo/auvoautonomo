@@ -104,6 +104,7 @@ export interface Charge {
   client: ChargeSummaryClient;
   events?: ChargeEvent[];
   publicToken?: string;
+  sentAt?: string;
   createdAt: string;
   updatedAt: string;
 }

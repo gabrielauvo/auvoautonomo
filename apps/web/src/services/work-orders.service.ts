@@ -208,6 +208,7 @@ export interface WorkOrder {
   notes?: string;
   totalValue: number;
   discountValue?: number;
+  sentAt?: string;
   createdAt: string;
   updatedAt: string;
   client: ClientSummary;

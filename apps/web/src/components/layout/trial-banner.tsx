@@ -7,18 +7,27 @@
  * restam do período de teste gratuito de 14 dias.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { Clock, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { useAuth } from '@/context/auth-context';
 import { cn } from '@/lib/utils';
-import { useTranslations } from '@/i18n';
+import { useTranslations, useLocale } from '@/i18n';
 import {
   BillingStatus,
   calculateTrialDaysRemaining,
   PRO_PLAN_PRICING,
+  getGatewayInfo,
+  GatewayInfo,
 } from '@/services/billing.service';
+
+// Mapeia locale para país
+const LOCALE_TO_COUNTRY: Record<string, string> = {
+  'pt-BR': 'BR',
+  'en-US': 'US',
+  'es': 'US', // Espanhol também cobra em USD
+};
 
 interface TrialBannerProps {
   billing?: BillingStatus | null;
@@ -28,8 +37,44 @@ interface TrialBannerProps {
 export function TrialBanner({ billing, className }: TrialBannerProps) {
   const { user } = useAuth();
   const { t } = useTranslations('trialBanner');
+  const { locale } = useLocale();
   const [dismissed, setDismissed] = useState(false);
   const [daysRemaining, setDaysRemaining] = useState<number | null>(null);
+  const [gatewayInfo, setGatewayInfo] = useState<GatewayInfo | null>(null);
+
+  // Detecta o país baseado no locale
+  const country = useMemo(() => LOCALE_TO_COUNTRY[locale] || 'BR', [locale]);
+
+  // Busca informações de preço do gateway
+  useEffect(() => {
+    getGatewayInfo(country)
+      .then((info) => setGatewayInfo(info))
+      .catch((err) => console.error('Error fetching gateway info:', err));
+  }, [country]);
+
+  // Preços dinâmicos
+  const pricing = useMemo(() => {
+    if (gatewayInfo?.pricing) {
+      return {
+        yearly: gatewayInfo.pricing.yearly,
+        currency: gatewayInfo.currency,
+        symbol: gatewayInfo.currencySymbol || (gatewayInfo.currency === 'BRL' ? 'R$' : '$'),
+      };
+    }
+    return {
+      yearly: PRO_PLAN_PRICING.YEARLY,
+      currency: 'BRL',
+      symbol: 'R$',
+    };
+  }, [gatewayInfo]);
+
+  // Formata preço de acordo com a moeda
+  const formatPrice = (amount: number) => {
+    if (pricing.currency === 'BRL') {
+      return `${pricing.symbol} ${amount.toFixed(2).replace('.', ',')}`;
+    }
+    return `${pricing.symbol}${amount.toFixed(2)}`;
+  };
 
   useEffect(() => {
     // Prioridade: usar trialDaysRemaining do backend se disponível
@@ -89,7 +134,7 @@ export function TrialBanner({ billing, className }: TrialBannerProps) {
           <span className="hidden sm:inline">
             {t('subscribe')}{' '}
             <strong>
-              R$ {PRO_PLAN_PRICING.YEARLY.toFixed(2).replace('.', ',')}/mês
+              {formatPrice(pricing.yearly)}/{t('perMonth')}
             </strong>{' '}
             {t('yearlyPlan')}
           </span>

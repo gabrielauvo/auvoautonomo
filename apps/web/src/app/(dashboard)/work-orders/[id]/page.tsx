@@ -690,16 +690,23 @@ export default function WorkOrderDetailsPage() {
             </Button>
 
             {/* Botão Enviar por Email */}
-            <Button
-              variant="outline"
-              onClick={handleSendEmail}
-              disabled={isSendingEmail || !workOrder.client?.email}
-              leftIcon={isSendingEmail ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
-              className="text-blue-600 border-blue-600 hover:bg-blue-50"
-              title={!workOrder.client?.email ? t('clientHasNoEmail') : undefined}
-            >
-              Email
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={handleSendEmail}
+                disabled={isSendingEmail || !workOrder.client?.email}
+                leftIcon={isSendingEmail ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                title={!workOrder.client?.email ? t('clientHasNoEmail') : undefined}
+              >
+                Email
+              </Button>
+              {workOrder.sentAt && (
+                <span className="text-xs text-gray-500" title={formatDateTime(workOrder.sentAt)}>
+                  {t('emailSentAt', { date: formatDate(workOrder.sentAt) })}
+                </span>
+              )}
+            </div>
 
             {/* Menu de mais ações */}
             <div className="relative">

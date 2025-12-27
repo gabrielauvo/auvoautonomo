@@ -723,6 +723,12 @@ export class ClientPaymentsService {
       contextData: context,
     });
 
+    // Update sentAt timestamp
+    await this.prisma.clientPayment.update({
+      where: { id: paymentId },
+      data: { sentAt: new Date() },
+    });
+
     this.logger.log(`Payment email sent manually for payment ${paymentId}`);
 
     return { success: true, message: 'Email sent successfully' };

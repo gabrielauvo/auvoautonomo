@@ -1030,6 +1030,12 @@ export class WorkOrdersService {
       contextData: context,
     });
 
+    // Update sentAt timestamp
+    await this.prisma.workOrder.update({
+      where: { id: workOrderId },
+      data: { sentAt: new Date() },
+    });
+
     this.logger.log(`Work order email sent manually for WO ${workOrderId}`);
 
     return { success: true, message: 'Email sent successfully' };

@@ -40,8 +40,8 @@ import {
 } from '@/services/inventory.service';
 
 const STATUS_OPTIONS = [
-  { value: 'IN_PROGRESS', label: 'Em Andamento' },
-  { value: 'DONE', label: 'Concluída' },
+  { value: 'IN_PROGRESS', labelKey: 'statusInProgress', descriptionKey: 'statusInProgressDescription' },
+  { value: 'DONE', labelKey: 'statusDone', descriptionKey: 'statusDoneDescription' },
 ] as const;
 
 export default function InventorySettingsPage() {
@@ -99,7 +99,7 @@ export default function InventorySettingsPage() {
             <div className="text-center">
               <Package className="h-12 w-12 mx-auto text-gray-400 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Controle de Estoque
+                {t('title')}
               </h3>
               <p className="text-gray-500 max-w-md mx-auto">
                 {t('settings.featureDisabled')}
@@ -123,7 +123,7 @@ export default function InventorySettingsPage() {
     return (
       <Alert variant="error">
         <AlertCircle className="h-4 w-4" />
-        <span>Erro ao carregar configuracoes de estoque</span>
+        <span>{t('settings.loadError')}</span>
       </Alert>
     );
   }
@@ -155,12 +155,12 @@ export default function InventorySettingsPage() {
               {isEnabled ? (
                 <>
                   <ToggleRight className="h-8 w-8 text-green-500" />
-                  <span className="text-green-600 font-medium">Ativado</span>
+                  <span className="text-green-600 font-medium">{t('settings.activated')}</span>
                 </>
               ) : (
                 <>
                   <ToggleLeft className="h-8 w-8 text-gray-400" />
-                  <span className="text-gray-500">Desativado</span>
+                  <span className="text-gray-500">{t('settings.deactivated')}</span>
                 </>
               )}
             </button>
@@ -204,17 +204,10 @@ export default function InventorySettingsPage() {
                       className="h-4 w-4 text-primary"
                     />
                     <div>
-                      <span className="font-medium">{option.label}</span>
-                      {option.value === 'DONE' && (
-                        <p className="text-xs text-gray-500 mt-0.5">
-                          Recomendado - baixa o estoque quando a OS for finalizada
-                        </p>
-                      )}
-                      {option.value === 'IN_PROGRESS' && (
-                        <p className="text-xs text-gray-500 mt-0.5">
-                          Baixa o estoque quando o tecnico iniciar o atendimento
-                        </p>
-                      )}
+                      <span className="font-medium">{t(`settings.${option.labelKey}`)}</span>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {t(`settings.${option.descriptionKey}`)}
+                      </p>
                     </div>
                   </label>
                 ))}
@@ -248,7 +241,7 @@ export default function InventorySettingsPage() {
                 <Alert variant="warning" className="mt-4">
                   <AlertTriangle className="h-4 w-4" />
                   <span className="text-sm">
-                    Com estoque negativo permitido, a baixa sera feita mesmo sem quantidade disponivel.
+                    {t('settings.negativeStockWarning')}
                   </span>
                 </Alert>
               )}
@@ -296,7 +289,7 @@ export default function InventorySettingsPage() {
         <Alert variant="error">
           <div className="flex items-center gap-2">
             <AlertCircle className="h-4 w-4" />
-            Erro ao salvar configuracoes
+            {t('settings.saveError')}
           </div>
         </Alert>
       )}
@@ -308,7 +301,7 @@ export default function InventorySettingsPage() {
           loading={updateMutation.isPending}
           leftIcon={<Check className="h-4 w-4" />}
         >
-          Salvar Configuracoes
+          {t('settings.saveSettings')}
         </Button>
       </div>
     </div>

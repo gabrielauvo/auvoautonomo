@@ -22,6 +22,11 @@ export class WorkOrdersPublicService {
   private buildFileUrl(publicUrl: string | null): string | null {
     if (!publicUrl) return null;
 
+    // Se é uma Data URL (base64), retorna como está
+    if (publicUrl.startsWith('data:')) {
+      return publicUrl;
+    }
+
     // Se já é uma URL completa (http/https)
     if (publicUrl.startsWith('http://') || publicUrl.startsWith('https://')) {
       // Substituir IPs locais antigos pelo API_URL atual

@@ -28,8 +28,8 @@ export class QuotesPublicService {
    */
   private buildFileUrl(publicUrl: string | null): string | null {
     if (!publicUrl) return null;
-    // Se já é uma URL completa (http/https), retorna como está
-    if (publicUrl.startsWith('http://') || publicUrl.startsWith('https://')) {
+    // Se é uma URL completa (http/https) ou Data URL (data:), retorna como está
+    if (publicUrl.startsWith('http://') || publicUrl.startsWith('https://') || publicUrl.startsWith('data:')) {
       return publicUrl;
     }
     // Senão, adiciona o domínio do backend

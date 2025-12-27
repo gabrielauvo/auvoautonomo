@@ -100,11 +100,11 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white px-6 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 sm:px-6 py-12">
       {/* Card Centralizado */}
       <div className="w-full max-w-5xl flex bg-white rounded-3xl shadow-xl overflow-hidden">
         {/* Lado Esquerdo - Formulário */}
-        <div className="flex-1 p-10 lg:p-14">
+        <div className="flex-1 min-w-0 p-8 sm:p-10 lg:p-14 flex flex-col justify-center">
           {/* Logo dentro do card */}
           <Link href="/" className="inline-block mb-8">
             <Image

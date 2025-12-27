@@ -304,6 +304,7 @@ export class ClientPaymentsService {
       pixCode: payment.asaasPixCode,
       paidAt: payment.paidAt,
       canceledAt: payment.canceledAt,
+      sentAt: payment.sentAt,
       publicToken: payment.publicToken,
       createdAt: payment.createdAt,
       updatedAt: payment.updatedAt,

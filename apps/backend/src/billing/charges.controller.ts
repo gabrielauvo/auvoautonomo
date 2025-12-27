@@ -287,9 +287,80 @@ export class ChargesController {
   @Get(':id/events')
   async getChargeEvents(@Req() req: AuthRequest, @Param('id') id: string) {
     const userId = req.user.userId;
-    // Verify the payment exists
-    await this.paymentsService.getPayment(userId, id);
-    // Return empty events for now
-    return [];
+    const payment = await this.paymentsService.getPayment(userId, id);
+
+    // Generate virtual events based on existing fields
+    const events: Array<{
+      id: string;
+      type: string;
+      description: string;
+      timestamp: Date;
+      metadata?: Record<string, any>;
+    }> = [];
+
+    // Event: Created
+    if (payment.createdAt) {
+      events.push({
+        id: `${id}-created`,
+        type: 'CREATED',
+        description: 'Cobrança criada',
+        timestamp: new Date(payment.createdAt),
+        metadata: {
+          value: payment.value,
+          billingType: payment.billingType,
+        },
+      });
+    }
+
+    // Event: Sent (email)
+    if (payment.sentAt) {
+      events.push({
+        id: `${id}-sent`,
+        type: 'SENT',
+        description: 'Cobrança enviada por email',
+        timestamp: new Date(payment.sentAt),
+      });
+    }
+
+    // Event: Paid
+    if (payment.paidAt) {
+      events.push({
+        id: `${id}-paid`,
+        type: 'PAID',
+        description:
+          payment.status === 'RECEIVED_IN_CASH'
+            ? 'Pagamento recebido em dinheiro'
+            : 'Pagamento confirmado',
+        timestamp: new Date(payment.paidAt),
+        metadata: {
+          status: payment.status,
+        },
+      });
+    }
+
+    // Event: Canceled
+    if (payment.canceledAt) {
+      events.push({
+        id: `${id}-canceled`,
+        type: 'CANCELED',
+        description: 'Cobrança cancelada',
+        timestamp: new Date(payment.canceledAt),
+      });
+    }
+
+    // Event: Overdue (if status is OVERDUE)
+    if (payment.status === 'OVERDUE' && payment.dueDate) {
+      events.push({
+        id: `${id}-overdue`,
+        type: 'OVERDUE',
+        description: 'Cobrança vencida',
+        timestamp: new Date(payment.dueDate),
+      });
+    }
+
+    // Sort events by timestamp (newest first)
+    events.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+
+    return events;
   }
 }

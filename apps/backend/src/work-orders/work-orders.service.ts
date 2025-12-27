@@ -315,7 +315,7 @@ export class WorkOrdersService {
         },
       },
       orderBy: {
-        scheduledDate: 'desc',
+        createdAt: 'desc',
       },
     });
   }

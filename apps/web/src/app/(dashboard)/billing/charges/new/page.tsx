@@ -15,8 +15,10 @@ import { ChevronLeft } from 'lucide-react';
 import { Button, Skeleton } from '@/components/ui';
 import { ChargeForm } from '@/components/billing';
 import { AppLayout } from '@/components/layout';
+import { useTranslations } from '@/i18n';
 
 function NewChargeContent() {
+  const { t } = useTranslations('billing');
   const searchParams = useSearchParams();
   const clientId = searchParams.get('clientId') || undefined;
   const workOrderId = searchParams.get('workOrderId') || undefined;
@@ -33,13 +35,13 @@ function NewChargeContent() {
       <div className="flex items-center gap-4">
         <Link href="/billing/charges">
           <Button variant="ghost" size="sm" leftIcon={<ChevronLeft className="h-4 w-4" />}>
-            Voltar
+            {t('back')}
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Nova Cobrança</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('newCharge')}</h1>
           <p className="text-sm text-gray-500">
-            Crie uma nova cobrança para seu cliente
+            {t('newChargeDescription')}
           </p>
         </div>
       </div>

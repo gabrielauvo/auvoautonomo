@@ -74,36 +74,12 @@ import {
 } from '@/services/charges.service';
 import { formatDocument } from '@/lib/utils';
 import { Link2 } from 'lucide-react';
-
-// Formatar valor em moeda
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
-}
-
-// Formatar data
-function formatDate(date: string): string {
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  }).format(new Date(date));
-}
-
-// Formatar data e hora
-function formatDateTime(date: string): string {
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(date));
-}
+import { useTranslations } from '@/i18n';
+import { useFormatting } from '@/hooks/use-formatting';
 
 export default function ChargeDetailsPage() {
+  const { t } = useTranslations('billing');
+  const { formatCurrency, formatDate, formatDateTime } = useFormatting();
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
@@ -201,13 +177,13 @@ export default function ChargeDetailsPage() {
         <div className="space-y-6">
           <Link href="/billing/charges">
             <Button variant="ghost" size="sm" leftIcon={<ChevronLeft className="h-4 w-4" />}>
-              Voltar
+              {t('back')}
             </Button>
           </Link>
           <Alert variant="error">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
-              Cobrança não encontrada
+              {t('chargeNotFound')}
             </div>
           </Alert>
         </div>
@@ -229,13 +205,13 @@ export default function ChargeDetailsPage() {
           <div className="flex items-center gap-4">
             <Link href="/billing/charges">
               <Button variant="ghost" size="sm" leftIcon={<ChevronLeft className="h-4 w-4" />}>
-                Voltar
+                {t('back')}
               </Button>
             </Link>
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="text-2xl font-bold text-gray-900">
-                  Cobrança
+                  {t('charge')}
                 </h1>
                 <ChargeStatusBadge status={charge.status} />
               </div>
@@ -261,7 +237,7 @@ export default function ChargeDetailsPage() {
                   )
                 }
               >
-                {copiedLink ? 'Link Copiado!' : 'Copiar Link'}
+                {copiedLink ? t('linkCopied') : t('copyLink')}
               </Button>
             )}
 
@@ -289,7 +265,7 @@ export default function ChargeDetailsPage() {
                       <Link href={`/billing/charges/${charge.id}/edit`}>
                         <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                           <Edit className="h-4 w-4" />
-                          Editar
+                          {t('edit')}
                         </button>
                       </Link>
                     )}
@@ -302,7 +278,7 @@ export default function ChargeDetailsPage() {
                         }}
                       >
                         <Mail className="h-4 w-4" />
-                        Reenviar por Email
+                        {t('resendEmail')}
                       </button>
                     )}
                     {canManualPayment && (
@@ -314,7 +290,7 @@ export default function ChargeDetailsPage() {
                         }}
                       >
                         <DollarSign className="h-4 w-4" />
-                        Registrar Pagamento
+                        {t('registerPayment')}
                       </button>
                     )}
                     {canCancel && (
@@ -326,7 +302,7 @@ export default function ChargeDetailsPage() {
                         }}
                       >
                         <XCircle className="h-4 w-4" />
-                        Cancelar Cobrança
+                        {t('cancelCharge')}
                       </button>
                     )}
                   </div>
@@ -341,11 +317,11 @@ export default function ChargeDetailsPage() {
           <TabsList>
             <TabsTrigger value="info">
               <FileText className="h-4 w-4 mr-2" />
-              Informações
+              {t('information')}
             </TabsTrigger>
             <TabsTrigger value="timeline">
               <History className="h-4 w-4 mr-2" />
-              Timeline
+              {t('timeline')}
             </TabsTrigger>
           </TabsList>
 
@@ -359,20 +335,20 @@ export default function ChargeDetailsPage() {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-gray-500">Valor da Cobrança</p>
+                        <p className="text-sm text-gray-500">{t('chargeValue')}</p>
                         <p className="text-3xl font-bold text-gray-900">
                           {formatCurrency(charge.value)}
                         </p>
                         {charge.netValue && charge.netValue !== charge.value && (
                           <p className="text-sm text-gray-500 mt-1">
-                            Valor líquido: {formatCurrency(charge.netValue)}
+                            {t('netValue')}: {formatCurrency(charge.netValue)}
                           </p>
                         )}
                       </div>
                       <div className="text-right">
                         <BillingTypeBadge type={charge.billingType} size="lg" />
                         <p className="text-sm text-gray-500 mt-2">
-                          Vencimento: {formatDate(charge.dueDate)}
+                          {t('dueDate')}: {formatDate(new Date(charge.dueDate))}
                         </p>
                       </div>
                     </div>
@@ -385,7 +361,7 @@ export default function ChargeDetailsPage() {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <DollarSign className="h-5 w-5" />
-                        Opções de Pagamento
+                        {t('paymentOptions')}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -399,7 +375,7 @@ export default function ChargeDetailsPage() {
                               leftIcon={<QrCode className="h-4 w-4" />}
                               className="justify-start"
                             >
-                              Ver QR Code PIX
+                              {t('viewPixQrCode')}
                             </Button>
                             <Button
                               variant="outline"
@@ -413,7 +389,7 @@ export default function ChargeDetailsPage() {
                               }
                               className="justify-start"
                             >
-                              {copiedPix ? 'Copiado!' : 'Copiar PIX'}
+                              {copiedPix ? t('copied') : t('copyPix')}
                             </Button>
                           </>
                         )}
@@ -430,7 +406,7 @@ export default function ChargeDetailsPage() {
                               leftIcon={<Download className="h-4 w-4" />}
                               className="justify-start w-full"
                             >
-                              Baixar Boleto
+                              {t('downloadBoleto')}
                             </Button>
                           </a>
                         )}
@@ -447,7 +423,7 @@ export default function ChargeDetailsPage() {
                               leftIcon={<ExternalLink className="h-4 w-4" />}
                               className="justify-start w-full"
                             >
-                              Abrir Página de Pagamento
+                              {t('openPaymentPage')}
                             </Button>
                           </a>
                         )}
@@ -465,10 +441,10 @@ export default function ChargeDetailsPage() {
                           <Check className="h-6 w-6" />
                         </div>
                         <div>
-                          <p className="font-semibold text-lg">Pagamento Confirmado</p>
+                          <p className="font-semibold text-lg">{t('paymentConfirmed')}</p>
                           {charge.paymentDate && (
                             <p className="text-sm text-success-700">
-                              Pago em {formatDateTime(charge.paymentDate)}
+                              {t('paidOn')} {formatDateTime(new Date(charge.paymentDate))}
                             </p>
                           )}
                         </div>
@@ -486,7 +462,7 @@ export default function ChargeDetailsPage() {
                               variant="outline"
                               leftIcon={<Download className="h-4 w-4" />}
                             >
-                              Baixar Comprovante
+                              {t('downloadReceipt')}
                             </Button>
                           </a>
                         </div>
@@ -499,12 +475,12 @@ export default function ChargeDetailsPage() {
                 {(charge.discount || charge.fine || charge.interest) && (
                   <Card>
                     <CardHeader>
-                      <CardTitle>Condições de Pagamento</CardTitle>
+                      <CardTitle>{t('paymentConditions')}</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
                       {charge.discount && (
                         <div className="flex justify-between p-3 bg-success-50 rounded-lg">
-                          <span className="text-success-700">Desconto</span>
+                          <span className="text-success-700">{t('discountLabel')}</span>
                           <span className="font-medium text-success-900">
                             {charge.discount.type === 'PERCENTAGE'
                               ? `${charge.discount.value}%`
@@ -514,7 +490,7 @@ export default function ChargeDetailsPage() {
                       )}
                       {charge.fine && (
                         <div className="flex justify-between p-3 bg-warning-50 rounded-lg">
-                          <span className="text-warning-700">Multa por atraso</span>
+                          <span className="text-warning-700">{t('lateFine')}</span>
                           <span className="font-medium text-warning-900">
                             {charge.fine.value}%
                           </span>
@@ -522,7 +498,7 @@ export default function ChargeDetailsPage() {
                       )}
                       {charge.interest && (
                         <div className="flex justify-between p-3 bg-error-50 rounded-lg">
-                          <span className="text-error-700">Juros ao mês</span>
+                          <span className="text-error-700">{t('monthlyInterest')}</span>
                           <span className="font-medium text-error-900">
                             {charge.interest.value}%
                           </span>
@@ -540,7 +516,7 @@ export default function ChargeDetailsPage() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <User className="h-5 w-5" />
-                      Cliente
+                      {t('client')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -576,12 +552,12 @@ export default function ChargeDetailsPage() {
                         )}
                         {charge.client.taxId && (
                           <p className="text-sm text-gray-500">
-                            CPF/CNPJ: {formatDocument(charge.client.taxId)}
+                            {t('taxId')}: {formatDocument(charge.client.taxId)}
                           </p>
                         )}
                       </div>
                     ) : (
-                      <p className="text-sm text-gray-500">Cliente não informado</p>
+                      <p className="text-sm text-gray-500">{t('clientNotInformed')}</p>
                     )}
                   </CardContent>
                 </Card>
@@ -591,29 +567,29 @@ export default function ChargeDetailsPage() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Calendar className="h-5 w-5" />
-                      Datas
+                      {t('dates')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Criada em:</span>
-                      <span className="text-gray-900">{formatDate(charge.createdAt)}</span>
+                      <span className="text-gray-600">{t('createdAt')}:</span>
+                      <span className="text-gray-900">{formatDate(new Date(charge.createdAt))}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Vencimento:</span>
-                      <span className="text-gray-900">{formatDate(charge.dueDate)}</span>
+                      <span className="text-gray-600">{t('dueDate')}:</span>
+                      <span className="text-gray-900">{formatDate(new Date(charge.dueDate))}</span>
                     </div>
                     {charge.paymentDate && (
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Pago em:</span>
+                        <span className="text-gray-600">{t('paidAt')}:</span>
                         <span className="text-success font-medium">
-                          {formatDate(charge.paymentDate)}
+                          {formatDate(new Date(charge.paymentDate))}
                         </span>
                       </div>
                     )}
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Atualizado em:</span>
-                      <span className="text-gray-900">{formatDateTime(charge.updatedAt)}</span>
+                      <span className="text-gray-600">{t('updatedAt')}:</span>
+                      <span className="text-gray-900">{formatDateTime(new Date(charge.updatedAt))}</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -623,23 +599,23 @@ export default function ChargeDetailsPage() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Clock className="h-5 w-5" />
-                      Identificadores
+                      {t('identifiers')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
                     <div className="text-xs">
-                      <span className="text-gray-500">ID interno:</span>
+                      <span className="text-gray-500">{t('internalId')}:</span>
                       <p className="font-mono text-gray-700 break-all">{charge.id}</p>
                     </div>
                     {charge.asaasId && (
                       <div className="text-xs">
-                        <span className="text-gray-500">ID Asaas:</span>
+                        <span className="text-gray-500">{t('asaasId')}:</span>
                         <p className="font-mono text-gray-700">{charge.asaasId}</p>
                       </div>
                     )}
                     {charge.externalReference && (
                       <div className="text-xs">
-                        <span className="text-gray-500">Referência externa:</span>
+                        <span className="text-gray-500">{t('externalReference')}:</span>
                         <p className="font-mono text-gray-700">{charge.externalReference}</p>
                       </div>
                     )}
@@ -655,7 +631,7 @@ export default function ChargeDetailsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <History className="h-5 w-5" />
-                  Histórico de Eventos
+                  {t('eventHistory')}
                 </CardTitle>
               </CardHeader>
               <CardContent>

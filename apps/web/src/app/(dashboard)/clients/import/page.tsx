@@ -6,8 +6,10 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ImportWizard } from '@/components/clients/import-wizard';
 import { useAuth } from '@/context/auth-context';
+import { useTranslations } from '@/i18n';
 
 export default function ClientsImportPage() {
+  const { t } = useTranslations('clients');
   const router = useRouter();
   const { billing, isLoading } = useAuth();
 
@@ -32,34 +34,33 @@ export default function ClientsImportPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              Recurso exclusivo PRO
+              {t('import.proExclusive')}
             </h1>
             <p className="mt-2 text-gray-500 max-w-md mx-auto">
-              A importação em massa de clientes é um recurso exclusivo do plano
-              PRO. Faça upgrade para importar centenas de clientes de uma vez.
+              {t('import.proExclusiveDescription')}
             </p>
           </div>
 
           <div className="bg-gray-50 rounded-lg p-6 text-left max-w-md mx-auto">
             <h3 className="font-medium text-gray-900 mb-3">
-              Com o plano PRO você pode:
+              {t('import.proBenefitsTitle')}
             </h3>
             <ul className="space-y-2 text-sm text-gray-600">
               <li className="flex items-center">
                 <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full mr-2" />
-                Importar até 1.000 clientes por arquivo
+                {t('import.proBenefit1')}
               </li>
               <li className="flex items-center">
                 <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full mr-2" />
-                Usar arquivos Excel ou CSV
+                {t('import.proBenefit2')}
               </li>
               <li className="flex items-center">
                 <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full mr-2" />
-                Validação automática de CPF/CNPJ
+                {t('import.proBenefit3')}
               </li>
               <li className="flex items-center">
                 <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full mr-2" />
-                Relatório detalhado de erros
+                {t('import.proBenefit4')}
               </li>
             </ul>
           </div>
@@ -68,13 +69,13 @@ export default function ClientsImportPage() {
             <Link href="/clients">
               <Button variant="outline">
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Voltar para Clientes
+                {t('import.backToClients')}
               </Button>
             </Link>
             <Link href="/settings/billing">
               <Button>
                 <Crown className="h-4 w-4 mr-2" />
-                Fazer Upgrade
+                {t('import.upgrade')}
               </Button>
             </Link>
           </div>
@@ -92,11 +93,11 @@ export default function ClientsImportPage() {
           className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Voltar para Clientes
+          {t('import.backToClients')}
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">Importar Clientes</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('import.title')}</h1>
         <p className="mt-1 text-sm text-gray-500">
-          Importe clientes em massa usando um arquivo Excel ou CSV.
+          {t('import.description')}
         </p>
       </div>
 
@@ -108,15 +109,15 @@ export default function ClientsImportPage() {
       {/* Info box */}
       <div className="mt-6 bg-blue-50 rounded-lg p-4">
         <h4 className="text-sm font-medium text-blue-800 mb-2">
-          Dicas para uma importação bem-sucedida:
+          {t('import.tipsTitle')}
         </h4>
         <ul className="text-sm text-blue-700 space-y-1">
           <li>
-            - Baixe e use nosso arquivo modelo para garantir o formato correto
+            - {t('import.tip1')}
           </li>
-          <li>- Preencha os campos obrigatórios: Nome, CPF/CNPJ e Telefone</li>
-          <li>- Limite de 1.000 clientes por arquivo</li>
-          <li>- CPF/CNPJ duplicados atualizarão os dados existentes</li>
+          <li>- {t('import.tip2')}</li>
+          <li>- {t('import.tip3')}</li>
+          <li>- {t('import.tip4')}</li>
         </ul>
       </div>
     </div>

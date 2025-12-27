@@ -14,8 +14,10 @@ import { ChargeForm } from '@/components/billing';
 import { AppLayout } from '@/components/layout';
 import { useCharge } from '@/hooks/use-charges';
 import { canEditCharge, Charge } from '@/services/charges.service';
+import { useTranslations } from '@/i18n';
 
 export default function EditChargePage() {
+  const { t } = useTranslations('billing');
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
@@ -43,13 +45,13 @@ export default function EditChargePage() {
         <div className="space-y-6">
           <Link href="/billing/charges">
             <Button variant="ghost" size="sm" leftIcon={<ChevronLeft className="h-4 w-4" />}>
-              Voltar
+              {t('back')}
             </Button>
           </Link>
           <Alert variant="error">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
-              Cobrança não encontrada
+              {t('chargeNotFound')}
             </div>
           </Alert>
         </div>
@@ -64,13 +66,13 @@ export default function EditChargePage() {
         <div className="space-y-6">
           <Link href={`/billing/charges/${id}`}>
             <Button variant="ghost" size="sm" leftIcon={<ChevronLeft className="h-4 w-4" />}>
-              Voltar
+              {t('back')}
             </Button>
           </Link>
           <Alert variant="warning">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
-              Esta cobrança não pode ser editada. Apenas cobranças pendentes podem ser modificadas.
+              {t('cannotEditCharge')}
             </div>
           </Alert>
         </div>
@@ -93,12 +95,12 @@ export default function EditChargePage() {
         <div className="flex items-center gap-4">
           <Link href={`/billing/charges/${id}`}>
             <Button variant="ghost" size="sm" leftIcon={<ChevronLeft className="h-4 w-4" />}>
-              Voltar
+              {t('back')}
             </Button>
           </Link>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              Editar Cobrança
+              {t('editCharge')}
             </h1>
             <p className="text-sm text-gray-500">
               {charge.client?.name}

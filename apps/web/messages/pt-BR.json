@@ -651,6 +651,7 @@
     "clientHasNoEmail": "Cliente não possui email cadastrado",
     "emailSentSuccessfully": "Email enviado com sucesso!",
     "emailSentToClient": "Enviado para {email}",
+    "emailSentAt": "Enviado em {date}",
     "emailSendError": "Erro ao enviar email. Tente novamente."
   },
   "schedule": {
@@ -1017,6 +1018,7 @@
     "clientHasNoEmail": "Cliente não possui email cadastrado",
     "emailSentSuccessfully": "Email enviado com sucesso!",
     "emailSentToClient": "Enviado para {email}",
+    "emailSentAt": "Enviado em {date}",
     "emailSendError": "Erro ao enviar email. Tente novamente.",
     "registerPayment": "Registrar Pagamento",
     "cancelCharge": "Cancelar Cobrança",

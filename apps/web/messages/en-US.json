@@ -640,6 +640,7 @@
     "clientHasNoEmail": "Client does not have an email address",
     "emailSentSuccessfully": "Email sent successfully!",
     "emailSentToClient": "Sent to {email}",
+    "emailSentAt": "Sent on {date}",
     "emailSendError": "Error sending email. Please try again."
   },
   "schedule": {

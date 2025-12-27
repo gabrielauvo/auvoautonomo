@@ -6,7 +6,6 @@
  */
 
 import { Linking, Share, Alert } from 'react-native';
-import Constants from 'expo-constants';
 import { AuthService } from './AuthService';
 import { fetchWithTimeout } from '../utils/fetch-with-timeout';
 
@@ -14,8 +13,8 @@ import { fetchWithTimeout } from '../utils/fetch-with-timeout';
 // CONSTANTS
 // =============================================================================
 
-const API_URL = Constants.expoConfig?.extra?.apiUrl || 'http://localhost:3001';
-const WEB_URL = Constants.expoConfig?.extra?.webUrl || 'http://localhost:3000';
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
+const WEB_URL = process.env.EXPO_PUBLIC_WEB_URL || 'http://localhost:3000';
 
 // =============================================================================
 // TYPES

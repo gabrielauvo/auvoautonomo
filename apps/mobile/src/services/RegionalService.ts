@@ -6,13 +6,12 @@
 
 import { AuthService } from './AuthService';
 import { fetchWithTimeout } from '../utils/fetch-with-timeout';
-import Constants from 'expo-constants';
 
 // =============================================================================
 // CONSTANTS
 // =============================================================================
 
-const API_URL = Constants.expoConfig?.extra?.apiUrl || 'http://localhost:3001';
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 
 // =============================================================================
 // TYPES
@@ -139,13 +138,19 @@ export const RegionalService = {
    */
   async getCountries(): Promise<CountryInfo[]> {
     try {
-      const response = await fetchWithTimeout(`${API_URL}/settings/regional/countries`);
+      const url = `${API_URL}/settings/regional/countries`;
+      console.log('[RegionalService] Fetching countries from:', url);
+      const response = await fetchWithTimeout(url);
+      console.log('[RegionalService] Countries response status:', response.status);
       if (response.ok) {
-        return await response.json();
+        const data = await response.json();
+        console.log('[RegionalService] Countries loaded:', data?.length || 0);
+        return data;
       }
+      console.warn('[RegionalService] Countries request failed with status:', response.status);
       return [];
     } catch (error) {
-      console.warn('Failed to fetch countries:', error);
+      console.warn('[RegionalService] Failed to fetch countries:', error);
       return [];
     }
   },
@@ -160,7 +165,14 @@ export const RegionalService = {
       );
       if (response.ok) {
         const data = await response.json();
-        return data.timezones || [];
+        // Backend returns { countryCode, timezones: string[] }
+        // We need to transform to TimezoneInfo[]
+        const timezoneStrings: string[] = data.timezones || [];
+        return timezoneStrings.map((tz: string) => ({
+          id: tz,
+          name: this.formatTimezoneName(tz),
+          offset: this.getTimezoneOffset(tz),
+        }));
       }
       return [];
     } catch (error) {
@@ -170,17 +182,60 @@ export const RegionalService = {
   },
 
   /**
+   * Format timezone name for display
+   */
+  formatTimezoneName(timezone: string): string {
+    // Convert America/Sao_Paulo to "São Paulo"
+    const parts = timezone.split('/');
+    const city = parts[parts.length - 1];
+    return city.replace(/_/g, ' ').replace(/Sao/g, 'São');
+  },
+
+  /**
+   * Get timezone offset string
+   */
+  getTimezoneOffset(timezone: string): string {
+    try {
+      const now = new Date();
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: timezone,
+        timeZoneName: 'shortOffset',
+      });
+      const parts = formatter.formatToParts(now);
+      const offsetPart = parts.find(p => p.type === 'timeZoneName');
+      if (offsetPart) {
+        // Convert "GMT-3" to "-03:00"
+        const match = offsetPart.value.match(/GMT([+-]?)(\d+)?/);
+        if (match) {
+          const sign = match[1] || '+';
+          const hours = match[2] ? match[2].padStart(2, '0') : '00';
+          return `${sign}${hours}:00`;
+        }
+      }
+      return '+00:00';
+    } catch {
+      return '+00:00';
+    }
+  },
+
+  /**
    * Get available currencies
    */
   async getCurrencies(): Promise<CurrencyInfo[]> {
     try {
-      const response = await fetchWithTimeout(`${API_URL}/settings/regional/currencies`);
+      const url = `${API_URL}/settings/regional/currencies`;
+      console.log('[RegionalService] Fetching currencies from:', url);
+      const response = await fetchWithTimeout(url);
+      console.log('[RegionalService] Currencies response status:', response.status);
       if (response.ok) {
-        return await response.json();
+        const data = await response.json();
+        console.log('[RegionalService] Currencies loaded:', data?.length || 0);
+        return data;
       }
+      console.warn('[RegionalService] Currencies request failed with status:', response.status);
       return [];
     } catch (error) {
-      console.warn('Failed to fetch currencies:', error);
+      console.warn('[RegionalService] Failed to fetch currencies:', error);
       return [];
     }
   },

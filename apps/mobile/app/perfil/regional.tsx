@@ -96,12 +96,19 @@ export default function RegionalScreen() {
   const loadData = async () => {
     setIsLoading(true);
     try {
+      console.log('[Regional] Loading data...');
+      console.log('[Regional] API_URL:', process.env.EXPO_PUBLIC_API_URL);
+
       // Load all data in parallel
       const [settingsData, countriesData, currenciesData] = await Promise.all([
         RegionalService.getSettings(),
         RegionalService.getCountries(),
         RegionalService.getCurrencies(),
       ]);
+
+      console.log('[Regional] Settings loaded:', settingsData);
+      console.log('[Regional] Countries loaded:', countriesData?.length || 0);
+      console.log('[Regional] Currencies loaded:', currenciesData?.length || 0);
 
       setSettings(settingsData);
       setOriginalSettings(settingsData);
@@ -110,7 +117,9 @@ export default function RegionalScreen() {
 
       // Load timezones for the current country
       if (settingsData.country) {
+        console.log('[Regional] Loading timezones for:', settingsData.country);
         const timezonesData = await RegionalService.getTimezones(settingsData.country);
+        console.log('[Regional] Timezones loaded:', timezonesData?.length || 0);
         setTimezones(timezonesData);
       }
     } catch (error) {

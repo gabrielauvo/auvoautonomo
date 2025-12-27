@@ -45,6 +45,7 @@
       "env": {
         "EXPO_PUBLIC_ENV": "preview",
         "EXPO_PUBLIC_API_URL": "https://monorepobackend-production.up.railway.app",
+        "EXPO_PUBLIC_WEB_URL": "https://preview.auvo.app",
         "EAS_NO_VCS": "1",
         "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
       },
@@ -73,7 +74,8 @@
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_ENV": "production",
-        "EXPO_PUBLIC_API_URL": "https://api.auvo.app"
+        "EXPO_PUBLIC_API_URL": "https://api.auvo.app",
+        "EXPO_PUBLIC_WEB_URL": "https://app.auvo.app"
       },
       "ios": {
         "resourceClass": "m-medium"

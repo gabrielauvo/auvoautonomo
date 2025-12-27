@@ -404,6 +404,42 @@
       "tip2": "Fill in required fields: Name, Tax ID and Phone",
       "tip3": "Limit of 1,000 clients per file",
       "tip4": "Duplicate Tax IDs will update existing data"
+    },
+    "form": {
+      "mainData": "Main Information",
+      "name": "Name / Company Name",
+      "namePlaceholder": "Full name or company name",
+      "contact": "Contact",
+      "phone": "Phone",
+      "email": "Email",
+      "address": "Address",
+      "addressField": "Address",
+      "addressPlaceholder": "Street, number, suite",
+      "city": "City",
+      "cityPlaceholder": "City",
+      "state": "State",
+      "statePlaceholder": "State",
+      "zipCode": "Zip Code",
+      "notes": "Notes",
+      "notesField": "Notes",
+      "notesPlaceholder": "Notes about the client...",
+      "searchingData": "Searching data...",
+      "autoFilled": "Data filled automatically",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving...",
+      "saveError": "Error saving client. Try again.",
+      "validation": {
+        "nameRequired": "Name is required",
+        "phoneRequired": "Phone is required",
+        "phoneInvalid": "Invalid phone",
+        "taxIdRequired": "Tax ID is required",
+        "taxIdInvalid": "Invalid Tax ID",
+        "taxIdLength": "Tax ID must have 9 digits",
+        "cpfInvalid": "Invalid Tax ID",
+        "cnpjInvalid": "Invalid Tax ID",
+        "emailInvalid": "Invalid email"
+      }
     }
   },
   "quotes": {
@@ -589,9 +625,72 @@
     "allStatuses": "All Statuses",
     "allClients": "All Clients",
     "filterByStatus": "Filter by Status",
-    "filterByClient": "Filter by Client",
+    "filterByClient": "Filter by client...",
     "errorLoading": "Error loading schedule. Please try again.",
-    "reload": "Reload"
+    "reload": "Reload",
+    "filter": "Filter",
+    "clear": "Clear",
+    "all": "All",
+    "noClientFound": "No client found",
+    "noActivities": "No activities",
+    "moreItems": "+{count} more",
+    "previous": "Previous",
+    "next": "Next",
+    "activitiesOfTheDay": "Activities of the Day",
+    "weekDays": {
+      "sun": "Sun",
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sunShort": "SUN",
+      "monShort": "MON",
+      "tueShort": "TUE",
+      "wedShort": "WED",
+      "thuShort": "THU",
+      "friShort": "FRI",
+      "satShort": "SAT"
+    },
+    "months": {
+      "january": "January",
+      "february": "February",
+      "march": "March",
+      "april": "April",
+      "may": "May",
+      "june": "June",
+      "july": "July",
+      "august": "August",
+      "september": "September",
+      "october": "October",
+      "november": "November",
+      "december": "December"
+    },
+    "status": {
+      "scheduled": "Scheduled",
+      "inProgress": "In Progress",
+      "done": "Completed",
+      "canceled": "Canceled",
+      "draft": "Draft",
+      "sent": "Sent",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "expired": "Expired"
+    },
+    "counters": {
+      "totalActivities": "Total Activities",
+      "workOrders": "Work Orders",
+      "quoteVisits": "Quote Visits"
+    },
+    "emptyState": {
+      "title": "No activities scheduled",
+      "description": "There are no work orders or quote visits scheduled for this day. Create a new work order or schedule a quote visit."
+    },
+    "activityTypes": {
+      "workOrder": "Work Order",
+      "quoteVisit": "Quote Visit"
+    }
   },
   "catalog": {
     "title": "Catalog",

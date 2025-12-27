@@ -396,14 +396,50 @@
       "proBenefitsTitle": "Con el plan PRO puede:",
       "proBenefit1": "Importar hasta 1.000 clientes por archivo",
       "proBenefit2": "Usar archivos Excel o CSV",
-      "proBenefit3": "Validación automática de RUT/CUIT",
+      "proBenefit3": "Validación automática de RFC",
       "proBenefit4": "Informe detallado de errores",
       "upgrade": "Actualizar",
       "tipsTitle": "Consejos para una importación exitosa:",
       "tip1": "Descargue y use nuestro archivo modelo para garantizar el formato correcto",
-      "tip2": "Complete los campos obligatorios: Nombre, RUT/CUIT y Teléfono",
+      "tip2": "Complete los campos obligatorios: Nombre, RFC y Teléfono",
       "tip3": "Límite de 1.000 clientes por archivo",
-      "tip4": "RUT/CUIT duplicados actualizarán los datos existentes"
+      "tip4": "RFC duplicados actualizarán los datos existentes"
+    },
+    "form": {
+      "mainData": "Datos Principales",
+      "name": "Nombre / Razón Social",
+      "namePlaceholder": "Nombre completo o razón social",
+      "contact": "Contacto",
+      "phone": "Teléfono",
+      "email": "Email",
+      "address": "Dirección",
+      "addressField": "Dirección",
+      "addressPlaceholder": "Calle, número, interior",
+      "city": "Ciudad",
+      "cityPlaceholder": "Ciudad",
+      "state": "Estado",
+      "statePlaceholder": "Estado",
+      "zipCode": "Código Postal",
+      "notes": "Notas",
+      "notesField": "Notas",
+      "notesPlaceholder": "Notas sobre el cliente...",
+      "searchingData": "Buscando datos...",
+      "autoFilled": "Datos completados automáticamente",
+      "cancel": "Cancelar",
+      "save": "Guardar",
+      "saving": "Guardando...",
+      "saveError": "Error al guardar cliente. Intente de nuevo.",
+      "validation": {
+        "nameRequired": "Nombre es obligatorio",
+        "phoneRequired": "Teléfono es obligatorio",
+        "phoneInvalid": "Teléfono inválido",
+        "taxIdRequired": "RFC es obligatorio",
+        "taxIdInvalid": "RFC inválido",
+        "taxIdLength": "RFC debe tener 12 o 13 caracteres",
+        "cpfInvalid": "RFC inválido",
+        "cnpjInvalid": "RFC inválido",
+        "emailInvalid": "Email inválido"
+      }
     }
   },
   "quotes": {
@@ -589,9 +625,72 @@
     "allStatuses": "Todos los Estados",
     "allClients": "Todos los Clientes",
     "filterByStatus": "Filtrar por Estado",
-    "filterByClient": "Filtrar por Cliente",
+    "filterByClient": "Filtrar por cliente...",
     "errorLoading": "Error al cargar la agenda. Inténtelo de nuevo.",
-    "reload": "Recargar"
+    "reload": "Recargar",
+    "filter": "Filtrar",
+    "clear": "Limpiar",
+    "all": "Todos",
+    "noClientFound": "Ningún cliente encontrado",
+    "noActivities": "Sin actividades",
+    "moreItems": "+{count} más",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "activitiesOfTheDay": "Actividades del Día",
+    "weekDays": {
+      "sun": "Dom",
+      "mon": "Lun",
+      "tue": "Mar",
+      "wed": "Mié",
+      "thu": "Jue",
+      "fri": "Vie",
+      "sat": "Sáb",
+      "sunShort": "DOM",
+      "monShort": "LUN",
+      "tueShort": "MAR",
+      "wedShort": "MIÉ",
+      "thuShort": "JUE",
+      "friShort": "VIE",
+      "satShort": "SÁB"
+    },
+    "months": {
+      "january": "Enero",
+      "february": "Febrero",
+      "march": "Marzo",
+      "april": "Abril",
+      "may": "Mayo",
+      "june": "Junio",
+      "july": "Julio",
+      "august": "Agosto",
+      "september": "Septiembre",
+      "october": "Octubre",
+      "november": "Noviembre",
+      "december": "Diciembre"
+    },
+    "status": {
+      "scheduled": "Programado",
+      "inProgress": "En Progreso",
+      "done": "Completado",
+      "canceled": "Cancelado",
+      "draft": "Borrador",
+      "sent": "Enviado",
+      "approved": "Aprobado",
+      "rejected": "Rechazado",
+      "expired": "Expirado"
+    },
+    "counters": {
+      "totalActivities": "Total de Actividades",
+      "workOrders": "Órdenes de Trabajo",
+      "quoteVisits": "Visitas de Presupuesto"
+    },
+    "emptyState": {
+      "title": "Ninguna actividad programada",
+      "description": "No hay órdenes de trabajo o visitas de presupuesto programadas para este día. Crea una nueva orden de trabajo o programa una visita de presupuesto."
+    },
+    "activityTypes": {
+      "workOrder": "Orden de Trabajo",
+      "quoteVisit": "Visita de Presupuesto"
+    }
   },
   "catalog": {
     "title": "Catálogo",

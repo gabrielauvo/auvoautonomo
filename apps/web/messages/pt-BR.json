@@ -404,6 +404,42 @@
       "tip2": "Preencha os campos obrigatórios: Nome, CPF/CNPJ e Telefone",
       "tip3": "Limite de 1.000 clientes por arquivo",
       "tip4": "CPF/CNPJ duplicados atualizarão os dados existentes"
+    },
+    "form": {
+      "mainData": "Dados Principais",
+      "name": "Nome / Razão Social",
+      "namePlaceholder": "Nome completo ou razão social",
+      "contact": "Contato",
+      "phone": "Telefone",
+      "email": "Email",
+      "address": "Endereço",
+      "addressField": "Endereço",
+      "addressPlaceholder": "Rua, número, complemento",
+      "city": "Cidade",
+      "cityPlaceholder": "Cidade",
+      "state": "Estado",
+      "statePlaceholder": "UF",
+      "zipCode": "CEP",
+      "notes": "Observações",
+      "notesField": "Notas",
+      "notesPlaceholder": "Observações sobre o cliente...",
+      "searchingData": "Buscando dados...",
+      "autoFilled": "Dados preenchidos automaticamente",
+      "cancel": "Cancelar",
+      "save": "Salvar",
+      "saving": "Salvando...",
+      "saveError": "Erro ao salvar cliente. Tente novamente.",
+      "validation": {
+        "nameRequired": "Nome é obrigatório",
+        "phoneRequired": "Telefone é obrigatório",
+        "phoneInvalid": "Telefone inválido",
+        "taxIdRequired": "CPF/CNPJ é obrigatório",
+        "taxIdInvalid": "Documento inválido",
+        "taxIdLength": "CPF deve ter 11 dígitos ou CNPJ deve ter 14 dígitos",
+        "cpfInvalid": "CPF inválido",
+        "cnpjInvalid": "CNPJ inválido",
+        "emailInvalid": "Email inválido"
+      }
     }
   },
   "quotes": {
@@ -600,9 +636,72 @@
     "allStatuses": "Todos os Status",
     "allClients": "Todos os Clientes",
     "filterByStatus": "Filtrar por Status",
-    "filterByClient": "Filtrar por Cliente",
+    "filterByClient": "Filtrar por cliente...",
     "errorLoading": "Erro ao carregar agenda. Tente novamente.",
-    "reload": "Recarregar"
+    "reload": "Recarregar",
+    "filter": "Filtrar",
+    "clear": "Limpar",
+    "all": "Todos",
+    "noClientFound": "Nenhum cliente encontrado",
+    "noActivities": "Sem atividades",
+    "moreItems": "mais +{count}",
+    "previous": "Anterior",
+    "next": "Próximo",
+    "activitiesOfTheDay": "Atividades do Dia",
+    "weekDays": {
+      "sun": "Dom",
+      "mon": "Seg",
+      "tue": "Ter",
+      "wed": "Qua",
+      "thu": "Qui",
+      "fri": "Sex",
+      "sat": "Sáb",
+      "sunShort": "DOM",
+      "monShort": "SEG",
+      "tueShort": "TER",
+      "wedShort": "QUA",
+      "thuShort": "QUI",
+      "friShort": "SEX",
+      "satShort": "SÁB"
+    },
+    "months": {
+      "january": "Janeiro",
+      "february": "Fevereiro",
+      "march": "Março",
+      "april": "Abril",
+      "may": "Maio",
+      "june": "Junho",
+      "july": "Julho",
+      "august": "Agosto",
+      "september": "Setembro",
+      "october": "Outubro",
+      "november": "Novembro",
+      "december": "Dezembro"
+    },
+    "status": {
+      "scheduled": "Agendado",
+      "inProgress": "Em Andamento",
+      "done": "Concluído",
+      "canceled": "Cancelado",
+      "draft": "Rascunho",
+      "sent": "Enviado",
+      "approved": "Aprovado",
+      "rejected": "Rejeitado",
+      "expired": "Expirado"
+    },
+    "counters": {
+      "totalActivities": "Total de Atividades",
+      "workOrders": "Ordens de Serviço",
+      "quoteVisits": "Visitas de Orçamento"
+    },
+    "emptyState": {
+      "title": "Nenhuma atividade agendada",
+      "description": "Não há ordens de serviço ou visitas de orçamento agendadas para este dia. Crie uma nova ordem de serviço ou agende uma visita para orçamento."
+    },
+    "activityTypes": {
+      "workOrder": "Ordem de Serviço",
+      "quoteVisit": "Visita de Orçamento"
+    }
   },
   "catalog": {
     "title": "Catálogo",

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { formatDateDisplay, isToday, addDays, getDateString } from '@/hooks/use-schedule';
 import { cn } from '@/lib/utils';
+import { useTranslations } from '@/i18n';
 
 interface ScheduleDateNavigatorProps {
   selectedDate: string;
@@ -22,6 +23,8 @@ export function ScheduleDateNavigator({
   onDateChange,
   className,
 }: ScheduleDateNavigatorProps) {
+  const { t } = useTranslations('schedule');
+
   const handlePrevDay = () => {
     onDateChange(addDays(selectedDate, -1));
   };
@@ -52,7 +55,7 @@ export function ScheduleDateNavigator({
           onClick={handlePrevDay}
           leftIcon={<ChevronLeft className="h-4 w-4" />}
         >
-          Anterior
+          {t('previous')}
         </Button>
 
         <Button
@@ -61,7 +64,7 @@ export function ScheduleDateNavigator({
           onClick={handleToday}
           leftIcon={<Calendar className="h-4 w-4" />}
         >
-          Hoje
+          {t('today')}
         </Button>
 
         <Button
@@ -70,7 +73,7 @@ export function ScheduleDateNavigator({
           onClick={handleNextDay}
           rightIcon={<ChevronRight className="h-4 w-4" />}
         >
-          Próximo
+          {t('next')}
         </Button>
       </div>
 
@@ -80,7 +83,7 @@ export function ScheduleDateNavigator({
           {formattedDate}
         </p>
         {isTodaySelected && (
-          <span className="text-sm text-primary font-medium">Hoje</span>
+          <span className="text-sm text-primary font-medium">{t('today')}</span>
         )}
       </div>
     </div>

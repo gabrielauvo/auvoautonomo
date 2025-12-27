@@ -11,6 +11,7 @@ import { ScheduleActivityCard } from './schedule-activity-card';
 import { Card, CardContent, Skeleton } from '@/components/ui';
 import { Wrench, FileText, Calendar, ClipboardList } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslations } from '@/i18n';
 
 interface ScheduleDayViewProps {
   data?: ScheduleDayResponse;
@@ -43,6 +44,8 @@ export function ScheduleDayView({
   isLoading,
   className,
 }: ScheduleDayViewProps) {
+  const { t } = useTranslations('schedule');
+
   // Loading state
   if (isLoading) {
     return (
@@ -70,21 +73,21 @@ export function ScheduleDayView({
         {/* Counters */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <CounterCard
-            label="Total de Atividades"
+            label={t('counters.totalActivities')}
             count={0}
             icon={<ClipboardList className="h-5 w-5" />}
             bgColor="bg-gray-50"
             textColor="text-gray-500"
           />
           <CounterCard
-            label="Ordens de Serviço"
+            label={t('counters.workOrders')}
             count={0}
             icon={<Wrench className="h-5 w-5" />}
             bgColor="bg-blue-50"
             textColor="text-blue-500"
           />
           <CounterCard
-            label="Visitas de Orçamento"
+            label={t('counters.quoteVisits')}
             count={0}
             icon={<FileText className="h-5 w-5" />}
             bgColor="bg-amber-50"
@@ -97,11 +100,10 @@ export function ScheduleDayView({
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Calendar className="h-16 w-16 text-gray-300 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Nenhuma atividade agendada
+              {t('emptyState.title')}
             </h3>
             <p className="text-sm text-gray-500 text-center max-w-sm">
-              Não há ordens de serviço ou visitas de orçamento agendadas para este dia.
-              Crie uma nova ordem de serviço ou agende uma visita para orçamento.
+              {t('emptyState.description')}
             </p>
           </CardContent>
         </Card>
@@ -114,21 +116,21 @@ export function ScheduleDayView({
       {/* Counters */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <CounterCard
-          label="Total de Atividades"
+          label={t('counters.totalActivities')}
           count={data.totalCount}
           icon={<ClipboardList className="h-5 w-5" />}
           bgColor="bg-primary-50"
           textColor="text-primary"
         />
         <CounterCard
-          label="Ordens de Serviço"
+          label={t('counters.workOrders')}
           count={data.workOrdersCount}
           icon={<Wrench className="h-5 w-5" />}
           bgColor="bg-blue-50"
           textColor="text-blue-500"
         />
         <CounterCard
-          label="Visitas de Orçamento"
+          label={t('counters.quoteVisits')}
           count={data.quoteVisitsCount}
           icon={<FileText className="h-5 w-5" />}
           bgColor="bg-amber-50"
@@ -139,7 +141,7 @@ export function ScheduleDayView({
       {/* Activities list */}
       <div className="space-y-4">
         <h2 className="text-lg font-semibold text-gray-900">
-          Atividades do Dia
+          {t('activitiesOfTheDay')}
         </h2>
         <div className="space-y-3">
           {data.activities.map((activity) => (

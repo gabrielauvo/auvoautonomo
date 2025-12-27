@@ -6,6 +6,7 @@
  * Card de atividade individual (Work Order ou Visita de Orçamento)
  */
 
+import { useMemo } from 'react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui';
 import {
@@ -15,6 +16,7 @@ import {
 } from '@/services/schedule.service';
 import { formatTime } from '@/hooks/use-schedule';
 import { useFormatting } from '@/context';
+import { useTranslations } from '@/i18n';
 import {
   Wrench,
   FileText,
@@ -32,20 +34,18 @@ interface ScheduleActivityCardProps {
 }
 
 /**
- * Configuração de cores e labels por tipo
+ * Configuração de cores por tipo (sem labels hardcoded)
  */
-const typeConfig: Record<
+const typeStyles: Record<
   ScheduleActivityType,
-  { label: string; icon: React.ReactNode; bgColor: string; borderColor: string }
+  { icon: React.ReactNode; bgColor: string; borderColor: string }
 > = {
   WORK_ORDER: {
-    label: 'Ordem de Serviço',
     icon: <Wrench className="h-4 w-4" />,
     bgColor: 'bg-blue-50',
     borderColor: 'border-l-blue-500',
   },
   QUOTE_VISIT: {
-    label: 'Visita de Orçamento',
     icon: <FileText className="h-4 w-4" />,
     bgColor: 'bg-amber-50',
     borderColor: 'border-l-amber-500',
@@ -53,21 +53,21 @@ const typeConfig: Record<
 };
 
 /**
- * Configuração de badges por status
+ * Configuração de variantes por status (sem labels hardcoded)
  */
-const statusConfig: Record<
+const statusVariants: Record<
   ScheduleActivityStatus,
-  { label: string; variant: 'default' | 'secondary' | 'success' | 'warning' | 'error' }
+  'default' | 'secondary' | 'success' | 'warning' | 'error'
 > = {
-  SCHEDULED: { label: 'Agendado', variant: 'default' },
-  IN_PROGRESS: { label: 'Em Andamento', variant: 'warning' },
-  DONE: { label: 'Concluído', variant: 'success' },
-  CANCELED: { label: 'Cancelado', variant: 'error' },
-  DRAFT: { label: 'Rascunho', variant: 'secondary' },
-  SENT: { label: 'Enviado', variant: 'default' },
-  APPROVED: { label: 'Aprovado', variant: 'success' },
-  REJECTED: { label: 'Rejeitado', variant: 'error' },
-  EXPIRED: { label: 'Expirado', variant: 'error' },
+  SCHEDULED: 'default',
+  IN_PROGRESS: 'warning',
+  DONE: 'success',
+  CANCELED: 'error',
+  DRAFT: 'secondary',
+  SENT: 'default',
+  APPROVED: 'success',
+  REJECTED: 'error',
+  EXPIRED: 'error',
 };
 
 /**
@@ -86,9 +86,30 @@ export function ScheduleActivityCard({
   className,
 }: ScheduleActivityCardProps) {
   const { formatCurrency } = useFormatting();
-  const config = typeConfig[activity.type];
-  const status = statusConfig[activity.status];
+  const { t } = useTranslations('schedule');
+
+  const styles = typeStyles[activity.type];
+  const statusVariant = statusVariants[activity.status];
   const duration = formatDuration(activity.durationMinutes);
+
+  // Labels de tipo localizados
+  const typeLabels = useMemo(() => ({
+    WORK_ORDER: t('activityTypes.workOrder'),
+    QUOTE_VISIT: t('activityTypes.quoteVisit'),
+  }), [t]);
+
+  // Labels de status localizados
+  const statusLabels = useMemo(() => ({
+    SCHEDULED: t('status.scheduled'),
+    IN_PROGRESS: t('status.inProgress'),
+    DONE: t('status.done'),
+    CANCELED: t('status.canceled'),
+    DRAFT: t('status.draft'),
+    SENT: t('status.sent'),
+    APPROVED: t('status.approved'),
+    REJECTED: t('status.rejected'),
+    EXPIRED: t('status.expired'),
+  }), [t]);
 
   // Link para detalhe
   const detailHref =
@@ -101,21 +122,21 @@ export function ScheduleActivityCard({
       <div
         className={cn(
           'relative p-4 rounded-lg border border-l-4 transition-all hover:shadow-md cursor-pointer',
-          config.bgColor,
-          config.borderColor,
+          styles.bgColor,
+          styles.borderColor,
           className
         )}
       >
         {/* Header */}
         <div className="flex items-start justify-between gap-2 mb-3">
           <div className="flex items-center gap-2">
-            <span className="text-gray-600">{config.icon}</span>
+            <span className="text-gray-600">{styles.icon}</span>
             <span className="text-xs font-medium text-gray-500">
-              {config.label}
+              {typeLabels[activity.type]}
             </span>
           </div>
-          <Badge variant={status.variant} size="sm">
-            {status.label}
+          <Badge variant={statusVariant} size="sm">
+            {statusLabels[activity.status]}
           </Badge>
         </div>
 

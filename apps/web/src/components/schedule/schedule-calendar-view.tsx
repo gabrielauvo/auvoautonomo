@@ -19,6 +19,8 @@ import {
 import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
 import { Button, Skeleton } from '@/components/ui';
 import { cn } from '@/lib/utils';
+import { useTranslations } from '@/i18n';
+import { useFormatting } from '@/hooks/use-formatting';
 
 interface ScheduleCalendarViewProps {
   onDayClick?: (date: string) => void;
@@ -39,19 +41,12 @@ const statusColors: Record<ScheduleActivityStatus, { bg: string; text: string; d
   EXPIRED: { bg: 'bg-orange-100', text: 'text-orange-800', dot: 'bg-orange-500' },
 };
 
-const weekDays = ['DOM.', 'SEG.', 'TER.', 'QUA.', 'QUI.', 'SEX.', 'SÁB.'];
-
-const monthNames = [
-  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
-];
-
 /**
  * Formata hora para exibição compacta
  */
-function formatTimeShort(dateStr: string): string {
+function formatTimeShort(dateStr: string, locale: string): string {
   const date = new Date(dateStr);
-  return new Intl.DateTimeFormat('pt-BR', {
+  return new Intl.DateTimeFormat(locale, {
     hour: '2-digit',
     minute: '2-digit',
   }).format(date);
@@ -84,7 +79,7 @@ function getCalendarDays(year: number, month: number) {
 /**
  * Componente de item de atividade no calendário
  */
-function CalendarActivityItem({ activity }: { activity: ScheduleActivity }) {
+function CalendarActivityItem({ activity, locale }: { activity: ScheduleActivity; locale: string }) {
   const colors = statusColors[activity.status];
   const href = activity.type === 'WORK_ORDER'
     ? `/work-orders/${activity.id}`
@@ -101,7 +96,7 @@ function CalendarActivityItem({ activity }: { activity: ScheduleActivity }) {
         title={`${activity.title} - ${activity.client.name}`}
       >
         <span className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', colors.dot)} />
-        <span className="font-medium">{formatTimeShort(activity.scheduledStart)}</span>
+        <span className="font-medium">{formatTimeShort(activity.scheduledStart, locale)}</span>
         <span className="truncate">{activity.client.name}</span>
       </div>
     </Link>
@@ -111,14 +106,10 @@ function CalendarActivityItem({ activity }: { activity: ScheduleActivity }) {
 // Status de OS para filtro (os principais)
 type FilterStatus = 'SCHEDULED' | 'IN_PROGRESS' | 'DONE' | 'CANCELED';
 
-const filterOptions: { status: FilterStatus; label: string; dotColor: string }[] = [
-  { status: 'SCHEDULED', label: 'Agendado', dotColor: 'bg-blue-500' },
-  { status: 'IN_PROGRESS', label: 'Em Andamento', dotColor: 'bg-yellow-500' },
-  { status: 'DONE', label: 'Concluído', dotColor: 'bg-green-500' },
-  { status: 'CANCELED', label: 'Cancelado', dotColor: 'bg-red-500' },
-];
-
 export function ScheduleCalendarView({ onDayClick }: ScheduleCalendarViewProps) {
+  const { t } = useTranslations('schedule');
+  const { locale } = useFormatting();
+
   const today = new Date();
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
@@ -127,6 +118,41 @@ export function ScheduleCalendarView({ onDayClick }: ScheduleCalendarViewProps) 
   const [activeFilters, setActiveFilters] = useState<Set<FilterStatus>>(
     new Set(['SCHEDULED', 'IN_PROGRESS', 'DONE', 'CANCELED'])
   );
+
+  // Nomes dos dias da semana localizados
+  const weekDays = useMemo(() => [
+    t('weekDays.sun'),
+    t('weekDays.mon'),
+    t('weekDays.tue'),
+    t('weekDays.wed'),
+    t('weekDays.thu'),
+    t('weekDays.fri'),
+    t('weekDays.sat'),
+  ], [t]);
+
+  // Nomes dos meses localizados
+  const monthNames = useMemo(() => [
+    t('months.january'),
+    t('months.february'),
+    t('months.march'),
+    t('months.april'),
+    t('months.may'),
+    t('months.june'),
+    t('months.july'),
+    t('months.august'),
+    t('months.september'),
+    t('months.october'),
+    t('months.november'),
+    t('months.december'),
+  ], [t]);
+
+  // Opções de filtro localizadas
+  const filterOptions = useMemo(() => [
+    { status: 'SCHEDULED' as FilterStatus, label: t('status.scheduled'), dotColor: 'bg-blue-500' },
+    { status: 'IN_PROGRESS' as FilterStatus, label: t('status.inProgress'), dotColor: 'bg-yellow-500' },
+    { status: 'DONE' as FilterStatus, label: t('status.done'), dotColor: 'bg-green-500' },
+    { status: 'CANCELED' as FilterStatus, label: t('status.canceled'), dotColor: 'bg-red-500' },
+  ], [t]);
 
   // Filtro por cliente
   const [clientFilter, setClientFilter] = useState<string>('');
@@ -285,7 +311,7 @@ export function ScheduleCalendarView({ onDayClick }: ScheduleCalendarViewProps) 
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Filtrar por cliente..."
+                  placeholder={t('filterByClient')}
                   value={clientFilter ? selectedClientName : clientSearch}
                   onChange={(e) => {
                     setClientSearch(e.target.value);
@@ -334,20 +360,20 @@ export function ScheduleCalendarView({ onDayClick }: ScheduleCalendarViewProps) 
               {/* Mensagem quando não há clientes */}
               {showClientDropdown && !clientFilter && clientSearch && filteredClients.length === 0 && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-md shadow-lg z-50 p-3 text-sm text-gray-500">
-                  Nenhum cliente encontrado
+                  {t('noClientFound')}
                 </div>
               )}
             </div>
 
             <Button variant="outline" size="sm" onClick={goToToday}>
-              Hoje
+              {t('today')}
             </Button>
           </div>
         </div>
 
         {/* Linha 2: Filtros por Status */}
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-medium text-gray-500 mr-1">Filtrar:</span>
+          <span className="text-xs font-medium text-gray-500 mr-1">{t('filter')}:</span>
           {filterOptions.map((filter) => {
             const isActive = activeFilters.has(filter.status);
             return (
@@ -376,7 +402,7 @@ export function ScheduleCalendarView({ onDayClick }: ScheduleCalendarViewProps) 
             onClick={toggleAllFilters}
             className="ml-2 text-xs text-primary hover:underline font-medium"
           >
-            {activeFilters.size === filterOptions.length ? 'Limpar' : 'Todos'}
+            {activeFilters.size === filterOptions.length ? t('clear') : t('all')}
           </button>
         </div>
       </div>
@@ -444,11 +470,11 @@ export function ScheduleCalendarView({ onDayClick }: ScheduleCalendarViewProps) 
                   ) : (
                     <div className="space-y-0.5">
                       {displayActivities.map((activity) => (
-                        <CalendarActivityItem key={activity.id} activity={activity} />
+                        <CalendarActivityItem key={activity.id} activity={activity} locale={locale} />
                       ))}
                       {hasMore && (
                         <div className="text-xs text-gray-500 pl-1 font-medium">
-                          mais +{activities.length - 4}
+                          {t('moreItems', { count: activities.length - 4 })}
                         </div>
                       )}
                     </div>

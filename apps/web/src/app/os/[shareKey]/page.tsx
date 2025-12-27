@@ -167,7 +167,13 @@ function calculateDuration(start: string | null, end: string | null): string {
   return hours > 0 ? `${hours}h ${mins}min` : `${mins}min`;
 }
 
-function getChecklistAnswerDisplay(answer: any, questions: any[]): string | { type: 'signature'; data: string } {
+function getChecklistAnswerDisplay(
+  answer: any,
+  questions: any[],
+  locale: string = 'pt-BR',
+  t: (key: string) => string,
+  tCommon: (key: string) => string
+): string | { type: 'signature'; data: string } {
   const question = questions.find((q) => q.id === answer.questionId);
   if (!question) return '-';
 
@@ -178,23 +184,23 @@ function getChecklistAnswerDisplay(answer: any, questions: any[]): string | { ty
     case 'NUMBER':
       return answer.valueNumber != null ? answer.valueNumber.toString() : '-';
     case 'CHECKBOX':
-      return answer.valueBoolean != null ? (answer.valueBoolean ? 'Sim' : 'Não') : '-';
+      return answer.valueBoolean != null ? (answer.valueBoolean ? tCommon('yes') : tCommon('no')) : '-';
     case 'SELECT':
       return answer.valueJson || answer.valueText || '-';
     case 'MULTI_SELECT':
       return Array.isArray(answer.valueJson) ? answer.valueJson.join(', ') : '-';
     case 'DATE':
-      return formatDate(answer.valueDate);
+      return formatDate(answer.valueDate, locale);
     case 'TIME':
-      return formatTime(answer.valueDate);
+      return formatTime(answer.valueDate, locale);
     case 'DATETIME':
-      return formatDateTime(answer.valueDate);
+      return formatDateTime(answer.valueDate, locale);
     case 'RATING':
       const rating = answer.valueNumber ?? answer.valueJson;
       return rating != null ? `${rating}/5` : '-';
     case 'PHOTO_REQUIRED':
     case 'PHOTO_OPTIONAL':
-      return answer.attachments?.length > 0 ? `${answer.attachments.length} foto(s)` : '-';
+      return answer.attachments?.length > 0 ? `${answer.attachments.length} ${t('photos')}` : '-';
     case 'SIGNATURE_TECHNICIAN':
     case 'SIGNATURE_CLIENT':
       const signatureData = answer.valueText || answer.valueJson?.data || answer.valueJson;
@@ -220,12 +226,14 @@ function ImageLightbox({
   onClose,
   onPrev,
   onNext,
+  labels,
 }: {
   images: { url: string; caption?: string }[];
   currentIndex: number;
   onClose: () => void;
   onPrev: () => void;
   onNext: () => void;
+  labels: { close: string; previous: string; next: string };
 }) {
   const currentImage = images[currentIndex];
 
@@ -246,7 +254,7 @@ function ImageLightbox({
       <button
         onClick={onClose}
         className="absolute top-4 right-4 p-2 text-white hover:text-gray-300 transition-colors z-10"
-        aria-label="Fechar"
+        aria-label={labels.close}
       >
         <X className="h-8 w-8" />
       </button>
@@ -259,7 +267,7 @@ function ImageLightbox({
         <button
           onClick={onPrev}
           className="absolute left-4 p-2 text-white hover:text-gray-300 transition-colors"
-          aria-label="Anterior"
+          aria-label={labels.previous}
         >
           <ChevronLeft className="h-10 w-10" />
         </button>
@@ -269,7 +277,7 @@ function ImageLightbox({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={currentImage.url}
-          alt={currentImage.caption || 'Foto'}
+          alt={currentImage.caption || ''}
           className="max-w-full max-h-[85vh] object-contain"
         />
       </div>
@@ -278,7 +286,7 @@ function ImageLightbox({
         <button
           onClick={onNext}
           className="absolute right-4 p-2 text-white hover:text-gray-300 transition-colors"
-          aria-label="Próximo"
+          aria-label={labels.next}
         >
           <ChevronRight className="h-10 w-10" />
         </button>
@@ -679,7 +687,7 @@ export default function PublicWorkOrderPage() {
 
                   const answer = checklist.answers.find((a) => a.questionId === question.id);
                   const displayValue = answer
-                    ? getChecklistAnswerDisplay(answer, checklist.templateSnapshot?.questions || [])
+                    ? getChecklistAnswerDisplay(answer, checklist.templateSnapshot?.questions || [], locale, t, tCommon)
                     : '-';
                   const hasPhotos = answer?.attachments && answer.attachments.length > 0 &&
                     answer.type !== 'SIGNATURE_TECHNICIAN' && answer.type !== 'SIGNATURE_CLIENT';
@@ -858,6 +866,11 @@ export default function PublicWorkOrderPage() {
           onClose={closeLightbox}
           onPrev={prevImage}
           onNext={nextImage}
+          labels={{
+            close: t('close'),
+            previous: t('previous'),
+            next: t('next'),
+          }}
         />
       )}
     </div>

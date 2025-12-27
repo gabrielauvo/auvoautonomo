@@ -640,6 +640,8 @@
     "clientHasNoEmail": "El cliente no tiene email registrado",
     "emailSentSuccessfully": "¡Email enviado con éxito!",
     "emailSentToClient": "Enviado a {email}",
+    "emailSentAt": "Enviado el {date}",
+    "emailSent": "Email enviado",
     "emailSendError": "Error al enviar email. Por favor, intente nuevamente."
   },
   "schedule": {
@@ -1006,6 +1008,8 @@
     "clientHasNoEmail": "El cliente no tiene email registrado",
     "emailSentSuccessfully": "¡Email enviado con éxito!",
     "emailSentToClient": "Enviado a {email}",
+    "emailSentAt": "Enviado el {date}",
+    "emailSent": "Email enviado",
     "emailSendError": "Error al enviar email. Por favor, intente nuevamente.",
     "registerPayment": "Registrar Pago",
     "cancelCharge": "Cancelar Cobro",

@@ -585,6 +585,11 @@ export class BillingController {
     const info = this.paymentGatewayFactory.getPaymentMethodsInfo(country);
     const isPixAvailable = this.paymentGatewayFactory.isPixAvailable(country);
 
+    // yearlyPrice é o total anual, precisamos calcular o preço mensal do plano anual
+    const yearlyTotal = info.yearlyPrice; // Ex: 1078.80
+    const yearlyMonthly = yearlyTotal / 12; // Ex: 89.90 (preço por mês no plano anual)
+    const yearlySavings = (info.monthlyPrice * 12) - yearlyTotal;
+
     return {
       country: country.toUpperCase(),
       gateway: info.gateway,
@@ -592,11 +597,12 @@ export class BillingController {
       isPixAvailable,
       pricing: {
         monthly: info.monthlyPrice,
-        yearly: info.yearlyPrice,
-        yearlySavings: (info.monthlyPrice * 12) - info.yearlyPrice,
+        yearly: yearlyMonthly, // Preço MENSAL do plano anual (ex: 89.90)
+        yearlyTotal: yearlyTotal, // Total anual (ex: 1078.80)
+        yearlySavings: yearlySavings,
         // Formatar para exibição
         monthlyFormatted: this.formatCurrency(info.monthlyPrice, info.currency),
-        yearlyFormatted: this.formatCurrency(info.yearlyPrice, info.currency),
+        yearlyFormatted: this.formatCurrency(yearlyMonthly, info.currency),
       },
       paymentMethods: info.methods,
       // Informações adicionais por método

@@ -604,6 +604,17 @@ export default function ChargeDetailsPage() {
                         </span>
                       </div>
                     )}
+                    {charge.sentAt && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600 flex items-center gap-1">
+                          <Mail className="h-3 w-3" />
+                          {t('emailSent')}:
+                        </span>
+                        <span className="text-blue-600 font-medium">
+                          {formatDateTime(new Date(charge.sentAt))}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">{t('updatedAt')}:</span>
                       <span className="text-gray-900">{formatDateTime(new Date(charge.updatedAt))}</span>

@@ -652,6 +652,7 @@
     "emailSentSuccessfully": "Email enviado com sucesso!",
     "emailSentToClient": "Enviado para {email}",
     "emailSentAt": "Enviado em {date}",
+    "emailSent": "Email enviado",
     "emailSendError": "Erro ao enviar email. Tente novamente."
   },
   "schedule": {
@@ -1019,6 +1020,7 @@
     "emailSentSuccessfully": "Email enviado com sucesso!",
     "emailSentToClient": "Enviado para {email}",
     "emailSentAt": "Enviado em {date}",
+    "emailSent": "Email enviado",
     "emailSendError": "Erro ao enviar email. Tente novamente.",
     "registerPayment": "Registrar Pagamento",
     "cancelCharge": "Cancelar Cobrança",

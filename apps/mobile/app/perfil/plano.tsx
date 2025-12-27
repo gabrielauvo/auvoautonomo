@@ -797,17 +797,17 @@ export default function PlanoScreen() {
                   {paymentMethod === 'credit_card' && (
                     <Card style={{ marginTop: spacing[4] }}>
                       <Text variant="body" weight="semibold" style={{ marginBottom: spacing[3] }}>
-                        Dados do Cartão
+                        {t('billing.checkout.cardData')}
                       </Text>
 
                       <View style={styles.inputGroup}>
                         <Text variant="caption" weight="medium" color="secondary">
-                          Nome no Cartão *
+                          {t('billing.checkout.cardName')} *
                         </Text>
                         <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                           <TextInput
                             style={[styles.input, { color: colors.text.primary }]}
-                            placeholder="Nome como está no cartão"
+                            placeholder={t('billing.checkout.cardNamePlaceholder')}
                             placeholderTextColor={colors.text.tertiary}
                             value={cardName}
                             onChangeText={setCardName}
@@ -818,7 +818,7 @@ export default function PlanoScreen() {
 
                       <View style={[styles.inputGroup, { marginTop: spacing[3] }]}>
                         <Text variant="caption" weight="medium" color="secondary">
-                          Número do Cartão *
+                          {t('billing.checkout.cardNumber')} *
                         </Text>
                         <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                           <TextInput
@@ -836,7 +836,7 @@ export default function PlanoScreen() {
                       <View style={[styles.row, { marginTop: spacing[3] }]}>
                         <View style={[styles.inputGroup, { flex: 1 }]}>
                           <Text variant="caption" weight="medium" color="secondary">
-                            Validade *
+                            {t('billing.checkout.expiry')} *
                           </Text>
                           <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                             <TextInput
@@ -852,7 +852,7 @@ export default function PlanoScreen() {
                         </View>
                         <View style={[styles.inputGroup, { flex: 1, marginLeft: spacing[3] }]}>
                           <Text variant="caption" weight="medium" color="secondary">
-                            CVV *
+                            {t('billing.checkout.cvv')} *
                           </Text>
                           <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                             <TextInput
@@ -872,7 +872,7 @@ export default function PlanoScreen() {
                       <View style={[styles.row, { marginTop: spacing[3] }]}>
                         <View style={[styles.inputGroup, { flex: 1 }]}>
                           <Text variant="caption" weight="medium" color="secondary">
-                            CEP *
+                            {t('billing.checkout.postalCode')} *
                           </Text>
                           <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                             <TextInput
@@ -888,12 +888,12 @@ export default function PlanoScreen() {
                         </View>
                         <View style={[styles.inputGroup, { flex: 1, marginLeft: spacing[3] }]}>
                           <Text variant="caption" weight="medium" color="secondary">
-                            Número *
+                            {t('billing.checkout.addressNumber')} *
                           </Text>
                           <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                             <TextInput
                               style={[styles.input, { color: colors.text.primary }]}
-                              placeholder="Nº"
+                              placeholder={t('billing.checkout.numberAbbrev')}
                               placeholderTextColor={colors.text.tertiary}
                               value={addressNumber}
                               onChangeText={setAddressNumber}
@@ -908,7 +908,7 @@ export default function PlanoScreen() {
                   {/* Billing Period Selection */}
                   <Card style={{ marginTop: spacing[4] }}>
                     <Text variant="body" weight="semibold" style={{ marginBottom: spacing[3] }}>
-                      Período de Cobrança
+                      {t('billing.checkout.billingPeriod')}
                     </Text>
                     <View style={{ flexDirection: 'row', gap: spacing[3] }}>
                       <TouchableOpacity
@@ -927,10 +927,10 @@ export default function PlanoScreen() {
                           weight={selectedBillingPeriod === 'MONTHLY' ? 'semibold' : 'normal'}
                           style={{ color: selectedBillingPeriod === 'MONTHLY' ? colors.primary[600] : colors.text.secondary }}
                         >
-                          Mensal
+                          {t('billing.monthlyPlan')}
                         </Text>
                         <Text variant="caption" color="tertiary">
-                          R$ {PRO_PLAN_PRICING.MONTHLY.toFixed(2).replace('.', ',')}/mês
+                          R$ {PRO_PLAN_PRICING.MONTHLY.toFixed(2).replace('.', ',')}/${t('billing.perMonth')}
                         </Text>
                       </TouchableOpacity>
 
@@ -951,12 +951,12 @@ export default function PlanoScreen() {
                             weight={selectedBillingPeriod === 'YEARLY' ? 'semibold' : 'normal'}
                             style={{ color: selectedBillingPeriod === 'YEARLY' ? colors.primary[600] : colors.text.secondary }}
                           >
-                            Anual
+                            {t('billing.yearlyPlan')}
                           </Text>
                           <Badge variant="success" size="sm">-10%</Badge>
                         </View>
                         <Text variant="caption" color="tertiary">
-                          R$ {PRO_PLAN_PRICING.YEARLY.toFixed(2).replace('.', ',')}/mês
+                          R$ {PRO_PLAN_PRICING.YEARLY.toFixed(2).replace('.', ',')}/${t('billing.perMonth')}
                         </Text>
                       </TouchableOpacity>
                     </View>
@@ -966,15 +966,15 @@ export default function PlanoScreen() {
                   <Card style={{ marginTop: spacing[4] }}>
                     <View style={styles.priceSummary}>
                       <Text variant="body" color="secondary">
-                        Plano Profissional ({selectedBillingPeriod === 'YEARLY' ? 'Anual' : 'Mensal'})
+                        {t('billing.proPlan')} ({selectedBillingPeriod === 'YEARLY' ? t('billing.yearlyPlan') : t('billing.monthlyPlan')})
                       </Text>
                       <View style={{ alignItems: 'flex-end' }}>
                         <Text variant="h4" weight="bold" style={{ color: colors.primary[600] }}>
-                          R$ {selectedBillingPeriod === 'YEARLY' ? PRO_PLAN_PRICING.YEARLY.toFixed(2).replace('.', ',') : PRO_PLAN_PRICING.MONTHLY.toFixed(2).replace('.', ',')}/mês
+                          R$ {selectedBillingPeriod === 'YEARLY' ? PRO_PLAN_PRICING.YEARLY.toFixed(2).replace('.', ',') : PRO_PLAN_PRICING.MONTHLY.toFixed(2).replace('.', ',')}/${t('billing.perMonth')}
                         </Text>
                         {selectedBillingPeriod === 'YEARLY' && (
                           <Text variant="caption" color="tertiary">
-                            Total: R$ {PRO_PLAN_PRICING.YEARLY_TOTAL.toFixed(2).replace('.', ',')} por ano
+                            {t('common.total')}: R$ {PRO_PLAN_PRICING.YEARLY_TOTAL.toFixed(2).replace('.', ',')} {t('billing.billedYearly')}
                           </Text>
                         )}
                       </View>
@@ -988,7 +988,7 @@ export default function PlanoScreen() {
                     loading={isProcessing}
                     style={{ marginTop: spacing[4] }}
                   >
-                    {paymentMethod === 'pix' ? 'Gerar PIX' : 'Pagar com Cartão'}
+                    {paymentMethod === 'pix' ? t('billing.checkout.generatePix') : t('billing.checkout.payWithCard')}
                   </Button>
                 </>
               )}

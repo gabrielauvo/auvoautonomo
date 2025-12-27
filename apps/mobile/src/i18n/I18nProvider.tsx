@@ -11,8 +11,10 @@ import React, {
   useState,
   useCallback,
   useEffect,
+  useMemo,
   ReactNode,
 } from 'react';
+import { Platform, NativeModules } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { Locale, defaultLocale, isValidLocale, locales } from './config';
@@ -69,6 +71,54 @@ async function saveLocale(locale: Locale): Promise<void> {
   }
 }
 
+/**
+ * Detect device locale and map to supported locale
+ * Maps: es-* -> es, en-* -> en-US, pt-* -> pt-BR
+ */
+function detectDeviceLocale(): Locale {
+  let deviceLocale: string | undefined;
+
+  try {
+    if (Platform.OS === 'ios') {
+      // iOS: Get locale from settings
+      deviceLocale =
+        NativeModules.SettingsManager?.settings?.AppleLocale ||
+        NativeModules.SettingsManager?.settings?.AppleLanguages?.[0];
+    } else if (Platform.OS === 'android') {
+      // Android: Get locale from I18nManager
+      deviceLocale = NativeModules.I18nManager?.localeIdentifier;
+    }
+  } catch {
+    // Ignore errors, use default
+  }
+
+  if (!deviceLocale) {
+    return defaultLocale;
+  }
+
+  const normalizedLocale = deviceLocale.toLowerCase().replace('_', '-');
+
+  // Check for exact match first
+  for (const loc of locales) {
+    if (normalizedLocale === loc.toLowerCase()) {
+      return loc;
+    }
+  }
+
+  // Map language families to supported locales
+  if (normalizedLocale.startsWith('pt')) {
+    return 'pt-BR';
+  }
+  if (normalizedLocale.startsWith('es')) {
+    return 'es';
+  }
+  if (normalizedLocale.startsWith('en')) {
+    return 'en-US';
+  }
+
+  return defaultLocale;
+}
+
 // =============================================================================
 // CONTEXT
 // =============================================================================
@@ -121,13 +171,19 @@ export function I18nProvider({ children, initialLocale }: I18nProviderProps) {
   const [locale, setLocaleState] = useState<Locale>(initialLocale || defaultLocale);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load stored locale on mount
+  // Load stored locale on mount, or detect from device if first launch
   useEffect(() => {
     async function init() {
       if (!initialLocale) {
         const stored = await loadStoredLocale();
         if (stored) {
+          // User has previously selected a locale - use it
           setLocaleState(stored);
+        } else {
+          // First launch - detect from device and save
+          const detectedLocale = detectDeviceLocale();
+          setLocaleState(detectedLocale);
+          await saveLocale(detectedLocale);
         }
       }
       setIsLoading(false);
@@ -174,13 +230,18 @@ export function I18nProvider({ children, initialLocale }: I18nProviderProps) {
     [locale]
   );
 
-  const contextValue: I18nContextValue = {
-    locale,
-    setLocale,
-    t,
-    translations: translationsMap[locale],
-    isLoading,
-  };
+  // Memoizar contextValue para evitar re-renders desnecessários
+  // Todos os descendentes só re-renderizam quando locale ou isLoading mudam
+  const contextValue = useMemo<I18nContextValue>(
+    () => ({
+      locale,
+      setLocale,
+      t,
+      translations: translationsMap[locale],
+      isLoading,
+    }),
+    [locale, setLocale, t, isLoading]
+  );
 
   return (
     <I18nContext.Provider value={contextValue}>

@@ -1,6 +1,9 @@
+'use client';
+
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
+import { useTranslations } from '@/i18n';
 
 /**
  * Auvo Design System - Badge/Chip Component
@@ -119,24 +122,24 @@ export type StatusType =
   | 'overdue'
   | 'refunded';
 
-const statusConfig: Record<StatusType, { variant: VariantProps<typeof badgeVariants>['variant']; label: string }> = {
+const statusVariants: Record<StatusType, VariantProps<typeof badgeVariants>['variant']> = {
   // Quote
-  draft: { variant: 'gray', label: 'Rascunho' },
-  sent: { variant: 'soft-info', label: 'Enviado' },
-  approved: { variant: 'soft-success', label: 'Aprovado' },
-  rejected: { variant: 'soft-error', label: 'Rejeitado' },
-  expired: { variant: 'soft-warning', label: 'Expirado' },
+  draft: 'gray',
+  sent: 'soft-info',
+  approved: 'soft-success',
+  rejected: 'soft-error',
+  expired: 'soft-warning',
   // Work Order
-  scheduled: { variant: 'soft-info', label: 'Agendado' },
-  in_progress: { variant: 'soft-warning', label: 'Em Andamento' },
-  done: { variant: 'soft-success', label: 'Concluído' },
-  canceled: { variant: 'soft-error', label: 'Cancelado' },
+  scheduled: 'soft-info',
+  in_progress: 'soft-warning',
+  done: 'soft-success',
+  canceled: 'soft-error',
   // Payment
-  pending: { variant: 'soft-warning', label: 'Pendente' },
-  confirmed: { variant: 'soft-info', label: 'Confirmado' },
-  received: { variant: 'soft-success', label: 'Recebido' },
-  overdue: { variant: 'soft-error', label: 'Vencido' },
-  refunded: { variant: 'gray', label: 'Reembolsado' },
+  pending: 'soft-warning',
+  confirmed: 'soft-info',
+  received: 'soft-success',
+  overdue: 'soft-error',
+  refunded: 'gray',
 };
 
 export interface StatusBadgeProps extends Omit<BadgeProps, 'variant'> {
@@ -146,11 +149,13 @@ export interface StatusBadgeProps extends Omit<BadgeProps, 'variant'> {
 
 const StatusBadge = React.forwardRef<HTMLSpanElement, StatusBadgeProps>(
   ({ status, showDot = true, children, ...props }, ref) => {
-    const config = statusConfig[status];
+    const { t } = useTranslations('common');
+    const variant = statusVariants[status];
+    const label = t(`statusBadge.${status}`);
 
     return (
-      <Badge ref={ref} variant={config.variant} dot={showDot} {...props}>
-        {children || config.label}
+      <Badge ref={ref} variant={variant} dot={showDot} {...props}>
+        {children || label}
       </Badge>
     );
   }

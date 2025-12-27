@@ -24,6 +24,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '../../services/AuthProvider';
+import { useMountedRef } from '../../hooks';
 import { CatalogItemRepository, CategoryRepository } from '../../db/repositories';
 import { CatalogItem, ProductCategory, ItemType } from '../../db/schema';
 import { useSyncStatus } from '../../sync';
@@ -151,6 +152,9 @@ export default function CatalogListScreen() {
 
   const technicianId = user?.technicianId;
 
+  // Track mounted state to prevent state updates on unmounted component
+  const isMountedRef = useMountedRef();
+
   // =============================================================================
   // DATA LOADING
   // =============================================================================
@@ -170,16 +174,21 @@ export default function CatalogListScreen() {
         CategoryRepository.getAll(technicianId),
       ]);
 
+      // Prevent state update if component unmounted during async operation
+      if (!isMountedRef.current) return;
+
       console.log('[CatalogListScreen] Loaded', itemsData.length, 'items and', categoriesData.length, 'categories');
       setItems(itemsData);
       setCategories(categoriesData);
     } catch (error) {
       console.error('[CatalogListScreen] Error loading data:', error);
     } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+        setIsRefreshing(false);
+      }
     }
-  }, [technicianId]);
+  }, [technicianId, isMountedRef]);
 
   useFocusEffect(
     useCallback(() => {

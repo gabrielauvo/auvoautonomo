@@ -14,11 +14,13 @@ import CatalogListScreen from '../../src/modules/catalog/CatalogListScreen';
 import { useColors } from '../../src/design-system/ThemeProvider';
 import { Text } from '../../src/design-system/components/Text';
 import { spacing } from '../../src/design-system/tokens';
+import { useTranslation } from '../../src/i18n';
 
 export default function CatalogoIndexScreen() {
   const router = useRouter();
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
 
   // Navegar para criar novo item
   const handleNewItem = () => {
@@ -44,7 +46,7 @@ export default function CatalogoIndexScreen() {
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
         </TouchableOpacity>
-        <Text variant="h4" weight="semibold">Catálogo</Text>
+        <Text variant="h4" weight="semibold">{t('navigation.catalog')}</Text>
         <TouchableOpacity onPress={handleNewItem} style={styles.addButton}>
           <Ionicons name="add" size={24} color={colors.primary[500]} />
         </TouchableOpacity>

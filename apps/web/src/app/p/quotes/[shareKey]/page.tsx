@@ -8,9 +8,10 @@
  * Layout profissional estilo documento comercial
  */
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { useTranslations } from '@/i18n';
+import { useFormatting } from '@/hooks/use-formatting';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -99,36 +100,21 @@ interface QuoteData {
   };
 }
 
-const statusConfig: Record<string, { label: string; color: string; bgColor: string; icon: any }> = {
-  DRAFT: { label: 'Rascunho', color: 'text-gray-700', bgColor: 'bg-gray-100', icon: FileText },
-  SENT: { label: 'Enviado', color: 'text-blue-700', bgColor: 'bg-blue-100', icon: Send },
-  APPROVED: { label: 'Aprovado', color: 'text-green-700', bgColor: 'bg-green-100', icon: CheckCircle2 },
-  REJECTED: { label: 'Recusado', color: 'text-red-700', bgColor: 'bg-red-100', icon: XCircle },
-  EXPIRED: { label: 'Expirado', color: 'text-yellow-700', bgColor: 'bg-yellow-100', icon: Clock },
+const statusStyles: Record<string, { color: string; bgColor: string; icon: any }> = {
+  DRAFT: { color: 'text-gray-700', bgColor: 'bg-gray-100', icon: FileText },
+  SENT: { color: 'text-blue-700', bgColor: 'bg-blue-100', icon: Send },
+  APPROVED: { color: 'text-green-700', bgColor: 'bg-green-100', icon: CheckCircle2 },
+  REJECTED: { color: 'text-red-700', bgColor: 'bg-red-100', icon: XCircle },
+  EXPIRED: { color: 'text-yellow-700', bgColor: 'bg-yellow-100', icon: Clock },
 };
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
-}
-
-function formatDate(dateString: string | null): string {
-  if (!dateString) return '-';
-  return new Date(dateString).toLocaleDateString('pt-BR');
-}
-
-function formatDateTime(dateString: string | null): string {
-  if (!dateString) return '-';
-  return new Date(dateString).toLocaleString('pt-BR');
-}
 
 // Componente de Canvas para assinatura
 function SignaturePad({
   onSignatureChange,
+  t,
 }: {
   onSignatureChange: (dataUrl: string | null) => void;
+  t: (key: string) => string;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -241,7 +227,7 @@ function SignaturePad({
         />
         {!hasSignature && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <span className="text-gray-400 text-sm">Assine aqui</span>
+            <span className="text-gray-400 text-sm">{t('signHere')}</span>
           </div>
         )}
       </div>
@@ -254,7 +240,7 @@ function SignaturePad({
           className="w-full"
         >
           <Trash2 className="h-4 w-4 mr-2" />
-          Limpar Assinatura
+          {t('clearSignature')}
         </Button>
       )}
     </div>
@@ -268,12 +254,14 @@ function SignatureModal({
   onConfirm,
   isSubmitting,
   clientName,
+  t,
 }: {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (data: { imageBase64: string; signerName: string; signerDocument?: string }) => void;
   isSubmitting: boolean;
   clientName: string;
+  t: (key: string) => string;
 }) {
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
   const [signerName, setSignerName] = useState(clientName || '');
@@ -291,11 +279,11 @@ function SignatureModal({
 
   const handleConfirm = () => {
     if (!signerName.trim()) {
-      setError('Por favor, informe seu nome');
+      setError(t('errorNameRequired'));
       return;
     }
     if (!signatureDataUrl) {
-      setError('Por favor, assine no campo acima');
+      setError(t('errorSignatureRequired'));
       return;
     }
 
@@ -315,7 +303,7 @@ function SignatureModal({
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold flex items-center gap-2">
               <PenTool className="h-5 w-5 text-green-600" />
-              Assinar e Aprovar
+              {t('signAndApprove')}
             </h2>
             <button
               onClick={onClose}
@@ -329,20 +317,20 @@ function SignatureModal({
           <div className="space-y-4">
             <div>
               <label htmlFor="signerName" className="block text-sm font-medium text-gray-700 mb-1">
-                Nome Completo *
+                {t('fullName')} *
               </label>
               <Input
                 id="signerName"
                 value={signerName}
                 onChange={(e) => setSignerName(e.target.value)}
-                placeholder="Seu nome completo"
+                placeholder={t('fullNamePlaceholder')}
                 disabled={isSubmitting}
               />
             </div>
 
             <div>
               <label htmlFor="signerDocument" className="block text-sm font-medium text-gray-700 mb-1">
-                CPF/RG (opcional)
+                {t('documentOptional')}
               </label>
               <Input
                 id="signerDocument"
@@ -355,9 +343,9 @@ function SignatureModal({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Assinatura *
+                {t('signature')} *
               </label>
-              <SignaturePad onSignatureChange={setSignatureDataUrl} />
+              <SignaturePad onSignatureChange={setSignatureDataUrl} t={t} />
             </div>
 
             {error && (
@@ -374,7 +362,7 @@ function SignatureModal({
                 className="flex-1"
                 disabled={isSubmitting}
               >
-                Cancelar
+                {t('cancel')}
               </Button>
               <Button
                 onClick={handleConfirm}
@@ -384,12 +372,12 @@ function SignatureModal({
                 {isSubmitting ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Aprovando...
+                    {t('approving')}
                   </>
                 ) : (
                   <>
                     <CheckCircle2 className="h-4 w-4 mr-2" />
-                    Aprovar Orçamento
+                    {t('approveQuote')}
                   </>
                 )}
               </Button>
@@ -407,11 +395,13 @@ function RejectModal({
   onClose,
   onConfirm,
   isSubmitting,
+  t,
 }: {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (reason?: string) => void;
   isSubmitting: boolean;
+  t: (key: string) => string;
 }) {
   const [reason, setReason] = useState('');
 
@@ -430,7 +420,7 @@ function RejectModal({
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold flex items-center gap-2 text-red-600">
               <XCircle className="h-5 w-5" />
-              Recusar Orçamento
+              {t('rejectQuote')}
             </h2>
             <button
               onClick={onClose}
@@ -443,18 +433,18 @@ function RejectModal({
 
           <div className="space-y-4">
             <p className="text-gray-600">
-              Tem certeza que deseja recusar este orçamento? Esta ação não pode ser desfeita.
+              {t('rejectConfirmation')}
             </p>
 
             <div>
               <label htmlFor="reason" className="block text-sm font-medium text-gray-700 mb-1">
-                Motivo da recusa (opcional)
+                {t('rejectReasonOptional')}
               </label>
               <textarea
                 id="reason"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="Informe o motivo da recusa..."
+                placeholder={t('rejectReasonPlaceholder')}
                 rows={3}
                 disabled={isSubmitting}
                 className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -468,7 +458,7 @@ function RejectModal({
                 className="flex-1"
                 disabled={isSubmitting}
               >
-                Cancelar
+                {t('cancel')}
               </Button>
               <Button
                 onClick={() => onConfirm(reason.trim() || undefined)}
@@ -479,12 +469,12 @@ function RejectModal({
                 {isSubmitting ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Recusando...
+                    {t('rejecting')}
                   </>
                 ) : (
                   <>
                     <XCircle className="h-4 w-4 mr-2" />
-                    Recusar Orçamento
+                    {t('rejectQuote')}
                   </>
                 )}
               </Button>
@@ -503,12 +493,14 @@ function AcceptanceTermsModal({
   onAccept,
   termsContent,
   version,
+  t,
 }: {
   isOpen: boolean;
   onClose: () => void;
   onAccept: () => void;
   termsContent: string | null;
   version: number;
+  t: (key: string) => string;
 }) {
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
@@ -540,7 +532,7 @@ function AcceptanceTermsModal({
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold flex items-center gap-2">
               <ScrollText className="h-5 w-5 text-primary" />
-              Termos de Aceite
+              {t('acceptanceTerms')}
             </h2>
             <button
               onClick={onClose}
@@ -550,7 +542,7 @@ function AcceptanceTermsModal({
             </button>
           </div>
           <p className="text-sm text-gray-500 mt-1">
-            Leia atentamente os termos abaixo. Voce deve rolar ate o final para poder aceitar.
+            {t('acceptanceTermsInstructions')}
           </p>
         </div>
 
@@ -565,7 +557,7 @@ function AcceptanceTermsModal({
           {!hasScrolledToBottom && (
             <div className="flex items-center justify-center gap-2 text-gray-400 mt-4 animate-bounce">
               <ChevronLeft className="h-4 w-4 rotate-[-90deg]" />
-              <span className="text-sm">Role para ler todos os termos</span>
+              <span className="text-sm">{t('scrollToReadTerms')}</span>
             </div>
           )}
         </div>
@@ -582,12 +574,12 @@ function AcceptanceTermsModal({
               className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary disabled:opacity-50"
             />
             <span className="text-sm text-gray-700">
-              Li e aceito os termos e condicoes apresentados acima
+              {t('acceptTermsCheckbox')}
             </span>
           </label>
 
           {version > 0 && (
-            <p className="text-xs text-gray-500">Versao: {version}</p>
+            <p className="text-xs text-gray-500">{t('version')}: {version}</p>
           )}
 
           <div className="flex gap-3">
@@ -596,7 +588,7 @@ function AcceptanceTermsModal({
               onClick={onClose}
               className="flex-1"
             >
-              Cancelar
+              {t('cancel')}
             </Button>
             <Button
               onClick={onAccept}
@@ -604,7 +596,7 @@ function AcceptanceTermsModal({
               disabled={!canAccept}
             >
               <CheckCircle2 className="h-4 w-4 mr-2" />
-              Aceitar e Continuar
+              {t('acceptAndContinue')}
             </Button>
           </div>
         </div>
@@ -703,7 +695,8 @@ function ImageLightbox({
 export default function PublicQuotePage() {
   const params = useParams();
   const shareKey = params.shareKey as string;
-  const { t } = useTranslations('common');
+  const { t } = useTranslations('publicQuote');
+  const { formatCurrency, formatDate, formatDateTime } = useFormatting();
 
   const [quote, setQuote] = useState<QuoteData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -771,7 +764,7 @@ export default function PublicQuotePage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Erro ao aprovar orçamento');
+        throw new Error(errorData.message || t('errorApproving'));
       }
 
       setActionSuccess('approved');
@@ -784,7 +777,7 @@ export default function PublicQuotePage() {
       }
     } catch (err: any) {
       console.error('Error approving quote:', err);
-      alert(err.message || 'Erro ao aprovar orçamento. Tente novamente.');
+      alert(err.message || t('errorApprovingRetry'));
     } finally {
       setIsSubmitting(false);
     }
@@ -802,7 +795,7 @@ export default function PublicQuotePage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Erro ao recusar orçamento');
+        throw new Error(errorData.message || t('errorRejecting'));
       }
 
       setActionSuccess('rejected');
@@ -815,11 +808,18 @@ export default function PublicQuotePage() {
       }
     } catch (err: any) {
       console.error('Error rejecting quote:', err);
-      alert(err.message || 'Erro ao recusar orçamento. Tente novamente.');
+      alert(err.message || t('errorRejectingRetry'));
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Mensagens de erro traduzidas (para uso no useEffect)
+  const errorMessages = useMemo(() => ({
+    notFound: t('errorNotFoundOrInvalid'),
+    loadError: t('errorLoading'),
+    connectionError: t('errorConnection'),
+  }), [t]);
 
   useEffect(() => {
     async function fetchQuote() {
@@ -828,9 +828,9 @@ export default function PublicQuotePage() {
 
         if (!response.ok) {
           if (response.status === 404) {
-            setError('Orçamento não encontrado ou link inválido.');
+            setError(errorMessages.notFound);
           } else {
-            setError('Erro ao carregar orçamento.');
+            setError(errorMessages.loadError);
           }
           return;
         }
@@ -856,7 +856,7 @@ export default function PublicQuotePage() {
         }
       } catch (err) {
         console.error('Error fetching quote:', err);
-        setError('Erro ao conectar com o servidor.');
+        setError(errorMessages.connectionError);
       } finally {
         setLoading(false);
       }
@@ -883,15 +883,24 @@ export default function PublicQuotePage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-8 text-center">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Link Inválido</h2>
-          <p className="text-gray-600">{error || 'Orçamento não encontrado.'}</p>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">{t('invalidLink')}</h2>
+          <p className="text-gray-600">{error || t('quoteNotFound')}</p>
         </div>
       </div>
     );
   }
 
-  const status = statusConfig[quote.status] || statusConfig.DRAFT;
-  const StatusIcon = status.icon;
+  const statusStyle = statusStyles[quote.status] || statusStyles.DRAFT;
+  const StatusIcon = statusStyle.icon;
+
+  // Labels de status localizados
+  const statusLabels = useMemo(() => ({
+    DRAFT: t('status.draft'),
+    SENT: t('status.sent'),
+    APPROVED: t('status.approved'),
+    REJECTED: t('status.rejected'),
+    EXPIRED: t('status.expired'),
+  }), [t]);
 
   // Cores do template (fallback para verde padrão)
   const primaryColor = quote.template?.primaryColor || '#16a34a';
@@ -956,7 +965,7 @@ export default function PublicQuotePage() {
                 {/* Número e data do orçamento */}
                 <div className="text-left md:text-right">
                   <div className="inline-block">
-                    <p className="text-sm text-gray-500 uppercase tracking-wide">Orçamento</p>
+                    <p className="text-sm text-gray-500 uppercase tracking-wide">{t('quote')}</p>
                     <p className="text-2xl font-bold text-gray-900">
                       #{quote.id.substring(0, 8).toUpperCase()}
                     </p>
@@ -967,13 +976,13 @@ export default function PublicQuotePage() {
                       </p>
                       {quote.validUntil && (
                         <p className="text-sm text-gray-500">
-                          Válido até: {formatDate(quote.validUntil)}
+                          {t('validUntil')}: {formatDate(quote.validUntil)}
                         </p>
                       )}
                     </div>
-                    <Badge className={`mt-3 ${status.bgColor} ${status.color}`}>
+                    <Badge className={`mt-3 ${statusStyle.bgColor} ${statusStyle.color}`}>
                       <StatusIcon className="h-3 w-3 mr-1" />
-                      {status.label}
+                      {statusLabels[quote.status as keyof typeof statusLabels] || quote.status}
                     </Badge>
                   </div>
                 </div>
@@ -986,7 +995,7 @@ export default function PublicQuotePage() {
             <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8">
               <div className="flex items-center gap-2 text-sm">
                 <User className="h-4 w-4 text-gray-400" />
-                <span className="text-gray-500">Cliente:</span>
+                <span className="text-gray-500">{t('client')}:</span>
                 <span className="font-medium text-gray-900">{quote.client.name}</span>
               </div>
               {quote.client.phone && (
@@ -1014,7 +1023,7 @@ export default function PublicQuotePage() {
           {quote.notes && (
             <div className="px-6 py-4 md:px-8 bg-yellow-50 border-b">
               <p className="text-sm text-yellow-800">
-                <span className="font-medium">Observações:</span> {quote.notes}
+                <span className="font-medium">{t('notes')}:</span> {quote.notes}
               </p>
             </div>
           )}
@@ -1022,7 +1031,7 @@ export default function PublicQuotePage() {
           {/* Tabela de itens */}
           {quote.items.length > 0 && (
             <div className="px-6 py-6 md:px-8">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Itens do Orçamento</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('quoteItems')}</h2>
 
               {/* Tabela desktop */}
               <div className="hidden md:block overflow-x-auto">
@@ -1030,10 +1039,10 @@ export default function PublicQuotePage() {
                   <thead>
                     <tr className="border-b-2" style={{ borderColor: primaryColor }}>
                       <th className="text-left py-3 px-2 text-sm font-semibold text-gray-700 w-8"></th>
-                      <th className="text-left py-3 px-2 text-sm font-semibold text-gray-700">Descrição</th>
-                      <th className="text-center py-3 px-2 text-sm font-semibold text-gray-700 w-20">Qtd</th>
-                      <th className="text-right py-3 px-2 text-sm font-semibold text-gray-700 w-28">Valor Un.</th>
-                      <th className="text-right py-3 px-2 text-sm font-semibold text-gray-700 w-28">Total</th>
+                      <th className="text-left py-3 px-2 text-sm font-semibold text-gray-700">{t('description')}</th>
+                      <th className="text-center py-3 px-2 text-sm font-semibold text-gray-700 w-20">{t('qty')}</th>
+                      <th className="text-right py-3 px-2 text-sm font-semibold text-gray-700 w-28">{t('unitPrice')}</th>
+                      <th className="text-right py-3 px-2 text-sm font-semibold text-gray-700 w-28">{t('total')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -1066,12 +1075,12 @@ export default function PublicQuotePage() {
                                 {item.name}
                                 {item.optional && (
                                   <span className="ml-2 text-xs font-normal text-blue-600 bg-blue-100 px-2 py-0.5 rounded">
-                                    Opcional
+                                    {t('optional')}
                                   </span>
                                 )}
                               </p>
                               <p className="text-xs text-gray-500">
-                                {item.type === 'SERVICE' ? 'Serviço' : 'Produto'} • {item.unit}
+                                {item.type === 'SERVICE' ? t('service') : t('product')} • {item.unit}
                               </p>
                               {item.description && (
                                 <p className="text-sm text-gray-600 mt-1">{item.description}</p>
@@ -1115,12 +1124,12 @@ export default function PublicQuotePage() {
                           {item.name}
                           {item.optional && (
                             <span className="ml-2 text-xs font-normal text-blue-600 bg-blue-100 px-2 py-0.5 rounded">
-                              Opcional
+                              {t('optional')}
                             </span>
                           )}
                         </p>
                         <p className="text-xs text-gray-500 mt-1">
-                          {item.type === 'SERVICE' ? 'Serviço' : 'Produto'} • {item.unit}
+                          {item.type === 'SERVICE' ? t('service') : t('product')} • {item.unit}
                         </p>
                         <div className="flex justify-between mt-2">
                           <span className="text-sm text-gray-600">
@@ -1141,12 +1150,12 @@ export default function PublicQuotePage() {
                 <div className="w-full md:w-72">
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Subtotal:</span>
+                      <span className="text-gray-600">{t('subtotal')}:</span>
                       <span className="text-gray-900">{formatCurrency(subtotal)}</span>
                     </div>
                     {quote.discountValue > 0 && (
                       <div className="flex justify-between text-sm text-red-600">
-                        <span>Desconto:</span>
+                        <span>{t('discount')}:</span>
                         <span>-{formatCurrency(quote.discountValue)}</span>
                       </div>
                     )}
@@ -1154,7 +1163,7 @@ export default function PublicQuotePage() {
                       className="flex justify-between pt-3 border-t-2 font-bold text-lg"
                       style={{ borderColor: primaryColor }}
                     >
-                      <span className="text-gray-900">Total:</span>
+                      <span className="text-gray-900">{t('total')}:</span>
                       <span style={{ color: primaryColor }}>{formatCurrency(quote.totalValue)}</span>
                     </div>
                   </div>
@@ -1167,7 +1176,7 @@ export default function PublicQuotePage() {
           {quote.attachments.length > 0 && (
             <div className="px-6 py-6 md:px-8 border-t">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                Anexos ({quote.attachments.length})
+                {t('attachments')} ({quote.attachments.length})
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {quote.attachments.map((attachment, index) => {
@@ -1210,7 +1219,7 @@ export default function PublicQuotePage() {
                     >
                       <FileText className="h-10 w-10 text-gray-400" />
                       <span className="text-xs text-gray-500 mt-2">
-                        {attachment.mimeType === 'application/pdf' ? 'PDF' : 'Documento'}
+                        {attachment.mimeType === 'application/pdf' ? 'PDF' : t('document')}
                       </span>
                     </a>
                   );
@@ -1224,7 +1233,7 @@ export default function PublicQuotePage() {
             {quote.signature ? (
               // Assinatura existente
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Assinatura</h2>
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('signature')}</h2>
                 <div className="flex flex-col md:flex-row md:items-end gap-6">
                   <div className="flex-1">
                     {quote.signature.imageUrl && (
@@ -1232,18 +1241,18 @@ export default function PublicQuotePage() {
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={quote.signature.imageUrl}
-                          alt="Assinatura"
+                          alt={t('signature')}
                           className="h-16 object-contain"
                         />
                       </div>
                     )}
                     <p className="font-medium text-gray-900">{quote.signature.signerName}</p>
                     {quote.signature.signerDocument && (
-                      <p className="text-sm text-gray-500">CPF/RG: {quote.signature.signerDocument}</p>
+                      <p className="text-sm text-gray-500">{t('documentId')}: {quote.signature.signerDocument}</p>
                     )}
                   </div>
                   <div className="text-sm text-gray-500">
-                    <p>Assinado em:</p>
+                    <p>{t('signedAt')}:</p>
                     <p className="font-medium text-gray-700">{formatDateTime(quote.signature.signedAt)}</p>
                   </div>
                 </div>
@@ -1251,9 +1260,9 @@ export default function PublicQuotePage() {
             ) : (quote.status === 'SENT' || quote.status === 'DRAFT') && !actionSuccess ? (
               // Área para assinar
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-2">Assinatura do Cliente</h2>
+                <h2 className="text-lg font-semibold text-gray-900 mb-2">{t('clientSignature')}</h2>
                 <p className="text-sm text-gray-600 mb-4">
-                  Para aprovar este orçamento, assine digitalmente clicando no botão abaixo.
+                  {t('signatureInstructions')}
                 </p>
 
                 {/* Card de Termos de Aceite (se obrigatório) */}
@@ -1274,12 +1283,12 @@ export default function PublicQuotePage() {
                       )}
                       <div className="flex-1">
                         <p className={`font-medium ${termsAccepted ? 'text-green-800' : 'text-yellow-800'}`}>
-                          Termos de Aceite
+                          {t('acceptanceTerms')}
                         </p>
                         <p className={`text-sm ${termsAccepted ? 'text-green-600' : 'text-yellow-600'}`}>
                           {termsAccepted
-                            ? 'Termos aceitos. Pronto para assinar.'
-                            : 'Leia e aceite os termos antes de assinar.'}
+                            ? t('termsAcceptedReady')
+                            : t('readAndAcceptTerms')}
                         </p>
                       </div>
                       <ChevronRight className={`h-5 w-5 ${termsAccepted ? 'text-green-400' : 'text-yellow-400'}`} />
@@ -1301,7 +1310,7 @@ export default function PublicQuotePage() {
                     style={{ backgroundColor: primaryColor }}
                   >
                     <PenTool className="h-5 w-5 mr-2" />
-                    Assinar e Aprovar
+                    {t('signAndApprove')}
                   </Button>
                   <Button
                     onClick={() => setRejectModalOpen(true)}
@@ -1309,7 +1318,7 @@ export default function PublicQuotePage() {
                     className="sm:w-auto border-gray-300 text-gray-700 hover:bg-gray-100"
                   >
                     <XCircle className="h-5 w-5 mr-2" />
-                    Recusar
+                    {t('reject')}
                   </Button>
                 </div>
               </div>
@@ -1320,16 +1329,16 @@ export default function PublicQuotePage() {
                   <div className="flex items-center justify-center gap-3">
                     <CheckCircle2 className="h-8 w-8 text-green-600" />
                     <div>
-                      <h3 className="text-lg font-semibold text-green-600">Orçamento Aprovado!</h3>
-                      <p className="text-gray-600">Obrigado por aprovar este orçamento.</p>
+                      <h3 className="text-lg font-semibold text-green-600">{t('quoteApproved')}</h3>
+                      <p className="text-gray-600">{t('thankYouApproval')}</p>
                     </div>
                   </div>
                 ) : (
                   <div className="flex items-center justify-center gap-3">
                     <XCircle className="h-8 w-8 text-red-600" />
                     <div>
-                      <h3 className="text-lg font-semibold text-red-600">Orçamento Recusado</h3>
-                      <p className="text-gray-600">Este orçamento foi recusado.</p>
+                      <h3 className="text-lg font-semibold text-red-600">{t('quoteRejected')}</h3>
+                      <p className="text-gray-600">{t('quoteWasRejected')}</p>
                     </div>
                   </div>
                 )}
@@ -1365,6 +1374,7 @@ export default function PublicQuotePage() {
         onConfirm={handleSignAndApprove}
         isSubmitting={isSubmitting}
         clientName={quote.client.name}
+        t={t}
       />
 
       {/* Modal de rejeição */}
@@ -1373,6 +1383,7 @@ export default function PublicQuotePage() {
         onClose={() => setRejectModalOpen(false)}
         onConfirm={handleReject}
         isSubmitting={isSubmitting}
+        t={t}
       />
 
       {/* Modal de Termos de Aceite */}
@@ -1386,6 +1397,7 @@ export default function PublicQuotePage() {
         }}
         termsContent={acceptanceTerms?.termsContent || null}
         version={acceptanceTerms?.version || 0}
+        t={t}
       />
     </div>
   );

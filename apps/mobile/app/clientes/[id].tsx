@@ -21,6 +21,7 @@ import { Text, Button, Input, Card, Badge, Avatar } from '../../src/design-syste
 import { useColors, useSpacing } from '../../src/design-system/ThemeProvider';
 import { ClientService, UpdateClientInput } from '../../src/modules/clients/ClientService';
 import { Client } from '../../src/db/schema';
+import { useTranslation } from '../../src/i18n';
 
 // =============================================================================
 // MAIN SCREEN
@@ -30,6 +31,7 @@ export default function ClienteDetalhesScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
   const spacing = useSpacing();
+  const { t } = useTranslation();
 
   // State
   const [client, setClient] = useState<Client | null>(null);
@@ -76,7 +78,7 @@ export default function ClienteDetalhesScreen() {
       }
     } catch (error) {
       console.error('[ClienteDetalhesScreen] Error loading client:', error);
-      Alert.alert('Erro', 'Não foi possível carregar o cliente.');
+      Alert.alert(t('common.error'), t('clients.couldNotLoadClient'));
       router.back();
     } finally {
       setIsLoading(false);
@@ -92,16 +94,16 @@ export default function ClienteDetalhesScreen() {
     const newErrors: Record<string, string> = {};
 
     if (!name.trim()) {
-      newErrors.name = 'Nome é obrigatório';
+      newErrors.name = t('clients.validation.nameRequired');
     }
 
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = 'Email inválido';
+      newErrors.email = t('clients.validation.invalidEmail');
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [name, email]);
+  }, [name, email, t]);
 
   // Handle save
   const handleSave = useCallback(async () => {
@@ -128,42 +130,42 @@ export default function ClienteDetalhesScreen() {
       setIsEditing(false);
       setHasPending(true);
 
-      Alert.alert('Sucesso', 'Cliente atualizado!');
+      Alert.alert(t('common.success'), t('clients.clientUpdated'));
     } catch (error) {
       console.error('[ClienteDetalhesScreen] Error updating client:', error);
-      Alert.alert('Erro', 'Não foi possível atualizar o cliente.');
+      Alert.alert(t('common.error'), t('clients.couldNotUpdateClient'));
     } finally {
       setIsSaving(false);
     }
-  }, [id, validate, name, email, phone, taxId, address, city, state, zipCode, notes]);
+  }, [id, validate, name, email, phone, taxId, address, city, state, zipCode, notes, t]);
 
   // Handle delete
   const handleDelete = useCallback(() => {
     if (!id) return;
 
     Alert.alert(
-      'Excluir Cliente',
-      'Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita.',
+      t('clients.deleteClient'),
+      t('clients.deleteConfirmation'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Excluir',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               await ClientService.deleteClient(id);
-              Alert.alert('Sucesso', 'Cliente excluído!', [
+              Alert.alert(t('common.success'), t('clients.clientDeleted'), [
                 { text: 'OK', onPress: () => router.back() },
               ]);
             } catch (error) {
               console.error('[ClienteDetalhesScreen] Error deleting client:', error);
-              Alert.alert('Erro', 'Não foi possível excluir o cliente.');
+              Alert.alert(t('common.error'), t('clients.couldNotDeleteClient'));
             }
           },
         },
       ]
     );
-  }, [id]);
+  }, [id, t]);
 
   // Cancel editing
   const handleCancel = useCallback(() => {
@@ -188,7 +190,7 @@ export default function ClienteDetalhesScreen() {
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
         <View style={styles.loadingContainer}>
           <Text variant="body" color="secondary">
-            Carregando...
+            {t('common.loading')}
           </Text>
         </View>
       </SafeAreaView>
@@ -201,7 +203,7 @@ export default function ClienteDetalhesScreen() {
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
         <View style={styles.loadingContainer}>
           <Text variant="body" color="secondary">
-            Cliente não encontrado
+            {t('clients.clientNotFound')}
           </Text>
         </View>
       </SafeAreaView>
@@ -220,7 +222,7 @@ export default function ClienteDetalhesScreen() {
     <>
       <Stack.Screen
         options={{
-          title: isEditing ? 'Editar Cliente' : 'Detalhes',
+          title: isEditing ? t('clients.editClient') : t('common.details'),
           headerRight: () =>
             !isEditing ? (
               <View style={styles.headerButtons}>
@@ -230,7 +232,7 @@ export default function ClienteDetalhesScreen() {
                   onPress={() => setIsEditing(true)}
                   style={{ marginRight: 8 }}
                 >
-                  Editar
+                  {t('common.edit')}
                 </Button>
               </View>
             ) : null,
@@ -259,7 +261,7 @@ export default function ClienteDetalhesScreen() {
                   </Text>
                   {hasPending && (
                     <Badge variant="warning" size="sm">
-                      Pendente de sync
+                      {t('common.pendingSync')}
                     </Badge>
                   )}
                 </View>
@@ -271,21 +273,21 @@ export default function ClienteDetalhesScreen() {
               <View style={[styles.quickActions, { marginBottom: spacing[4] }]}>
                 <QuickActionButton
                   icon="construct-outline"
-                  label="Nova OS"
+                  label={t('clients.newWorkOrder')}
                   color={colors.primary[500]}
                   backgroundColor={colors.primary[50]}
                   onPress={() => router.push(`/os/novo?clientId=${id}&clientName=${encodeURIComponent(client.name)}`)}
                 />
                 <QuickActionButton
                   icon="document-text-outline"
-                  label="Novo Orçamento"
+                  label={t('clients.newQuote')}
                   color={colors.secondary[500]}
                   backgroundColor={colors.secondary[50]}
                   onPress={() => router.push(`/orcamentos/novo?clientId=${id}&clientName=${encodeURIComponent(client.name)}`)}
                 />
                 <QuickActionButton
                   icon="cash-outline"
-                  label="Nova Cobrança"
+                  label={t('clients.newCharge')}
                   color={colors.success[500]}
                   backgroundColor={colors.success[50]}
                   onPress={() => router.push(`/cobrancas/nova?clientId=${id}&clientName=${encodeURIComponent(client.name)}`)}
@@ -296,14 +298,14 @@ export default function ClienteDetalhesScreen() {
             {/* Basic Info */}
             <Card variant="outlined" style={[styles.section, { marginBottom: spacing[4] }]}>
               <Text variant="subtitle" weight="semibold" style={{ marginBottom: spacing[4] }}>
-                Informações Básicas
+                {t('clients.basicInfo')}
               </Text>
 
               {isEditing ? (
                 <>
                   <Input
-                    label="Nome *"
-                    placeholder="Nome completo"
+                    label={`${t('clients.name')} *`}
+                    placeholder={t('clients.namePlaceholder')}
                     value={name}
                     onChangeText={setName}
                     error={errors.name}
@@ -311,8 +313,8 @@ export default function ClienteDetalhesScreen() {
                   />
                   <View style={{ height: spacing[3] }} />
                   <Input
-                    label="Email"
-                    placeholder="email@exemplo.com"
+                    label={t('clients.email')}
+                    placeholder={t('clients.emailPlaceholder')}
                     value={email}
                     onChangeText={setEmail}
                     error={errors.email}
@@ -321,7 +323,7 @@ export default function ClienteDetalhesScreen() {
                   />
                   <View style={{ height: spacing[3] }} />
                   <Input
-                    label="Telefone"
+                    label={t('clients.phone')}
                     placeholder="(00) 00000-0000"
                     value={phone}
                     onChangeText={setPhone}
@@ -329,7 +331,7 @@ export default function ClienteDetalhesScreen() {
                   />
                   <View style={{ height: spacing[3] }} />
                   <Input
-                    label="CPF/CNPJ"
+                    label={t('clients.taxId')}
                     placeholder="000.000.000-00"
                     value={taxId}
                     onChangeText={setTaxId}
@@ -340,21 +342,24 @@ export default function ClienteDetalhesScreen() {
                 <>
                   <InfoRow
                     icon="mail-outline"
-                    label="Email"
+                    label={t('clients.email')}
                     value={client.email}
                     colors={colors}
+                    notInformedText={t('clients.notInformed')}
                   />
                   <InfoRow
                     icon="call-outline"
-                    label="Telefone"
+                    label={t('clients.phone')}
                     value={client.phone}
                     colors={colors}
+                    notInformedText={t('clients.notInformed')}
                   />
                   <InfoRow
                     icon="document-text-outline"
-                    label="CPF/CNPJ"
+                    label={t('clients.taxId')}
                     value={client.document}
                     colors={colors}
+                    notInformedText={t('clients.notInformed')}
                   />
                 </>
               )}
@@ -363,14 +368,14 @@ export default function ClienteDetalhesScreen() {
             {/* Address */}
             <Card variant="outlined" style={[styles.section, { marginBottom: spacing[4] }]}>
               <Text variant="subtitle" weight="semibold" style={{ marginBottom: spacing[4] }}>
-                Endereço
+                {t('clients.address')}
               </Text>
 
               {isEditing ? (
                 <>
                   <Input
-                    label="Endereço"
-                    placeholder="Rua, número, complemento"
+                    label={t('clients.address')}
+                    placeholder={t('clients.addressPlaceholder')}
                     value={address}
                     onChangeText={setAddress}
                   />
@@ -378,8 +383,8 @@ export default function ClienteDetalhesScreen() {
                   <View style={styles.row}>
                     <View style={styles.flex2}>
                       <Input
-                        label="Cidade"
-                        placeholder="Cidade"
+                        label={t('clients.city')}
+                        placeholder={t('clients.city')}
                         value={city}
                         onChangeText={setCity}
                       />
@@ -387,8 +392,8 @@ export default function ClienteDetalhesScreen() {
                     <View style={{ width: spacing[3] }} />
                     <View style={styles.flex1}>
                       <Input
-                        label="Estado"
-                        placeholder="UF"
+                        label={t('clients.state')}
+                        placeholder={t('clients.stateAbbrev')}
                         value={state}
                         onChangeText={setState}
                         maxLength={2}
@@ -398,7 +403,7 @@ export default function ClienteDetalhesScreen() {
                   </View>
                   <View style={{ height: spacing[3] }} />
                   <Input
-                    label="CEP"
+                    label={t('clients.zipCode')}
                     placeholder="00000-000"
                     value={zipCode}
                     onChangeText={setZipCode}
@@ -409,25 +414,28 @@ export default function ClienteDetalhesScreen() {
                 <>
                   <InfoRow
                     icon="location-outline"
-                    label="Endereço"
+                    label={t('clients.address')}
                     value={client.address}
                     colors={colors}
+                    notInformedText={t('clients.notInformed')}
                   />
                   <InfoRow
                     icon="business-outline"
-                    label="Cidade/Estado"
+                    label={t('clients.cityState')}
                     value={
                       client.city && client.state
                         ? `${client.city} - ${client.state}`
                         : client.city || client.state
                     }
                     colors={colors}
+                    notInformedText={t('clients.notInformed')}
                   />
                   <InfoRow
                     icon="map-outline"
-                    label="CEP"
+                    label={t('clients.zipCode')}
                     value={client.zipCode}
                     colors={colors}
+                    notInformedText={t('clients.notInformed')}
                   />
                 </>
               )}
@@ -436,13 +444,13 @@ export default function ClienteDetalhesScreen() {
             {/* Notes */}
             <Card variant="outlined" style={[styles.section, { marginBottom: spacing[4] }]}>
               <Text variant="subtitle" weight="semibold" style={{ marginBottom: spacing[4] }}>
-                Observações
+                {t('clients.observations')}
               </Text>
 
               {isEditing ? (
                 <Input
-                  label="Notas"
-                  placeholder="Observações sobre o cliente..."
+                  label={t('clients.notes')}
+                  placeholder={t('clients.notesPlaceholder')}
                   value={notes}
                   onChangeText={setNotes}
                   multiline
@@ -450,7 +458,7 @@ export default function ClienteDetalhesScreen() {
                 />
               ) : (
                 <Text variant="body" color={client.notes ? 'primary' : 'tertiary'}>
-                  {client.notes || 'Nenhuma observação'}
+                  {client.notes || t('clients.noObservations')}
                 </Text>
               )}
             </Card>
@@ -463,7 +471,7 @@ export default function ClienteDetalhesScreen() {
                 style={{ marginTop: spacing[4] }}
               >
                 <Text variant="body" style={{ color: colors.error[500] }}>
-                  Excluir Cliente
+                  {t('clients.deleteClient')}
                 </Text>
               </Button>
             )}
@@ -487,7 +495,7 @@ export default function ClienteDetalhesScreen() {
                 disabled={isSaving}
                 style={styles.cancelButton}
               >
-                Cancelar
+                {t('common.cancel')}
               </Button>
               <Button
                 variant="primary"
@@ -495,7 +503,7 @@ export default function ClienteDetalhesScreen() {
                 loading={isSaving}
                 style={styles.saveButton}
               >
-                Salvar
+                {t('common.save')}
               </Button>
             </View>
           )}
@@ -562,11 +570,13 @@ function InfoRow({
   label,
   value,
   colors,
+  notInformedText,
 }: {
   icon: string;
   label: string;
   value?: string | null;
   colors: any;
+  notInformedText: string;
 }) {
   return (
     <View style={infoStyles.row}>
@@ -576,7 +586,7 @@ function InfoRow({
           {label}
         </Text>
         <Text variant="body" color={value ? 'primary' : 'tertiary'}>
-          {value || 'Não informado'}
+          {value || notInformedText}
         </Text>
       </View>
     </View>

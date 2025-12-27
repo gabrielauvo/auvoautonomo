@@ -434,7 +434,202 @@ export async function simpleBulkInsert<T extends Record<string, unknown>>(
   });
 }
 
+/**
+ * Versão com streaming para processar registros sem carregar tudo na memória
+ *
+ * OTIMIZAÇÃO DE MEMÓRIA:
+ * - Processa registros em chunks sob demanda
+ * - Permite GC liberar memória entre chunks
+ * - Ideal para sync de grandes volumes (10k+ registros)
+ *
+ * Uso:
+ * ```typescript
+ * async function* fetchRecordsInChunks() {
+ *   for (let page = 0; page < totalPages; page++) {
+ *     const records = await api.fetchPage(page);
+ *     yield records;
+ *   }
+ * }
+ *
+ * await bulkInsertStream(db, fetchRecordsInChunks(), options);
+ * ```
+ */
+export async function bulkInsertStream<T extends Record<string, unknown>>(
+  db: SQLiteDatabase,
+  source: AsyncIterable<T[]>,
+  options: BulkInsertOptions
+): Promise<BulkInsertResult> {
+  const startTime = performance.now();
+  const chunkSize = options.chunkSize ?? SYNC_FLAGS.BULK_INSERT_CHUNK_SIZE;
+  const continueOnError = options.continueOnError ?? SYNC_FLAGS.BULK_INSERT_CONTINUE_ON_ERROR;
+  const bisectMinSize = options.bisectMinSize ?? SYNC_FLAGS.BULK_INSERT_BISECT_MIN_SIZE;
+
+  const result: BulkInsertResult = {
+    totalRecords: 0,
+    insertedRecords: 0,
+    failedRecords: 0,
+    failedIds: [],
+    errors: [],
+    metrics: {
+      totalDurationMs: 0,
+      chunksProcessed: 0,
+      chunksSucceeded: 0,
+      chunksBisected: 0,
+      avgChunkDurationMs: 0,
+      maxChunkDurationMs: 0,
+      rowsPerSecond: 0,
+      chunkDetails: [],
+    },
+  };
+
+  let maxChunkDuration = 0;
+  let totalChunkDuration = 0;
+  let globalOffset = 0;
+  let batchBuffer: T[] = [];
+
+  // Processar registros conforme chegam do stream
+  for await (const batch of source) {
+    batchBuffer.push(...batch);
+    result.totalRecords += batch.length;
+
+    // Processar quando buffer atinge tamanho do chunk
+    while (batchBuffer.length >= chunkSize) {
+      const chunk = batchBuffer.slice(0, chunkSize);
+      batchBuffer = batchBuffer.slice(chunkSize);
+
+      const chunkStartTime = performance.now();
+      let chunkSuccess = false;
+      let chunkBisected = false;
+
+      // Reportar progresso
+      if (options.onProgress) {
+        options.onProgress({
+          currentChunk: result.metrics.chunksProcessed,
+          totalChunks: -1, // Desconhecido em streaming
+          processedRecords: result.insertedRecords + result.failedRecords,
+          totalRecords: result.totalRecords,
+          percentComplete: -1, // Desconhecido em streaming
+        });
+      }
+
+      try {
+        await insertChunk(db, chunk, options);
+        result.insertedRecords += chunk.length;
+        chunkSuccess = true;
+      } catch (chunkError) {
+        console.warn(
+          `[BulkInsertService] Stream chunk failed, bisecting...`,
+          chunkError
+        );
+
+        chunkBisected = true;
+        const bisectResult = await bisectAndInsert(
+          db,
+          chunk,
+          options,
+          bisectMinSize,
+          globalOffset
+        );
+
+        result.insertedRecords += bisectResult.inserted;
+        result.failedRecords += bisectResult.failed;
+        result.failedIds.push(...bisectResult.failedIds);
+        result.errors.push(...bisectResult.errors);
+
+        if (!continueOnError && bisectResult.failed > 0) {
+          console.error('[BulkInsertService] Stopping stream due to error');
+          break;
+        }
+      }
+
+      const chunkDuration = performance.now() - chunkStartTime;
+      totalChunkDuration += chunkDuration;
+      maxChunkDuration = Math.max(maxChunkDuration, chunkDuration);
+      globalOffset += chunk.length;
+
+      result.metrics.chunkDetails.push({
+        index: result.metrics.chunksProcessed,
+        size: chunk.length,
+        durationMs: chunkDuration,
+        success: chunkSuccess,
+        bisected: chunkBisected,
+      });
+
+      result.metrics.chunksProcessed++;
+      if (chunkSuccess) result.metrics.chunksSucceeded++;
+      if (chunkBisected) result.metrics.chunksBisected++;
+
+      // Yield para event loop após cada chunk (permite GC e UI updates)
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+  }
+
+  // Processar registros restantes no buffer
+  if (batchBuffer.length > 0) {
+    const chunkStartTime = performance.now();
+    let chunkSuccess = false;
+    let chunkBisected = false;
+
+    try {
+      await insertChunk(db, batchBuffer, options);
+      result.insertedRecords += batchBuffer.length;
+      chunkSuccess = true;
+    } catch (chunkError) {
+      chunkBisected = true;
+      const bisectResult = await bisectAndInsert(
+        db,
+        batchBuffer,
+        options,
+        bisectMinSize,
+        globalOffset
+      );
+
+      result.insertedRecords += bisectResult.inserted;
+      result.failedRecords += bisectResult.failed;
+      result.failedIds.push(...bisectResult.failedIds);
+      result.errors.push(...bisectResult.errors);
+    }
+
+    const chunkDuration = performance.now() - chunkStartTime;
+    totalChunkDuration += chunkDuration;
+    maxChunkDuration = Math.max(maxChunkDuration, chunkDuration);
+
+    result.metrics.chunkDetails.push({
+      index: result.metrics.chunksProcessed,
+      size: batchBuffer.length,
+      durationMs: chunkDuration,
+      success: chunkSuccess,
+      bisected: chunkBisected,
+    });
+
+    result.metrics.chunksProcessed++;
+    if (chunkSuccess) result.metrics.chunksSucceeded++;
+    if (chunkBisected) result.metrics.chunksBisected++;
+  }
+
+  // Calcular métricas finais
+  const totalDuration = performance.now() - startTime;
+  result.metrics.totalDurationMs = totalDuration;
+  result.metrics.avgChunkDurationMs = result.metrics.chunksProcessed > 0
+    ? totalChunkDuration / result.metrics.chunksProcessed
+    : 0;
+  result.metrics.maxChunkDurationMs = maxChunkDuration;
+  result.metrics.rowsPerSecond = totalDuration > 0
+    ? (result.insertedRecords / totalDuration) * 1000
+    : 0;
+
+  console.log(
+    `[BulkInsertService] Stream complete: ${result.insertedRecords}/${result.totalRecords} inserted, ` +
+    `${result.failedRecords} failed, ${result.metrics.chunksProcessed} chunks, ` +
+    `${result.metrics.totalDurationMs.toFixed(0)}ms, ` +
+    `${result.metrics.rowsPerSecond.toFixed(0)} rows/s`
+  );
+
+  return result;
+}
+
 export default {
   bulkInsert,
   simpleBulkInsert,
+  bulkInsertStream,
 };

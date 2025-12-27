@@ -5,15 +5,15 @@
  * Suporta lógica condicional, seções, e diferentes tipos de perguntas.
  */
 
-import React, { useMemo, useCallback, useState, useEffect } from 'react';
+import React, { useMemo, useCallback, useState, useRef } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { useTranslation, useLocale } from '../../../i18n';
 import {
   ChecklistTemplate,
@@ -60,6 +60,11 @@ interface SectionWithQuestions {
   section?: ChecklistSection;
   questions: QuestionWithVisibility[];
 }
+
+// Tipo para itens da lista virtualizada
+type ListItem =
+  | { type: 'section'; data: ChecklistSection }
+  | { type: 'question'; data: QuestionWithVisibility };
 
 // =============================================================================
 // HOOKS
@@ -214,6 +219,44 @@ export const ChecklistRenderer: React.FC<ChecklistRendererProps> = ({
   const [errors, setErrors] = useState<Map<string, string>>(new Map());
   const data = useChecklistData(instance, answers);
 
+  // Flatten sections into list items for FlashList
+  const listItems: ListItem[] = useMemo(() => {
+    if (!data) return [];
+
+    const items: ListItem[] = [];
+    const seen = new Set<string>();
+
+    for (const section of data.sections) {
+      // Add section header if exists
+      if (section.section) {
+        const sectionKey = `section-${section.section.id}`;
+        if (!seen.has(sectionKey)) {
+          seen.add(sectionKey);
+          items.push({ type: 'section', data: section.section });
+        }
+      }
+
+      // Add questions
+      for (const questionItem of section.questions) {
+        if (questionItem.question.type === 'SECTION_TITLE') continue;
+
+        const questionKey = `question-${questionItem.question.id}`;
+        if (!seen.has(questionKey)) {
+          seen.add(questionKey);
+          items.push({
+            type: 'question',
+            data: {
+              ...questionItem,
+              error: errors.get(questionItem.question.id),
+            },
+          });
+        }
+      }
+    }
+
+    return items;
+  }, [data, errors]);
+
   // Handle answer change
   const handleAnswerChange = useCallback((questionId: string, value: unknown) => {
     // Clear error for this question
@@ -225,6 +268,46 @@ export const ChecklistRenderer: React.FC<ChecklistRendererProps> = ({
 
     onAnswerChange(questionId, value);
   }, [onAnswerChange]);
+
+  // Render item for FlashList
+  const renderListItem = useCallback(
+    ({ item }: { item: ListItem }) => {
+      if (item.type === 'section') {
+        return (
+          <SectionTitleRenderer
+            question={{
+              id: item.data.id,
+              type: 'SECTION_TITLE',
+              title: item.data.title,
+              description: item.data.description,
+              isRequired: false,
+              order: item.data.order,
+            }}
+          />
+        );
+      }
+
+      return (
+        <QuestionItem
+          item={item.data}
+          onAnswerChange={(value) => handleAnswerChange(item.data.question.id, value)}
+          disabled={disabled || instance.status === 'COMPLETED' || instance.status === 'CANCELLED'}
+          unsupportedTypeMessage={t('checklists.unsupportedType', { type: item.data.question.type })}
+        />
+      );
+    },
+    [disabled, instance.status, t, handleAnswerChange]
+  );
+
+  // Key extractor for FlashList
+  const keyExtractor = useCallback((item: ListItem) => {
+    return item.type === 'section' ? `section-${item.data.id}` : `question-${item.data.question.id}`;
+  }, []);
+
+  // Get item type for FlashList optimization
+  const getItemType = useCallback((item: ListItem) => {
+    return item.type;
+  }, []);
 
   // Handle complete
   const handleComplete = useCallback(() => {
@@ -272,53 +355,16 @@ export const ChecklistRenderer: React.FC<ChecklistRendererProps> = ({
       {/* Progress */}
       {showProgress && <ProgressBar progress={progress} progressLabel={t('checklists.progressComplete', { progress })} />}
 
-      {/* Questions */}
-      <ScrollView style={styles.questionsContainer}>
-        {/* Filter sections to avoid duplicate keys */}
-        {sections.filter((section, index, self) =>
-          index === self.findIndex(s => (s.section?.id || `unsectioned-${index}`) === (section.section?.id || `unsectioned-${index}`))
-        ).map((section, sectionIndex) => (
-          <View key={section.section?.id || `unsectioned-${sectionIndex}`}>
-            {/* Section Header */}
-            {section.section && (
-              <SectionTitleRenderer
-                question={{
-                  id: section.section.id,
-                  type: 'SECTION_TITLE',
-                  title: section.section.title,
-                  description: section.section.description,
-                  isRequired: false,
-                  order: section.section.order,
-                }}
-              />
-            )}
-
-            {/* Questions - filter duplicates to avoid key collision */}
-            {section.questions.filter((item, index, self) =>
-              index === self.findIndex(q => q.question.id === item.question.id)
-            ).map((item) => {
-              // Skip section titles (rendered above)
-              if (item.question.type === 'SECTION_TITLE') return null;
-
-              return (
-                <QuestionItem
-                  key={item.question.id}
-                  item={{
-                    ...item,
-                    error: errors.get(item.question.id),
-                  }}
-                  onAnswerChange={(value) => handleAnswerChange(item.question.id, value)}
-                  disabled={disabled || instance.status === 'COMPLETED' || instance.status === 'CANCELLED'}
-                  unsupportedTypeMessage={t('checklists.unsupportedType', { type: item.question.type })}
-                />
-              );
-            })}
-          </View>
-        ))}
-
-        {/* Spacer for bottom buttons */}
-        <View style={{ height: 100 }} />
-      </ScrollView>
+      {/* Questions - Virtualized FlashList for performance */}
+      <FlashList
+        data={listItems}
+        renderItem={renderListItem}
+        keyExtractor={keyExtractor}
+        getItemType={getItemType}
+        estimatedItemSize={120}
+        contentContainerStyle={{ paddingBottom: 100 }}
+        extraData={errors}
+      />
 
       {/* Actions */}
       {instance.status !== 'COMPLETED' && instance.status !== 'CANCELLED' && (

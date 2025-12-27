@@ -5,7 +5,7 @@
  * Suporta busca, filtro por status e pull to refresh.
  */
 
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -15,7 +15,9 @@ import {
   ActivityIndicator,
   TextInput,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Text } from '../../design-system/components/Text';
+import { useMountedRef } from '../../hooks';
 import { Card } from '../../design-system/components/Card';
 import { Badge } from '../../design-system/components/Badge';
 import { colors, spacing, borderRadius, shadows, theme } from '../../design-system/tokens';
@@ -221,6 +223,9 @@ export const WorkOrdersListScreen: React.FC<WorkOrdersListScreenProps> = ({
   const [offset, setOffset] = useState(0);
   const [pausedWorkOrderIds, setPausedWorkOrderIds] = useState<Set<string>>(new Set());
 
+  // Track mounted state to prevent state updates on unmounted component
+  const isMountedRef = useMountedRef();
+
   // Build status filters with translations
   const statusFilters = useMemo(() => [
     { label: t('workOrders.all'), value: 'ALL' as const },
@@ -263,11 +268,14 @@ export const WorkOrdersListScreen: React.FC<WorkOrdersListScreenProps> = ({
   const loadPausedWorkOrderIds = useCallback(async () => {
     try {
       const pausedIds = await ExecutionSessionRepository.getPausedWorkOrderIds();
-      setPausedWorkOrderIds(new Set(pausedIds));
+      // Prevent state update if component unmounted during async operation
+      if (isMountedRef.current) {
+        setPausedWorkOrderIds(new Set(pausedIds));
+      }
     } catch (error) {
       console.error('Error loading paused work order IDs:', error);
     }
-  }, []);
+  }, [isMountedRef]);
 
   // Load work orders
   const loadWorkOrders = useCallback(async (reset: boolean = false) => {
@@ -285,6 +293,9 @@ export const WorkOrdersListScreen: React.FC<WorkOrdersListScreenProps> = ({
         offset: currentOffset,
       });
 
+      // Prevent state update if component unmounted during async operation
+      if (!isMountedRef.current) return;
+
       if (reset) {
         setWorkOrders(result.items);
       } else {
@@ -296,16 +307,34 @@ export const WorkOrdersListScreen: React.FC<WorkOrdersListScreenProps> = ({
     } catch (error) {
       console.error('Error loading work orders:', error);
     } finally {
-      setLoading(false);
-      setLoadingMore(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+        setLoadingMore(false);
+      }
     }
-  }, [buildFilter, offset]);
+  }, [buildFilter, offset, isMountedRef]);
 
-  // Initial load
+  // Track if this is the first mount to avoid double load
+  const isFirstMount = useRef(true);
+
+  // Initial load on filter/search change
   useEffect(() => {
+    // Skip on first mount since useFocusEffect will handle it
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
     loadWorkOrders(true);
     loadPausedWorkOrderIds();
   }, [selectedStatus, searchQuery]);
+
+  // Reload data when screen gains focus (e.g., returning from detail screen)
+  useFocusEffect(
+    useCallback(() => {
+      loadWorkOrders(true);
+      loadPausedWorkOrderIds();
+    }, [loadWorkOrders, loadPausedWorkOrderIds])
+  );
 
   // Pull to refresh
   const handleRefresh = async () => {

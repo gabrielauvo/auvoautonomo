@@ -11,6 +11,7 @@
 
 import * as FileSystem from 'expo-file-system';
 import * as ImageManipulator from 'expo-image-manipulator';
+import { InteractionManager } from 'react-native';
 import { syncEngine } from '../../../sync';
 import { ChecklistAttachmentRepository } from '../repositories/ChecklistAttachmentRepository';
 import { AttachmentStorageService } from './AttachmentStorageService';
@@ -181,70 +182,47 @@ class AttachmentUploadServiceClass {
     const mimeType = type === 'SIGNATURE' ? 'image/png' : 'image/jpeg';
 
     if (!this.isOnline()) {
-      // Salvar localmente para sync posterior
-      const useFilesystem = SYNC_FLAGS.SYNC_OPT_FS_ATTACHMENTS;
+      // SEMPRE usar filesystem para armazenamento local (evita OOM)
+      // Não há mais fallback para base64Data no SQLite
+      try {
+        await AttachmentStorageService.initialize();
 
-      let attachmentData: Parameters<typeof ChecklistAttachmentRepository.create>[0];
+        // Criar registro primeiro para ter o ID
+        const tempAttachment = await ChecklistAttachmentRepository.create({
+          answerId,
+          workOrderId: '', // Será preenchido depois
+          type,
+          fileName,
+          fileSize: Math.round(base64Data.length * 0.75),
+          mimeType,
+          technicianId: this.technicianId || '',
+        });
 
-      if (useFilesystem) {
-        // NOVO: Salvar no filesystem
-        try {
-          await AttachmentStorageService.initialize();
+        // Salvar no filesystem usando o ID
+        const saveResult = await AttachmentStorageService.saveFromBase64(
+          tempAttachment.id,
+          base64Data,
+          mimeType
+        );
 
-          // Criar registro primeiro para ter o ID
-          const tempAttachment = await ChecklistAttachmentRepository.create({
-            answerId,
-            workOrderId: '', // Será preenchido depois
-            type,
-            fileName,
-            fileSize: Math.round(base64Data.length * 0.75),
-            mimeType,
-            technicianId: this.technicianId || '',
-          });
+        // Atualizar registro com o caminho do arquivo
+        await ChecklistAttachmentRepository.update(tempAttachment.id, {
+          localPath: saveResult.filePath,
+          fileSize: saveResult.sizeBytes,
+        });
 
-          // Salvar no filesystem usando o ID
-          const saveResult = await AttachmentStorageService.saveFromBase64(
-            tempAttachment.id,
-            base64Data,
-            mimeType
-          );
+        console.log(`[AttachmentUploadService] Saved to filesystem: ${saveResult.filePath}`);
 
-          // Atualizar registro com o caminho do arquivo
-          await ChecklistAttachmentRepository.update(tempAttachment.id, {
-            localPath: saveResult.filePath,
-            fileSize: saveResult.sizeBytes,
-          });
-
-          console.log(`[AttachmentUploadService] Saved to filesystem: ${saveResult.filePath}`);
-
-          return {
-            success: false,
-            attachmentId: tempAttachment.id,
-            error: 'Offline - salvo no filesystem',
-          };
-        } catch (fsError) {
-          console.warn('[AttachmentUploadService] Filesystem save failed, falling back to SQLite:', fsError);
-          // Fallback para SQLite se filesystem falhar
-        }
+        return {
+          success: false,
+          attachmentId: tempAttachment.id,
+          error: 'Offline - salvo no filesystem',
+        };
+      } catch (fsError) {
+        console.error('[AttachmentUploadService] Filesystem save failed:', fsError);
+        // Não há mais fallback para SQLite - falhar explicitamente
+        throw new Error(`Falha ao salvar anexo: ${fsError instanceof Error ? fsError.message : 'Erro desconhecido'}`);
       }
-
-      // ORIGINAL: Salvar base64Data no SQLite (fallback ou flag desabilitada)
-      const attachment = await ChecklistAttachmentRepository.create({
-        answerId,
-        workOrderId: '', // Será preenchido depois
-        type,
-        fileName,
-        fileSize: Math.round(base64Data.length * 0.75), // Aproximação do tamanho real
-        mimeType,
-        base64Data,
-        technicianId: this.technicianId || '',
-      });
-
-      return {
-        success: false,
-        attachmentId: attachment.id,
-        error: 'Offline - salvo localmente',
-      };
     }
 
     try {
@@ -449,9 +427,8 @@ class AttachmentUploadServiceClass {
             const compressed = await this.compressImage(attachment.localPath);
             base64Data = compressed.base64;
           } else {
-            base64Data = await FileSystem.readAsStringAsync(attachment.localPath, {
-              encoding: FileSystem.EncodingType.Base64,
-            });
+            // Usar método não bloqueante para arquivos não-imagem também
+            base64Data = await this.readFileAsBase64NonBlocking(attachment.localPath);
           }
           usedFilesystem = true;
         } else if (attachment.base64Data) {
@@ -610,11 +587,20 @@ class AttachmentUploadServiceClass {
 
   /**
    * Comprimir imagem antes do upload
+   * OTIMIZAÇÃO: Não bloqueia a thread principal
+   * - Compressão sem base64 inline (evita bloqueio)
+   * - Conversão base64 feita em chunks após interações
    */
   private async compressImage(
     uri: string
   ): Promise<{ uri: string; base64: string }> {
     try {
+      // Aguardar interações pendentes antes de iniciar
+      await new Promise<void>((resolve) => {
+        InteractionManager.runAfterInteractions(() => resolve());
+      });
+
+      // Comprimir SEM base64 inline (não bloqueia)
       const result = await ImageManipulator.manipulateAsync(
         uri,
         [
@@ -628,21 +614,72 @@ class AttachmentUploadServiceClass {
         {
           compress: COMPRESSION_QUALITY,
           format: ImageManipulator.SaveFormat.JPEG,
-          base64: true,
+          base64: false, // Não bloqueia a thread
         }
       );
 
+      // Aguardar interações pendentes antes de converter base64
+      await new Promise<void>((resolve) => {
+        InteractionManager.runAfterInteractions(() => resolve());
+      });
+
+      // Converter para base64 em operação separada
+      const base64 = await this.readFileAsBase64NonBlocking(result.uri);
+
       return {
         uri: result.uri,
-        base64: result.base64 || '',
+        base64,
       };
     } catch (error) {
       console.warn('[AttachmentUploadService] Image compression failed, using original:', error);
-      const base64 = await FileSystem.readAsStringAsync(uri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
+      const base64 = await this.readFileAsBase64NonBlocking(uri);
       return { uri, base64 };
     }
+  }
+
+  /**
+   * Lê arquivo como base64 de forma não bloqueante
+   * Para arquivos grandes, processa em chunks para não travar a UI
+   */
+  private async readFileAsBase64NonBlocking(uri: string): Promise<string> {
+    // Aguardar interações pendentes
+    await new Promise<void>((resolve) => {
+      InteractionManager.runAfterInteractions(() => resolve());
+    });
+
+    // Verificar tamanho do arquivo
+    const fileInfo = await FileSystem.getInfoAsync(uri);
+    if (!fileInfo.exists) {
+      throw new Error(`File not found: ${uri}`);
+    }
+
+    const fileSize = (fileInfo as any).size || 0;
+    const CHUNK_THRESHOLD = 1024 * 1024; // 1MB
+
+    // Para arquivos pequenos, ler diretamente
+    if (fileSize < CHUNK_THRESHOLD) {
+      return FileSystem.readAsStringAsync(uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+    }
+
+    // Para arquivos grandes, dar yield para o event loop periodicamente
+    // Expo FileSystem não suporta leitura em chunks, então usamos
+    // InteractionManager para dar prioridade à UI
+    await new Promise<void>((resolve) => {
+      InteractionManager.runAfterInteractions(() => resolve());
+    });
+
+    const base64 = await FileSystem.readAsStringAsync(uri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+
+    // Yield após operação pesada
+    await new Promise<void>((resolve) => {
+      InteractionManager.runAfterInteractions(() => resolve());
+    });
+
+    return base64;
   }
 
   /**

@@ -23,6 +23,7 @@ import { useColors, useSpacing } from '../../src/design-system/ThemeProvider';
 import { useAuth } from '../../src/services';
 import { CatalogItemRepository } from '../../src/db/repositories';
 import { CatalogItem, BundleItem, ItemType } from '../../src/db/schema';
+import { useTranslation, useLocale } from '../../src/i18n';
 
 // =============================================================================
 // CONSTANTS
@@ -34,11 +35,7 @@ const TYPE_COLORS: Record<ItemType, string> = {
   BUNDLE: '#f97316',
 };
 
-const TYPE_LABELS: Record<ItemType, string> = {
-  PRODUCT: 'Produto',
-  SERVICE: 'Serviço',
-  BUNDLE: 'Kit',
-};
+// TYPE_LABELS moved to component to support i18n
 
 const TYPE_ICONS: Record<ItemType, string> = {
   PRODUCT: 'cube-outline',
@@ -55,12 +52,21 @@ export default function CatalogoDetalheScreen() {
   const spacing = useSpacing();
   const { user } = useAuth();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { t } = useTranslation();
+  const { locale } = useLocale();
 
   const [item, setItem] = useState<(CatalogItem & { bundleItems?: BundleItem[] }) | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const technicianId = user?.id;
+
+  // Dynamic type labels based on current locale
+  const TYPE_LABELS: Record<ItemType, string> = {
+    PRODUCT: t('catalog.types.product'),
+    SERVICE: t('catalog.types.service'),
+    BUNDLE: t('catalog.types.bundle'),
+  };
 
   // =============================================================================
   // DATA LOADING
@@ -74,7 +80,7 @@ export default function CatalogoDetalheScreen() {
       setItem(data);
     } catch (error) {
       console.error('[CatalogoDetalheScreen] Error loading item:', error);
-      Alert.alert('Erro', 'Não foi possível carregar o item.');
+      Alert.alert(t('common.error'), t('catalog.couldNotLoadItem'));
     } finally {
       setIsLoading(false);
     }
@@ -94,12 +100,12 @@ export default function CatalogoDetalheScreen() {
 
   const handleDelete = () => {
     Alert.alert(
-      'Excluir Item',
-      `Tem certeza que deseja excluir "${item?.name}"? Esta ação não pode ser desfeita.`,
+      t('catalog.deleteItem'),
+      t('catalog.deleteConfirmation', { name: item?.name }),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Excluir',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: confirmDelete,
         },
@@ -113,19 +119,19 @@ export default function CatalogoDetalheScreen() {
     setIsDeleting(true);
     try {
       await CatalogItemRepository.deleteItem(id, technicianId);
-      Alert.alert('Sucesso', 'Item excluído com sucesso!', [
+      Alert.alert(t('common.success'), t('catalog.itemDeleted'), [
         { text: 'OK', onPress: () => router.back() },
       ]);
     } catch (error) {
       console.error('[CatalogoDetalheScreen] Error deleting item:', error);
-      Alert.alert('Erro', 'Não foi possível excluir o item.');
+      Alert.alert(t('common.error'), t('catalog.couldNotDeleteItem'));
     } finally {
       setIsDeleting(false);
     }
   };
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
+    return new Intl.NumberFormat(locale, {
       style: 'currency',
       currency: 'BRL',
     }).format(value);
@@ -147,7 +153,7 @@ export default function CatalogoDetalheScreen() {
       <View style={[styles.loadingContainer, { backgroundColor: colors.background.primary }]}>
         <ActivityIndicator size="large" color={colors.primary[500]} />
         <Text variant="body" color="secondary" style={{ marginTop: spacing[3] }}>
-          Carregando...
+          {t('common.loading')}
         </Text>
       </View>
     );
@@ -158,10 +164,10 @@ export default function CatalogoDetalheScreen() {
       <View style={[styles.loadingContainer, { backgroundColor: colors.background.primary }]}>
         <Ionicons name="alert-circle-outline" size={64} color={colors.text.tertiary} />
         <Text variant="h5" color="secondary" style={{ marginTop: spacing[3] }}>
-          Item não encontrado
+          {t('catalog.itemNotFound')}
         </Text>
         <Button variant="ghost" onPress={() => router.back()} style={{ marginTop: spacing[4] }}>
-          Voltar
+          {t('common.back')}
         </Button>
       </View>
     );
@@ -176,7 +182,7 @@ export default function CatalogoDetalheScreen() {
       <Stack.Screen
         options={{
           title: item.name,
-          headerBackTitle: 'Voltar',
+          headerBackTitle: t('common.back'),
           headerRight: () => (
             <TouchableOpacity onPress={handleEdit} style={{ marginRight: 8 }}>
               <Ionicons name="pencil-outline" size={22} color={colors.primary[500]} />
@@ -219,14 +225,14 @@ export default function CatalogoDetalheScreen() {
 
             <View style={[styles.priceRow, { marginTop: spacing[4] }]}>
               <View>
-                <Text variant="caption" color="secondary">Preço de Venda</Text>
+                <Text variant="caption" color="secondary">{t('catalog.salePrice')}</Text>
                 <Text variant="h3" weight="bold" color="primary">
                   {formatCurrency(item.basePrice)}
                 </Text>
               </View>
               {item.costPrice && (
                 <View style={{ alignItems: 'flex-end' }}>
-                  <Text variant="caption" color="secondary">Custo</Text>
+                  <Text variant="caption" color="secondary">{t('catalog.cost')}</Text>
                   <Text variant="body" color="secondary">
                     {formatCurrency(item.costPrice)}
                   </Text>
@@ -238,7 +244,7 @@ export default function CatalogoDetalheScreen() {
               <View style={[styles.syncBadge, { backgroundColor: colors.warning[50] }]}>
                 <Ionicons name="cloud-upload-outline" size={16} color={colors.warning[500]} />
                 <Text variant="caption" style={{ color: colors.warning[700], marginLeft: 4 }}>
-                  Pendente de sincronização
+                  {t('catalog.pendingSync')}
                 </Text>
               </View>
             )}
@@ -247,17 +253,17 @@ export default function CatalogoDetalheScreen() {
           {/* Details Card */}
           <Card variant="outlined" style={[styles.section, { marginBottom: spacing[4] }]}>
             <Text variant="subtitle" weight="semibold" style={{ marginBottom: spacing[3] }}>
-              Detalhes
+              {t('common.details')}
             </Text>
 
             <View style={styles.detailRow}>
-              <Text variant="body" color="secondary">Unidade</Text>
+              <Text variant="body" color="secondary">{t('catalog.unit')}</Text>
               <Text variant="body" weight="medium">{item.unit}</Text>
             </View>
 
             {item.categoryName && (
               <View style={styles.detailRow}>
-                <Text variant="body" color="secondary">Categoria</Text>
+                <Text variant="body" color="secondary">{t('catalog.category')}</Text>
                 <View style={styles.categoryBadge}>
                   {item.categoryColor && (
                     <View style={[styles.categoryDot, { backgroundColor: item.categoryColor }]} />
@@ -269,7 +275,7 @@ export default function CatalogoDetalheScreen() {
 
             {item.type === 'SERVICE' && item.defaultDurationMinutes && (
               <View style={styles.detailRow}>
-                <Text variant="body" color="secondary">Duração Padrão</Text>
+                <Text variant="body" color="secondary">{t('catalog.defaultDuration')}</Text>
                 <Text variant="body" weight="medium">
                   {formatDuration(item.defaultDurationMinutes)}
                 </Text>
@@ -277,7 +283,7 @@ export default function CatalogoDetalheScreen() {
             )}
 
             <View style={styles.detailRow}>
-              <Text variant="body" color="secondary">Status</Text>
+              <Text variant="body" color="secondary">{t('common.status')}</Text>
               <View style={[
                 styles.statusBadge,
                 { backgroundColor: item.isActive ? colors.success[50] : colors.error[50] }
@@ -287,7 +293,7 @@ export default function CatalogoDetalheScreen() {
                   weight="medium"
                   style={{ color: item.isActive ? colors.success[700] : colors.error[700] }}
                 >
-                  {item.isActive ? 'Ativo' : 'Inativo'}
+                  {item.isActive ? t('catalog.active') : t('catalog.inactive')}
                 </Text>
               </View>
             </View>
@@ -297,7 +303,7 @@ export default function CatalogoDetalheScreen() {
           {item.type === 'BUNDLE' && item.bundleItems && item.bundleItems.length > 0 && (
             <Card variant="outlined" style={[styles.section, { marginBottom: spacing[4] }]}>
               <Text variant="subtitle" weight="semibold" style={{ marginBottom: spacing[3] }}>
-                Composição do Kit
+                {t('catalog.bundleComposition')}
               </Text>
 
               {item.bundleItems.map((bi, index) => (
@@ -325,7 +331,7 @@ export default function CatalogoDetalheScreen() {
               ))}
 
               <View style={[styles.bundleTotal, { borderTopColor: colors.border.light }]}>
-                <Text variant="body" weight="medium">Total do Kit</Text>
+                <Text variant="body" weight="medium">{t('catalog.bundleTotal')}</Text>
                 <Text variant="h5" weight="bold" color="primary">
                   {formatCurrency(
                     item.bundleItems.reduce((sum, bi) => sum + (bi.itemBasePrice * bi.quantity), 0)
@@ -338,15 +344,15 @@ export default function CatalogoDetalheScreen() {
           {/* Timestamps */}
           <Card variant="outlined" style={[styles.section, { marginBottom: spacing[4] }]}>
             <View style={styles.detailRow}>
-              <Text variant="caption" color="tertiary">Criado em</Text>
+              <Text variant="caption" color="tertiary">{t('catalog.createdAt')}</Text>
               <Text variant="caption" color="tertiary">
-                {new Date(item.createdAt).toLocaleDateString('pt-BR')}
+                {new Date(item.createdAt).toLocaleDateString(locale)}
               </Text>
             </View>
             <View style={[styles.detailRow, { marginBottom: 0 }]}>
-              <Text variant="caption" color="tertiary">Atualizado em</Text>
+              <Text variant="caption" color="tertiary">{t('catalog.updatedAt')}</Text>
               <Text variant="caption" color="tertiary">
-                {new Date(item.updatedAt).toLocaleDateString('pt-BR')}
+                {new Date(item.updatedAt).toLocaleDateString(locale)}
               </Text>
             </View>
           </Card>
@@ -359,7 +365,7 @@ export default function CatalogoDetalheScreen() {
               style={styles.actionButton}
               leftIcon={<Ionicons name="pencil-outline" size={18} color={colors.primary[500]} />}
             >
-              Editar
+              {t('common.edit')}
             </Button>
             <Button
               variant="ghost"
@@ -368,7 +374,7 @@ export default function CatalogoDetalheScreen() {
               style={styles.actionButton}
               leftIcon={<Ionicons name="trash-outline" size={18} color={colors.error[500]} />}
             >
-              <Text style={{ color: colors.error[500] }}>Excluir</Text>
+              <Text style={{ color: colors.error[500] }}>{t('common.delete')}</Text>
             </Button>
           </View>
         </ScrollView>

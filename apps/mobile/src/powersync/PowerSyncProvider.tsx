@@ -130,6 +130,8 @@ export function PowerSyncProvider({ children }: PowerSyncProviderProps) {
     }
 
     let mounted = true;
+    let unsubscribeListener: (() => void) | null = null;
+    let databaseInstance: any = null; // Keep reference for cleanup
 
     const initialize = async () => {
       try {
@@ -231,12 +233,14 @@ export function PowerSyncProvider({ children }: PowerSyncProviderProps) {
         };
 
         setDb(wrappedDb);
+        databaseInstance = database; // Keep reference for cleanup
 
         // Step 4: Connect to PowerSync service
         const connector = new AuvoBackendConnector();
 
         // Listen for sync status changes
-        database.registerListener({
+        // Capture unsubscribe function for cleanup
+        unsubscribeListener = database.registerListener({
           statusChanged: (status) => {
             if (mounted) {
               setIsConnected(status.connected);
@@ -279,6 +283,24 @@ export function PowerSyncProvider({ children }: PowerSyncProviderProps) {
 
     return () => {
       mounted = false;
+
+      // Cleanup: Unsubscribe from listener to prevent memory leaks
+      if (unsubscribeListener) {
+        try {
+          unsubscribeListener();
+        } catch (err) {
+          console.warn('[PowerSync] Error unsubscribing listener:', err);
+        }
+      }
+
+      // Cleanup: Close database connection
+      if (databaseInstance) {
+        try {
+          databaseInstance.close?.();
+        } catch (err) {
+          console.warn('[PowerSync] Error closing database:', err);
+        }
+      }
     };
   }, [isAuthenticated, user, isMockMode]);
 

@@ -19,6 +19,7 @@ import { Stack, router } from 'expo-router';
 import { Text, Button, Input, Card } from '../../src/design-system';
 import { useColors, useSpacing } from '../../src/design-system/ThemeProvider';
 import { ClientService, CreateClientInput } from '../../src/modules/clients/ClientService';
+import { useTranslation } from '../../src/i18n';
 
 // =============================================================================
 // MAIN SCREEN
@@ -27,6 +28,7 @@ import { ClientService, CreateClientInput } from '../../src/modules/clients/Clie
 export default function NovoClienteScreen() {
   const colors = useColors();
   const spacing = useSpacing();
+  const { t } = useTranslation();
 
   // Form state
   const [name, setName] = useState('');
@@ -46,16 +48,16 @@ export default function NovoClienteScreen() {
     const newErrors: Record<string, string> = {};
 
     if (!name.trim()) {
-      newErrors.name = 'Nome é obrigatório';
+      newErrors.name = t('clients.validation.nameRequired');
     }
 
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = 'Email inválido';
+      newErrors.email = t('clients.validation.invalidEmail');
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [name, email]);
+  }, [name, email, t]);
 
   // Handle save
   const handleSave = useCallback(async () => {
@@ -80,12 +82,12 @@ export default function NovoClienteScreen() {
 
       await ClientService.createClient(input);
 
-      Alert.alert('Sucesso', 'Cliente criado com sucesso!', [
+      Alert.alert(t('common.success'), t('clients.clientCreated'), [
         { text: 'OK', onPress: () => router.back() },
       ]);
     } catch (error) {
       console.error('[NovoClienteScreen] Error creating client:', error);
-      Alert.alert('Erro', 'Não foi possível criar o cliente. Tente novamente.');
+      Alert.alert(t('common.error'), t('clients.couldNotCreateClient'));
     } finally {
       setIsLoading(false);
     }
@@ -95,8 +97,8 @@ export default function NovoClienteScreen() {
     <>
       <Stack.Screen
         options={{
-          title: 'Novo Cliente',
-          headerBackTitle: 'Voltar',
+          title: t('clients.newClient'),
+          headerBackTitle: t('common.back'),
         }}
       />
       <SafeAreaView
@@ -116,12 +118,12 @@ export default function NovoClienteScreen() {
             {/* Basic Info */}
             <Card variant="outlined" style={[styles.section, { marginBottom: spacing[4] }]}>
               <Text variant="subtitle" weight="semibold" style={{ marginBottom: spacing[4] }}>
-                Informações Básicas
+                {t('clients.basicInfo')}
               </Text>
 
               <Input
-                label="Nome *"
-                placeholder="Nome completo"
+                label={`${t('clients.name')} *`}
+                placeholder={t('clients.namePlaceholder')}
                 value={name}
                 onChangeText={setName}
                 error={errors.name}
@@ -131,8 +133,8 @@ export default function NovoClienteScreen() {
               <View style={{ height: spacing[3] }} />
 
               <Input
-                label="Email"
-                placeholder="email@exemplo.com"
+                label={t('clients.email')}
+                placeholder={t('clients.emailPlaceholder')}
                 value={email}
                 onChangeText={setEmail}
                 error={errors.email}
@@ -143,7 +145,7 @@ export default function NovoClienteScreen() {
               <View style={{ height: spacing[3] }} />
 
               <Input
-                label="Telefone"
+                label={t('clients.phone')}
                 placeholder="(00) 00000-0000"
                 value={phone}
                 onChangeText={setPhone}
@@ -153,7 +155,7 @@ export default function NovoClienteScreen() {
               <View style={{ height: spacing[3] }} />
 
               <Input
-                label="CPF/CNPJ"
+                label={t('clients.taxId')}
                 placeholder="000.000.000-00"
                 value={taxId}
                 onChangeText={setTaxId}
@@ -164,12 +166,12 @@ export default function NovoClienteScreen() {
             {/* Address */}
             <Card variant="outlined" style={[styles.section, { marginBottom: spacing[4] }]}>
               <Text variant="subtitle" weight="semibold" style={{ marginBottom: spacing[4] }}>
-                Endereço
+                {t('clients.address')}
               </Text>
 
               <Input
-                label="Endereço"
-                placeholder="Rua, número, complemento"
+                label={t('clients.address')}
+                placeholder={t('clients.addressPlaceholder')}
                 value={address}
                 onChangeText={setAddress}
               />
@@ -179,8 +181,8 @@ export default function NovoClienteScreen() {
               <View style={styles.row}>
                 <View style={styles.flex2}>
                   <Input
-                    label="Cidade"
-                    placeholder="Cidade"
+                    label={t('clients.city')}
+                    placeholder={t('clients.city')}
                     value={city}
                     onChangeText={setCity}
                   />
@@ -188,8 +190,8 @@ export default function NovoClienteScreen() {
                 <View style={{ width: spacing[3] }} />
                 <View style={styles.flex1}>
                   <Input
-                    label="Estado"
-                    placeholder="UF"
+                    label={t('clients.state')}
+                    placeholder={t('clients.stateAbbrev')}
                     value={state}
                     onChangeText={setState}
                     maxLength={2}
@@ -201,7 +203,7 @@ export default function NovoClienteScreen() {
               <View style={{ height: spacing[3] }} />
 
               <Input
-                label="CEP"
+                label={t('clients.zipCode')}
                 placeholder="00000-000"
                 value={zipCode}
                 onChangeText={setZipCode}
@@ -212,12 +214,12 @@ export default function NovoClienteScreen() {
             {/* Notes */}
             <Card variant="outlined" style={[styles.section, { marginBottom: spacing[4] }]}>
               <Text variant="subtitle" weight="semibold" style={{ marginBottom: spacing[4] }}>
-                Observações
+                {t('clients.observations')}
               </Text>
 
               <Input
-                label="Notas"
-                placeholder="Observações sobre o cliente..."
+                label={t('clients.notes')}
+                placeholder={t('clients.notesPlaceholder')}
                 value={notes}
                 onChangeText={setNotes}
                 multiline
@@ -228,7 +230,7 @@ export default function NovoClienteScreen() {
             {/* Offline notice */}
             <View style={[styles.offlineNotice, { backgroundColor: colors.info[50] }]}>
               <Text variant="caption" color="secondary">
-                💡 O cliente será salvo localmente e sincronizado quando houver conexão.
+                {t('clients.offlineSaveNotice')}
               </Text>
             </View>
           </ScrollView>
@@ -250,7 +252,7 @@ export default function NovoClienteScreen() {
               disabled={isLoading}
               style={styles.cancelButton}
             >
-              Cancelar
+              {t('common.cancel')}
             </Button>
             <Button
               variant="primary"
@@ -258,7 +260,7 @@ export default function NovoClienteScreen() {
               loading={isLoading}
               style={styles.saveButton}
             >
-              Salvar Cliente
+              {t('clients.saveClient')}
             </Button>
           </View>
         </KeyboardAvoidingView>

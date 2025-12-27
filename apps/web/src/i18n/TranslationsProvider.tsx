@@ -27,6 +27,39 @@ const TranslationsContext = createContext<TranslationsContextType | undefined>(u
 
 const LOCALE_STORAGE_KEY = 'app-locale';
 
+/**
+ * Detect browser locale and map to supported locale
+ * Maps: es-* -> es, en-* -> en-US, pt-* -> pt-BR
+ */
+function detectBrowserLocale(): Locale {
+  if (typeof navigator === 'undefined') return defaultLocale;
+
+  // Get browser languages (ordered by preference)
+  const browserLanguages = navigator.languages || [navigator.language];
+
+  for (const lang of browserLanguages) {
+    const normalizedLang = lang.toLowerCase();
+
+    // Check for exact match first
+    if (locales.includes(lang as Locale)) {
+      return lang as Locale;
+    }
+
+    // Map language families to supported locales
+    if (normalizedLang.startsWith('pt')) {
+      return 'pt-BR';
+    }
+    if (normalizedLang.startsWith('es')) {
+      return 'es';
+    }
+    if (normalizedLang.startsWith('en')) {
+      return 'en-US';
+    }
+  }
+
+  return defaultLocale;
+}
+
 function getNestedValue(obj: Record<string, unknown>, path: string): string | undefined {
   const keys = path.split('.');
   let current: unknown = obj;
@@ -44,16 +77,19 @@ function getNestedValue(obj: Record<string, unknown>, path: string): string | un
 export function TranslationsProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(defaultLocale);
   const [isLoading, setIsLoading] = useState(true);
-  const [isMounted, setIsMounted] = useState(false);
 
-  // Load locale from localStorage on mount - usando isMounted para evitar hydration mismatch
+  // Load locale from localStorage on mount, or detect from browser if first visit
   useEffect(() => {
-    setIsMounted(true);
-    // Só acessar localStorage após montagem no cliente
     if (typeof window !== 'undefined') {
       const savedLocale = localStorage.getItem(LOCALE_STORAGE_KEY) as Locale | null;
       if (savedLocale && locales.includes(savedLocale)) {
+        // User has previously selected a locale - use it
         setLocaleState(savedLocale);
+      } else {
+        // First visit - detect from browser and save
+        const detectedLocale = detectBrowserLocale();
+        setLocaleState(detectedLocale);
+        localStorage.setItem(LOCALE_STORAGE_KEY, detectedLocale);
       }
     }
     setIsLoading(false);

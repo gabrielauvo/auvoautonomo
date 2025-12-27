@@ -18,6 +18,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTranslation } from '../../i18n';
+import { useMountedRef } from '../../hooks';
 import { InventoryService } from './InventoryService';
 import { InventoryBalance } from './InventoryRepository';
 import { InventoryBalanceCard, AdjustStockModal } from './components';
@@ -48,6 +49,9 @@ export function InventoryListScreen({ navigation }: Props) {
     pendingSyncCount: 0,
   });
 
+  // Track mounted state to prevent state updates on unmounted component
+  const isMountedRef = useMountedRef();
+
   const loadData = useCallback(async () => {
     try {
       const [enabled, negativeStock, balancesData, statsData] = await Promise.all([
@@ -57,6 +61,9 @@ export function InventoryListScreen({ navigation }: Props) {
         InventoryService.getStats(),
       ]);
 
+      // Prevent state update if component unmounted during async operation
+      if (!isMountedRef.current) return;
+
       setIsEnabled(enabled);
       setAllowNegativeStock(negativeStock);
       setBalances(balancesData);
@@ -65,10 +72,12 @@ export function InventoryListScreen({ navigation }: Props) {
     } catch (error) {
       console.error('Error loading inventory:', error);
     } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+        setIsRefreshing(false);
+      }
     }
-  }, []);
+  }, [isMountedRef]);
 
   useFocusEffect(
     useCallback(() => {

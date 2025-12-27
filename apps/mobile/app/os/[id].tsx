@@ -39,30 +39,17 @@ import { SignaturePad, SignatureData } from '../../src/modules/checklists/compon
 import { SIGNER_ROLES } from '../../src/modules/checklists/SignatureSyncConfig';
 import { rawQuery, insert, findOne, update } from '../../src/db/database';
 import { v4 as uuidv4 } from 'uuid';
+import { useTranslation, useLocale } from '../../src/i18n';
 
 // =============================================================================
 // CONSTANTS
 // =============================================================================
 
-const STATUS_CONFIG: Record<
-  WorkOrderStatus,
-  { color: string; label: string; icon: string }
-> = {
-  SCHEDULED: { color: 'primary', label: 'Agendada', icon: 'calendar' },
-  IN_PROGRESS: { color: 'warning', label: 'Em Andamento', icon: 'play-circle' },
-  DONE: { color: 'success', label: 'Concluída', icon: 'checkmark-circle' },
-  CANCELED: { color: 'error', label: 'Cancelada', icon: 'close-circle' },
-};
+// Status config is now dynamic - see getStatusConfig function below
 
-const TABS = [
-  { key: 'info', label: 'Info', icon: 'information-circle-outline' },
-  { key: 'checklists', label: 'Checklists', icon: 'checkbox-outline' },
-  { key: 'attachments', label: 'Anexos', icon: 'attach-outline' },
-  { key: 'signature', label: 'Assinatura', icon: 'pencil-outline' },
-  { key: 'history', label: 'Histórico', icon: 'time-outline' },
-] as const;
+const TAB_KEYS = ['info', 'checklists', 'attachments', 'signature', 'history'] as const;
 
-type TabKey = typeof TABS[number]['key'];
+type TabKey = typeof TAB_KEYS[number];
 
 // =============================================================================
 // EXECUTION TIMER DISPLAY
@@ -70,8 +57,10 @@ type TabKey = typeof TABS[number]['key'];
 
 const ExecutionTimerDisplay = React.memo(function ExecutionTimerDisplay({
   timer,
+  t,
 }: {
   timer: ReturnType<typeof useExecutionTimer>;
+  t: (key: string) => string;
 }) {
   const colors = useColors();
 
@@ -82,7 +71,7 @@ const ExecutionTimerDisplay = React.memo(function ExecutionTimerDisplay({
       <View style={styles.timerRow}>
         <View style={styles.timerItem}>
           <Text variant="caption" color="secondary">
-            Sessão
+            {t('workOrders.detail.timer.session')}
           </Text>
           <Text variant="h3" weight="bold" style={{ color: timer.isPaused ? colors.warning[500] : colors.success[500] }}>
             {timer.currentSession.formatted}
@@ -91,7 +80,7 @@ const ExecutionTimerDisplay = React.memo(function ExecutionTimerDisplay({
         <View style={styles.timerDivider} />
         <View style={styles.timerItem}>
           <Text variant="caption" color="secondary">
-            Total Trabalho
+            {t('workOrders.detail.timer.totalWork')}
           </Text>
           <Text variant="h3" weight="bold">
             {timer.totalWork.formatted}
@@ -102,7 +91,7 @@ const ExecutionTimerDisplay = React.memo(function ExecutionTimerDisplay({
         <View style={[styles.pausedBadge, { backgroundColor: colors.warning[100] }]}>
           <Ionicons name="pause-circle" size={16} color={colors.warning[600]} />
           <Text variant="caption" style={{ color: colors.warning[600] }}>
-            Pausado
+            {t('workOrders.detail.timer.paused')}
           </Text>
         </View>
       )}
@@ -135,6 +124,7 @@ const ExecutionControls = React.memo(function ExecutionControls({
   onRetrySync,
   onShareWhatsApp,
   onCreateCharge,
+  t,
 }: {
   status: WorkOrderStatus;
   isExecuting: boolean;
@@ -156,6 +146,7 @@ const ExecutionControls = React.memo(function ExecutionControls({
   onRetrySync?: () => void;
   onShareWhatsApp?: () => void;
   onCreateCharge?: () => void;
+  t: (key: string) => string;
 }) {
   const colors = useColors();
   const spacing = useSpacing();
@@ -182,7 +173,7 @@ const ExecutionControls = React.memo(function ExecutionControls({
               <View style={styles.buttonContent}>
                 <Ionicons name="logo-whatsapp" size={20} color="#FFFFFF" />
                 <Text variant="body" weight="semibold" style={{ color: '#FFFFFF', marginLeft: 8 }}>
-                  Enviar Relatório via WhatsApp
+                  {t('workOrders.detail.execution.sendReportWhatsApp')}
                 </Text>
               </View>
             )}
@@ -198,7 +189,7 @@ const ExecutionControls = React.memo(function ExecutionControls({
             <View style={styles.buttonContent}>
               <Ionicons name="receipt-outline" size={20} color="#FFFFFF" />
               <Text variant="body" weight="semibold" style={{ color: '#FFFFFF', marginLeft: 8 }}>
-                Criar Cobrança
+                {t('workOrders.detail.execution.createCharge')}
               </Text>
             </View>
           </TouchableOpacity>
@@ -208,7 +199,7 @@ const ExecutionControls = React.memo(function ExecutionControls({
           <View style={styles.buttonContent}>
             <Ionicons name="refresh" size={20} color={colors.primary[500]} />
             <Text variant="body" weight="semibold" style={{ color: colors.primary[500], marginLeft: 8 }}>
-              Reabrir OS
+              {t('workOrders.detail.execution.reopenWO')}
             </Text>
           </View>
         </Button>
@@ -224,7 +215,7 @@ const ExecutionControls = React.memo(function ExecutionControls({
           <View style={styles.buttonContent}>
             <Ionicons name="play" size={20} color="#FFF" />
             <Text variant="body" weight="semibold" style={{ color: '#FFF', marginLeft: 8 }}>
-              Iniciar Execução
+              {t('workOrders.detail.execution.startExecution')}
             </Text>
           </View>
         </Button>
@@ -239,7 +230,7 @@ const ExecutionControls = React.memo(function ExecutionControls({
               <View style={styles.buttonContent}>
                 <Ionicons name="play" size={18} color={colors.primary[500]} />
                 <Text variant="body" weight="medium" style={{ color: colors.primary[500], marginLeft: 6 }}>
-                  Retomar
+                  {t('workOrders.detail.execution.resume')}
                 </Text>
               </View>
             </Button>
@@ -248,7 +239,7 @@ const ExecutionControls = React.memo(function ExecutionControls({
               <View style={styles.buttonContent}>
                 <Ionicons name="pause" size={18} color={colors.warning[500]} />
                 <Text variant="body" weight="medium" style={{ color: colors.warning[500], marginLeft: 6 }}>
-                  Pausar
+                  {t('workOrders.detail.execution.pause')}
                 </Text>
               </View>
             </Button>
@@ -259,7 +250,7 @@ const ExecutionControls = React.memo(function ExecutionControls({
             <View style={styles.buttonContent}>
               <Ionicons name="checkmark-circle" size={18} color="#FFF" />
               <Text variant="body" weight="semibold" style={{ color: '#FFF', marginLeft: 6 }}>
-                Concluir
+                {t('workOrders.detail.execution.complete')}
               </Text>
             </View>
           </Button>
@@ -279,7 +270,7 @@ const ExecutionControls = React.memo(function ExecutionControls({
             <Ionicons name="cloud-upload-outline" size={14} color={colors.warning[600]} />
           )}
           <Text variant="caption" style={{ color: colors.warning[600], marginLeft: 4 }}>
-            {isSyncing ? 'Sincronizando...' : 'Dados pendentes - toque para sincronizar'}
+            {isSyncing ? t('workOrders.detail.execution.syncing') : t('workOrders.detail.execution.pendingDataTapToSync')}
           </Text>
         </TouchableOpacity>
       )}
@@ -295,10 +286,12 @@ function PauseReasonModal({
   visible,
   onClose,
   onConfirm,
+  t,
 }: {
   visible: boolean;
   onClose: () => void;
   onConfirm: (reason: PauseReasonValue, notes?: string) => void;
+  t: (key: string) => string;
 }) {
   const colors = useColors();
   const spacing = useSpacing();
@@ -318,7 +311,7 @@ function PauseReasonModal({
       <View style={styles.modalOverlay}>
         <View style={[styles.modalContent, { backgroundColor: colors.background.primary }]}>
           <Text variant="h4" weight="semibold" style={styles.modalTitle}>
-            Motivo da Pausa
+            {t('workOrders.detail.pauseModal.title')}
           </Text>
 
           <ScrollView style={styles.reasonsList}>
@@ -355,7 +348,7 @@ function PauseReasonModal({
 
           {selectedReason === 'other' && (
             <TextInput
-              placeholder="Descreva o motivo..."
+              placeholder={t('workOrders.detail.pauseModal.describeMotive')}
               value={notes}
               onChangeText={setNotes}
               style={[
@@ -373,7 +366,7 @@ function PauseReasonModal({
 
           <View style={styles.modalButtons}>
             <Button variant="ghost" onPress={onClose} style={{ flex: 1 }}>
-              Cancelar
+              {t('common.cancel')}
             </Button>
             <Button
               variant="primary"
@@ -381,7 +374,7 @@ function PauseReasonModal({
               disabled={!selectedReason}
               style={{ flex: 1 }}
             >
-              Confirmar
+              {t('common.confirm')}
             </Button>
           </View>
         </View>
@@ -1720,6 +1713,8 @@ export default function WorkOrderDetailScreen() {
   const colors = useColors();
   const spacing = useSpacing();
   const { user } = useAuth();
+  const { t } = useTranslation();
+  const { locale } = useLocale();
 
   // State
   const [activeTab, setActiveTab] = useState<TabKey>('info');
@@ -1740,13 +1735,30 @@ export default function WorkOrderDetailScreen() {
 
   const timer = useExecutionTimer(executionState);
 
+  // Dynamic status config based on current locale
+  const STATUS_CONFIG = useMemo(() => ({
+    SCHEDULED: { color: 'primary', label: t('workOrders.detail.statuses.scheduled'), icon: 'calendar' },
+    IN_PROGRESS: { color: 'warning', label: t('workOrders.detail.statuses.inProgress'), icon: 'play-circle' },
+    DONE: { color: 'success', label: t('workOrders.detail.statuses.done'), icon: 'checkmark-circle' },
+    CANCELED: { color: 'error', label: t('workOrders.detail.statuses.canceled'), icon: 'close-circle' },
+  }), [t, locale]);
+
+  // Dynamic tabs based on current locale
+  const TABS = useMemo(() => [
+    { key: 'info', label: t('workOrders.detail.tabs.info'), icon: 'information-circle-outline' },
+    { key: 'checklists', label: t('workOrders.detail.tabs.checklists'), icon: 'checkbox-outline' },
+    { key: 'attachments', label: t('workOrders.detail.tabs.attachments'), icon: 'attach-outline' },
+    { key: 'signature', label: t('workOrders.detail.tabs.signature'), icon: 'pencil-outline' },
+    { key: 'history', label: t('workOrders.detail.tabs.history'), icon: 'time-outline' },
+  ] as const, [t, locale]);
+
   // Handlers
   const handleStart = useCallback(async () => {
     const success = await actions.start({ syncChecklistsFirst: true });
     if (!success) {
-      Alert.alert('Erro', 'Não foi possível iniciar a execução');
+      Alert.alert(t('common.error'), t('workOrders.detail.alerts.couldNotStart'));
     }
-  }, [actions]);
+  }, [actions, t]);
 
   const handlePause = useCallback(() => {
     setPauseModalVisible(true);
@@ -1757,72 +1769,72 @@ export default function WorkOrderDetailScreen() {
       setPauseModalVisible(false);
       const success = await actions.pause(reason, notes);
       if (!success) {
-        Alert.alert('Erro', 'Não foi possível pausar a execução');
+        Alert.alert(t('common.error'), t('workOrders.detail.alerts.couldNotPause'));
       }
     },
-    [actions]
+    [actions, t]
   );
 
   const handleResume = useCallback(async () => {
     const success = await actions.resume();
     if (!success) {
-      Alert.alert('Erro', 'Não foi possível retomar a execução');
+      Alert.alert(t('common.error'), t('workOrders.detail.alerts.couldNotResume'));
     }
-  }, [actions]);
+  }, [actions, t]);
 
   const handleComplete = useCallback(async () => {
     Alert.alert(
-      'Concluir OS',
-      'Deseja concluir esta ordem de serviço?',
+      t('workOrders.detail.execution.complete'),
+      t('workOrders.detail.alerts.completeConfirm'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Concluir',
+          text: t('workOrders.detail.execution.complete'),
           onPress: async () => {
             const result = await actions.complete({ syncPendingFirst: true });
             if (result.success) {
-              Alert.alert('Sucesso', 'Ordem de serviço concluída');
+              Alert.alert(t('common.success'), t('workOrders.detail.alerts.completeSuccess'));
             } else {
-              Alert.alert('Erro', result.error || 'Não foi possível concluir a OS');
+              Alert.alert(t('common.error'), result.error || t('workOrders.detail.alerts.couldNotComplete'));
             }
           },
         },
       ],
       { cancelable: true }
     );
-  }, [actions]);
+  }, [actions, t]);
 
   // Handler para reabrir OS concluída
   const handleReopen = useCallback(async () => {
     Alert.alert(
-      'Reabrir OS',
-      'Deseja reabrir esta ordem de serviço para continuar editando?',
+      t('workOrders.detail.execution.reopenWO'),
+      t('workOrders.detail.alerts.reopenConfirm'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Reabrir',
+          text: t('workOrders.detail.checklists.reopen'),
           onPress: async () => {
             try {
               const success = await actions.start({ syncChecklistsFirst: false });
               if (success) {
-                Alert.alert('Sucesso', 'Ordem de serviço reaberta');
+                Alert.alert(t('common.success'), t('workOrders.detail.alerts.reopenSuccess'));
               } else {
-                Alert.alert('Erro', 'Não foi possível reabrir a OS');
+                Alert.alert(t('common.error'), t('workOrders.detail.alerts.couldNotReopen'));
               }
             } catch (err) {
-              Alert.alert('Erro', err instanceof Error ? err.message : 'Erro ao reabrir');
+              Alert.alert(t('common.error'), err instanceof Error ? err.message : t('workOrders.detail.alerts.couldNotReopen'));
             }
           },
         },
       ],
       { cancelable: true }
     );
-  }, [actions]);
+  }, [actions, t]);
 
   // Handler para compartilhar via WhatsApp
   const handleShareWhatsApp = useCallback(async () => {
     if (!workOrder || !workOrder.clientPhone) {
-      Alert.alert('Erro', 'Cliente não possui telefone cadastrado');
+      Alert.alert(t('common.error'), t('workOrders.detail.alerts.noClientPhone'));
       return;
     }
 
@@ -1831,16 +1843,16 @@ export default function WorkOrderDetailScreen() {
       await ShareService.shareWorkOrderViaWhatsApp(
         workOrder.id,
         workOrder.clientPhone,
-        workOrder.clientName || 'Cliente',
+        workOrder.clientName || t('workOrders.detail.info.client'),
         workOrder.title,
       );
     } catch (error: any) {
       console.error('[WorkOrderDetail] Error sharing:', error);
-      Alert.alert('Erro', error.message || 'Erro ao compartilhar ordem de serviço');
+      Alert.alert(t('common.error'), error.message || t('workOrders.detail.alerts.shareError'));
     } finally {
       setIsSharing(false);
     }
-  }, [workOrder]);
+  }, [workOrder, t]);
 
   // Handler para criar cobrança a partir da OS
   const handleCreateCharge = useCallback(() => {
@@ -1956,20 +1968,20 @@ export default function WorkOrderDetailScreen() {
       const stillPendingUploads = await ChecklistSyncService.countPendingUploadsByWorkOrder(id);
 
       if (stillPendingAnswers === 0 && stillPendingUploads === 0) {
-        Alert.alert('Sucesso', 'Todos os dados foram sincronizados!');
+        Alert.alert(t('common.success'), t('workOrders.detail.alerts.syncSuccess'));
       } else if (failCount > 0 || stillPendingAnswers > 0 || stillPendingUploads > 0) {
         const pendingMsg = [];
         if (stillPendingAnswers > 0) pendingMsg.push(`${stillPendingAnswers} resposta(s)`);
         if (stillPendingUploads > 0) pendingMsg.push(`${stillPendingUploads} anexo(s)`);
-        Alert.alert('Parcial', `Ainda pendente: ${pendingMsg.join(', ')}`);
+        Alert.alert(t('common.warning'), t('workOrders.detail.alerts.syncPartial', { pending: pendingMsg.join(', ') }));
       }
     } catch (err) {
       console.error('[WorkOrderDetail] Retry sync error:', err);
-      Alert.alert('Erro', 'Falha ao sincronizar. Verifique sua conexão.');
+      Alert.alert(t('common.error'), t('workOrders.detail.alerts.syncFailed'));
     } finally {
       setIsSyncing(false);
     }
-  }, [id, isSyncing, actions]);
+  }, [id, isSyncing, actions, t]);
 
   // Status config
   const statusConfig = workOrder ? STATUS_CONFIG[workOrder.status] : null;
@@ -2005,7 +2017,7 @@ export default function WorkOrderDetailScreen() {
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
         <View style={styles.loadingContainer}>
           <Text variant="body" color="secondary">
-            Carregando...
+            {t('common.loading')}
           </Text>
         </View>
       </SafeAreaView>
@@ -2019,10 +2031,10 @@ export default function WorkOrderDetailScreen() {
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={48} color={colors.error[500]} />
           <Text variant="body" color="error" style={{ marginTop: spacing[2] }}>
-            {error || 'Ordem de serviço não encontrada'}
+            {error || t('workOrders.detail.alerts.workOrderNotFound')}
           </Text>
           <Button variant="ghost" onPress={() => router.back()} style={{ marginTop: spacing[4] }}>
-            Voltar
+            {t('common.back')}
           </Button>
         </View>
       </SafeAreaView>
@@ -2049,7 +2061,7 @@ export default function WorkOrderDetailScreen() {
       </View>
 
       {/* Timer (quando em execução) */}
-      <ExecutionTimerDisplay timer={timer} />
+      <ExecutionTimerDisplay timer={timer} t={t} />
 
       {/* Tabs - ScrollView horizontal para caber em telas menores */}
       <View style={[styles.tabsContainer, { borderBottomColor: colors.border.light }]}>
@@ -2111,6 +2123,7 @@ export default function WorkOrderDetailScreen() {
         onRetrySync={handleRetrySync}
         onShareWhatsApp={handleShareWhatsApp}
         onCreateCharge={handleCreateCharge}
+        t={t}
       />
 
       {/* Pause Reason Modal */}
@@ -2118,6 +2131,7 @@ export default function WorkOrderDetailScreen() {
         visible={pauseModalVisible}
         onClose={() => setPauseModalVisible(false)}
         onConfirm={handlePauseConfirm}
+        t={t}
       />
     </SafeAreaView>
   );

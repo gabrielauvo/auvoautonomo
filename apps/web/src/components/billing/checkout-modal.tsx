@@ -42,6 +42,7 @@ import {
   type GatewayInfo,
   PRO_PLAN_PRICING,
 } from '@/services/billing.service';
+import { useAuth } from '@/context';
 import { cn } from '@/lib/utils';
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -67,6 +68,7 @@ export function CheckoutModal({
   billingPeriod = 'MONTHLY',
   country = 'BR',
 }: CheckoutModalProps) {
+  const { user } = useAuth();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('pix');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -225,6 +227,8 @@ export function CheckoutModal({
       const result = await createStripeCheckout({
         billingPeriod,
         country,
+        name: user?.name || user?.email || '',
+        email: user?.email || '',
         successUrl: `${window.location.origin}/settings/plan?success=true`,
         cancelUrl: `${window.location.origin}/settings/plan?canceled=true`,
       });

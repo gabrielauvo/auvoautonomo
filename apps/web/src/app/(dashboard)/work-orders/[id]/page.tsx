@@ -15,6 +15,7 @@
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { useTranslations } from '@/i18n';
 import {
   ChevronLeft,
@@ -479,7 +480,7 @@ export default function WorkOrderDetailsPage() {
 
     // Verifica se o cliente tem email
     if (!workOrder.client?.email) {
-      alert(t('clientHasNoEmail'));
+      toast.error(t('clientHasNoEmail'));
       return;
     }
 
@@ -487,9 +488,13 @@ export default function WorkOrderDetailsPage() {
     try {
       await sendEmail.mutateAsync(workOrder.id);
       refetch();
-      alert(t('emailSentSuccessfully'));
+      toast.success(t('emailSentSuccessfully'), {
+        description: t('emailSentToClient', { email: workOrder.client.email }),
+      });
     } catch (error) {
-      alert(error instanceof Error ? error.message : t('emailSendError'));
+      toast.error(t('emailSendError'), {
+        description: error instanceof Error ? error.message : undefined,
+      });
     } finally {
       setIsSendingEmail(false);
     }

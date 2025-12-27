@@ -401,7 +401,8 @@
       "Bash(git commit -m \"$\\(cat <<''EOF''\nfix\\(mobile\\): fix Regional Settings screen not loading data\n\n- Fix API_URL configuration using process.env.EXPO_PUBLIC_API_URL\n- Add timezone parsing to transform backend string[] to TimezoneInfo[]\n- Add formatTimezoneName and getTimezoneOffset helper functions\n- Add debug logging to track API calls for countries/currencies\n- Add EXPO_PUBLIC_WEB_URL to eas.json for preview and production\n- Fix ShareService to use environment variables instead of Constants\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat\\(mobile\\): add reports screen with i18n support\n\nAdd Reports screen matching the web version with full i18n translations.\nIncludes KPIs, revenue vs expenses, expenses summary, and period filtering.\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(npm run email:preview:*)",
-      "Bash(npm run email:test:*)"
+      "Bash(npm run email:test:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat\\(billing\\): add dynamic pricing based on user locale\n\n- Detect country from locale \\(pt-BR=BR, en-US=US, es=MX\\)\n- Fetch pricing from backend via getGatewayInfo API\n- Display prices in correct currency format\n- Pass country to CheckoutModal for correct gateway selection\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
     ]
   }
 }

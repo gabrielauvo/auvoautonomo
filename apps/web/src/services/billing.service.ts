@@ -194,6 +194,8 @@ export interface StripeCheckoutResult {
 export interface StripeCheckoutDto {
   billingPeriod: BillingPeriod;
   country: string;
+  name: string;
+  email: string;
   successUrl?: string;
   cancelUrl?: string;
 }
@@ -287,6 +289,8 @@ export async function createStripeCheckout(data: StripeCheckoutDto): Promise<Str
     const response = await api.post<StripeCheckoutResult>('/billing/checkout/stripe', {
       billingPeriod: data.billingPeriod,
       country: data.country,
+      name: data.name,
+      email: data.email,
       successUrl: data.successUrl || `${window.location.origin}/settings/plan?success=true`,
       cancelUrl: data.cancelUrl || `${window.location.origin}/settings/plan?canceled=true`,
     });

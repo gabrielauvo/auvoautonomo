@@ -15,6 +15,7 @@
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import {
   ChevronLeft,
   Edit,
@@ -148,16 +149,20 @@ export default function ChargeDetailsPage() {
 
     // Verifica se o cliente tem email
     if (!charge.client?.email) {
-      alert(t('clientHasNoEmail'));
+      toast.error(t('clientHasNoEmail'));
       return;
     }
 
     try {
       await sendEmail.mutateAsync(charge.id);
       refetch();
-      alert(t('emailSentSuccessfully'));
+      toast.success(t('emailSentSuccessfully'), {
+        description: t('emailSentToClient', { email: charge.client.email }),
+      });
     } catch (error) {
-      alert(error instanceof Error ? error.message : t('emailSendError'));
+      toast.error(t('emailSendError'), {
+        description: error instanceof Error ? error.message : undefined,
+      });
     }
   };
 

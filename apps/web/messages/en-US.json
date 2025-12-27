@@ -536,6 +536,7 @@
     "item": "Item",
     "clientHasNoEmail": "Client does not have an email address",
     "emailSentSuccessfully": "Email sent successfully!",
+    "emailSentToClient": "Sent to {email}",
     "emailSendError": "Error sending email. Please try again.",
     "quoteNotFound": "Quote not found",
     "actionCannotBeUndone": "This action cannot be undone."
@@ -638,6 +639,7 @@
     "discount": "Discount",
     "clientHasNoEmail": "Client does not have an email address",
     "emailSentSuccessfully": "Email sent successfully!",
+    "emailSentToClient": "Sent to {email}",
     "emailSendError": "Error sending email. Please try again."
   },
   "schedule": {
@@ -1003,6 +1005,7 @@
     "sendEmail": "Send by Email",
     "clientHasNoEmail": "Client does not have an email address",
     "emailSentSuccessfully": "Email sent successfully!",
+    "emailSentToClient": "Sent to {email}",
     "emailSendError": "Error sending email. Please try again.",
     "registerPayment": "Register Payment",
     "cancelCharge": "Cancel Charge",

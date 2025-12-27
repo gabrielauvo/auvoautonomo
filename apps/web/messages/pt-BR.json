@@ -537,6 +537,7 @@
     "item": "Item",
     "clientHasNoEmail": "Cliente não possui email cadastrado",
     "emailSentSuccessfully": "Email enviado com sucesso!",
+    "emailSentToClient": "Enviado para {email}",
     "emailSendError": "Erro ao enviar email. Tente novamente.",
     "quoteNotFound": "Orçamento não encontrado",
     "actionCannotBeUndone": "Esta ação não pode ser desfeita."
@@ -649,6 +650,7 @@
     "discount": "Desconto",
     "clientHasNoEmail": "Cliente não possui email cadastrado",
     "emailSentSuccessfully": "Email enviado com sucesso!",
+    "emailSentToClient": "Enviado para {email}",
     "emailSendError": "Erro ao enviar email. Tente novamente."
   },
   "schedule": {
@@ -1014,6 +1016,7 @@
     "sendEmail": "Enviar por Email",
     "clientHasNoEmail": "Cliente não possui email cadastrado",
     "emailSentSuccessfully": "Email enviado com sucesso!",
+    "emailSentToClient": "Enviado para {email}",
     "emailSendError": "Erro ao enviar email. Tente novamente.",
     "registerPayment": "Registrar Pagamento",
     "cancelCharge": "Cancelar Cobrança",

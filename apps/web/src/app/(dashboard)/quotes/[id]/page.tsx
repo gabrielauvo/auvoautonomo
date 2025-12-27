@@ -12,6 +12,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { AppLayout } from '@/components/layout';
 import { QuoteStatusBadge, QuoteItemsTable } from '@/components/quotes';
 import {
@@ -205,7 +206,7 @@ export default function QuoteDetailsPage({ params }: QuoteDetailsPageProps) {
 
     // Verifica se o cliente tem email
     if (!quote.client?.email) {
-      alert(t('clientHasNoEmail'));
+      toast.error(t('clientHasNoEmail'));
       return;
     }
 
@@ -213,9 +214,13 @@ export default function QuoteDetailsPage({ params }: QuoteDetailsPageProps) {
     try {
       await sendEmail.mutateAsync(id);
       refetch();
-      alert(t('emailSentSuccessfully'));
+      toast.success(t('emailSentSuccessfully'), {
+        description: t('emailSentToClient', { email: quote.client.email }),
+      });
     } catch (error) {
-      alert(error instanceof Error ? error.message : t('emailSendError'));
+      toast.error(t('emailSendError'), {
+        description: error instanceof Error ? error.message : undefined,
+      });
     } finally {
       setActionLoading(null);
     }

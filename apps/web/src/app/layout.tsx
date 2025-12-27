@@ -4,6 +4,7 @@ import './globals.css';
 import { AuthProvider, QueryProvider, ThemeProvider, CompanySettingsProvider } from '@/context';
 import { TranslationsProvider } from '@/i18n';
 import { ProgressBar } from '@/components/ui';
+import { Toaster } from 'sonner';
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' });
 
@@ -88,6 +89,17 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider>
           <ProgressBar />
+          <Toaster
+            position="top-center"
+            richColors
+            closeButton
+            toastOptions={{
+              duration: 4000,
+              style: {
+                fontSize: '14px',
+              },
+            }}
+          />
           <QueryProvider>
             <AuthProvider>
               <CompanySettingsProvider>

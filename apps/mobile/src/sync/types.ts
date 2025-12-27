@@ -18,8 +18,8 @@ export interface SyncEntityConfig<T> {
   /** Endpoint da API para buscar dados */
   apiEndpoint: string;
 
-  /** Endpoint da API para enviar mutações */
-  apiMutationEndpoint: string;
+  /** Endpoint da API para enviar mutações (opcional para entidades read-only) */
+  apiMutationEndpoint?: string;
 
   /** Campo usado para delta sync (geralmente 'updatedAt') */
   cursorField: keyof T;

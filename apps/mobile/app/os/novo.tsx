@@ -37,6 +37,7 @@ import { findAll, findById } from '../../src/db/database';
 import { ChecklistInstanceRepository } from '../../src/modules/checklists/repositories/ChecklistInstanceRepository';
 import { useAuth } from '../../src/services/AuthProvider';
 import { getActiveWorkOrderTypes } from '../../src/modules/workorders/WorkOrderTypeSyncConfig';
+import { useTranslation, useLocale } from '../../src/i18n';
 
 // =============================================================================
 // TYPES
@@ -94,6 +95,7 @@ const ClientSelectionModal = React.memo(function ClientSelectionModal({
 }) {
   const colors = useColors();
   const spacing = useSpacing();
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -130,7 +132,7 @@ const ClientSelectionModal = React.memo(function ClientSelectionModal({
           <TouchableOpacity onPress={onClose} style={styles.modalCloseButton}>
             <Ionicons name="close" size={24} color={colors.text.primary} />
           </TouchableOpacity>
-          <Text variant="h4" weight="semibold">Selecionar Cliente</Text>
+          <Text variant="h4" weight="semibold">{t('workOrders.selectClient')}</Text>
           <View style={{ width: 40 }} />
         </View>
 
@@ -140,7 +142,7 @@ const ClientSelectionModal = React.memo(function ClientSelectionModal({
             <Ionicons name="search" size={20} color={colors.text.tertiary} />
             <TextInput
               style={[styles.searchInput, { color: colors.text.primary }]}
-              placeholder="Buscar cliente..."
+              placeholder={t('workOrders.searchClient')}
               placeholderTextColor={colors.text.tertiary}
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -161,7 +163,7 @@ const ClientSelectionModal = React.memo(function ClientSelectionModal({
         >
           <Ionicons name="add-circle-outline" size={24} color={colors.primary[500]} />
           <Text variant="body" weight="medium" style={{ color: colors.primary[500], marginLeft: 8 }}>
-            Criar novo cliente
+            {t('workOrders.createNewClient')}
           </Text>
         </TouchableOpacity>
 
@@ -169,11 +171,11 @@ const ClientSelectionModal = React.memo(function ClientSelectionModal({
         <ScrollView style={styles.clientList} contentContainerStyle={{ paddingHorizontal: spacing[4] }}>
           {isLoading ? (
             <Text variant="body" color="secondary" style={{ textAlign: 'center', marginTop: 20 }}>
-              Carregando...
+              {t('common.loading')}
             </Text>
           ) : clients.length === 0 ? (
             <Text variant="body" color="secondary" style={{ textAlign: 'center', marginTop: 20 }}>
-              {searchQuery ? 'Nenhum cliente encontrado' : 'Nenhum cliente cadastrado'}
+              {searchQuery ? t('workOrders.noClientFound') : t('workOrders.noClientsRegistered')}
             </Text>
           ) : (
             clients.map((client) => (
@@ -219,6 +221,7 @@ const QuickCreateClientModal = React.memo(function QuickCreateClientModal({
 }) {
   const colors = useColors();
   const spacing = useSpacing();
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
@@ -231,7 +234,7 @@ const QuickCreateClientModal = React.memo(function QuickCreateClientModal({
     }
 
     if (!name.trim()) {
-      Alert.alert('Erro', 'Nome do cliente é obrigatório');
+      Alert.alert(t('common.error'), t('workOrders.clientNameRequired'));
       return;
     }
 
@@ -249,7 +252,7 @@ const QuickCreateClientModal = React.memo(function QuickCreateClientModal({
       setAddress('');
     } catch (err) {
       console.error('[QuickCreateClientModal] Error:', err);
-      Alert.alert('Erro', 'Não foi possível criar o cliente');
+      Alert.alert(t('common.error'), t('workOrders.couldNotCreateClient'));
     } finally {
       setIsCreating(false);
     }
@@ -264,7 +267,7 @@ const QuickCreateClientModal = React.memo(function QuickCreateClientModal({
         >
           <View style={[styles.quickCreateContent, { backgroundColor: colors.background.primary }]}>
             <View style={styles.quickCreateHeader}>
-              <Text variant="h4" weight="semibold">Novo Cliente</Text>
+              <Text variant="h4" weight="semibold">{t('workOrders.newClient')}</Text>
               <TouchableOpacity onPress={onClose}>
                 <Ionicons name="close" size={24} color={colors.text.primary} />
               </TouchableOpacity>
@@ -273,11 +276,11 @@ const QuickCreateClientModal = React.memo(function QuickCreateClientModal({
             <View style={styles.quickCreateForm}>
               <View style={styles.formField}>
                 <Text variant="caption" weight="medium" color="secondary" style={styles.fieldLabel}>
-                  Nome *
+                  {t('clients.name')} *
                 </Text>
                 <TextInput
                   style={[styles.textInput, { backgroundColor: colors.background.secondary, borderColor: colors.border.light, color: colors.text.primary }]}
-                  placeholder="Nome do cliente"
+                  placeholder={t('clients.clientName')}
                   placeholderTextColor={colors.text.tertiary}
                   value={name}
                   onChangeText={setName}
@@ -287,7 +290,7 @@ const QuickCreateClientModal = React.memo(function QuickCreateClientModal({
 
               <View style={styles.formField}>
                 <Text variant="caption" weight="medium" color="secondary" style={styles.fieldLabel}>
-                  Telefone
+                  {t('clients.phone')}
                 </Text>
                 <TextInput
                   style={[styles.textInput, { backgroundColor: colors.background.secondary, borderColor: colors.border.light, color: colors.text.primary }]}
@@ -301,11 +304,11 @@ const QuickCreateClientModal = React.memo(function QuickCreateClientModal({
 
               <View style={styles.formField}>
                 <Text variant="caption" weight="medium" color="secondary" style={styles.fieldLabel}>
-                  Endereço
+                  {t('clients.address')}
                 </Text>
                 <TextInput
                   style={[styles.textInput, { backgroundColor: colors.background.secondary, borderColor: colors.border.light, color: colors.text.primary }]}
-                  placeholder="Endereço do cliente"
+                  placeholder={t('clients.clientAddress')}
                   placeholderTextColor={colors.text.tertiary}
                   value={address}
                   onChangeText={setAddress}
@@ -315,7 +318,7 @@ const QuickCreateClientModal = React.memo(function QuickCreateClientModal({
 
             <View style={styles.quickCreateButtons}>
               <Button variant="ghost" onPress={onClose} style={{ flex: 1 }}>
-                Cancelar
+                {t('common.cancel')}
               </Button>
               <Button
                 variant="primary"
@@ -323,7 +326,7 @@ const QuickCreateClientModal = React.memo(function QuickCreateClientModal({
                 disabled={isCreating || !name.trim()}
                 style={{ flex: 1 }}
               >
-                {isCreating ? 'Criando...' : 'Criar Cliente'}
+                {isCreating ? t('common.creating') : t('workOrders.createClient')}
               </Button>
             </View>
           </View>
@@ -350,6 +353,7 @@ const ChecklistSelectionModal = React.memo(function ChecklistSelectionModal({
 }) {
   const colors = useColors();
   const spacing = useSpacing();
+  const { t } = useTranslation();
   const [templates, setTemplates] = useState<ChecklistTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -433,10 +437,10 @@ const ChecklistSelectionModal = React.memo(function ChecklistSelectionModal({
           <TouchableOpacity onPress={onClose} style={styles.modalCloseButton}>
             <Ionicons name="close" size={24} color={colors.text.primary} />
           </TouchableOpacity>
-          <Text variant="h4" weight="semibold">Checklists</Text>
+          <Text variant="h4" weight="semibold">{t('workOrders.checklists')}</Text>
           <TouchableOpacity onPress={onClose}>
             <Text variant="body" weight="medium" style={{ color: colors.primary[500] }}>
-              Pronto
+              {t('common.done')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -445,13 +449,13 @@ const ChecklistSelectionModal = React.memo(function ChecklistSelectionModal({
         <ScrollView style={styles.clientList} contentContainerStyle={{ padding: spacing[4] }}>
           {isLoading ? (
             <Text variant="body" color="secondary" style={{ textAlign: 'center', marginTop: 20 }}>
-              Carregando checklists...
+              {t('workOrders.loadingChecklists')}
             </Text>
           ) : templates.length === 0 ? (
             <View style={styles.emptyState}>
               <Ionicons name="checkbox-outline" size={48} color={colors.text.tertiary} />
               <Text variant="body" color="secondary" style={{ textAlign: 'center', marginTop: 12 }}>
-                Nenhum checklist cadastrado.{'\n'}Cadastre checklists no painel web.
+                {t('workOrders.noChecklistsRegistered')}
               </Text>
             </View>
           ) : (
@@ -489,14 +493,14 @@ const ChecklistSelectionModal = React.memo(function ChecklistSelectionModal({
                       </Text>
                     )}
                     <Text variant="caption" color="tertiary">
-                      {questionsCount} pergunta{questionsCount !== 1 ? 's' : ''}
+                      {t('workOrders.questionCount', { count: questionsCount })}
                     </Text>
                   </View>
                   <View style={[
                     styles.checkbox,
                     {
                       backgroundColor: isSelected ? colors.primary[500] : 'transparent',
-                      borderColor: isSelected ? colors.primary[500] : colors.border.medium,
+                      borderColor: isSelected ? colors.primary[500] : colors.border.default,
                     },
                   ]}>
                     {isSelected && <Ionicons name="checkmark" size={16} color="#FFF" />}
@@ -511,7 +515,7 @@ const ChecklistSelectionModal = React.memo(function ChecklistSelectionModal({
         {selectedIds.length > 0 && (
           <View style={[styles.selectionFooter, { backgroundColor: colors.background.secondary, borderTopColor: colors.border.light }]}>
             <Text variant="body" color="secondary">
-              {selectedIds.length} checklist{selectedIds.length !== 1 ? 's' : ''} selecionado{selectedIds.length !== 1 ? 's' : ''}
+              {t('workOrders.checklistsSelected', { count: selectedIds.length })}
             </Text>
           </View>
         )}
@@ -537,6 +541,7 @@ const WorkOrderTypeSelectionModal = React.memo(function WorkOrderTypeSelectionMo
 }) {
   const colors = useColors();
   const spacing = useSpacing();
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [types, setTypes] = useState<WorkOrderType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -574,7 +579,7 @@ const WorkOrderTypeSelectionModal = React.memo(function WorkOrderTypeSelectionMo
           <TouchableOpacity onPress={onClose} style={styles.modalCloseButton}>
             <Ionicons name="close" size={24} color={colors.text.primary} />
           </TouchableOpacity>
-          <Text variant="h4" weight="semibold">Tipo de OS</Text>
+          <Text variant="h4" weight="semibold">{t('workOrders.workOrderType')}</Text>
           <View style={{ width: 40 }} />
         </View>
 
@@ -582,13 +587,13 @@ const WorkOrderTypeSelectionModal = React.memo(function WorkOrderTypeSelectionMo
         <ScrollView style={styles.clientList} contentContainerStyle={{ padding: spacing[4] }}>
           {isLoading ? (
             <Text variant="body" color="secondary" style={{ textAlign: 'center', marginTop: 20 }}>
-              Carregando tipos...
+              {t('workOrders.loadingTypes')}
             </Text>
           ) : types.length === 0 ? (
             <View style={styles.emptyState}>
               <Ionicons name="pricetag-outline" size={48} color={colors.text.tertiary} />
               <Text variant="body" color="secondary" style={{ textAlign: 'center', marginTop: 12 }}>
-                Nenhum tipo de OS cadastrado.{'\n'}Cadastre tipos no painel web.
+                {t('workOrders.noTypesRegistered')}
               </Text>
             </View>
           ) : (
@@ -606,8 +611,8 @@ const WorkOrderTypeSelectionModal = React.memo(function WorkOrderTypeSelectionMo
               >
                 <View style={[styles.typeColorDot, { backgroundColor: colors.text.tertiary }]} />
                 <View style={styles.typeItemContent}>
-                  <Text variant="body" weight="medium">Sem tipo definido</Text>
-                  <Text variant="caption" color="secondary">Não classificar esta OS</Text>
+                  <Text variant="body" weight="medium">{t('workOrders.noTypeDefined')}</Text>
+                  <Text variant="caption" color="secondary">{t('workOrders.doNotClassify')}</Text>
                 </View>
                 {!selectedTypeId && (
                   <Ionicons name="checkmark-circle" size={24} color={colors.primary[500]} />
@@ -668,6 +673,7 @@ const ItemSelectionModal = React.memo(function ItemSelectionModal({
 }) {
   const colors = useColors();
   const spacing = useSpacing();
+  const { t } = useTranslation();
   const [catalogItems, setCatalogItems] = useState<CatalogItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -799,11 +805,11 @@ const ItemSelectionModal = React.memo(function ItemSelectionModal({
   const getTypeLabel = (type: string) => {
     switch (type) {
       case 'PRODUCT':
-        return 'Produto';
+        return t('catalog.product');
       case 'SERVICE':
-        return 'Serviço';
+        return t('catalog.service');
       case 'BUNDLE':
-        return 'Kit';
+        return t('catalog.bundle');
       default:
         return type;
     }
@@ -828,10 +834,10 @@ const ItemSelectionModal = React.memo(function ItemSelectionModal({
           <TouchableOpacity onPress={onClose} style={styles.modalCloseButton}>
             <Ionicons name="close" size={24} color={colors.text.primary} />
           </TouchableOpacity>
-          <Text variant="h4" weight="semibold">Itens do Catálogo</Text>
+          <Text variant="h4" weight="semibold">{t('catalog.catalogItems')}</Text>
           <TouchableOpacity onPress={onClose}>
             <Text variant="body" weight="medium" style={{ color: colors.primary[500] }}>
-              Pronto
+              {t('common.done')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -842,7 +848,7 @@ const ItemSelectionModal = React.memo(function ItemSelectionModal({
             <Ionicons name="search" size={20} color={colors.text.tertiary} />
             <TextInput
               style={[styles.searchInput, { color: colors.text.primary }]}
-              placeholder="Buscar item..."
+              placeholder={t('catalog.searchItem')}
               placeholderTextColor={colors.text.tertiary}
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -873,7 +879,7 @@ const ItemSelectionModal = React.memo(function ItemSelectionModal({
                 variant="caption"
                 style={{ color: typeFilter === type ? '#FFFFFF' : colors.text.secondary }}
               >
-                {type === 'ALL' ? 'Todos' : getTypeLabel(type)}
+                {type === 'ALL' ? t('common.all') : getTypeLabel(type)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -883,15 +889,15 @@ const ItemSelectionModal = React.memo(function ItemSelectionModal({
         <ScrollView style={styles.clientList} contentContainerStyle={{ padding: spacing[4] }}>
           {isLoading ? (
             <Text variant="body" color="secondary" style={{ textAlign: 'center', marginTop: 20 }}>
-              Carregando itens...
+              {t('catalog.loadingItems')}
             </Text>
           ) : catalogItems.length === 0 ? (
             <View style={styles.emptyState}>
               <Ionicons name="cube-outline" size={48} color={colors.text.tertiary} />
               <Text variant="body" color="secondary" style={{ textAlign: 'center', marginTop: 12 }}>
                 {searchQuery
-                  ? 'Nenhum item encontrado'
-                  : 'Nenhum item no catálogo local.\n\nCadastre itens no painel web e sincronize o app quando estiver online.'}
+                  ? t('catalog.noItemFound')
+                  : t('catalog.noCatalogItems')}
               </Text>
             </View>
           ) : (
@@ -933,7 +939,7 @@ const ItemSelectionModal = React.memo(function ItemSelectionModal({
                       styles.checkbox,
                       {
                         backgroundColor: isSelected ? colors.primary[500] : 'transparent',
-                        borderColor: isSelected ? colors.primary[500] : colors.border.medium,
+                        borderColor: isSelected ? colors.primary[500] : colors.border.default,
                       },
                     ]}>
                       {isSelected && <Ionicons name="checkmark" size={16} color="#FFF" />}
@@ -943,7 +949,7 @@ const ItemSelectionModal = React.memo(function ItemSelectionModal({
                   {/* Quantity controls when selected */}
                   {isSelected && (
                     <View style={[styles.quantityControls, { borderTopColor: colors.border.light }]}>
-                      <Text variant="caption" color="secondary">Quantidade:</Text>
+                      <Text variant="caption" color="secondary">{t('catalog.quantity')}:</Text>
                       <View style={styles.quantityButtons}>
                         <TouchableOpacity
                           style={[styles.qtyButton, { backgroundColor: colors.background.primary, borderColor: colors.border.light }]}
@@ -974,14 +980,14 @@ const ItemSelectionModal = React.memo(function ItemSelectionModal({
           <View style={[styles.itemsFooter, { backgroundColor: colors.background.secondary, borderTopColor: colors.border.light }]}>
             <View>
               <Text variant="caption" color="secondary">
-                {selectedItems.length} ite{selectedItems.length !== 1 ? 'ns' : 'm'} selecionado{selectedItems.length !== 1 ? 's' : ''}
+                {t('catalog.itemsSelected', { count: selectedItems.length })}
               </Text>
               <Text variant="body" weight="semibold" style={{ color: colors.primary[500] }}>
-                Total: {formatPrice(totalValue)}
+                {t('common.total')}: {formatPrice(totalValue)}
               </Text>
             </View>
             <Button variant="primary" size="sm" onPress={onClose}>
-              Confirmar
+              {t('common.confirm')}
             </Button>
           </View>
         )}
@@ -997,6 +1003,8 @@ const ItemSelectionModal = React.memo(function ItemSelectionModal({
 export default function CreateWorkOrderScreen() {
   const colors = useColors();
   const spacing = useSpacing();
+  const { t } = useTranslation();
+  const { locale } = useLocale();
   const { isOnline } = useSyncStatus();
   const { user } = useAuth();
   const params = useLocalSearchParams<{ clientId?: string; clientName?: string }>();
@@ -1132,11 +1140,11 @@ export default function CreateWorkOrderScreen() {
 
     // Validação
     if (!formData.clientId) {
-      Alert.alert('Erro', 'Selecione um cliente');
+      Alert.alert(t('common.error'), t('workOrders.selectClientRequired'));
       return;
     }
     if (!formData.title.trim()) {
-      Alert.alert('Erro', 'Informe o título da OS');
+      Alert.alert(t('common.error'), t('workOrders.titleRequired'));
       return;
     }
 
@@ -1312,15 +1320,15 @@ export default function CreateWorkOrderScreen() {
       }
 
       Alert.alert(
-        'Sucesso',
-        'Ordem de serviço criada com sucesso!',
+        t('common.success'),
+        t('workOrders.workOrderCreated'),
         [
           {
-            text: 'Ver OS',
+            text: t('workOrders.viewWorkOrder'),
             onPress: () => router.replace(`/os/${workOrder.id}`),
           },
           {
-            text: 'Criar outra',
+            text: t('workOrders.createAnother'),
             onPress: () => {
               // Reset form
               setFormData({
@@ -1347,7 +1355,7 @@ export default function CreateWorkOrderScreen() {
       );
     } catch (err) {
       console.error('[CreateWorkOrderScreen] Error:', err);
-      Alert.alert('Erro', 'Não foi possível criar a ordem de serviço');
+      Alert.alert(t('common.error'), t('workOrders.couldNotCreateWorkOrder'));
     } finally {
       setIsSubmitting(false);
     }
@@ -1355,7 +1363,7 @@ export default function CreateWorkOrderScreen() {
 
   // Format helpers
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('pt-BR', {
+    return date.toLocaleDateString(locale, {
       weekday: 'short',
       day: '2-digit',
       month: 'short',
@@ -1364,7 +1372,7 @@ export default function CreateWorkOrderScreen() {
   };
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('pt-BR', {
+    return date.toLocaleTimeString(locale, {
       hour: '2-digit',
       minute: '2-digit',
     });
@@ -1377,10 +1385,10 @@ export default function CreateWorkOrderScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
         </TouchableOpacity>
-        <Text variant="h4" weight="semibold">Nova Ordem de Serviço</Text>
+        <Text variant="h4" weight="semibold">{t('workOrders.newWorkOrder')}</Text>
         <View style={styles.headerRight}>
           {!isOnline && (
-            <Badge variant="warning" size="sm">Offline</Badge>
+            <Badge variant="warning" size="sm">{t('common.offline')}</Badge>
           )}
         </View>
       </View>
@@ -1397,7 +1405,7 @@ export default function CreateWorkOrderScreen() {
           <Card variant="outlined" style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="person-outline" size={20} color={colors.primary[500]} />
-              <Text variant="body" weight="semibold" style={{ marginLeft: 8 }}>Cliente</Text>
+              <Text variant="body" weight="semibold" style={{ marginLeft: 8 }}>{t('workOrders.client')}</Text>
               <Text variant="caption" color="error" style={{ marginLeft: 4 }}>*</Text>
             </View>
 
@@ -1419,7 +1427,7 @@ export default function CreateWorkOrderScreen() {
                 <View style={styles.selectButtonContent}>
                   <Ionicons name="add-circle-outline" size={20} color={colors.primary[500]} />
                   <Text variant="body" style={{ color: colors.primary[500], marginLeft: 8 }}>
-                    Selecionar cliente
+                    {t('workOrders.selectClient')}
                   </Text>
                 </View>
               )}
@@ -1430,16 +1438,16 @@ export default function CreateWorkOrderScreen() {
           <Card variant="outlined" style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="document-text-outline" size={20} color={colors.primary[500]} />
-              <Text variant="body" weight="semibold" style={{ marginLeft: 8 }}>Detalhes</Text>
+              <Text variant="body" weight="semibold" style={{ marginLeft: 8 }}>{t('workOrders.details')}</Text>
             </View>
 
             <View style={styles.formField}>
               <Text variant="caption" weight="medium" color="secondary" style={styles.fieldLabel}>
-                Título *
+                {t('workOrders.title')} *
               </Text>
               <TextInput
                 style={[styles.textInput, { backgroundColor: colors.background.secondary, borderColor: colors.border.light, color: colors.text.primary }]}
-                placeholder="Ex: Manutenção preventiva"
+                placeholder={t('workOrders.titlePlaceholder')}
                 placeholderTextColor={colors.text.tertiary}
                 value={formData.title}
                 onChangeText={(text) => setFormData((prev) => ({ ...prev, title: text }))}
@@ -1448,11 +1456,11 @@ export default function CreateWorkOrderScreen() {
 
             <View style={styles.formField}>
               <Text variant="caption" weight="medium" color="secondary" style={styles.fieldLabel}>
-                Descrição
+                {t('workOrders.description')}
               </Text>
               <TextInput
                 style={[styles.textInput, styles.textArea, { backgroundColor: colors.background.secondary, borderColor: colors.border.light, color: colors.text.primary }]}
-                placeholder="Descrição do serviço..."
+                placeholder={t('workOrders.descriptionPlaceholder')}
                 placeholderTextColor={colors.text.tertiary}
                 value={formData.description}
                 onChangeText={(text) => setFormData((prev) => ({ ...prev, description: text }))}
@@ -1466,7 +1474,7 @@ export default function CreateWorkOrderScreen() {
           <Card variant="outlined" style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="pricetag-outline" size={20} color={colors.primary[500]} />
-              <Text variant="body" weight="semibold" style={{ marginLeft: 8 }}>Tipo de OS</Text>
+              <Text variant="body" weight="semibold" style={{ marginLeft: 8 }}>{t('workOrders.workOrderType')}</Text>
             </View>
 
             <TouchableOpacity
@@ -1485,7 +1493,7 @@ export default function CreateWorkOrderScreen() {
                 <View style={styles.selectButtonContent}>
                   <Ionicons name="add-circle-outline" size={20} color={colors.primary[500]} />
                   <Text variant="body" style={{ color: colors.primary[500], marginLeft: 8 }}>
-                    Selecionar tipo (opcional)
+                    {t('workOrders.selectTypeOptional')}
                   </Text>
                 </View>
               )}
@@ -1496,7 +1504,7 @@ export default function CreateWorkOrderScreen() {
           <Card variant="outlined" style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="calendar-outline" size={20} color={colors.primary[500]} />
-              <Text variant="body" weight="semibold" style={{ marginLeft: 8 }}>Agendamento</Text>
+              <Text variant="body" weight="semibold" style={{ marginLeft: 8 }}>{t('workOrders.scheduling')}</Text>
             </View>
 
             <TouchableOpacity
@@ -1517,7 +1525,7 @@ export default function CreateWorkOrderScreen() {
               >
                 <Ionicons name="time" size={20} color={colors.text.tertiary} />
                 <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text variant="caption" color="secondary">Início</Text>
+                  <Text variant="caption" color="secondary">{t('workOrders.start')}</Text>
                   <Text variant="body">{formatTime(formData.scheduledStartTime)}</Text>
                 </View>
               </TouchableOpacity>
@@ -1528,7 +1536,7 @@ export default function CreateWorkOrderScreen() {
               >
                 <Ionicons name="time-outline" size={20} color={colors.text.tertiary} />
                 <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text variant="caption" color="secondary">Fim</Text>
+                  <Text variant="caption" color="secondary">{t('workOrders.end')}</Text>
                   <Text variant="body">
                     {formData.scheduledEndTime ? formatTime(formData.scheduledEndTime) : '--:--'}
                   </Text>
@@ -1541,12 +1549,12 @@ export default function CreateWorkOrderScreen() {
           <Card variant="outlined" style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="location-outline" size={20} color={colors.primary[500]} />
-              <Text variant="body" weight="semibold" style={{ marginLeft: 8 }}>Endereço do Serviço</Text>
+              <Text variant="body" weight="semibold" style={{ marginLeft: 8 }}>{t('workOrders.serviceAddress')}</Text>
             </View>
 
             <TextInput
               style={[styles.textInput, { backgroundColor: colors.background.secondary, borderColor: colors.border.light, color: colors.text.primary }]}
-              placeholder="Endereço onde será realizado o serviço"
+              placeholder={t('workOrders.serviceAddressPlaceholder')}
               placeholderTextColor={colors.text.tertiary}
               value={formData.address}
               onChangeText={(text) => setFormData((prev) => ({ ...prev, address: text }))}
@@ -1557,7 +1565,7 @@ export default function CreateWorkOrderScreen() {
           <Card variant="outlined" style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="checkbox-outline" size={20} color={colors.primary[500]} />
-              <Text variant="body" weight="semibold" style={{ marginLeft: 8 }}>Checklists</Text>
+              <Text variant="body" weight="semibold" style={{ marginLeft: 8 }}>{t('workOrders.checklists')}</Text>
             </View>
 
             <TouchableOpacity
@@ -1568,7 +1576,7 @@ export default function CreateWorkOrderScreen() {
                 <View style={styles.selectedClient}>
                   <View style={styles.selectedClientInfo}>
                     <Text variant="body" weight="medium">
-                      {formData.selectedChecklists.length} checklist{formData.selectedChecklists.length !== 1 ? 's' : ''} selecionado{formData.selectedChecklists.length !== 1 ? 's' : ''}
+                      {t('workOrders.checklistsSelected', { count: formData.selectedChecklists.length })}
                     </Text>
                   </View>
                   <Ionicons name="chevron-forward" size={20} color={colors.text.tertiary} />
@@ -1577,7 +1585,7 @@ export default function CreateWorkOrderScreen() {
                 <View style={styles.selectButtonContent}>
                   <Ionicons name="add-circle-outline" size={20} color={colors.primary[500]} />
                   <Text variant="body" style={{ color: colors.primary[500], marginLeft: 8 }}>
-                    Selecionar checklists
+                    {t('workOrders.selectChecklists')}
                   </Text>
                 </View>
               )}
@@ -1588,7 +1596,7 @@ export default function CreateWorkOrderScreen() {
           <Card variant="outlined" style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="cart-outline" size={20} color={colors.primary[500]} />
-              <Text variant="body" weight="semibold" style={{ marginLeft: 8 }}>Produtos e Serviços</Text>
+              <Text variant="body" weight="semibold" style={{ marginLeft: 8 }}>{t('workOrders.productsAndServices')}</Text>
             </View>
 
             <TouchableOpacity
@@ -1599,10 +1607,10 @@ export default function CreateWorkOrderScreen() {
                 <View style={styles.selectedClient}>
                   <View style={styles.selectedClientInfo}>
                     <Text variant="body" weight="medium">
-                      {formData.selectedItems.length} ite{formData.selectedItems.length !== 1 ? 'ns' : 'm'} selecionado{formData.selectedItems.length !== 1 ? 's' : ''}
+                      {t('catalog.itemsSelected', { count: formData.selectedItems.length })}
                     </Text>
                     <Text variant="caption" color="secondary">
-                      Total: {formData.selectedItems.reduce((sum, si) => sum + (si.quantity * si.unitPrice - si.discount), 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      {t('common.total')}: {formData.selectedItems.reduce((sum, si) => sum + (si.quantity * si.unitPrice - si.discount), 0).toLocaleString(locale, { style: 'currency', currency: 'BRL' })}
                     </Text>
                   </View>
                   <Ionicons name="chevron-forward" size={20} color={colors.text.tertiary} />
@@ -1611,7 +1619,7 @@ export default function CreateWorkOrderScreen() {
                 <View style={styles.selectButtonContent}>
                   <Ionicons name="add-circle-outline" size={20} color={colors.primary[500]} />
                   <Text variant="body" style={{ color: colors.primary[500], marginLeft: 8 }}>
-                    Adicionar produtos/serviços
+                    {t('workOrders.addProductsServices')}
                   </Text>
                 </View>
               )}
@@ -1628,11 +1636,11 @@ export default function CreateWorkOrderScreen() {
                     <View style={{ flex: 1 }}>
                       <Text variant="body" weight="medium">{si.item.name}</Text>
                       <Text variant="caption" color="tertiary">
-                        {si.quantity} x {si.unitPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        {si.quantity} x {si.unitPrice.toLocaleString(locale, { style: 'currency', currency: 'BRL' })}
                       </Text>
                     </View>
                     <Text variant="body" weight="semibold" style={{ color: colors.primary[500] }}>
-                      {(si.quantity * si.unitPrice - si.discount).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      {(si.quantity * si.unitPrice - si.discount).toLocaleString(locale, { style: 'currency', currency: 'BRL' })}
                     </Text>
                   </View>
                 ))}
@@ -1644,12 +1652,12 @@ export default function CreateWorkOrderScreen() {
           <Card variant="outlined" style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="create-outline" size={20} color={colors.primary[500]} />
-              <Text variant="body" weight="semibold" style={{ marginLeft: 8 }}>Notas</Text>
+              <Text variant="body" weight="semibold" style={{ marginLeft: 8 }}>{t('workOrders.notes')}</Text>
             </View>
 
             <TextInput
               style={[styles.textInput, styles.textArea, { backgroundColor: colors.background.secondary, borderColor: colors.border.light, color: colors.text.primary }]}
-              placeholder="Observações adicionais..."
+              placeholder={t('workOrders.notesPlaceholder')}
               placeholderTextColor={colors.text.tertiary}
               value={formData.notes}
               onChangeText={(text) => setFormData((prev) => ({ ...prev, notes: text }))}
@@ -1669,7 +1677,7 @@ export default function CreateWorkOrderScreen() {
           onPress={handleSubmit}
           disabled={isSubmitting || !formData.clientId || !formData.title.trim()}
         >
-          {isSubmitting ? 'Criando...' : 'Criar Ordem de Serviço'}
+          {isSubmitting ? t('common.creating') : t('workOrders.createWorkOrder')}
         </Button>
       </View>
 

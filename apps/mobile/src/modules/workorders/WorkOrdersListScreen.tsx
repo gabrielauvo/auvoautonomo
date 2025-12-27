@@ -192,7 +192,7 @@ const EmptyState: React.FC<{
   ordersWillAppear: string;
 }> = ({ hasFilter, noOrdersFound, noOrders, adjustFilters, ordersWillAppear }) => (
   <View style={styles.emptyState}>
-    <Text variant="h2" style={styles.emptyIcon}></Text>
+    <Text variant="h2" style={styles.emptyIcon}>📋</Text>
     <Text variant="body" weight="semibold" align="center">
       {hasFilter ? noOrdersFound : noOrders}
     </Text>

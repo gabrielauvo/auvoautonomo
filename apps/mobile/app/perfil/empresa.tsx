@@ -369,7 +369,7 @@ export default function EmpresaScreen() {
             </Text>
             <View style={styles.logoSection}>
               <TouchableOpacity
-                style={[styles.logoContainer, { borderColor: colors.border.medium }]}
+                style={[styles.logoContainer, { borderColor: colors.border.default }]}
                 onPress={handlePickLogo}
                 disabled={isUploadingLogo}
               >
@@ -411,7 +411,7 @@ export default function EmpresaScreen() {
               <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
                 {t('profile.companyData.tradeName')} *
               </Text>
-              <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
+              <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                 <TextInput
                   style={[styles.input, { color: colors.text.primary }]}
                   placeholder={t('profile.companyData.tradeNamePlaceholder')}
@@ -427,7 +427,7 @@ export default function EmpresaScreen() {
               <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
                 {t('profile.companyData.legalName')}
               </Text>
-              <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
+              <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                 <TextInput
                   style={[styles.input, { color: colors.text.primary }]}
                   placeholder={t('profile.companyData.legalNamePlaceholder')}
@@ -443,7 +443,7 @@ export default function EmpresaScreen() {
               <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
                 {t('profile.companyData.taxId')}
               </Text>
-              <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
+              <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                 <TextInput
                   style={[styles.input, { color: colors.text.primary }]}
                   placeholder="00.000.000/0000-00"
@@ -461,7 +461,7 @@ export default function EmpresaScreen() {
               <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
                 {t('profile.companyData.stateRegistration')}
               </Text>
-              <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
+              <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                 <TextInput
                   style={[styles.input, { color: colors.text.primary }]}
                   placeholder={t('profile.companyData.stateRegistrationPlaceholder')}
@@ -484,7 +484,7 @@ export default function EmpresaScreen() {
               <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
                 {t('profile.companyData.phone')}
               </Text>
-              <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
+              <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                 <Ionicons name="call-outline" size={20} color={colors.text.tertiary} />
                 <TextInput
                   style={[styles.input, { color: colors.text.primary }]}
@@ -503,7 +503,7 @@ export default function EmpresaScreen() {
               <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
                 WhatsApp
               </Text>
-              <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
+              <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                 <Ionicons name="logo-whatsapp" size={20} color={colors.text.tertiary} />
                 <TextInput
                   style={[styles.input, { color: colors.text.primary }]}
@@ -529,7 +529,7 @@ export default function EmpresaScreen() {
               <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
                 {t('profile.companyData.zipCode')}
               </Text>
-              <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
+              <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                 <TextInput
                   style={[styles.input, { color: colors.text.primary }]}
                   placeholder="00000-000"
@@ -548,7 +548,7 @@ export default function EmpresaScreen() {
                 <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
                   {t('profile.companyData.street')}
                 </Text>
-                <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
+                <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                   <TextInput
                     style={[styles.input, { color: colors.text.primary }]}
                     placeholder={t('profile.companyData.streetPlaceholder')}
@@ -562,7 +562,7 @@ export default function EmpresaScreen() {
                 <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
                   {t('profile.companyData.number')}
                 </Text>
-                <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
+                <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                   <TextInput
                     style={[styles.input, { color: colors.text.primary }]}
                     placeholder={t('profile.companyData.numberPlaceholder')}
@@ -581,7 +581,7 @@ export default function EmpresaScreen() {
                 <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
                   {t('profile.companyData.complement')}
                 </Text>
-                <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
+                <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                   <TextInput
                     style={[styles.input, { color: colors.text.primary }]}
                     placeholder={t('profile.companyData.complementPlaceholder')}
@@ -595,7 +595,7 @@ export default function EmpresaScreen() {
                 <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
                   {t('profile.companyData.neighborhood')}
                 </Text>
-                <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
+                <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                   <TextInput
                     style={[styles.input, { color: colors.text.primary }]}
                     placeholder={t('profile.companyData.neighborhoodPlaceholder')}
@@ -613,7 +613,7 @@ export default function EmpresaScreen() {
                 <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
                   {t('profile.companyData.city')}
                 </Text>
-                <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
+                <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                   <TextInput
                     style={[styles.input, { color: colors.text.primary }]}
                     placeholder={t('profile.companyData.cityPlaceholder')}
@@ -627,7 +627,7 @@ export default function EmpresaScreen() {
                 <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
                   {t('profile.companyData.state')}
                 </Text>
-                <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
+                <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                   <TextInput
                     style={[styles.input, { color: colors.text.primary }]}
                     placeholder={t('profile.companyData.statePlaceholder')}
@@ -656,17 +656,17 @@ export default function EmpresaScreen() {
                   onPress={() => setPixKeyEnabled(!pixKeyEnabled)}
                   style={[
                     styles.toggleButton,
-                    { backgroundColor: pixKeyEnabled ? colors.success[100] : colors.neutral[100] }
+                    { backgroundColor: pixKeyEnabled ? colors.success[100] : colors.gray[100] }
                   ]}
                 >
                   <Ionicons
                     name={pixKeyEnabled ? 'toggle' : 'toggle-outline'}
                     size={28}
-                    color={pixKeyEnabled ? colors.success[500] : colors.neutral[400]}
+                    color={pixKeyEnabled ? colors.success[500] : colors.gray[400]}
                   />
                   <Text
                     variant="caption"
-                    style={{ color: pixKeyEnabled ? colors.success[600] : colors.neutral[500] }}
+                    style={{ color: pixKeyEnabled ? colors.success[600] : colors.gray[500] }}
                   >
                     {pixKeyEnabled ? t('common.enabled') : t('common.disabled')}
                   </Text>
@@ -686,7 +686,7 @@ export default function EmpresaScreen() {
                   style={[
                     styles.inputContainer,
                     {
-                      borderColor: colors.border.medium,
+                      borderColor: colors.border.default,
                       opacity: pixKeyEnabled ? 1 : 0.5,
                     }
                   ]}
@@ -708,7 +708,7 @@ export default function EmpresaScreen() {
                 <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
                   {t('profile.companyData.pix.pixKey')}
                 </Text>
-                <View style={[styles.inputContainer, { borderColor: colors.border.medium, opacity: pixKeyEnabled ? 1 : 0.5 }]}>
+                <View style={[styles.inputContainer, { borderColor: colors.border.default, opacity: pixKeyEnabled ? 1 : 0.5 }]}>
                   <Ionicons name="key-outline" size={20} color={colors.text.tertiary} />
                   <TextInput
                     style={[styles.input, { color: colors.text.primary }]}
@@ -739,7 +739,7 @@ export default function EmpresaScreen() {
                 <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
                   {t('profile.companyData.pix.ownerName')}
                 </Text>
-                <View style={[styles.inputContainer, { borderColor: colors.border.medium, opacity: pixKeyEnabled ? 1 : 0.5 }]}>
+                <View style={[styles.inputContainer, { borderColor: colors.border.default, opacity: pixKeyEnabled ? 1 : 0.5 }]}>
                   <Ionicons name="person-outline" size={20} color={colors.text.tertiary} />
                   <TextInput
                     style={[styles.input, { color: colors.text.primary }]}

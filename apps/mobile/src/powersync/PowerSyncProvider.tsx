@@ -218,7 +218,16 @@ export function PowerSyncProvider({ children }: PowerSyncProviderProps) {
             const result = await database.getAll(sql, params);
             return (result[0] as T) || null;
           },
-          watch: (sql, params) => database.watch(sql, params),
+          watch: (sql, params) => {
+            const iter = database.watch(sql, params);
+            return {
+              async *[Symbol.asyncIterator]() {
+                for await (const result of iter) {
+                  yield { rows: { _array: result.rows?._array || [] } };
+                }
+              },
+            };
+          },
         };
 
         setDb(wrappedDb);

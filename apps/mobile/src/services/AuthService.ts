@@ -31,6 +31,8 @@ export interface User {
   name: string;
   technicianId: string;
   avatarUrl?: string | null;
+  phone?: string | null;
+  language?: string | null;
 }
 
 export interface AuthTokens {

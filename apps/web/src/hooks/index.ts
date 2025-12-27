@@ -67,6 +67,9 @@ export {
   useDeleteExpense,
 } from './use-expenses';
 
+// Formatting
+export { useFormatting } from './use-formatting';
+
 // AI Copilot
 export { useAiChat, type UseAiChatOptions, type UseAiChatReturn } from './use-ai-chat';
 export { useAiContext, type UseAiContextOptions, type UseAiContextReturn } from './use-ai-context';

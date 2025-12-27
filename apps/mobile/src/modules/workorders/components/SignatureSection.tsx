@@ -277,7 +277,7 @@ export function SignatureSection({
         onClose={() => setShowPad(false)}
         onCapture={handleCapture}
         defaultSignerName={clientName || ''}
-        defaultSignerRole={t('signature.client')}
+        defaultSignerRole="Cliente"
         requireDocument={false}
         title={t('workOrders.finalizationSignature')}
       />

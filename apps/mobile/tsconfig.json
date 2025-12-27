@@ -20,8 +20,6 @@
     "src/**/*.tsx",
     "app/**/*.ts",
     "app/**/*.tsx",
-    "__tests__/**/*.ts",
-    "__tests__/**/*.tsx",
     "*.ts",
     "*.tsx"
   ],

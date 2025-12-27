@@ -107,11 +107,12 @@ export class PdfGenerator {
         user: {
           select: { id: true, name: true, email: true },
         },
-        items: {
-          orderBy: { createdAt: 'asc' },
-        },
-        payments: {
-          orderBy: { dueDate: 'asc' },
+        workOrder: {
+          include: {
+            items: {
+              orderBy: { createdAt: 'asc' },
+            },
+          },
         },
       },
     });
@@ -343,9 +344,10 @@ export class PdfGenerator {
 
       doc.moveDown(2);
 
-      if (invoice.items && invoice.items.length > 0) {
+      const items = invoice.workOrder?.items || [];
+      if (items.length > 0) {
         this.addSection(doc, 'ITENS DA FATURA');
-        this.addItemsTable(doc, invoice.items);
+        this.addItemsTable(doc, items);
         doc.moveDown();
       }
 
@@ -353,15 +355,9 @@ export class PdfGenerator {
         .text(`Subtotal: ${this.formatCurrency(Number(invoice.subtotal || 0))}`, { align: 'right' })
         .text(`Desconto: ${this.formatCurrency(Number(invoice.discount || 0))}`, { align: 'right' })
         .fontSize(12)
-        .text(`TOTAL: ${this.formatCurrency(Number(invoice.totalValue))}`, { align: 'right' });
+        .text(`TOTAL: ${this.formatCurrency(Number(invoice.total))}`, { align: 'right' });
 
       doc.moveDown(2);
-
-      if (invoice.payments && invoice.payments.length > 0) {
-        this.addSection(doc, 'PAGAMENTOS');
-        this.addPaymentsTable(doc, invoice.payments);
-        doc.moveDown();
-      }
 
       if (invoice.notes) {
         this.addSection(doc, 'OBSERVAÇÕES');

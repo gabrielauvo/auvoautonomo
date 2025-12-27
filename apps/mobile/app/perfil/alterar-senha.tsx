@@ -128,7 +128,7 @@ export default function AlterarSenhaScreen() {
               <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
                 {t('profile.changePassword.currentPassword')} *
               </Text>
-              <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
+              <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                 <Ionicons name="lock-closed-outline" size={20} color={colors.text.tertiary} />
                 <TextInput
                   style={[styles.input, { color: colors.text.primary }]}
@@ -154,7 +154,7 @@ export default function AlterarSenhaScreen() {
               <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
                 {t('profile.changePassword.newPassword')} *
               </Text>
-              <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
+              <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                 <Ionicons name="key-outline" size={20} color={colors.text.tertiary} />
                 <TextInput
                   style={[styles.input, { color: colors.text.primary }]}
@@ -183,7 +183,7 @@ export default function AlterarSenhaScreen() {
               <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
                 {t('profile.changePassword.confirmNewPassword')} *
               </Text>
-              <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
+              <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                 <Ionicons name="shield-checkmark-outline" size={20} color={colors.text.tertiary} />
                 <TextInput
                   style={[styles.input, { color: colors.text.primary }]}

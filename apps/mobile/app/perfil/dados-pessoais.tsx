@@ -154,7 +154,7 @@ export default function DadosPessoaisScreen() {
               <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
                 {t('profile.personalData.fullName')} *
               </Text>
-              <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
+              <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                 <Ionicons name="person-outline" size={20} color={colors.text.tertiary} />
                 <TextInput
                   style={[styles.input, { color: colors.text.primary }]}
@@ -172,7 +172,7 @@ export default function DadosPessoaisScreen() {
               <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
                 {t('profile.personalData.email')}
               </Text>
-              <View style={[styles.inputContainer, { borderColor: colors.border.medium, backgroundColor: colors.gray[50] }]}>
+              <View style={[styles.inputContainer, { borderColor: colors.border.default, backgroundColor: colors.gray[50] }]}>
                 <Ionicons name="mail-outline" size={20} color={colors.text.tertiary} />
                 <TextInput
                   style={[styles.input, { color: colors.text.secondary }]}
@@ -191,7 +191,7 @@ export default function DadosPessoaisScreen() {
               <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
                 {t('profile.personalData.phone')}
               </Text>
-              <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
+              <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                 <Ionicons name="call-outline" size={20} color={colors.text.tertiary} />
                 <TextInput
                   style={[styles.input, { color: colors.text.primary }]}

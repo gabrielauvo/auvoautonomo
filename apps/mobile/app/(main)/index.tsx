@@ -335,7 +335,7 @@ export default function HomeScreen() {
       const now = new Date();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
       const completedThisMonth = completedWOs.items.filter((wo) => {
-        const completedDate = wo.completedAt ? extractDatePart(wo.completedAt) : null;
+        const completedDate = wo.executionEnd ? extractDatePart(wo.executionEnd) : null;
         return completedDate && completedDate >= monthStart;
       }).length;
 

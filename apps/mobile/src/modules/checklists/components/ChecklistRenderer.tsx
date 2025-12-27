@@ -357,7 +357,7 @@ export const ChecklistRenderer: React.FC<ChecklistRendererProps> = ({
           <Text style={styles.completedText}>{t('checklists.checklistCompleted')}</Text>
           {instance.completedAt && (
             <Text style={styles.completedDate}>
-              {new Date(instance.completedAt).toLocaleDateString(locale)}
+              {new Date(instance.completedAt).toLocaleDateString(locale.locale)}
             </Text>
           )}
         </View>

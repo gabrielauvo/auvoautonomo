@@ -282,7 +282,7 @@ export class ChecklistService {
       answerId: input.answerId,
       workOrderId: input.workOrderId,
       type: input.type,
-      filePath: input.filePath,
+      localPath: input.filePath,
       fileName: input.fileName,
       mimeType: input.mimeType,
       fileSize: input.fileSize,

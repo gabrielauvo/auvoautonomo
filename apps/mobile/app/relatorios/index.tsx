@@ -13,6 +13,7 @@ import {
   RefreshControl,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -314,9 +315,18 @@ export default function ReportsScreen() {
   }, [locale]);
 
   const handleComingSoon = useCallback((feature: string) => {
-    // TODO: Navigate to detailed report when implemented
-    console.log('Navigate to:', feature);
-  }, []);
+    const featureNames: Record<string, string> = {
+      finance: t('reports.finance'),
+      sales: t('reports.sales'),
+      operations: t('reports.operations'),
+      clients: t('reports.clients'),
+    };
+    Alert.alert(
+      t('common.soon'),
+      t('menu.comingSoonMessage', { feature: featureNames[feature] || feature }),
+      [{ text: t('common.confirm') }]
+    );
+  }, [t]);
 
   return (
     <View style={[styles.container, { backgroundColor: themeColors.background.secondary }]}>

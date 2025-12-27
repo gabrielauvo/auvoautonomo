@@ -135,6 +135,8 @@ export class FileStorageService {
       mimeType: attachment.mimeType,
       fileNameOriginal: attachment.fileNameOriginal,
       fileSize: attachment.fileSize,
+      storagePath: attachment.storagePath,
+      publicUrl: attachment.publicUrl,
       metadata: attachment.metadata,
       createdAt: attachment.createdAt,
     };

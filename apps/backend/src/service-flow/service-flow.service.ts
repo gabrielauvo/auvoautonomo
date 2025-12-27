@@ -668,9 +668,14 @@ export class ServiceFlowService {
       }
     }
 
-    // 6. Attachments
+    // 6. Attachments (excluding signature files)
     const attachments = await this.prisma.attachment.findMany({
-      where: { workOrderId },
+      where: {
+        workOrderId,
+        NOT: {
+          fileNameOriginal: { startsWith: 'signature_' },
+        },
+      },
     });
 
     for (const attachment of attachments) {

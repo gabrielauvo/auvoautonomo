@@ -123,6 +123,30 @@ interface CachedReportsData {
   period: ReportPeriod;
 }
 
+interface CachedFinanceData {
+  data: FinanceReportData;
+  timestamp: number;
+  period: ReportPeriod;
+}
+
+interface CachedSalesData {
+  data: SalesReportData;
+  timestamp: number;
+  period: ReportPeriod;
+}
+
+interface CachedOperationsData {
+  data: OperationsReportData;
+  timestamp: number;
+  period: ReportPeriod;
+}
+
+interface CachedClientsData {
+  data: ClientsReportData;
+  timestamp: number;
+  period: ReportPeriod;
+}
+
 // =============================================================================
 // CONSTANTS
 // =============================================================================
@@ -135,8 +159,28 @@ const STALE_TTL = 24 * 60 * 60 * 1000; // 24 horas
 // CACHE HELPERS
 // =============================================================================
 
-function getCacheKey(period: ReportPeriod, startDate?: string, endDate?: string): string {
-  return `${STORAGE_KEY_PREFIX}${period}_${startDate || ''}_${endDate || ''}`;
+function getCacheKey(prefix: string, period: ReportPeriod, startDate?: string, endDate?: string): string {
+  return `${STORAGE_KEY_PREFIX}${prefix}_${period}_${startDate || ''}_${endDate || ''}`;
+}
+
+function getReportsCacheKey(period: ReportPeriod, startDate?: string, endDate?: string): string {
+  return getCacheKey('overview', period, startDate, endDate);
+}
+
+function getFinanceCacheKey(period: ReportPeriod, startDate?: string, endDate?: string): string {
+  return getCacheKey('finance', period, startDate, endDate);
+}
+
+function getSalesCacheKey(period: ReportPeriod, startDate?: string, endDate?: string): string {
+  return getCacheKey('sales', period, startDate, endDate);
+}
+
+function getOperationsCacheKey(period: ReportPeriod, startDate?: string, endDate?: string): string {
+  return getCacheKey('operations', period, startDate, endDate);
+}
+
+function getClientsCacheKey(period: ReportPeriod, startDate?: string, endDate?: string): string {
+  return getCacheKey('clients', period, startDate, endDate);
 }
 
 async function getFromStorage(key: string): Promise<CachedReportsData | null> {
@@ -171,8 +215,45 @@ async function saveToStorage(key: string, data: ReportsData, period: ReportPerio
   }
 }
 
-// Memory cache
+// Generic cache functions for detailed reports
+async function getDetailedReportFromStorage<T>(key: string): Promise<{ data: T; timestamp: number; period: ReportPeriod } | null> {
+  try {
+    const stored = await AsyncStorage.getItem(key);
+    if (!stored) return null;
+
+    const parsed = JSON.parse(stored);
+
+    if (Date.now() - parsed.timestamp > STALE_TTL) {
+      await AsyncStorage.removeItem(key);
+      return null;
+    }
+
+    return parsed;
+  } catch (error) {
+    console.warn('[ReportsService] Error reading detailed report from storage:', error);
+    return null;
+  }
+}
+
+async function saveDetailedReportToStorage<T>(key: string, data: T, period: ReportPeriod): Promise<void> {
+  try {
+    const cacheData = {
+      data,
+      timestamp: Date.now(),
+      period,
+    };
+    await AsyncStorage.setItem(key, JSON.stringify(cacheData));
+  } catch (error) {
+    console.warn('[ReportsService] Error saving detailed report to storage:', error);
+  }
+}
+
+// Memory caches
 const memoryCache: Map<string, CachedReportsData> = new Map();
+const financeCache: Map<string, CachedFinanceData> = new Map();
+const salesCache: Map<string, CachedSalesData> = new Map();
+const operationsCache: Map<string, CachedOperationsData> = new Map();
+const clientsCache: Map<string, CachedClientsData> = new Map();
 
 // =============================================================================
 // PERIOD HELPERS
@@ -235,7 +316,7 @@ export const ReportsService = {
     period: ReportPeriod = 'last_30_days',
     options?: { startDate?: string; endDate?: string; forceRefresh?: boolean }
   ): Promise<{ data: ReportsData; fromCache: boolean; cacheAge: number | null }> {
-    const cacheKey = getCacheKey(period, options?.startDate, options?.endDate);
+    const cacheKey = getReportsCacheKey(period, options?.startDate, options?.endDate);
 
     // 1. Tenta memoria primeiro
     let cached = memoryCache.get(cacheKey);
@@ -378,10 +459,44 @@ export const ReportsService = {
    */
   async getFinanceReport(
     period: ReportPeriod = 'last_30_days',
-    options?: { startDate?: string; endDate?: string }
-  ): Promise<FinanceReportData | null> {
+    options?: { startDate?: string; endDate?: string; forceRefresh?: boolean }
+  ): Promise<{ data: FinanceReportData | null; fromCache: boolean; cacheAge: number | null }> {
+    const cacheKey = getFinanceCacheKey(period, options?.startDate, options?.endDate);
+
+    // 1. Tenta memoria primeiro
+    let cached = financeCache.get(cacheKey);
+
+    // 2. Se nao tem em memoria, tenta AsyncStorage
+    if (!cached) {
+      const stored = await getDetailedReportFromStorage<FinanceReportData>(cacheKey);
+      if (stored) {
+        cached = stored;
+        financeCache.set(cacheKey, stored);
+      }
+    }
+
+    // 3. Se tem cache e nao e forceRefresh e dados sao frescos, retorna cache
+    const isFresh = cached && (Date.now() - cached.timestamp < CACHE_TTL);
+    if (cached && !options?.forceRefresh && isFresh) {
+      return {
+        data: cached.data,
+        fromCache: true,
+        cacheAge: Date.now() - cached.timestamp,
+      };
+    }
+
+    // 4. Tenta buscar da API
     const token = await AuthService.getAccessToken();
-    if (!token) return null;
+    if (!token) {
+      if (cached) {
+        return {
+          data: cached.data,
+          fromCache: true,
+          cacheAge: Date.now() - cached.timestamp,
+        };
+      }
+      return { data: null, fromCache: false, cacheAge: null };
+    }
 
     try {
       const baseUrl = getApiBaseUrl();
@@ -399,11 +514,39 @@ export const ReportsService = {
         { method: 'GET', headers, timeout: 15000 }
       );
 
-      if (!res.ok) return null;
-      return await res.json();
+      if (!res.ok) {
+        if (cached) {
+          return {
+            data: cached.data,
+            fromCache: true,
+            cacheAge: Date.now() - cached.timestamp,
+          };
+        }
+        return { data: null, fromCache: false, cacheAge: null };
+      }
+
+      const data = await res.json();
+
+      // Salva em memoria e storage
+      const newCacheData: CachedFinanceData = {
+        data,
+        timestamp: Date.now(),
+        period,
+      };
+      financeCache.set(cacheKey, newCacheData);
+      await saveDetailedReportToStorage(cacheKey, data, period);
+
+      return { data, fromCache: false, cacheAge: null };
     } catch (error) {
       console.warn('[ReportsService] Error fetching finance report:', error);
-      return null;
+      if (cached) {
+        return {
+          data: cached.data,
+          fromCache: true,
+          cacheAge: Date.now() - cached.timestamp,
+        };
+      }
+      return { data: null, fromCache: false, cacheAge: null };
     }
   },
 
@@ -412,10 +555,44 @@ export const ReportsService = {
    */
   async getSalesReport(
     period: ReportPeriod = 'last_30_days',
-    options?: { startDate?: string; endDate?: string }
-  ): Promise<SalesReportData | null> {
+    options?: { startDate?: string; endDate?: string; forceRefresh?: boolean }
+  ): Promise<{ data: SalesReportData | null; fromCache: boolean; cacheAge: number | null }> {
+    const cacheKey = getSalesCacheKey(period, options?.startDate, options?.endDate);
+
+    // 1. Tenta memoria primeiro
+    let cached = salesCache.get(cacheKey);
+
+    // 2. Se nao tem em memoria, tenta AsyncStorage
+    if (!cached) {
+      const stored = await getDetailedReportFromStorage<SalesReportData>(cacheKey);
+      if (stored) {
+        cached = stored;
+        salesCache.set(cacheKey, stored);
+      }
+    }
+
+    // 3. Se tem cache e nao e forceRefresh e dados sao frescos, retorna cache
+    const isFresh = cached && (Date.now() - cached.timestamp < CACHE_TTL);
+    if (cached && !options?.forceRefresh && isFresh) {
+      return {
+        data: cached.data,
+        fromCache: true,
+        cacheAge: Date.now() - cached.timestamp,
+      };
+    }
+
+    // 4. Tenta buscar da API
     const token = await AuthService.getAccessToken();
-    if (!token) return null;
+    if (!token) {
+      if (cached) {
+        return {
+          data: cached.data,
+          fromCache: true,
+          cacheAge: Date.now() - cached.timestamp,
+        };
+      }
+      return { data: null, fromCache: false, cacheAge: null };
+    }
 
     try {
       const baseUrl = getApiBaseUrl();
@@ -433,11 +610,39 @@ export const ReportsService = {
         { method: 'GET', headers, timeout: 15000 }
       );
 
-      if (!res.ok) return null;
-      return await res.json();
+      if (!res.ok) {
+        if (cached) {
+          return {
+            data: cached.data,
+            fromCache: true,
+            cacheAge: Date.now() - cached.timestamp,
+          };
+        }
+        return { data: null, fromCache: false, cacheAge: null };
+      }
+
+      const data = await res.json();
+
+      // Salva em memoria e storage
+      const newCacheData: CachedSalesData = {
+        data,
+        timestamp: Date.now(),
+        period,
+      };
+      salesCache.set(cacheKey, newCacheData);
+      await saveDetailedReportToStorage(cacheKey, data, period);
+
+      return { data, fromCache: false, cacheAge: null };
     } catch (error) {
       console.warn('[ReportsService] Error fetching sales report:', error);
-      return null;
+      if (cached) {
+        return {
+          data: cached.data,
+          fromCache: true,
+          cacheAge: Date.now() - cached.timestamp,
+        };
+      }
+      return { data: null, fromCache: false, cacheAge: null };
     }
   },
 
@@ -446,10 +651,44 @@ export const ReportsService = {
    */
   async getOperationsReport(
     period: ReportPeriod = 'last_30_days',
-    options?: { startDate?: string; endDate?: string }
-  ): Promise<OperationsReportData | null> {
+    options?: { startDate?: string; endDate?: string; forceRefresh?: boolean }
+  ): Promise<{ data: OperationsReportData | null; fromCache: boolean; cacheAge: number | null }> {
+    const cacheKey = getOperationsCacheKey(period, options?.startDate, options?.endDate);
+
+    // 1. Tenta memoria primeiro
+    let cached = operationsCache.get(cacheKey);
+
+    // 2. Se nao tem em memoria, tenta AsyncStorage
+    if (!cached) {
+      const stored = await getDetailedReportFromStorage<OperationsReportData>(cacheKey);
+      if (stored) {
+        cached = stored;
+        operationsCache.set(cacheKey, stored);
+      }
+    }
+
+    // 3. Se tem cache e nao e forceRefresh e dados sao frescos, retorna cache
+    const isFresh = cached && (Date.now() - cached.timestamp < CACHE_TTL);
+    if (cached && !options?.forceRefresh && isFresh) {
+      return {
+        data: cached.data,
+        fromCache: true,
+        cacheAge: Date.now() - cached.timestamp,
+      };
+    }
+
+    // 4. Tenta buscar da API
     const token = await AuthService.getAccessToken();
-    if (!token) return null;
+    if (!token) {
+      if (cached) {
+        return {
+          data: cached.data,
+          fromCache: true,
+          cacheAge: Date.now() - cached.timestamp,
+        };
+      }
+      return { data: null, fromCache: false, cacheAge: null };
+    }
 
     try {
       const baseUrl = getApiBaseUrl();
@@ -467,11 +706,39 @@ export const ReportsService = {
         { method: 'GET', headers, timeout: 15000 }
       );
 
-      if (!res.ok) return null;
-      return await res.json();
+      if (!res.ok) {
+        if (cached) {
+          return {
+            data: cached.data,
+            fromCache: true,
+            cacheAge: Date.now() - cached.timestamp,
+          };
+        }
+        return { data: null, fromCache: false, cacheAge: null };
+      }
+
+      const data = await res.json();
+
+      // Salva em memoria e storage
+      const newCacheData: CachedOperationsData = {
+        data,
+        timestamp: Date.now(),
+        period,
+      };
+      operationsCache.set(cacheKey, newCacheData);
+      await saveDetailedReportToStorage(cacheKey, data, period);
+
+      return { data, fromCache: false, cacheAge: null };
     } catch (error) {
       console.warn('[ReportsService] Error fetching operations report:', error);
-      return null;
+      if (cached) {
+        return {
+          data: cached.data,
+          fromCache: true,
+          cacheAge: Date.now() - cached.timestamp,
+        };
+      }
+      return { data: null, fromCache: false, cacheAge: null };
     }
   },
 
@@ -480,10 +747,44 @@ export const ReportsService = {
    */
   async getClientsReport(
     period: ReportPeriod = 'last_30_days',
-    options?: { startDate?: string; endDate?: string }
-  ): Promise<ClientsReportData | null> {
+    options?: { startDate?: string; endDate?: string; forceRefresh?: boolean }
+  ): Promise<{ data: ClientsReportData | null; fromCache: boolean; cacheAge: number | null }> {
+    const cacheKey = getClientsCacheKey(period, options?.startDate, options?.endDate);
+
+    // 1. Tenta memoria primeiro
+    let cached = clientsCache.get(cacheKey);
+
+    // 2. Se nao tem em memoria, tenta AsyncStorage
+    if (!cached) {
+      const stored = await getDetailedReportFromStorage<ClientsReportData>(cacheKey);
+      if (stored) {
+        cached = stored;
+        clientsCache.set(cacheKey, stored);
+      }
+    }
+
+    // 3. Se tem cache e nao e forceRefresh e dados sao frescos, retorna cache
+    const isFresh = cached && (Date.now() - cached.timestamp < CACHE_TTL);
+    if (cached && !options?.forceRefresh && isFresh) {
+      return {
+        data: cached.data,
+        fromCache: true,
+        cacheAge: Date.now() - cached.timestamp,
+      };
+    }
+
+    // 4. Tenta buscar da API
     const token = await AuthService.getAccessToken();
-    if (!token) return null;
+    if (!token) {
+      if (cached) {
+        return {
+          data: cached.data,
+          fromCache: true,
+          cacheAge: Date.now() - cached.timestamp,
+        };
+      }
+      return { data: null, fromCache: false, cacheAge: null };
+    }
 
     try {
       const baseUrl = getApiBaseUrl();
@@ -501,11 +802,39 @@ export const ReportsService = {
         { method: 'GET', headers, timeout: 15000 }
       );
 
-      if (!res.ok) return null;
-      return await res.json();
+      if (!res.ok) {
+        if (cached) {
+          return {
+            data: cached.data,
+            fromCache: true,
+            cacheAge: Date.now() - cached.timestamp,
+          };
+        }
+        return { data: null, fromCache: false, cacheAge: null };
+      }
+
+      const data = await res.json();
+
+      // Salva em memoria e storage
+      const newCacheData: CachedClientsData = {
+        data,
+        timestamp: Date.now(),
+        period,
+      };
+      clientsCache.set(cacheKey, newCacheData);
+      await saveDetailedReportToStorage(cacheKey, data, period);
+
+      return { data, fromCache: false, cacheAge: null };
     } catch (error) {
       console.warn('[ReportsService] Error fetching clients report:', error);
-      return null;
+      if (cached) {
+        return {
+          data: cached.data,
+          fromCache: true,
+          cacheAge: Date.now() - cached.timestamp,
+        };
+      }
+      return { data: null, fromCache: false, cacheAge: null };
     }
   },
 };

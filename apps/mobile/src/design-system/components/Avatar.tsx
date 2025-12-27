@@ -55,13 +55,13 @@ export function Avatar({ size = 'md', src, name, status = 'none' }: AvatarProps)
   const getStatusColor = (status: StatusIndicator) => {
     switch (status) {
       case 'online':
-        return colors.success[500];
+        return '#22C55E'; // green-500
       case 'offline':
-        return colors.gray[400];
+        return '#9CA3AF'; // gray-400
       case 'busy':
-        return colors.error[500];
+        return '#EF4444'; // red-500
       case 'away':
-        return colors.warning[500];
+        return '#F59E0B'; // amber-500
       default:
         return 'transparent';
     }
@@ -77,68 +77,58 @@ export function Avatar({ size = 'md', src, name, status = 'none' }: AvatarProps)
     },
   ];
 
-  const renderStatusIndicator = () => {
-    if (status === 'none') return null;
-
-    const indicatorSize = sizeConfig.indicator;
-    const borderWidth = Math.max(2, indicatorSize / 5);
+  // Render the avatar with status indicator overlay
+  const renderContent = () => {
+    if (src) {
+      return (
+        <Image
+          source={{ uri: src }}
+          style={[
+            styles.image,
+            {
+              width: sizeConfig.container,
+              height: sizeConfig.container,
+              borderRadius: sizeConfig.container / 2,
+            },
+          ]}
+        />
+      );
+    }
 
     return (
-      <View
-        style={[
-          styles.statusIndicator,
-          {
-            width: indicatorSize,
-            height: indicatorSize,
-            borderRadius: indicatorSize / 2,
-            backgroundColor: getStatusColor(status),
-            borderWidth,
-            borderColor: colors.background.primary,
-            // Position at bottom-right
-            bottom: 0,
-            right: 0,
-          },
-        ]}
-      />
+      <Text
+        variant="body"
+        weight="medium"
+        style={{
+          fontSize: sizeConfig.fontSize,
+          color: colors.primary[600],
+        }}
+      >
+        {getInitials(name)}
+      </Text>
     );
   };
 
-  if (src) {
-    return (
-      <View style={styles.wrapper}>
-        <View style={containerStyle}>
-          <Image
-            source={{ uri: src }}
-            style={[
-              styles.image,
-              {
-                width: sizeConfig.container,
-                height: sizeConfig.container,
-                borderRadius: sizeConfig.container / 2,
-              },
-            ]}
-          />
-        </View>
-        {renderStatusIndicator()}
-      </View>
-    );
-  }
+  const showIndicator = status !== 'none';
 
   return (
-    <View style={styles.wrapper}>
-      <View style={containerStyle}>
-        <Text
-          variant="body"
-          weight="medium"
+    <View style={{ position: 'relative' }}>
+      <View style={containerStyle}>{renderContent()}</View>
+      {showIndicator && (
+        <View
           style={{
-            fontSize: sizeConfig.fontSize,
-            color: colors.primary[600],
+            position: 'absolute',
+            width: 14,
+            height: 14,
+            borderRadius: 7,
+            backgroundColor: getStatusColor(status),
+            borderWidth: 2,
+            borderColor: '#FFFFFF',
+            bottom: -2,
+            right: -2,
           }}
-        >
-          {getInitials(name)}
-        </Text>
-      </View>
-      {renderStatusIndicator()}
+        />
+      )}
     </View>
   );
 }
@@ -148,9 +138,6 @@ export function Avatar({ size = 'md', src, name, status = 'none' }: AvatarProps)
 // =============================================================================
 
 const styles = StyleSheet.create({
-  wrapper: {
-    position: 'relative',
-  },
   container: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -158,9 +145,6 @@ const styles = StyleSheet.create({
   },
   image: {
     resizeMode: 'cover',
-  },
-  statusIndicator: {
-    position: 'absolute',
   },
 });
 

@@ -13,11 +13,12 @@ import {
   TouchableOpacity,
   RefreshControl,
   Animated,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Text, Card, Badge, Avatar, Button } from '../../src/design-system';
+import { Text, Card, Badge, Button } from '../../src/design-system';
 import { useColors } from '../../src/design-system/ThemeProvider';
 import { useAuth, DashboardService, DashboardOverview, ExpensesService, ExpenseSummary } from '../../src/services';
 import { useSyncStatus } from '../../src/sync';
@@ -26,6 +27,7 @@ import { WorkOrder } from '../../src/db/schema';
 import { workOrderRepository } from '../../src/modules/workorders/WorkOrderRepository';
 import { QuoteRepository } from '../../src/modules/quotes/QuoteRepository';
 import { getTodayLocalDate, extractDatePart } from '../../src/utils/dateUtils';
+import { useTranslation } from '../../src/i18n';
 
 // =============================================================================
 // TYPES
@@ -85,6 +87,77 @@ function formatCompactCurrency(value: number | undefined | null): string {
     }).format(value);
   }
 }
+
+// =============================================================================
+// AVATAR WITH STATUS INDICATOR
+// =============================================================================
+
+interface AvatarWithStatusProps {
+  name?: string;
+  src?: string | null;
+  isOnline: boolean;
+}
+
+const AvatarWithStatus = ({ name, src, isOnline }: AvatarWithStatusProps) => {
+  const colors = useColors();
+
+  const getInitials = (name?: string) => {
+    if (!name) return '?';
+    const parts = name.trim().split(' ');
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  };
+
+  return (
+    <View style={{ width: 46, height: 46 }}>
+      {/* Avatar circle */}
+      {src ? (
+        <Image
+          source={{ uri: src }}
+          style={avatarStyles.image}
+        />
+      ) : (
+        <View style={[avatarStyles.circle, { backgroundColor: colors.primary[100] }]}>
+          <Text style={{ fontSize: 16, fontWeight: '500', color: colors.primary[600] }}>
+            {getInitials(name)}
+          </Text>
+        </View>
+      )}
+      {/* Status indicator - positioned absolutely over the avatar */}
+      <View
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          right: 0,
+          width: 16,
+          height: 16,
+          borderRadius: 8,
+          backgroundColor: isOnline ? '#22C55E' : '#9CA3AF',
+          borderWidth: 2,
+          borderColor: colors.background.secondary,
+          zIndex: 999,
+          elevation: 10,
+        }}
+      />
+    </View>
+  );
+};
+
+const avatarStyles = StyleSheet.create({
+  circle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  image: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+});
 
 // =============================================================================
 // SKELETON COMPONENT
@@ -281,6 +354,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { isOnline, isSyncing, lastSyncAt, sync } = useSyncStatus();
+  const { t } = useTranslation();
 
   // State
   const [localStats, setLocalStats] = useState<LocalStats>({
@@ -488,6 +562,22 @@ export default function HomeScreen() {
 
   const showFinancialLoading = financialLoading && isOnline;
 
+  // Helper function to format cache age with translations
+  const formatCacheAgeTranslated = (ageMs: number | null): string => {
+    if (ageMs === null) return '';
+
+    const minutes = Math.floor(ageMs / 60000);
+    const hours = Math.floor(ageMs / 3600000);
+
+    if (hours > 0) {
+      return t('dashboard.cacheAgeHours', { hours });
+    }
+    if (minutes > 0) {
+      return t('dashboard.cacheAgeMinutes', { minutes });
+    }
+    return t('dashboard.cacheAgeRecent');
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background.secondary }]} edges={['bottom']}>
       <ScrollView
@@ -504,7 +594,11 @@ export default function HomeScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Avatar name={user?.name} size="md" status={isOnline ? 'online' : 'offline'} />
+            <AvatarWithStatus
+              name={user?.name}
+              src={user?.avatarUrl}
+              isOnline={isOnline}
+            />
             <View style={styles.headerText}>
               <Text variant="bodySmall" color="secondary">
                 Bem-vindo,
@@ -530,7 +624,7 @@ export default function HomeScreen() {
           <View style={[styles.cacheBanner, { backgroundColor: colors.warning[100], borderColor: colors.warning[300] }]}>
             <Ionicons name="cloud-offline-outline" size={16} color={colors.warning[700]} />
             <Text variant="caption" style={{ color: colors.warning[700], marginLeft: spacing[2], flex: 1 }}>
-              Você está offline. Dados financeiros {DashboardService.formatCacheAge(cacheAge)}.
+              {t('dashboard.offlineBanner', { cacheAge: formatCacheAgeTranslated(cacheAge) })}
             </Text>
           </View>
         )}
@@ -538,7 +632,7 @@ export default function HomeScreen() {
           <View style={[styles.cacheBanner, { backgroundColor: colors.info[50], borderColor: colors.info[200] }]}>
             <Ionicons name="time-outline" size={16} color={colors.info[600]} />
             <Text variant="caption" style={{ color: colors.info[600], marginLeft: spacing[2], flex: 1 }}>
-              Dados do cache ({DashboardService.formatCacheAge(cacheAge)}). Puxe para atualizar.
+              {t('dashboard.cacheBanner', { cacheAge: formatCacheAgeTranslated(cacheAge) })}
             </Text>
           </View>
         )}

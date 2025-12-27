@@ -22,6 +22,8 @@ import { useColors } from '../../src/design-system/ThemeProvider';
 import { colors, spacing, borderRadius } from '../../src/design-system/tokens';
 import { useTranslation } from '../../src/i18n';
 import { ReportsService, FinanceReportData, ReportPeriod } from '../../src/services/ReportsService';
+
+const formatCacheAge = ReportsService.formatCacheAge;
 import { useLocale } from '../../src/i18n/I18nProvider';
 
 // =============================================================================
@@ -272,6 +274,8 @@ export default function FinanceReportScreen() {
   const [data, setData] = useState<FinanceReportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [fromCache, setFromCache] = useState(false);
+  const [cacheAge, setCacheAge] = useState<number | null>(null);
 
   // Load data
   const loadData = useCallback(async (forceRefresh = false) => {
@@ -282,8 +286,10 @@ export default function FinanceReportScreen() {
         setLoading(true);
       }
 
-      const result = await ReportsService.getFinanceReport(selectedPeriod);
-      setData(result);
+      const result = await ReportsService.getFinanceReport(selectedPeriod, { forceRefresh });
+      setData(result.data);
+      setFromCache(result.fromCache);
+      setCacheAge(result.cacheAge);
     } catch (error) {
       console.error('[FinanceReportScreen] Error loading data:', error);
     } finally {
@@ -309,7 +315,17 @@ export default function FinanceReportScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={themeColors.text.primary} />
         </TouchableOpacity>
-        <Text variant="h5" weight="semibold">{t('reports.financeReport')}</Text>
+        <View style={styles.titleContainer}>
+          <Text variant="h5" weight="semibold">{t('reports.financeReport')}</Text>
+          {fromCache && cacheAge !== null && (
+            <View style={styles.cacheIndicator}>
+              <Ionicons name="cloud-offline-outline" size={12} color={themeColors.text.tertiary} />
+              <Text variant="caption" color="tertiary" style={{ marginLeft: spacing[1] }}>
+                {formatCacheAge(cacheAge)}
+              </Text>
+            </View>
+          )}
+        </View>
         <TouchableOpacity onPress={() => loadData(true)} style={styles.refreshButton}>
           <Ionicons name="refresh" size={22} color={themeColors.primary[500]} />
         </TouchableOpacity>
@@ -530,6 +546,15 @@ const styles = StyleSheet.create({
   refreshButton: {
     padding: spacing[2],
     marginRight: -spacing[2],
+  },
+  titleContainer: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  cacheIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing[1],
   },
   periodContainer: {
     paddingVertical: spacing[3],

@@ -66,7 +66,9 @@ export default function NotificationsSettingsPage() {
   const updateMessages = useUpdateNotificationMessages();
 
   // WhatsApp is popular in Latin America, Spain, Portugal, India - not in US/CA
-  const showWhatsApp = WHATSAPP_COUNTRIES.includes(companySettings?.country?.toUpperCase() || 'BR');
+  // Use 'BR' as fallback if country is not set or empty
+  const userCountry = companySettings?.country?.toUpperCase();
+  const showWhatsApp = WHATSAPP_COUNTRIES.includes(userCountry && userCountry.length > 0 ? userCountry : 'BR');
 
   // Z-API connection status
   const isZApiConnected = zapiStatus?.configured && zapiStatus?.connectionStatus === 'connected';

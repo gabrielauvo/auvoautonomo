@@ -76,7 +76,9 @@ export default function IntegrationsSettingsPage() {
   const { settings: companySettings } = useCompanySettings();
 
   // WhatsApp is popular in Latin America, Spain, Portugal, India - not in US/CA
-  const showWhatsApp = WHATSAPP_COUNTRIES.includes(companySettings?.country?.toUpperCase() || 'BR');
+  // Use 'BR' as fallback if country is not set or empty
+  const userCountry = companySettings?.country?.toUpperCase();
+  const showWhatsApp = WHATSAPP_COUNTRIES.includes(userCountry && userCountry.length > 0 ? userCountry : 'BR');
 
   // Asaas hooks
   const { data: asaasStatus, isLoading: asaasLoading } = useAsaasStatus();

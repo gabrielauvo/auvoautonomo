@@ -310,6 +310,7 @@ export const ptBR = {
     searchPlaceholder: 'Buscar clientes...',
     noClients: 'Nenhum cliente cadastrado',
     noClientsFound: 'Nenhum cliente encontrado',
+    totalCount: '{count} cliente(s)',
     name: 'Nome',
     email: 'Email',
     phone: 'Telefone',

@@ -8,12 +8,10 @@ import React from 'react';
 import { View, StyleSheet, TouchableOpacity, ViewStyle, Platform, StatusBar } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Text, Badge } from '../design-system';
+import { Text } from '../design-system';
 import { useColors } from '../design-system/ThemeProvider';
 import { useDrawer } from './DrawerContext';
 import { spacing } from '../design-system/tokens';
-
-import { useSyncStatus } from '../sync';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -41,7 +39,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { openDrawer } = useDrawer();
-  const { isOnline } = useSyncStatus();
 
   const statusBarHeight = Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0;
   const topPadding = Math.max(insets.top, statusBarHeight);
@@ -99,11 +96,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             >
               <Ionicons name={rightIcon} size={22} color={colors.text.primary} />
             </TouchableOpacity>
-          ) : (
-            <Badge variant={isOnline ? 'success' : 'error'} size="sm">
-              {isOnline ? 'Online' : 'Offline'}
-            </Badge>
-          )}
+          ) : null}
         </View>
       </View>
     </View>

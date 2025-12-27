@@ -238,9 +238,9 @@ export function CompanySettingsProvider({
       if (response.ok) {
         const data = await response.json();
         setSettings({
-          country: data.country || DEFAULT_SETTINGS.country,
-          currency: data.currency || DEFAULT_SETTINGS.currency,
-          timezone: data.timezone || DEFAULT_SETTINGS.timezone,
+          country: data.country && data.country.length > 0 ? data.country : DEFAULT_SETTINGS.country,
+          currency: data.currency && data.currency.length > 0 ? data.currency : DEFAULT_SETTINGS.currency,
+          timezone: data.timezone && data.timezone.length > 0 ? data.timezone : DEFAULT_SETTINGS.timezone,
         });
       } else {
         setSettings(DEFAULT_SETTINGS);

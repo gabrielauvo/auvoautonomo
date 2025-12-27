@@ -1072,7 +1072,7 @@ const AttachmentsTab = React.memo(function AttachmentsTab({
             );
           } else {
             const errorText = await response.text();
-            console.error('[AttachmentsTab] Upload failed:', response.status, errorText);
+            console.warn('[AttachmentsTab] Upload failed (will retry):', response.status, errorText);
             // Marcar como falhou mas manter localmente
             await ChecklistAttachmentRepository.update(localAttachment.id, {
               syncStatus: 'FAILED',
@@ -1081,7 +1081,8 @@ const AttachmentsTab = React.memo(function AttachmentsTab({
           }
         }
       } catch (uploadErr) {
-        console.error('[AttachmentsTab] Upload error:', uploadErr);
+        // Usar warn ao invés de error para não mostrar LogBox vermelho em erros de rede
+        console.warn('[AttachmentsTab] Upload error (will retry when online):', uploadErr instanceof Error ? uploadErr.message : uploadErr);
         // Falha no upload, mas anexo fica salvo localmente
         await ChecklistAttachmentRepository.update(localAttachment.id, {
           syncStatus: 'FAILED',
@@ -1942,7 +1943,7 @@ export default function WorkOrderDetailScreen() {
               successCount++;
             } else {
               const errorText = await response.text();
-              console.error(`[WorkOrderDetail] Upload failed for ${attachment.id}:`, response.status, errorText);
+              console.warn(`[WorkOrderDetail] Upload failed for ${attachment.id} (will retry):`, response.status, errorText);
               await ChecklistAttachmentRepository.update(attachment.id, {
                 syncStatus: 'FAILED',
                 lastUploadError: `${response.status}: ${errorText}`,
@@ -1950,7 +1951,8 @@ export default function WorkOrderDetailScreen() {
               failCount++;
             }
           } catch (uploadErr) {
-            console.error(`[WorkOrderDetail] Upload error for ${attachment.id}:`, uploadErr);
+            // Usar warn ao invés de error para não mostrar LogBox vermelho em erros de rede
+            console.warn(`[WorkOrderDetail] Upload error for ${attachment.id} (will retry when online):`, uploadErr instanceof Error ? uploadErr.message : uploadErr);
             await ChecklistAttachmentRepository.update(attachment.id, {
               syncStatus: 'FAILED',
               lastUploadError: uploadErr instanceof Error ? uploadErr.message : 'Erro de upload',

@@ -451,7 +451,7 @@ export default function FinanceReportScreen() {
             <View style={styles.methodsList}>
               {data.chargesByMethod.map((method, index) => (
                 <PaymentMethodBar
-                  key={method.method || index}
+                  key={`method-${index}-${method.method}`}
                   method={method.method}
                   amount={method.amount}
                   count={method.count}

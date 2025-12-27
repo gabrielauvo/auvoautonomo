@@ -488,7 +488,7 @@ export default function ClientsReportScreen() {
             <View style={styles.cityList}>
               {data.clientsByCity.slice(0, 5).map((city, index) => (
                 <CityBar
-                  key={city.city || index}
+                  key={`city-${index}-${city.city}`}
                   city={city.city || 'N/A'}
                   count={city.count}
                   maxCount={maxCityCount}

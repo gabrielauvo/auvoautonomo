@@ -29,6 +29,7 @@ import {
   Button,
   Skeleton,
   Input,
+  SearchSelect,
 } from '@/components/ui';
 import {
   getInventoryMovements,
@@ -124,40 +125,32 @@ export default function MovementsPage() {
               <label className="text-sm font-medium text-gray-700 mb-1 block">
                 {t('movements.type')}
               </label>
-              <select
+              <SearchSelect
+                options={TYPE_OPTIONS.map((opt) => ({ value: opt.value, label: opt.label }))}
                 value={type}
-                onChange={(e) => {
-                  setType(e.target.value);
+                onChange={(val) => {
+                  setType(val);
                   setPage(0);
                 }}
-                className="w-full h-10 px-3 border rounded-lg text-sm"
-              >
-                {TYPE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+                placeholder="Todos os tipos"
+                searchPlaceholder="Buscar tipo..."
+              />
             </div>
 
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1 block">
                 {t('movements.source')}
               </label>
-              <select
+              <SearchSelect
+                options={SOURCE_OPTIONS.map((opt) => ({ value: opt.value, label: opt.label }))}
                 value={source}
-                onChange={(e) => {
-                  setSource(e.target.value);
+                onChange={(val) => {
+                  setSource(val);
                   setPage(0);
                 }}
-                className="w-full h-10 px-3 border rounded-lg text-sm"
-              >
-                {SOURCE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+                placeholder="Todas as origens"
+                searchPlaceholder="Buscar origem..."
+              />
             </div>
 
             <div>

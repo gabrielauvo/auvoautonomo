@@ -38,6 +38,7 @@ import {
   TabsList,
   TabsTrigger,
   TabsContent,
+  SearchSelect,
 } from '@/components/ui';
 import {
   ColorPicker,
@@ -228,20 +229,23 @@ export default function TemplatesSettingsPage() {
                     </label>
 
                     {quoteTemplate.showLogo && (
-                      <select
+                      <SearchSelect
+                        options={[
+                          { value: 'left', label: t('left') },
+                          { value: 'center', label: t('center') },
+                          { value: 'right', label: t('right') },
+                        ]}
                         value={quoteTemplate.logoPosition}
-                        onChange={(e) =>
+                        onChange={(val) =>
                           setQuoteTemplate({
                             ...quoteTemplate,
-                            logoPosition: e.target.value as 'left' | 'center' | 'right',
+                            logoPosition: val as 'left' | 'center' | 'right',
                           })
                         }
-                        className="px-3 py-1.5 border rounded text-sm"
-                      >
-                        <option value="left">{t('left')}</option>
-                        <option value="center">{t('center')}</option>
-                        <option value="right">{t('right')}</option>
-                      </select>
+                        placeholder={t('left')}
+                        size="sm"
+                        className="w-32"
+                      />
                     )}
                   </div>
 
@@ -380,20 +384,23 @@ export default function TemplatesSettingsPage() {
                     </label>
 
                     {workOrderTemplate.showLogo && (
-                      <select
+                      <SearchSelect
+                        options={[
+                          { value: 'left', label: t('left') },
+                          { value: 'center', label: t('center') },
+                          { value: 'right', label: t('right') },
+                        ]}
                         value={workOrderTemplate.logoPosition}
-                        onChange={(e) =>
+                        onChange={(val) =>
                           setWorkOrderTemplate({
                             ...workOrderTemplate,
-                            logoPosition: e.target.value as 'left' | 'center' | 'right',
+                            logoPosition: val as 'left' | 'center' | 'right',
                           })
                         }
-                        className="px-3 py-1.5 border rounded text-sm"
-                      >
-                        <option value="left">{t('left')}</option>
-                        <option value="center">{t('center')}</option>
-                        <option value="right">{t('right')}</option>
-                      </select>
+                        placeholder={t('left')}
+                        size="sm"
+                        className="w-32"
+                      />
                     )}
                   </div>
 
@@ -406,19 +413,20 @@ export default function TemplatesSettingsPage() {
                   />
 
                   <FormField label={t('layout')}>
-                    <select
+                    <SearchSelect
+                      options={[
+                        { value: 'compact', label: t('compact') },
+                        { value: 'detailed', label: t('detailed') },
+                      ]}
                       value={workOrderTemplate.layout}
-                      onChange={(e) =>
+                      onChange={(val) =>
                         setWorkOrderTemplate({
                           ...workOrderTemplate,
-                          layout: e.target.value as 'compact' | 'detailed',
+                          layout: val as 'compact' | 'detailed',
                         })
                       }
-                      className="w-full h-10 px-3 border rounded-lg text-sm"
-                    >
-                      <option value="compact">{t('compact')}</option>
-                      <option value="detailed">{t('detailed')}</option>
-                    </select>
+                      placeholder={t('compact')}
+                    />
                   </FormField>
 
                   <label className="flex items-center gap-2 cursor-pointer">

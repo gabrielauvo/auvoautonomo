@@ -7,7 +7,7 @@
  */
 
 import { useState } from 'react';
-import { Modal, Button, Input, Textarea, FormField, Alert } from '@/components/ui';
+import { Modal, Button, Input, Textarea, FormField, Alert, SearchSelect } from '@/components/ui';
 import { useFormatting } from '@/context';
 import { DollarSign, Calendar, FileText, AlertCircle } from 'lucide-react';
 import { ManualPaymentDto } from '@/services/charges.service';
@@ -140,18 +140,14 @@ export function ManualPaymentModal({
         </div>
 
         <FormField label="Forma de pagamento">
-          <select
+          <SearchSelect
+            options={PAYMENT_METHODS}
             value={paymentMethod}
-            onChange={(e) => setPaymentMethod(e.target.value)}
-            className="w-full h-10 px-3 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            onChange={setPaymentMethod}
+            placeholder="Selecione a forma de pagamento..."
+            searchPlaceholder="Buscar forma de pagamento..."
             disabled={isLoading}
-          >
-            {PAYMENT_METHODS.map((method) => (
-              <option key={method.value} value={method.value}>
-                {method.label}
-              </option>
-            ))}
-          </select>
+          />
         </FormField>
 
         <FormField label="Observações">

@@ -40,6 +40,7 @@ import {
   FormField,
   Alert,
   Skeleton,
+  SearchSelect,
 } from '@/components/ui';
 import { maskCNPJ, isValidCNPJ, cleanDocument, maskPhone, maskPhoneMobile, getTaxIdConfig, isPIXAvailable, type TaxIdLocale } from '@/lib/utils';
 import { UploadLogo, ColorPicker, TemplatePreview } from '@/components/settings';
@@ -454,16 +455,16 @@ export default function CompanySettingsPage() {
             </FormField>
 
             <FormField label={t('state')}>
-              <select
+              <SearchSelect
+                options={[
+                  { value: '', label: t('selectState') },
+                  ...STATES.map((uf) => ({ value: uf, label: uf })),
+                ]}
                 value={state}
-                onChange={(e) => setState(e.target.value)}
-                className="w-full h-10 px-3 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="">{t('selectState')}</option>
-                {STATES.map((uf) => (
-                  <option key={uf} value={uf}>{uf}</option>
-                ))}
-              </select>
+                onChange={setState}
+                placeholder={t('selectState')}
+                searchPlaceholder="Buscar estado..."
+              />
             </FormField>
           </div>
         </CardContent>
@@ -504,19 +505,17 @@ export default function CompanySettingsPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField label={t('pixKeyType')}>
-                <select
+                <SearchSelect
+                  options={[
+                    { value: '', label: t('selectType') },
+                    ...PIX_KEY_TYPES.map((type) => ({ value: type.value, label: type.label })),
+                  ]}
                   value={pixKeyType}
-                  onChange={(e) => setPixKeyType(e.target.value as PixKeyType | '')}
-                  className="w-full h-10 px-3 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  onChange={(val) => setPixKeyType(val as PixKeyType | '')}
+                  placeholder={t('selectType')}
+                  searchPlaceholder="Buscar tipo..."
                   disabled={!pixKeyEnabled}
-                >
-                  <option value="">{t('selectType')}</option>
-                  {PIX_KEY_TYPES.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
+                />
               </FormField>
 
               <FormField label={t('pixKey')}>

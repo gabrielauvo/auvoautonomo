@@ -25,6 +25,7 @@ import {
   FormField,
   Alert,
   Skeleton,
+  SearchSelect,
 } from '@/components/ui';
 import { UpsellModal } from '@/components/billing';
 import { WorkOrderItemsTable } from '@/components/work-orders';
@@ -644,36 +645,21 @@ export function WorkOrderForm({ workOrder, onSuccess, onCancel, preselectedClien
             {/* Tipo de OS - Apenas se tiver tipos cadastrados */}
             {workOrderTypes && workOrderTypes.length > 0 && (
               <FormField label="Tipo de OS">
-                <div className="relative">
-                  <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <select
-                    value={selectedWorkOrderTypeId}
-                    onChange={(e) => setSelectedWorkOrderTypeId(e.target.value)}
-                    disabled={isLoading || isLoadingTypes}
-                    className="w-full h-10 pl-10 pr-3 border rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none"
-                  >
-                    <option value="">Sem tipo definido</option>
-                    {workOrderTypes.map((type) => (
-                      <option key={type.id} value={type.id}>
-                        {type.name}
-                      </option>
-                    ))}
-                  </select>
-                  {/* Color indicator */}
-                  {selectedWorkOrderTypeId && (
-                    <div
-                      className="absolute right-10 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border"
-                      style={{
-                        backgroundColor: workOrderTypes.find(t => t.id === selectedWorkOrderTypeId)?.color || '#6B7280',
-                      }}
-                    />
-                  )}
-                  <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
-                    <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
-                </div>
+                <SearchSelect
+                  options={[
+                    { value: '', label: 'Sem tipo definido' },
+                    ...workOrderTypes.map((type) => ({
+                      value: type.id,
+                      label: type.name,
+                    })),
+                  ]}
+                  value={selectedWorkOrderTypeId}
+                  onChange={setSelectedWorkOrderTypeId}
+                  placeholder="Selecione o tipo de OS..."
+                  searchPlaceholder="Buscar tipo..."
+                  disabled={isLoading || isLoadingTypes}
+                  clearable
+                />
               </FormField>
             )}
           </CardContent>
@@ -743,20 +729,24 @@ export function WorkOrderForm({ workOrder, onSuccess, onCancel, preselectedClien
             </CardHeader>
             <CardContent>
               <FormField label="Template de Checklist">
-                <select
+                <SearchSelect
+                  options={[
+                    { value: '', label: 'Nenhum checklist (opcional)' },
+                    ...(checklistTemplates?.map((template) => ({
+                      value: template.id,
+                      label: template.description
+                        ? `${template.name} - ${template.description}`
+                        : template.name,
+                    })) || []),
+                  ]}
                   value={selectedChecklistTemplateId}
-                  onChange={(e) => setSelectedChecklistTemplateId(e.target.value)}
+                  onChange={setSelectedChecklistTemplateId}
+                  placeholder="Nenhum checklist (opcional)"
+                  searchPlaceholder="Buscar checklist..."
+                  emptyMessage="Nenhum checklist encontrado"
                   disabled={isLoading || isLoadingTemplates}
-                  className="w-full h-10 px-3 border rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-                >
-                  <option value="">Nenhum checklist (opcional)</option>
-                  {checklistTemplates?.map((template) => (
-                    <option key={template.id} value={template.id}>
-                      {template.name}
-                      {template.description ? ` - ${template.description}` : ''}
-                    </option>
-                  ))}
-                </select>
+                  clearable
+                />
                 <p className="text-sm text-gray-500 mt-1">
                   Selecione um checklist para o técnico preencher durante a execução do serviço.
                 </p>

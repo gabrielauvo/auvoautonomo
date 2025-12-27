@@ -22,6 +22,7 @@ import {
   FormField,
   Alert,
   Skeleton,
+  SearchSelect,
 } from '@/components/ui';
 import { RegionalSettingsForm } from '@/components/settings';
 import {
@@ -191,18 +192,18 @@ export default function AccountSettingsPage() {
 
             <FormField label={t('language')}>
               <div className="relative">
-                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <select
+                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 z-10 pointer-events-none" />
+                <SearchSelect
+                  options={LANGUAGES.map((lang) => ({
+                    value: lang.value,
+                    label: lang.label,
+                  }))}
                   value={language}
-                  onChange={(e) => setLanguage(e.target.value as Locale)}
-                  className="w-full h-10 pl-10 pr-4 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  {LANGUAGES.map((lang) => (
-                    <option key={lang.value} value={lang.value}>
-                      {lang.label}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setLanguage(val as Locale)}
+                  placeholder={t('language')}
+                  searchPlaceholder={t('language') + '...'}
+                  className="pl-10"
+                />
               </div>
             </FormField>
           </div>

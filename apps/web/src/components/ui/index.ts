@@ -100,3 +100,7 @@ export { DynamicModal, DynamicDialog } from './dynamic-modal';
 
 // Theme Toggle
 export { ThemeToggle, ThemeDropdown } from './theme-toggle';
+
+// Search Select (Combobox with search)
+export { SearchSelect, searchSelectVariants } from './search-select';
+export type { SearchSelectProps, SearchSelectOption } from './search-select';

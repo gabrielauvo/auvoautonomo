@@ -504,17 +504,14 @@ export default function HomeScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Avatar name={user?.name} size="md" />
+            <Avatar name={user?.name} size="md" status={isOnline ? 'online' : 'offline'} />
             <View style={styles.headerText}>
               <Text variant="bodySmall" color="secondary">
-                Olá,
+                Bem-vindo,
               </Text>
               <Text variant="h5">{user?.name || 'Técnico'}</Text>
             </View>
           </View>
-          <Badge variant={isOnline ? 'success' : 'error'} size="sm">
-            {isOnline ? 'Online' : 'Offline'}
-          </Badge>
         </View>
 
         {/* Period Filter */}

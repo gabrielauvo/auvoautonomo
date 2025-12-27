@@ -275,14 +275,6 @@ export default function ProfileScreen() {
       showChevron: true,
     },
     {
-      id: 'crescimento',
-      icon: 'trending-up-outline',
-      label: t('profile.menu.growth'),
-      description: t('profile.menu.growthDesc'),
-      route: '/perfil/crescimento',
-      showChevron: true,
-    },
-    {
       id: 'preferencias',
       icon: 'settings-outline',
       label: t('profile.menu.preferences'),

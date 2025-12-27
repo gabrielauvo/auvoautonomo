@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { Resend } from 'resend';
 import {
   NotificationChannel,
   NotificationMessage,
@@ -9,20 +10,25 @@ import { NotificationChannelBase } from './notification-channel.interface';
 /**
  * Email Channel Service
  *
- * Handles sending notifications via email.
- * Currently implements a mock/stub that logs to console.
- * Can be replaced with real providers like SendGrid, AWS SES, etc.
+ * Handles sending notifications via email using Resend.
  */
 @Injectable()
 export class EmailChannelService extends NotificationChannelBase {
   private readonly logger = new Logger(EmailChannelService.name);
+  private readonly resend: Resend;
   readonly channel = NotificationChannel.EMAIL;
 
+  constructor() {
+    super();
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      this.logger.warn('RESEND_API_KEY not configured - emails will not be sent');
+    }
+    this.resend = new Resend(apiKey);
+  }
+
   /**
-   * Send email notification
-   *
-   * In production, replace this with actual email provider integration
-   * (SendGrid, AWS SES, Mailgun, etc.)
+   * Send email notification using Resend
    */
   async send(message: NotificationMessage): Promise<NotificationResult> {
     try {
@@ -34,40 +40,43 @@ export class EmailChannelService extends NotificationChannelBase {
         };
       }
 
-      // Log the email (mock implementation - only detailed in development)
-      if (process.env.NODE_ENV !== 'production') {
-        this.logger.log('========================================');
-        this.logger.log('📧 EMAIL NOTIFICATION (MOCK)');
-        this.logger.log('========================================');
-        this.logger.log(`To: ${this.maskEmail(message.to)}`);
-        this.logger.log(`Subject: ${message.subject || '(no subject)'}`);
-        this.logger.log('----------------------------------------');
-        this.logger.log(`Body: [${message.body.length} characters]`);
-        this.logger.log('========================================');
-      } else {
-        this.logger.debug(`Sending email to ${this.maskEmail(message.to)}`);
+      // Check if API key is configured
+      if (!process.env.RESEND_API_KEY) {
+        this.logger.warn('RESEND_API_KEY not configured - skipping email send');
+        return {
+          success: false,
+          error: 'Email service not configured',
+        };
       }
 
-      // In production, this would be something like:
-      // const result = await this.sendgrid.send({
-      //   to: message.to,
-      //   from: process.env.EMAIL_FROM,
-      //   subject: message.subject,
-      //   text: message.body,
-      //   html: message.htmlBody,
-      // });
+      const fromEmail = process.env.EMAIL_FROM || 'onboarding@resend.dev';
+      const fromName = process.env.EMAIL_FROM_NAME || 'Auvo';
 
-      // Simulate async operation
-      await this.simulateNetworkDelay();
+      this.logger.log(`Sending email to ${this.maskEmail(message.to)}`);
+      this.logger.debug(`Subject: ${message.subject || '(no subject)'}`);
 
-      // Generate mock message ID
-      const messageId = `email_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      // Send email via Resend
+      const { data, error } = await this.resend.emails.send({
+        from: `${fromName} <${fromEmail}>`,
+        to: [message.to],
+        subject: message.subject || 'Notificação',
+        html: message.htmlBody || message.body,
+        text: message.body,
+      });
 
-      this.logger.log(`Email sent successfully. MessageId: ${messageId}`);
+      if (error) {
+        this.logger.error(`Failed to send email: ${error.message}`);
+        return {
+          success: false,
+          error: error.message,
+        };
+      }
+
+      this.logger.log(`Email sent successfully. MessageId: ${data?.id}`);
 
       return {
         success: true,
-        messageId,
+        messageId: data?.id,
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -89,15 +98,6 @@ export class EmailChannelService extends NotificationChannelBase {
     // Basic email validation regex
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
-  }
-
-  /**
-   * Simulate network delay for mock implementation
-   */
-  private async simulateNetworkDelay(): Promise<void> {
-    // Simulate 100-500ms delay
-    const delay = Math.random() * 400 + 100;
-    await new Promise((resolve) => setTimeout(resolve, delay));
   }
 
   /**

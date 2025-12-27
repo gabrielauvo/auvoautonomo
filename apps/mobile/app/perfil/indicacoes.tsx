@@ -22,6 +22,7 @@ import * as Clipboard from 'expo-clipboard';
 import { Text, Card, Badge } from '../../src/design-system';
 import { useColors, useSpacing } from '../../src/design-system/ThemeProvider';
 import { AuthService } from '../../src/services/AuthService';
+import { useTranslation, useLocale } from '../../src/i18n';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 const WEB_URL = process.env.EXPO_PUBLIC_WEB_URL || 'https://auvo.com';
@@ -85,38 +86,6 @@ interface ReferralDashboard {
 // HELPERS
 // =============================================================================
 
-const getStatusLabel = (status: Referral['status']): string => {
-  const labels: Record<Referral['status'], string> = {
-    PENDING: 'Aguardando',
-    SIGNUP_COMPLETE: 'Cadastrado',
-    SUBSCRIPTION_PAID: 'Pago',
-    CHURNED: 'Cancelado',
-    FRAUDULENT: 'Fraude',
-  };
-  return labels[status] || status;
-};
-
-const getStatusColor = (status: Referral['status'], colors: any): string => {
-  const colorMap: Record<Referral['status'], string> = {
-    PENDING: colors.warning[500],
-    SIGNUP_COMPLETE: colors.primary[500],
-    SUBSCRIPTION_PAID: colors.success[500],
-    CHURNED: colors.gray[500],
-    FRAUDULENT: colors.error[500],
-  };
-  return colorMap[status] || colors.gray[500];
-};
-
-const getRewardReasonLabel = (reason: ReferralReward['reason']): string => {
-  const labels: Record<ReferralReward['reason'], string> = {
-    SINGLE_REFERRAL: 'Indicação',
-    MILESTONE_10: 'Bônus 10 indicações',
-    BONUS: 'Bônus especial',
-    REVERSAL: 'Estorno',
-  };
-  return labels[reason] || reason;
-};
-
 const getPlatformIcon = (platform: Referral['platform']): string => {
   const icons: Record<Referral['platform'], string> = {
     IOS: 'logo-apple',
@@ -134,11 +103,36 @@ const getPlatformIcon = (platform: Referral['platform']): string => {
 export default function ReferralScreen() {
   const colors = useColors();
   const spacing = useSpacing();
+  const { t } = useTranslation();
+  const { locale } = useLocale();
 
   const [dashboard, setDashboard] = useState<ReferralDashboard | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // Status labels using translations
+  const getStatusLabel = useCallback((status: Referral['status']): string => {
+    const labels: Record<Referral['status'], string> = {
+      PENDING: t('referral.statusPending'),
+      SIGNUP_COMPLETE: t('referral.statusSignupComplete'),
+      SUBSCRIPTION_PAID: t('referral.statusSubscriptionPaid'),
+      CHURNED: t('referral.statusChurned'),
+      FRAUDULENT: t('referral.statusFraudulent'),
+    };
+    return labels[status] || status;
+  }, [t]);
+
+  // Reward reason labels using translations
+  const getRewardReasonLabel = useCallback((reason: ReferralReward['reason']): string => {
+    const labels: Record<ReferralReward['reason'], string> = {
+      SINGLE_REFERRAL: t('referral.reasonSingleReferral'),
+      MILESTONE_10: t('referral.reasonMilestone10'),
+      BONUS: t('referral.reasonBonus'),
+      REVERSAL: t('referral.reasonReversal'),
+    };
+    return labels[reason] || reason;
+  }, [t]);
 
   const loadData = useCallback(async () => {
     try {
@@ -183,17 +177,18 @@ export default function ReferralScreen() {
     if (!dashboard?.shareUrl) return;
 
     await Clipboard.setStringAsync(dashboard.shareUrl);
-    Alert.alert('Sucesso', 'Link copiado!');
+    Alert.alert(t('common.success'), t('referral.linkCopied'));
   };
 
   const handleShare = async () => {
     if (!dashboard?.shareUrl) return;
 
     try {
+      const message = t('referral.shareMessage').replace('{url}', dashboard.shareUrl);
       await Share.share({
-        message: `Experimente o Auvo Autônomo e gerencie seu negócio de forma profissional! Use meu link: ${dashboard.shareUrl}`,
+        message,
         url: dashboard.shareUrl,
-        title: 'Conheça o Auvo Autônomo',
+        title: t('referral.shareTitle'),
       });
     } catch (error) {
       console.error('[Referral] Error sharing:', error);
@@ -203,9 +198,8 @@ export default function ReferralScreen() {
   const handleShareWhatsApp = async () => {
     if (!dashboard?.shareUrl) return;
 
-    const message = encodeURIComponent(
-      `Olá! 👋\n\nEstou usando o Auvo Autônomo para gerenciar meu negócio e recomendo muito!\n\nExperimente gratuitamente: ${dashboard.shareUrl}`
-    );
+    const whatsappText = t('referral.whatsappMessage').replace('{url}', dashboard.shareUrl);
+    const message = encodeURIComponent(whatsappText);
 
     // Try to open WhatsApp
     const whatsappUrl = `whatsapp://send?text=${message}`;
@@ -229,7 +223,7 @@ export default function ReferralScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary[500]} />
           <Text variant="body" color="secondary" style={{ marginTop: spacing[3] }}>
-            Carregando...
+            {t('referral.loading')}
           </Text>
         </View>
       </SafeAreaView>
@@ -244,13 +238,13 @@ export default function ReferralScreen() {
             <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
           </TouchableOpacity>
           <Text variant="h4" weight="semibold">
-            Indique e Ganhe
+            {t('referral.title')}
           </Text>
           <View style={styles.headerSpacer} />
         </View>
         <View style={styles.loadingContainer}>
           <Text variant="body" color="secondary">
-            Erro ao carregar dados
+            {t('referral.errorLoading')}
           </Text>
         </View>
       </SafeAreaView>
@@ -269,7 +263,7 @@ export default function ReferralScreen() {
           <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
         </TouchableOpacity>
         <Text variant="h4" weight="semibold">
-          Indique e Ganhe
+          {t('referral.title')}
         </Text>
         <View style={styles.headerSpacer} />
       </View>
@@ -291,10 +285,10 @@ export default function ReferralScreen() {
           <View style={styles.shareCardHeader}>
             <View>
               <Text variant="h5" weight="bold" style={{ color: '#FFF' }}>
-                Seu código de indicação
+                {t('referral.yourCode')}
               </Text>
               <Text variant="caption" style={{ color: 'rgba(255,255,255,0.8)', marginTop: 4 }}>
-                Compartilhe e ganhe meses grátis
+                {t('referral.shareAndEarn')}
               </Text>
             </View>
             <View style={[styles.giftIcon, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
@@ -326,7 +320,7 @@ export default function ReferralScreen() {
             >
               <Ionicons name="logo-whatsapp" size={20} color="#FFF" />
               <Text variant="caption" weight="semibold" style={{ color: '#FFF', marginLeft: 6 }}>
-                WhatsApp
+                {t('referral.whatsApp')}
               </Text>
             </TouchableOpacity>
 
@@ -336,7 +330,7 @@ export default function ReferralScreen() {
             >
               <Ionicons name="link-outline" size={20} color="#FFF" />
               <Text variant="caption" weight="semibold" style={{ color: '#FFF', marginLeft: 6 }}>
-                Copiar Link
+                {t('referral.copyLink')}
               </Text>
             </TouchableOpacity>
 
@@ -346,7 +340,7 @@ export default function ReferralScreen() {
             >
               <Ionicons name="share-outline" size={20} color="#FFF" />
               <Text variant="caption" weight="semibold" style={{ color: '#FFF', marginLeft: 6 }}>
-                Mais
+                {t('referral.more')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -360,7 +354,7 @@ export default function ReferralScreen() {
               {stats.totalClicks}
             </Text>
             <Text variant="caption" color="secondary">
-              Cliques
+              {t('referral.clicks')}
             </Text>
           </Card>
 
@@ -370,7 +364,7 @@ export default function ReferralScreen() {
               {stats.totalSignups}
             </Text>
             <Text variant="caption" color="secondary">
-              Cadastros
+              {t('referral.signups')}
             </Text>
           </Card>
         </View>
@@ -382,7 +376,7 @@ export default function ReferralScreen() {
               {stats.totalPaidConversions}
             </Text>
             <Text variant="caption" color="secondary">
-              Assinantes
+              {t('referral.subscribers')}
             </Text>
           </Card>
 
@@ -392,7 +386,7 @@ export default function ReferralScreen() {
               {stats.totalDaysEarned}
             </Text>
             <Text variant="caption" color="secondary">
-              Dias ganhos
+              {t('referral.daysEarned')}
             </Text>
           </Card>
         </View>
@@ -405,10 +399,10 @@ export default function ReferralScreen() {
             </View>
             <View style={{ flex: 1, marginLeft: spacing[3] }}>
               <Text variant="body" weight="semibold">
-                Bônus de 12 meses
+                {t('referral.milestone12Months')}
               </Text>
               <Text variant="caption" color="secondary">
-                Indique 10 amigos que assinem
+                {t('referral.milestoneDescription')}
               </Text>
             </View>
           </View>
@@ -428,10 +422,10 @@ export default function ReferralScreen() {
               />
             </View>
             <Text variant="caption" color="secondary" style={{ marginTop: spacing[2] }}>
-              {progressToMilestone}/10 indicações
+              {t('referral.referralsProgress').replace('{current}', String(progressToMilestone))}
               {hasReachedMilestone
-                ? ' - Bônus conquistado! 🎉'
-                : ` - Faltam ${10 - progressToMilestone}`}
+                ? ` - ${t('referral.milestoneAchieved')} 🎉`
+                : ` - ${t('referral.remaining').replace('{count}', String(10 - progressToMilestone))}`}
             </Text>
           </View>
         </Card>
@@ -439,7 +433,7 @@ export default function ReferralScreen() {
         {/* How it works */}
         <View style={{ marginTop: spacing[4], paddingHorizontal: spacing[4] }}>
           <Text variant="body" weight="semibold" style={{ marginBottom: spacing[3] }}>
-            Como funciona
+            {t('referral.howItWorks')}
           </Text>
 
           <Card style={styles.howItWorksCard}>
@@ -451,10 +445,10 @@ export default function ReferralScreen() {
               </View>
               <View style={{ flex: 1, marginLeft: spacing[3] }}>
                 <Text variant="body" weight="medium">
-                  Compartilhe seu link
+                  {t('referral.step1Title')}
                 </Text>
                 <Text variant="caption" color="secondary">
-                  Envie para amigos e colegas
+                  {t('referral.step1Description')}
                 </Text>
               </View>
             </View>
@@ -467,10 +461,10 @@ export default function ReferralScreen() {
               </View>
               <View style={{ flex: 1, marginLeft: spacing[3] }}>
                 <Text variant="body" weight="medium">
-                  Amigo assina
+                  {t('referral.step2Title')}
                 </Text>
                 <Text variant="caption" color="secondary">
-                  Quando ele assinar um plano pago
+                  {t('referral.step2Description')}
                 </Text>
               </View>
             </View>
@@ -483,10 +477,10 @@ export default function ReferralScreen() {
               </View>
               <View style={{ flex: 1, marginLeft: spacing[3] }}>
                 <Text variant="body" weight="medium">
-                  Você ganha 1 mês grátis
+                  {t('referral.step3Title')}
                 </Text>
                 <Text variant="caption" color="secondary">
-                  +12 meses ao atingir 10 indicações!
+                  {t('referral.step3Description')}
                 </Text>
               </View>
             </View>
@@ -497,7 +491,7 @@ export default function ReferralScreen() {
         {referrals.length > 0 && (
           <View style={{ marginTop: spacing[4], paddingHorizontal: spacing[4] }}>
             <Text variant="body" weight="semibold" style={{ marginBottom: spacing[3] }}>
-              Suas indicações
+              {t('referral.yourReferrals')}
             </Text>
 
             <Card style={{ padding: 0, overflow: 'hidden' }}>
@@ -528,7 +522,7 @@ export default function ReferralScreen() {
                         color={colors.text.tertiary}
                       />
                       <Text variant="caption" color="tertiary" style={{ marginLeft: 4 }}>
-                        {new Date(referral.createdAt).toLocaleDateString('pt-BR')}
+                        {new Date(referral.createdAt).toLocaleDateString(locale)}
                       </Text>
                     </View>
                   </View>
@@ -554,7 +548,7 @@ export default function ReferralScreen() {
         {rewards.length > 0 && (
           <View style={{ marginTop: spacing[4], paddingHorizontal: spacing[4] }}>
             <Text variant="body" weight="semibold" style={{ marginBottom: spacing[3] }}>
-              Histórico de recompensas
+              {t('referral.rewardsHistory')}
             </Text>
 
             <Card style={{ padding: 0, overflow: 'hidden' }}>
@@ -605,7 +599,7 @@ export default function ReferralScreen() {
                       {getRewardReasonLabel(reward.reason)}
                     </Text>
                     <Text variant="caption" color="secondary">
-                      {new Date(reward.createdAt).toLocaleDateString('pt-BR')}
+                      {new Date(reward.createdAt).toLocaleDateString(locale)}
                     </Text>
                   </View>
                   <Text
@@ -617,7 +611,7 @@ export default function ReferralScreen() {
                     }}
                   >
                     {reward.reason === 'REVERSAL' ? '-' : '+'}
-                    {reward.daysAwarded} dias
+                    {reward.daysAwarded} {t('referral.days')}
                   </Text>
                 </View>
               ))}
@@ -632,10 +626,10 @@ export default function ReferralScreen() {
               <Ionicons name="people-outline" size={32} color={colors.primary[500]} />
             </View>
             <Text variant="body" weight="semibold" style={{ marginTop: spacing[3] }}>
-              Nenhuma indicação ainda
+              {t('referral.noReferralsYet')}
             </Text>
             <Text variant="caption" color="secondary" align="center" style={{ marginTop: spacing[1] }}>
-              Compartilhe seu link e comece a ganhar meses grátis!
+              {t('referral.noReferralsDescription')}
             </Text>
             <TouchableOpacity
               style={[styles.emptyButton, { backgroundColor: colors.primary[500], marginTop: spacing[4] }]}
@@ -643,7 +637,7 @@ export default function ReferralScreen() {
             >
               <Ionicons name="share-outline" size={18} color="#FFF" />
               <Text variant="body" weight="semibold" style={{ color: '#FFF', marginLeft: 8 }}>
-                Compartilhar agora
+                {t('referral.shareNow')}
               </Text>
             </TouchableOpacity>
           </View>

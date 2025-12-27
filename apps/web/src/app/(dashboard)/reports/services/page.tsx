@@ -175,6 +175,8 @@ function ServicesReportContent() {
           height={350}
           loading={isLoading}
           donut
+          valueLabel={t('value')}
+          totalLabel={t('total')}
         />
 
         {/* Ranking Table */}

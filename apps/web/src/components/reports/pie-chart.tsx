@@ -33,6 +33,10 @@ interface PieChartProps {
   donut?: boolean;
   formatValue?: (value: number) => string;
   className?: string;
+  /** Label for tooltip value */
+  valueLabel?: string;
+  /** Label for center total in donut mode */
+  totalLabel?: string;
 }
 
 /**
@@ -66,6 +70,8 @@ export function PieChart({
   donut = false,
   formatValue = defaultFormatter,
   className,
+  valueLabel = 'Valor',
+  totalLabel = 'Total',
 }: PieChartProps) {
   if (loading) {
     return (
@@ -147,7 +153,7 @@ export function PieChart({
               }}
               formatter={(value) => [
                 formatValue(typeof value === 'number' ? value : 0),
-                'Valor',
+                valueLabel,
               ]}
               labelStyle={{ fontWeight: 600, marginBottom: 4 }}
             />
@@ -167,7 +173,7 @@ export function PieChart({
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="text-center">
               <p className="text-2xl font-bold text-gray-900">{formatValue(total)}</p>
-              <p className="text-xs text-gray-500">Total</p>
+              <p className="text-xs text-gray-500">{totalLabel}</p>
             </div>
           </div>
         )}

@@ -189,6 +189,8 @@ function FinanceReportContent() {
           loading={isLoading}
           donut
           formatValue={formatCurrency}
+          valueLabel={t('value')}
+          totalLabel={t('total')}
         />
       </div>
 

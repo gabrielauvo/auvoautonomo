@@ -186,13 +186,15 @@ function ProfitLossReportContent() {
         />
 
         <PieChart
-          title="Despesas por Categoria"
-          subtitle="Distribuição atual"
+          title={t('expensesByCategory')}
+          subtitle={t('currentDistribution')}
           data={categoryChartData}
           height={300}
           loading={isLoading}
           donut
           formatValue={formatCurrency}
+          valueLabel={t('value')}
+          totalLabel={t('total')}
         />
       </div>
 

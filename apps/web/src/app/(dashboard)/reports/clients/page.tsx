@@ -227,6 +227,8 @@ function ClientsReportContent() {
           height={300}
           loading={isLoading}
           donut
+          valueLabel={t('value')}
+          totalLabel={t('total')}
         />
       </div>
 

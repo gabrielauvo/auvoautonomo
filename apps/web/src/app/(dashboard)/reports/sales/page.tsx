@@ -130,14 +130,22 @@ function SalesReportContent() {
 
   // Translate status names for pie chart
   // Backend returns names in Portuguese ("Rascunho", "Enviado", "Aprovado", etc.)
-  // But mock data uses English keys, so we translate them if needed
+  // Mock data uses English keys, so we handle both cases
   const statusTranslations: Record<string, string> = {
+    // English keys (mock data)
     approved: t('approved'),
     pending: t('pending'),
     rejected: t('rejected'),
     expired: t('expired'),
-    draft: t('quotes'),
-    sent: t('pending'),
+    draft: t('draft'),
+    sent: t('sent'),
+    // Portuguese keys (backend data)
+    Aprovado: t('approved'),
+    Pendente: t('pending'),
+    Recusado: t('rejected'),
+    Expirado: t('expired'),
+    Rascunho: t('draft'),
+    Enviado: t('sent'),
   };
   const translatedQuotesByStatus = salesData.quotesByStatus.map((item) => ({
     ...item,
@@ -226,6 +234,8 @@ function SalesReportContent() {
           height={300}
           loading={isLoading}
           donut
+          valueLabel={t('value')}
+          totalLabel={t('total')}
         />
       </div>
 

@@ -1224,6 +1224,8 @@
     "acceptanceTerms": "Termos de Aceite",
     "acceptanceTermsDescription": "Configure os termos que o cliente deve aceitar antes de assinar um orçamento.",
     "acceptanceTermsEnabled": "Exigir aceite dos termos",
+    "acceptanceTermsEnabledDescription": "Cliente precisará aceitar os termos",
+    "acceptanceTermsDisabledDescription": "Assinatura sem termos de aceite",
     "acceptanceTermsContent": "Conteúdo dos Termos",
     "acceptanceTermsContentPlaceholder": "Digite aqui os termos que o cliente deverá ler e aceitar antes de assinar o orçamento...",
     "acceptanceTermsVersion": "Versão",
@@ -1914,7 +1916,33 @@
     "totalExpenses": "Total de Despesas",
     "noExpensesRegistered": "Nenhuma despesa cadastrada",
     "expensesWillAppearHere": "As despesas deste fornecedor aparecerão aqui",
-    "registerExpense": "Cadastrar Despesa"
+    "registerExpense": "Cadastrar Despesa",
+    "form": {
+      "mainData": "Dados Principais",
+      "nameLabel": "Nome / Razão Social",
+      "namePlaceholder": "Nome completo ou razão social",
+      "documentLabel": "CPF / CNPJ",
+      "documentPlaceholder": "000.000.000-00 ou 00.000.000/0000-00",
+      "searchingData": "Buscando dados...",
+      "autoFilledSuccess": "Dados preenchidos automaticamente",
+      "contact": "Contato",
+      "phonePlaceholder": "(00) 00000-0000",
+      "emailPlaceholder": "email@exemplo.com",
+      "addressPlaceholder": "Rua, número, complemento, cidade - UF",
+      "notesLabel": "Notas",
+      "notesPlaceholder": "Observações sobre o fornecedor...",
+      "saving": "Salvando...",
+      "save": "Salvar",
+      "saveError": "Erro ao salvar fornecedor. Tente novamente.",
+      "validation": {
+        "nameRequired": "Nome é obrigatório",
+        "invalidCpf": "CPF inválido",
+        "invalidCnpj": "CNPJ inválido",
+        "documentLength": "CPF deve ter 11 dígitos ou CNPJ deve ter 14 dígitos",
+        "invalidPhone": "Telefone inválido",
+        "invalidEmail": "Email inválido"
+      }
+    }
   },
   "expenseCategories": {
     "title": "Categorias de Despesas",

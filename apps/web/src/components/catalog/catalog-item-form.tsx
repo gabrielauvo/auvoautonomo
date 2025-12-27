@@ -10,8 +10,9 @@
  * - Gerenciar composição de kits
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from '@/i18n';
 import {
   Card,
   CardHeader,
@@ -67,40 +68,15 @@ interface FormErrors {
   general?: string;
 }
 
-// Configuração de tipos
-const typeConfig: Record<ItemType, { icon: React.ElementType; label: string; description: string }> = {
-  PRODUCT: {
-    icon: Package,
-    label: 'Produto',
-    description: 'Item físico ou material',
-  },
-  SERVICE: {
-    icon: Wrench,
-    label: 'Serviço',
-    description: 'Mão de obra ou prestação de serviço',
-  },
-  BUNDLE: {
-    icon: Layers,
-    label: 'Kit',
-    description: 'Combinação de produtos e/ou serviços',
-  },
+// Type icons configuration
+const typeIcons: Record<ItemType, React.ElementType> = {
+  PRODUCT: Package,
+  SERVICE: Wrench,
+  BUNDLE: Layers,
 };
 
-// Unidades comuns
-const commonUnits = [
-  { value: 'un', label: 'Unidade (un)' },
-  { value: 'h', label: 'Hora (h)' },
-  { value: 'm', label: 'Metro (m)' },
-  { value: 'm²', label: 'Metro quadrado (m²)' },
-  { value: 'm³', label: 'Metro cúbico (m³)' },
-  { value: 'kg', label: 'Quilograma (kg)' },
-  { value: 'L', label: 'Litro (L)' },
-  { value: 'pç', label: 'Peça (pç)' },
-  { value: 'cx', label: 'Caixa (cx)' },
-  { value: 'mês', label: 'Mês (mês)' },
-];
-
 export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: CatalogItemFormProps) {
+  const { t } = useTranslations('catalog');
   const router = useRouter();
   const createItem = useCreateItem();
   const updateItem = useUpdateItem();
@@ -108,6 +84,39 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
   const { data: categories } = useCategories(true);
 
   const isEditing = !!item;
+
+  // Memoized type config with translations
+  const typeConfig = useMemo(() => ({
+    PRODUCT: {
+      icon: Package,
+      label: t('form.itemType.product'),
+      description: t('form.itemType.productDescription'),
+    },
+    SERVICE: {
+      icon: Wrench,
+      label: t('form.itemType.service'),
+      description: t('form.itemType.serviceDescription'),
+    },
+    BUNDLE: {
+      icon: Layers,
+      label: t('form.itemType.bundle'),
+      description: t('form.itemType.bundleDescription'),
+    },
+  }), [t]);
+
+  // Memoized common units with translations
+  const commonUnits = useMemo(() => [
+    { value: 'un', label: t('form.units.unit') },
+    { value: 'h', label: t('form.units.hour') },
+    { value: 'm', label: t('form.units.meter') },
+    { value: 'm²', label: t('form.units.squareMeter') },
+    { value: 'm³', label: t('form.units.cubicMeter') },
+    { value: 'kg', label: t('form.units.kilogram') },
+    { value: 'L', label: t('form.units.liter') },
+    { value: 'pç', label: t('form.units.piece') },
+    { value: 'cx', label: t('form.units.box') },
+    { value: 'mês', label: t('form.units.month') },
+  ], [t]);
 
   // Form state
   const [type, setType] = useState<ItemType>(item?.type || 'PRODUCT');
@@ -148,20 +157,20 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
     const newErrors: FormErrors = {};
 
     if (!name.trim()) {
-      newErrors.name = 'Nome é obrigatório';
+      newErrors.name = t('form.validation.nameRequired');
     }
 
     if (!type) {
-      newErrors.type = 'Tipo é obrigatório';
+      newErrors.type = t('form.validation.typeRequired');
     }
 
     const effectiveUnit = unit === 'custom' ? customUnit : unit;
     if (!effectiveUnit.trim()) {
-      newErrors.unit = 'Unidade é obrigatória';
+      newErrors.unit = t('form.validation.unitRequired');
     }
 
     if (!basePrice || parseFloat(basePrice) < 0) {
-      newErrors.basePrice = 'Preço base é obrigatório e deve ser maior ou igual a 0';
+      newErrors.basePrice = t('form.validation.basePriceRequired');
     }
 
     setErrors(newErrors);
@@ -227,7 +236,7 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
             await setInitialStockApi(
               result.id,
               parseFloat(initialStock),
-              'Estoque inicial',
+              t('form.initialStockNote'),
             );
           } catch (stockError) {
             // Não bloqueia criação do produto se falhar estoque
@@ -243,7 +252,7 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
       }
     } catch (error: any) {
       setErrors({
-        general: error.message || 'Erro ao salvar item. Tente novamente.',
+        general: error.message || t('form.saveError'),
       });
     } finally {
       setIsSubmitting(false);
@@ -262,7 +271,7 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
   // Handler para criar nova categoria
   const handleCreateCategory = async () => {
     if (!newCategoryName.trim()) {
-      setCategoryError('Nome da categoria é obrigatório');
+      setCategoryError(t('form.validation.categoryNameRequired'));
       return;
     }
 
@@ -282,7 +291,7 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
       setNewCategoryName('');
       setNewCategoryDescription('');
     } catch (error: any) {
-      setCategoryError(error.message || 'Erro ao criar categoria');
+      setCategoryError(error.message || t('form.categoryCreateError'));
     }
   };
 
@@ -305,20 +314,20 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Tag className="h-5 w-5" />
-            Tipo do Item
+            {t('form.itemTypeTitle')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {(Object.keys(typeConfig) as ItemType[]).map((t) => {
-              const config = typeConfig[t];
+            {(Object.keys(typeConfig) as ItemType[]).map((itemType) => {
+              const config = typeConfig[itemType];
               const Icon = config.icon;
-              const isSelected = type === t;
+              const isSelected = type === itemType;
               const isDisabled = isEditing; // Não permite mudar tipo se editando
 
               return (
                 <button
-                  key={t}
+                  key={itemType}
                   type="button"
                   className={cn(
                     'flex flex-col items-center gap-3 p-4 rounded-lg border-2 transition-all',
@@ -327,7 +336,7 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
                       : 'border-gray-200 hover:border-gray-300',
                     isDisabled && 'opacity-50 cursor-not-allowed'
                   )}
-                  onClick={() => !isDisabled && setType(t)}
+                  onClick={() => !isDisabled && setType(itemType)}
                   disabled={isDisabled}
                 >
                   <div
@@ -362,13 +371,13 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
       {/* Dados principais */}
       <Card>
         <CardHeader>
-          <CardTitle>Dados Principais</CardTitle>
+          <CardTitle>{t('form.mainData')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField label="Nome" required error={errors.name}>
+            <FormField label={t('name')} required error={errors.name}>
               <Input
-                placeholder="Nome do item"
+                placeholder={t('form.namePlaceholder')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 error={!!errors.name}
@@ -376,9 +385,9 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
               />
             </FormField>
 
-            <FormField label="SKU / Código">
+            <FormField label={t('form.skuCode')}>
               <Input
-                placeholder="Código interno (opcional)"
+                placeholder={t('form.skuPlaceholder')}
                 value={sku}
                 onChange={(e) => setSku(e.target.value)}
                 disabled={isLoading}
@@ -386,9 +395,9 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
             </FormField>
           </div>
 
-          <FormField label="Descrição">
+          <FormField label={t('description')}>
             <Textarea
-              placeholder="Descrição detalhada do item (opcional)"
+              placeholder={t('form.descriptionPlaceholder')}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
@@ -397,7 +406,7 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
           </FormField>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField label="Categoria">
+            <FormField label={t('category')}>
               <div className="flex gap-2">
                 <Select
                   value={categoryId}
@@ -405,7 +414,7 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
                   disabled={isLoading}
                   className="flex-1"
                 >
-                  <option value="">Sem categoria</option>
+                  <option value="">{t('noCategory')}</option>
                   {categories?.map((cat) => (
                     <option key={cat.id} value={cat.id}>
                       {cat.name}
@@ -418,7 +427,7 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
                   size="sm"
                   onClick={() => setShowCategoryModal(true)}
                   disabled={isLoading}
-                  title="Criar nova categoria"
+                  title={t('form.createNewCategory')}
                   className="px-3"
                 >
                   <Plus className="h-4 w-4" />
@@ -426,7 +435,7 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
               </div>
             </FormField>
 
-            <FormField label="Unidade" required error={errors.unit}>
+            <FormField label={t('unit')} required error={errors.unit}>
               <div className="flex gap-2">
                 <Select
                   value={unit}
@@ -439,11 +448,11 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
                       {u.label}
                     </option>
                   ))}
-                  <option value="custom">Outra...</option>
+                  <option value="custom">{t('form.otherUnit')}</option>
                 </Select>
                 {unit === 'custom' && (
                   <Input
-                    placeholder="Ex: pacote"
+                    placeholder={t('form.customUnitPlaceholder')}
                     value={customUnit}
                     onChange={(e) => setCustomUnit(e.target.value)}
                     className="w-32"
@@ -461,12 +470,12 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
-            Preços
+            {t('prices')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField label="Preço Base (Venda)" required error={errors.basePrice}>
+            <FormField label={t('form.basePrice')} required error={errors.basePrice}>
               <Input
                 type="number"
                 step="0.01"
@@ -480,12 +489,12 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
               />
             </FormField>
 
-            <FormField label="Preço de Custo">
+            <FormField label={t('costPrice')}>
               <Input
                 type="number"
                 step="0.01"
                 min="0"
-                placeholder="0,00 (opcional)"
+                placeholder={t('form.costPricePlaceholder')}
                 value={costPrice}
                 onChange={(e) => setCostPrice(e.target.value)}
                 disabled={isLoading}
@@ -496,19 +505,19 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
 
           {/* Duração padrão (apenas para serviços) */}
           {type === 'SERVICE' && (
-            <FormField label="Duração Padrão" hint="Tempo estimado para execução do serviço">
+            <FormField label={t('defaultDuration')} hint={t('form.defaultDurationHint')}>
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-gray-400" />
                 <Input
                   type="number"
                   min="0"
-                  placeholder="Em minutos (opcional)"
+                  placeholder={t('form.durationPlaceholder')}
                   value={defaultDurationMinutes}
                   onChange={(e) => setDefaultDurationMinutes(e.target.value)}
                   disabled={isLoading}
                   className="w-40"
                 />
-                <span className="text-sm text-gray-500">minutos</span>
+                <span className="text-sm text-gray-500">{t('form.minutes')}</span>
               </div>
             </FormField>
           )}
@@ -516,8 +525,8 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
           {/* Estoque inicial (apenas para produtos novos) */}
           {type === 'PRODUCT' && !isEditing && (
             <FormField
-              label="Quantidade Inicial em Estoque"
-              hint="Define a quantidade inicial de estoque ao criar o produto (opcional)"
+              label={t('form.initialStockLabel')}
+              hint={t('form.initialStockHint')}
             >
               <div className="flex items-center gap-2">
                 <Warehouse className="h-4 w-4 text-gray-400" />
@@ -551,14 +560,14 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Layers className="h-5 w-5" />
-              Composição do Kit
+              {t('bundleComposition')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <Alert variant="info">
               <div className="flex items-center gap-2">
                 <AlertCircle className="h-4 w-4" />
-                Após criar o kit, você poderá adicionar os itens que o compõem.
+                {t('form.bundleCompositionInfo')}
               </div>
             </Alert>
           </CardContent>
@@ -569,7 +578,7 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
       {isEditing && (
         <Card>
           <CardHeader>
-            <CardTitle>Status</CardTitle>
+            <CardTitle>{t('status')}</CardTitle>
           </CardHeader>
           <CardContent>
             <label className="flex items-center gap-3 cursor-pointer">
@@ -581,9 +590,9 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
                 disabled={isLoading}
               />
               <div>
-                <p className="font-medium text-gray-900">Item ativo</p>
+                <p className="font-medium text-gray-900">{t('form.itemActive')}</p>
                 <p className="text-sm text-gray-500">
-                  Itens inativos não aparecem para seleção em orçamentos e OS
+                  {t('form.itemActiveDescription')}
                 </p>
               </div>
             </label>
@@ -600,14 +609,14 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
           disabled={isLoading}
           leftIcon={<X className="h-4 w-4" />}
         >
-          Cancelar
+          {t('form.cancel')}
         </Button>
         <Button
           type="submit"
           loading={isLoading}
           leftIcon={<Save className="h-4 w-4" />}
         >
-          {isLoading ? 'Salvando...' : isEditing ? 'Salvar Alterações' : 'Criar Item'}
+          {isLoading ? t('form.saving') : isEditing ? t('form.saveChanges') : t('form.createItem')}
         </Button>
       </div>
 
@@ -620,11 +629,11 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
           setNewCategoryDescription('');
           setCategoryError('');
         }}
-        title="Nova Categoria"
+        title={t('form.newCategory')}
       >
         <div className="space-y-4">
           <p className="text-sm text-gray-500">
-            Crie uma nova categoria para organizar seus produtos e serviços.
+            {t('form.newCategoryDescription')}
           </p>
 
           {categoryError && (
@@ -636,9 +645,9 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
             </Alert>
           )}
 
-          <FormField label="Nome da Categoria" required>
+          <FormField label={t('form.categoryName')} required>
             <Input
-              placeholder="Ex: Manutenção, Instalação, Peças..."
+              placeholder={t('form.categoryNamePlaceholder')}
               value={newCategoryName}
               onChange={(e) => setNewCategoryName(e.target.value)}
               disabled={createCategory.isPending}
@@ -646,9 +655,9 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
             />
           </FormField>
 
-          <FormField label="Descrição (opcional)">
+          <FormField label={t('form.categoryDescription')}>
             <Textarea
-              placeholder="Descrição da categoria..."
+              placeholder={t('form.categoryDescriptionPlaceholder')}
               value={newCategoryDescription}
               onChange={(e) => setNewCategoryDescription(e.target.value)}
               disabled={createCategory.isPending}
@@ -668,7 +677,7 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
               }}
               disabled={createCategory.isPending}
             >
-              Cancelar
+              {t('form.cancel')}
             </Button>
             <Button
               type="button"
@@ -676,7 +685,7 @@ export function CatalogItemForm({ item, bundleItems, onSuccess, onCancel }: Cata
               loading={createCategory.isPending}
               leftIcon={<FolderPlus className="h-4 w-4" />}
             >
-              Criar Categoria
+              {t('form.createCategory')}
             </Button>
           </div>
         </div>

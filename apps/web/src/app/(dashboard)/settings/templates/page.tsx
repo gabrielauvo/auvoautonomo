@@ -611,7 +611,7 @@ export default function TemplatesSettingsPage() {
                   <div>
                     <p className="font-medium">{t('acceptanceTermsEnabled')}</p>
                     <p className="text-xs text-gray-500">
-                      {termsEnabled ? 'Cliente precisará aceitar os termos' : 'Assinatura sem termos de aceite'}
+                      {termsEnabled ? t('acceptanceTermsEnabledDescription') : t('acceptanceTermsDisabledDescription')}
                     </p>
                   </div>
                 </div>

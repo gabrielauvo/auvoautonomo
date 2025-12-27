@@ -9,6 +9,7 @@
 
 import { useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from '@/i18n';
 import {
   Card,
   CardHeader,
@@ -52,6 +53,7 @@ interface LimitError {
 }
 
 export function SupplierForm({ supplier, onSuccess, onCancel }: SupplierFormProps) {
+  const { t } = useTranslations('suppliers');
   const router = useRouter();
   const { billing } = useAuth();
   const createSupplier = useCreateSupplier();
@@ -84,7 +86,7 @@ export function SupplierForm({ supplier, onSuccess, onCancel }: SupplierFormProp
     const newErrors: FormErrors = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Nome é obrigatório';
+      newErrors.name = t('form.validation.nameRequired');
     }
 
     // Documento é opcional, mas se preenchido, valida
@@ -92,23 +94,23 @@ export function SupplierForm({ supplier, onSuccess, onCancel }: SupplierFormProp
       const cleanDoc = cleanDocument(formData.document);
       if (cleanDoc.length === 11) {
         if (!isValidCPF(cleanDoc)) {
-          newErrors.document = 'CPF inválido';
+          newErrors.document = t('form.validation.invalidCpf');
         }
       } else if (cleanDoc.length === 14) {
         if (!isValidCNPJ(cleanDoc)) {
-          newErrors.document = 'CNPJ inválido';
+          newErrors.document = t('form.validation.invalidCnpj');
         }
       } else if (cleanDoc.length > 0) {
-        newErrors.document = 'CPF deve ter 11 dígitos ou CNPJ deve ter 14 dígitos';
+        newErrors.document = t('form.validation.documentLength');
       }
     }
 
     if (formData.phone && !/^[\d\s()+-]*$/.test(formData.phone)) {
-      newErrors.phone = 'Telefone inválido';
+      newErrors.phone = t('form.validation.invalidPhone');
     }
 
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Email inválido';
+      newErrors.email = t('form.validation.invalidEmail');
     }
 
     setErrors(newErrors);
@@ -231,7 +233,7 @@ export function SupplierForm({ supplier, onSuccess, onCancel }: SupplierFormProp
         setShowUpsellModal(true);
       } else {
         setErrors({
-          general: errorMessage || 'Erro ao salvar fornecedor. Tente novamente.',
+          general: errorMessage || t('form.saveError'),
         });
       }
     } finally {
@@ -255,7 +257,7 @@ export function SupplierForm({ supplier, onSuccess, onCancel }: SupplierFormProp
       <form onSubmit={handleSubmit}>
         <Card>
           <CardHeader>
-            <CardTitle>{isEditing ? 'Editar Fornecedor' : 'Novo Fornecedor'}</CardTitle>
+            <CardTitle>{isEditing ? t('editSupplier') : t('newSupplier')}</CardTitle>
           </CardHeader>
 
           <CardContent className="space-y-6">
@@ -273,26 +275,26 @@ export function SupplierForm({ supplier, onSuccess, onCancel }: SupplierFormProp
             <div className="space-y-4">
               <h3 className="text-sm font-medium text-gray-700 flex items-center gap-2">
                 <Building2 className="h-4 w-4" />
-                Dados Principais
+                {t('form.mainData')}
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField label="Nome / Razão Social" required error={errors.name}>
+                <FormField label={t('form.nameLabel')} required error={errors.name}>
                   <Input
                     value={formData.name}
                     onChange={(e) => handleChange('name', e.target.value)}
-                    placeholder="Nome completo ou razão social"
+                    placeholder={t('form.namePlaceholder')}
                     error={!!errors.name}
                     disabled={isLoading}
                   />
                 </FormField>
 
-                <FormField label="CPF / CNPJ" error={errors.document}>
+                <FormField label={t('form.documentLabel')} error={errors.document}>
                   <div className="relative">
                     <Input
                       value={formData.document}
                       onChange={(e) => handleDocumentChange(e.target.value)}
-                      placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                      placeholder={t('form.documentPlaceholder')}
                       error={!!errors.document}
                       disabled={isLoading}
                       maxLength={18}
@@ -308,14 +310,14 @@ export function SupplierForm({ supplier, onSuccess, onCancel }: SupplierFormProp
                     />
                     {cnpjLookup.isPending && (
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">
-                        Buscando dados...
+                        {t('form.searchingData')}
                       </span>
                     )}
                   </div>
                   {cnpjSuccess && (
                     <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
                       <CheckCircle2 className="h-3 w-3" />
-                      Dados preenchidos automaticamente
+                      {t('form.autoFilledSuccess')}
                     </p>
                   )}
                 </FormField>
@@ -326,15 +328,15 @@ export function SupplierForm({ supplier, onSuccess, onCancel }: SupplierFormProp
             <div className="space-y-4">
               <h3 className="text-sm font-medium text-gray-700 flex items-center gap-2">
                 <Phone className="h-4 w-4" />
-                Contato
+                {t('form.contact')}
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField label="Telefone" error={errors.phone}>
+                <FormField label={t('phone')} error={errors.phone}>
                   <Input
                     value={formData.phone}
                     onChange={(e) => handleChange('phone', formatPhone(e.target.value))}
-                    placeholder="(00) 00000-0000"
+                    placeholder={t('form.phonePlaceholder')}
                     leftIcon={<Phone className="h-4 w-4" />}
                     error={!!errors.phone}
                     disabled={isLoading}
@@ -342,12 +344,12 @@ export function SupplierForm({ supplier, onSuccess, onCancel }: SupplierFormProp
                   />
                 </FormField>
 
-                <FormField label="Email" error={errors.email}>
+                <FormField label={t('email')} error={errors.email}>
                   <Input
                     type="email"
                     value={formData.email}
                     onChange={(e) => handleChange('email', e.target.value)}
-                    placeholder="email@exemplo.com"
+                    placeholder={t('form.emailPlaceholder')}
                     leftIcon={<Mail className="h-4 w-4" />}
                     error={!!errors.email}
                     disabled={isLoading}
@@ -360,14 +362,14 @@ export function SupplierForm({ supplier, onSuccess, onCancel }: SupplierFormProp
             <div className="space-y-4">
               <h3 className="text-sm font-medium text-gray-700 flex items-center gap-2">
                 <MapPin className="h-4 w-4" />
-                Endereço
+                {t('address')}
               </h3>
 
-              <FormField label="Endereço">
+              <FormField label={t('address')}>
                 <Input
                   value={formData.address}
                   onChange={(e) => handleChange('address', e.target.value)}
-                  placeholder="Rua, número, complemento, cidade - UF"
+                  placeholder={t('form.addressPlaceholder')}
                   disabled={isLoading}
                 />
               </FormField>
@@ -377,14 +379,14 @@ export function SupplierForm({ supplier, onSuccess, onCancel }: SupplierFormProp
             <div className="space-y-4">
               <h3 className="text-sm font-medium text-gray-700 flex items-center gap-2">
                 <FileText className="h-4 w-4" />
-                Observações
+                {t('notes')}
               </h3>
 
-              <FormField label="Notas">
+              <FormField label={t('form.notesLabel')}>
                 <Textarea
                   value={formData.notes}
                   onChange={(e) => handleChange('notes', e.target.value)}
-                  placeholder="Observações sobre o fornecedor..."
+                  placeholder={t('form.notesPlaceholder')}
                   rows={3}
                   disabled={isLoading}
                 />
@@ -400,7 +402,7 @@ export function SupplierForm({ supplier, onSuccess, onCancel }: SupplierFormProp
               disabled={isLoading}
               leftIcon={<X className="h-4 w-4" />}
             >
-              Cancelar
+              {t('cancel')}
             </Button>
             <Button
               type="submit"
@@ -408,7 +410,7 @@ export function SupplierForm({ supplier, onSuccess, onCancel }: SupplierFormProp
               disabled={isLoading}
               leftIcon={<Save className="h-4 w-4" />}
             >
-              {isLoading ? 'Salvando...' : 'Salvar'}
+              {isLoading ? t('form.saving') : t('form.save')}
             </Button>
           </CardFooter>
         </Card>

@@ -1738,6 +1738,68 @@
       "CANCELED": "Cancelada"
     }
   },
+  "notifications": {
+    "title": "Preferências de Notificação",
+    "tabs": {
+      "email": "Email",
+      "whatsapp": "WhatsApp",
+      "reminders": "Lembretes"
+    },
+    "email": {
+      "title": "Notificações por Email",
+      "description": "Receba atualizações importantes por email",
+      "quotes": "Orçamentos",
+      "newQuote": "Novo orçamento criado",
+      "quoteApproved": "Orçamento aprovado pelo cliente",
+      "quoteRejected": "Orçamento recusado pelo cliente",
+      "workOrders": "Ordens de Serviço",
+      "newWorkOrder": "Nova OS criada",
+      "workOrderCompleted": "OS concluída",
+      "charges": "Cobranças",
+      "paymentReceived": "Pagamento recebido",
+      "paymentOverdue": "Pagamento em atraso"
+    },
+    "whatsapp": {
+      "title": "Notificações via WhatsApp",
+      "description": "Envie lembretes automáticos para seus clientes",
+      "integrationTitle": "Integração WhatsApp Business",
+      "integrationDescription": "Os lembretes serão enviados através da API oficial do WhatsApp Business. Certifique-se de que seus clientes autorizaram o recebimento de mensagens.",
+      "paymentReminder": "Lembretes de pagamento",
+      "paymentReminderDescription": "Enviar lembretes antes e após o vencimento",
+      "scheduleReminder": "Lembretes de agendamento",
+      "scheduleReminderDescription": "Enviar lembrete antes da data agendada da OS"
+    },
+    "reminders": {
+      "chargeReminders": "Lembretes de Cobrança",
+      "daysBefore": "Dias antes do vencimento",
+      "onDueDate": "No dia do vencimento",
+      "daysAfter": "Dias após o vencimento",
+      "send": "Enviar",
+      "dontSend": "Não enviar",
+      "zeroNoSend": "0 = não enviar",
+      "workOrderReminders": "Lembretes de Ordem de Serviço",
+      "daysBeforeSchedule": "Dias antes do agendamento"
+    },
+    "messages": {
+      "title": "Mensagens Personalizadas",
+      "infoTitle": "Personalize suas mensagens",
+      "infoDescription": "Use as variáveis disponíveis para criar mensagens dinâmicas que serão preenchidas automaticamente com os dados do cliente e da cobrança.",
+      "paymentReminder": "Lembrete de pagamento",
+      "paymentReminderDescription": "Enviado antes do vencimento",
+      "paymentOverdue": "Cobrança em atraso",
+      "paymentOverdueDescription": "Enviado após o vencimento",
+      "workOrderReminder": "Lembrete de OS",
+      "workOrderReminderDescription": "Enviado antes do agendamento",
+      "quoteFollowUp": "Follow-up de orçamento",
+      "quoteFollowUpDescription": "Enviado para orçamentos pendentes"
+    },
+    "preferencesSaved": "Preferências salvas com sucesso!",
+    "preferencesError": "Erro ao salvar preferências. Tente novamente.",
+    "messagesSaved": "Mensagens salvas com sucesso!",
+    "messagesError": "Erro ao salvar mensagens. Tente novamente.",
+    "savePreferences": "Salvar preferências",
+    "saveMessages": "Salvar mensagens"
+  },
   "referral": {
     "title": "Indique e ganhe meses grátis",
     "subtitle": "Cada amigo que assinar = 30 dias grátis pra você. Simples assim.",

@@ -1707,6 +1707,68 @@
       "CANCELED": "Cancelada"
     }
   },
+  "notifications": {
+    "title": "Preferencias de Notificación",
+    "tabs": {
+      "email": "Email",
+      "whatsapp": "WhatsApp",
+      "reminders": "Recordatorios"
+    },
+    "email": {
+      "title": "Notificaciones por Email",
+      "description": "Reciba actualizaciones importantes por email",
+      "quotes": "Presupuestos",
+      "newQuote": "Nuevo presupuesto creado",
+      "quoteApproved": "Presupuesto aprobado por el cliente",
+      "quoteRejected": "Presupuesto rechazado por el cliente",
+      "workOrders": "Órdenes de Trabajo",
+      "newWorkOrder": "Nueva OT creada",
+      "workOrderCompleted": "OT completada",
+      "charges": "Cobros",
+      "paymentReceived": "Pago recibido",
+      "paymentOverdue": "Pago vencido"
+    },
+    "whatsapp": {
+      "title": "Notificaciones vía WhatsApp",
+      "description": "Envíe recordatorios automáticos a sus clientes",
+      "integrationTitle": "Integración WhatsApp Business",
+      "integrationDescription": "Los recordatorios serán enviados a través de la API oficial de WhatsApp Business. Asegúrese de que sus clientes hayan autorizado el recibo de mensajes.",
+      "paymentReminder": "Recordatorios de pago",
+      "paymentReminderDescription": "Enviar recordatorios antes y después del vencimiento",
+      "scheduleReminder": "Recordatorios de agenda",
+      "scheduleReminderDescription": "Enviar recordatorio antes de la fecha programada de la OT"
+    },
+    "reminders": {
+      "chargeReminders": "Recordatorios de Cobro",
+      "daysBefore": "Días antes del vencimiento",
+      "onDueDate": "En el día del vencimiento",
+      "daysAfter": "Días después del vencimiento",
+      "send": "Enviar",
+      "dontSend": "No enviar",
+      "zeroNoSend": "0 = no enviar",
+      "workOrderReminders": "Recordatorios de Orden de Trabajo",
+      "daysBeforeSchedule": "Días antes de la agenda"
+    },
+    "messages": {
+      "title": "Mensajes Personalizados",
+      "infoTitle": "Personalice sus mensajes",
+      "infoDescription": "Use las variables disponibles para crear mensajes dinámicos que serán completados automáticamente con los datos del cliente y del cobro.",
+      "paymentReminder": "Recordatorio de pago",
+      "paymentReminderDescription": "Enviado antes del vencimiento",
+      "paymentOverdue": "Cobro vencido",
+      "paymentOverdueDescription": "Enviado después del vencimiento",
+      "workOrderReminder": "Recordatorio de OT",
+      "workOrderReminderDescription": "Enviado antes de la agenda",
+      "quoteFollowUp": "Seguimiento de presupuesto",
+      "quoteFollowUpDescription": "Enviado para presupuestos pendientes"
+    },
+    "preferencesSaved": "¡Preferencias guardadas correctamente!",
+    "preferencesError": "Error al guardar preferencias. Intente nuevamente.",
+    "messagesSaved": "¡Mensajes guardados correctamente!",
+    "messagesError": "Error al guardar mensajes. Intente nuevamente.",
+    "savePreferences": "Guardar preferencias",
+    "saveMessages": "Guardar mensajes"
+  },
   "referral": {
     "title": "Invita y gana meses gratis",
     "subtitle": "Cada amigo que se suscriba = 30 días gratis para ti. Así de simple.",

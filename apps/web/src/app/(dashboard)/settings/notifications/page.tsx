@@ -11,6 +11,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from '@/i18n';
 import {
   Bell,
   Mail,
@@ -49,6 +50,7 @@ import {
 } from '@/services/settings.service';
 
 export default function NotificationsSettingsPage() {
+  const { t } = useTranslations('notifications');
   const { data: settings, isLoading } = useNotificationSettings();
   const updatePreferences = useUpdateNotificationPreferences();
   const updateMessages = useUpdateNotificationMessages();
@@ -149,7 +151,7 @@ export default function NotificationsSettingsPage() {
       setPrefsSaved(true);
       setTimeout(() => setPrefsSaved(false), 3000);
     } catch (error) {
-      console.error('Erro ao salvar preferências:', error);
+      console.error('Error saving preferences:', error);
     }
   };
 
@@ -166,7 +168,7 @@ export default function NotificationsSettingsPage() {
       setMessagesSaved(true);
       setTimeout(() => setMessagesSaved(false), 3000);
     } catch (error) {
-      console.error('Erro ao salvar mensagens:', error);
+      console.error('Error saving messages:', error);
     }
   };
 
@@ -187,7 +189,7 @@ export default function NotificationsSettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bell className="h-5 w-5" />
-            Preferências de Notificação
+            {t('title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -195,15 +197,15 @@ export default function NotificationsSettingsPage() {
             <TabsList className="mb-6">
               <TabsTrigger value="email">
                 <Mail className="h-4 w-4 mr-2" />
-                Email
+                {t('tabs.email')}
               </TabsTrigger>
               <TabsTrigger value="whatsapp">
                 <MessageCircle className="h-4 w-4 mr-2" />
-                WhatsApp
+                {t('tabs.whatsapp')}
               </TabsTrigger>
               <TabsTrigger value="reminders">
                 <Clock className="h-4 w-4 mr-2" />
-                Lembretes
+                {t('tabs.reminders')}
               </TabsTrigger>
             </TabsList>
 
@@ -213,10 +215,10 @@ export default function NotificationsSettingsPage() {
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
                     <h4 className="font-medium text-gray-900">
-                      Notificações por Email
+                      {t('email.title')}
                     </h4>
                     <p className="text-sm text-gray-500">
-                      Receba atualizações importantes por email
+                      {t('email.description')}
                     </p>
                   </div>
                   <Switch
@@ -227,12 +229,12 @@ export default function NotificationsSettingsPage() {
 
                 <div className={emailEnabled ? '' : 'opacity-50 pointer-events-none'}>
                   <h5 className="text-sm font-medium text-gray-700 mb-4">
-                    Orçamentos
+                    {t('email.quotes')}
                   </h5>
                   <div className="space-y-3 mb-6">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">
-                        Novo orçamento criado
+                        {t('email.newQuote')}
                       </span>
                       <Switch
                         checked={emailNewQuote}
@@ -241,7 +243,7 @@ export default function NotificationsSettingsPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">
-                        Orçamento aprovado pelo cliente
+                        {t('email.quoteApproved')}
                       </span>
                       <Switch
                         checked={emailQuoteApproved}
@@ -250,7 +252,7 @@ export default function NotificationsSettingsPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">
-                        Orçamento recusado pelo cliente
+                        {t('email.quoteRejected')}
                       </span>
                       <Switch
                         checked={emailQuoteRejected}
@@ -260,12 +262,12 @@ export default function NotificationsSettingsPage() {
                   </div>
 
                   <h5 className="text-sm font-medium text-gray-700 mb-4">
-                    Ordens de Serviço
+                    {t('email.workOrders')}
                   </h5>
                   <div className="space-y-3 mb-6">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">
-                        Nova OS criada
+                        {t('email.newWorkOrder')}
                       </span>
                       <Switch
                         checked={emailNewWorkOrder}
@@ -274,7 +276,7 @@ export default function NotificationsSettingsPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">
-                        OS concluída
+                        {t('email.workOrderCompleted')}
                       </span>
                       <Switch
                         checked={emailWorkOrderCompleted}
@@ -284,12 +286,12 @@ export default function NotificationsSettingsPage() {
                   </div>
 
                   <h5 className="text-sm font-medium text-gray-700 mb-4">
-                    Cobranças
+                    {t('email.charges')}
                   </h5>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">
-                        Pagamento recebido
+                        {t('email.paymentReceived')}
                       </span>
                       <Switch
                         checked={emailPaymentReceived}
@@ -298,7 +300,7 @@ export default function NotificationsSettingsPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">
-                        Pagamento em atraso
+                        {t('email.paymentOverdue')}
                       </span>
                       <Switch
                         checked={emailPaymentOverdue}
@@ -316,10 +318,10 @@ export default function NotificationsSettingsPage() {
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
                     <h4 className="font-medium text-gray-900">
-                      Notificações via WhatsApp
+                      {t('whatsapp.title')}
                     </h4>
                     <p className="text-sm text-gray-500">
-                      Envie lembretes automáticos para seus clientes
+                      {t('whatsapp.description')}
                     </p>
                   </div>
                   <Switch
@@ -332,11 +334,9 @@ export default function NotificationsSettingsPage() {
                   <div className="flex items-start gap-2">
                     <Info className="h-4 w-4 mt-0.5" />
                     <div className="text-sm">
-                      <p className="font-medium">Integração WhatsApp Business</p>
+                      <p className="font-medium">{t('whatsapp.integrationTitle')}</p>
                       <p>
-                        Os lembretes serão enviados através da API oficial do WhatsApp
-                        Business. Certifique-se de que seus clientes autorizaram o
-                        recebimento de mensagens.
+                        {t('whatsapp.integrationDescription')}
                       </p>
                     </div>
                   </div>
@@ -347,10 +347,10 @@ export default function NotificationsSettingsPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <span className="text-sm font-medium text-gray-700">
-                          Lembretes de pagamento
+                          {t('whatsapp.paymentReminder')}
                         </span>
                         <p className="text-xs text-gray-500">
-                          Enviar lembretes antes e após o vencimento
+                          {t('whatsapp.paymentReminderDescription')}
                         </p>
                       </div>
                       <Switch
@@ -361,10 +361,10 @@ export default function NotificationsSettingsPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <span className="text-sm font-medium text-gray-700">
-                          Lembretes de agendamento
+                          {t('whatsapp.scheduleReminder')}
                         </span>
                         <p className="text-xs text-gray-500">
-                          Enviar lembrete antes da data agendada da OS
+                          {t('whatsapp.scheduleReminderDescription')}
                         </p>
                       </div>
                       <Switch
@@ -382,11 +382,11 @@ export default function NotificationsSettingsPage() {
               <div className="space-y-6">
                 <div>
                   <h4 className="font-medium text-gray-900 mb-4">
-                    Lembretes de Cobrança
+                    {t('reminders.chargeReminders')}
                   </h4>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <FormField label="Dias antes do vencimento">
+                    <FormField label={t('reminders.daysBefore')}>
                       <Input
                         type="number"
                         min={0}
@@ -395,13 +395,13 @@ export default function NotificationsSettingsPage() {
                         onChange={(e) => setPaymentDaysBefore(Number(e.target.value))}
                       />
                       <p className="text-xs text-gray-500 mt-1">
-                        0 = não enviar
+                        {t('reminders.zeroNoSend')}
                       </p>
                     </FormField>
 
                     <div className="flex flex-col">
                       <label className="text-sm font-medium text-gray-700 mb-2">
-                        No dia do vencimento
+                        {t('reminders.onDueDate')}
                       </label>
                       <div className="flex items-center h-10">
                         <Switch
@@ -409,12 +409,12 @@ export default function NotificationsSettingsPage() {
                           onCheckedChange={setPaymentOnDueDate}
                         />
                         <span className="ml-2 text-sm text-gray-500">
-                          {paymentOnDueDate ? 'Enviar' : 'Não enviar'}
+                          {paymentOnDueDate ? t('reminders.send') : t('reminders.dontSend')}
                         </span>
                       </div>
                     </div>
 
-                    <FormField label="Dias após o vencimento">
+                    <FormField label={t('reminders.daysAfter')}>
                       <Input
                         type="number"
                         min={0}
@@ -423,7 +423,7 @@ export default function NotificationsSettingsPage() {
                         onChange={(e) => setPaymentDaysAfter(Number(e.target.value))}
                       />
                       <p className="text-xs text-gray-500 mt-1">
-                        0 = não enviar
+                        {t('reminders.zeroNoSend')}
                       </p>
                     </FormField>
                   </div>
@@ -431,11 +431,11 @@ export default function NotificationsSettingsPage() {
 
                 <div className="border-t pt-6">
                   <h4 className="font-medium text-gray-900 mb-4">
-                    Lembretes de Ordem de Serviço
+                    {t('reminders.workOrderReminders')}
                   </h4>
 
                   <div className="max-w-xs">
-                    <FormField label="Dias antes do agendamento">
+                    <FormField label={t('reminders.daysBeforeSchedule')}>
                       <Input
                         type="number"
                         min={0}
@@ -444,7 +444,7 @@ export default function NotificationsSettingsPage() {
                         onChange={(e) => setWorkOrderDaysBefore(Number(e.target.value))}
                       />
                       <p className="text-xs text-gray-500 mt-1">
-                        0 = não enviar
+                        {t('reminders.zeroNoSend')}
                       </p>
                     </FormField>
                   </div>
@@ -457,7 +457,7 @@ export default function NotificationsSettingsPage() {
             <Alert variant="success" className="mt-4">
               <div className="flex items-center gap-2">
                 <Check className="h-4 w-4" />
-                Preferências salvas com sucesso!
+                {t('preferencesSaved')}
               </div>
             </Alert>
           )}
@@ -466,7 +466,7 @@ export default function NotificationsSettingsPage() {
             <Alert variant="error" className="mt-4">
               <div className="flex items-center gap-2">
                 <AlertCircle className="h-4 w-4" />
-                Erro ao salvar preferências. Tente novamente.
+                {t('preferencesError')}
               </div>
             </Alert>
           )}
@@ -477,7 +477,7 @@ export default function NotificationsSettingsPage() {
               loading={updatePreferences.isPending}
               leftIcon={<Check className="h-4 w-4" />}
             >
-              Salvar preferências
+              {t('savePreferences')}
             </Button>
           </div>
         </CardContent>
@@ -488,7 +488,7 @@ export default function NotificationsSettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MessageCircle className="h-5 w-5" />
-            Mensagens Personalizadas
+            {t('messages.title')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -496,11 +496,9 @@ export default function NotificationsSettingsPage() {
             <div className="flex items-start gap-2">
               <Info className="h-4 w-4 mt-0.5" />
               <div className="text-sm">
-                <p className="font-medium">Personalize suas mensagens</p>
+                <p className="font-medium">{t('messages.infoTitle')}</p>
                 <p>
-                  Use as variáveis disponíveis para criar mensagens dinâmicas que
-                  serão preenchidas automaticamente com os dados do cliente e da
-                  cobrança.
+                  {t('messages.infoDescription')}
                 </p>
               </div>
             </div>
@@ -508,32 +506,32 @@ export default function NotificationsSettingsPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <NotificationMessageEditor
-              label="Lembrete de pagamento"
-              description="Enviado antes do vencimento"
+              label={t('messages.paymentReminder')}
+              description={t('messages.paymentReminderDescription')}
               value={paymentReminderMessage}
               onChange={setPaymentReminderMessage}
               defaultValue={DEFAULT_NOTIFICATION_MESSAGES.paymentReminder}
             />
 
             <NotificationMessageEditor
-              label="Cobrança em atraso"
-              description="Enviado após o vencimento"
+              label={t('messages.paymentOverdue')}
+              description={t('messages.paymentOverdueDescription')}
               value={paymentOverdueMessage}
               onChange={setPaymentOverdueMessage}
               defaultValue={DEFAULT_NOTIFICATION_MESSAGES.paymentOverdue}
             />
 
             <NotificationMessageEditor
-              label="Lembrete de OS"
-              description="Enviado antes do agendamento"
+              label={t('messages.workOrderReminder')}
+              description={t('messages.workOrderReminderDescription')}
               value={workOrderReminderMessage}
               onChange={setWorkOrderReminderMessage}
               defaultValue={DEFAULT_NOTIFICATION_MESSAGES.workOrderReminder}
             />
 
             <NotificationMessageEditor
-              label="Follow-up de orçamento"
-              description="Enviado para orçamentos pendentes"
+              label={t('messages.quoteFollowUp')}
+              description={t('messages.quoteFollowUpDescription')}
               value={quoteFollowUpMessage}
               onChange={setQuoteFollowUpMessage}
               defaultValue={DEFAULT_NOTIFICATION_MESSAGES.quoteFollowUp}
@@ -544,7 +542,7 @@ export default function NotificationsSettingsPage() {
             <Alert variant="success">
               <div className="flex items-center gap-2">
                 <Check className="h-4 w-4" />
-                Mensagens salvas com sucesso!
+                {t('messagesSaved')}
               </div>
             </Alert>
           )}
@@ -553,7 +551,7 @@ export default function NotificationsSettingsPage() {
             <Alert variant="error">
               <div className="flex items-center gap-2">
                 <AlertCircle className="h-4 w-4" />
-                Erro ao salvar mensagens. Tente novamente.
+                {t('messagesError')}
               </div>
             </Alert>
           )}
@@ -564,7 +562,7 @@ export default function NotificationsSettingsPage() {
               loading={updateMessages.isPending}
               leftIcon={<Check className="h-4 w-4" />}
             >
-              Salvar mensagens
+              {t('saveMessages')}
             </Button>
           </div>
         </CardContent>

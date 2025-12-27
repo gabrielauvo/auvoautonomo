@@ -1707,6 +1707,68 @@
       "CANCELED": "Canceled"
     }
   },
+  "notifications": {
+    "title": "Notification Preferences",
+    "tabs": {
+      "email": "Email",
+      "whatsapp": "WhatsApp",
+      "reminders": "Reminders"
+    },
+    "email": {
+      "title": "Email Notifications",
+      "description": "Receive important updates by email",
+      "quotes": "Quotes",
+      "newQuote": "New quote created",
+      "quoteApproved": "Quote approved by client",
+      "quoteRejected": "Quote rejected by client",
+      "workOrders": "Work Orders",
+      "newWorkOrder": "New WO created",
+      "workOrderCompleted": "WO completed",
+      "charges": "Charges",
+      "paymentReceived": "Payment received",
+      "paymentOverdue": "Payment overdue"
+    },
+    "whatsapp": {
+      "title": "WhatsApp Notifications",
+      "description": "Send automatic reminders to your clients",
+      "integrationTitle": "WhatsApp Business Integration",
+      "integrationDescription": "Reminders will be sent through the official WhatsApp Business API. Make sure your clients have authorized receiving messages.",
+      "paymentReminder": "Payment reminders",
+      "paymentReminderDescription": "Send reminders before and after due date",
+      "scheduleReminder": "Schedule reminders",
+      "scheduleReminderDescription": "Send reminder before the scheduled WO date"
+    },
+    "reminders": {
+      "chargeReminders": "Charge Reminders",
+      "daysBefore": "Days before due date",
+      "onDueDate": "On due date",
+      "daysAfter": "Days after due date",
+      "send": "Send",
+      "dontSend": "Don't send",
+      "zeroNoSend": "0 = don't send",
+      "workOrderReminders": "Work Order Reminders",
+      "daysBeforeSchedule": "Days before schedule"
+    },
+    "messages": {
+      "title": "Custom Messages",
+      "infoTitle": "Customize your messages",
+      "infoDescription": "Use the available variables to create dynamic messages that will be automatically filled with client and charge data.",
+      "paymentReminder": "Payment reminder",
+      "paymentReminderDescription": "Sent before due date",
+      "paymentOverdue": "Overdue charge",
+      "paymentOverdueDescription": "Sent after due date",
+      "workOrderReminder": "WO reminder",
+      "workOrderReminderDescription": "Sent before schedule",
+      "quoteFollowUp": "Quote follow-up",
+      "quoteFollowUpDescription": "Sent for pending quotes"
+    },
+    "preferencesSaved": "Preferences saved successfully!",
+    "preferencesError": "Error saving preferences. Please try again.",
+    "messagesSaved": "Messages saved successfully!",
+    "messagesError": "Error saving messages. Please try again.",
+    "savePreferences": "Save preferences",
+    "saveMessages": "Save messages"
+  },
   "referral": {
     "title": "Refer & Earn Free Months",
     "subtitle": "Each friend who subscribes = 30 free days for you. That simple.",

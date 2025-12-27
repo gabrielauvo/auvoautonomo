@@ -1325,6 +1325,7 @@ export const enUS: Translations = {
     receivedRevenue: 'Received Revenue',
     pending: 'Pending',
     overdue: 'Overdue',
+    expenses: 'Expenses',
     // Stats cards
     workOrdersToday: 'Work orders today',
     overdueWorkOrders: 'Overdue work orders',
@@ -1334,6 +1335,17 @@ export const enUS: Translations = {
     todaysAgenda: "Today's Agenda",
     viewAll: 'View all',
     noEventsToday: 'No events for today',
+    viewAllOS: 'View all work orders',
+    // Cache banners
+    offlineBanner: 'You are offline. Financial data {cacheAge}.',
+    cacheBanner: 'Cached data ({cacheAge}). Pull to refresh.',
+    // Cache age
+    cacheAgeHours: '{hours}h ago',
+    cacheAgeMinutes: '{minutes}min ago',
+    cacheAgeRecent: 'less than 1min ago',
+    // Sync card
+    lastSyncAt: 'Last sync: {time}',
+    notSynced: 'Not synced',
   },
 
   agenda: {
@@ -1404,5 +1416,70 @@ export const enUS: Translations = {
     noReferralsYet: 'No referrals yet',
     noReferralsDescription: 'Share your link and start earning free months!',
     shareNow: 'Share now',
+  },
+
+  reports: {
+    title: 'Reports',
+    overview: 'Overview',
+    refresh: 'Refresh',
+    errorLoadingData: 'Error loading data. Please try again.',
+    // Period filters
+    period: 'Period',
+    today: 'Today',
+    yesterday: 'Yesterday',
+    last7Days: 'Last 7 days',
+    last30Days: 'Last 30 days',
+    thisMonth: 'This Month',
+    lastMonth: 'Last Month',
+    thisYear: 'This Year',
+    custom: 'Custom',
+    // KPIs
+    totalRevenue: 'Total Revenue',
+    totalExpenses: 'Total Expenses',
+    quotes: 'Quotes',
+    completedWorkOrders: 'Completed Work Orders',
+    activeClients: 'Active Clients',
+    conversionRate: 'conversion rate',
+    completionRate: 'completion rate',
+    vsPrevious: 'vs. previous',
+    // Revenue vs Expenses
+    revenueVsExpenses: 'Revenue vs Expenses',
+    periodComparison: 'Period comparison',
+    receivedRevenue: 'Received Revenue',
+    paidExpenses: 'Paid Expenses',
+    netResult: 'Net Result',
+    positiveResult: 'Profit in period',
+    negativeResult: 'Loss in period',
+    profitMargin: 'profit margin',
+    // Expenses Summary
+    expensesSummary: 'Expenses Summary',
+    expensesOverview: 'Expenses overview',
+    paid: 'Paid',
+    pending: 'Pending',
+    overdue: 'Overdue',
+    items: 'items',
+    // Revenue by Period Chart
+    revenueByPeriod: 'Revenue by Period',
+    recentMonths: 'Recent months',
+    received: 'Received',
+    // Detailed Reports
+    detailedReports: 'Detailed Reports',
+    finance: 'Finance',
+    financeDescription: 'Revenue, charges and overdue',
+    sales: 'Sales',
+    salesDescription: 'Quotes, conversion and average ticket',
+    operations: 'Operations',
+    operationsDescription: 'Work orders and productivity',
+    clients: 'Clients',
+    clientsDescription: 'Client base and retention',
+    profitLoss: 'Profit & Loss',
+    profitLossDescription: 'Income statement',
+    // Empty/Loading states
+    noDataAvailable: 'No data available',
+    noDataDescription: 'There is no data for the selected period.',
+    loadingData: 'Loading data...',
+    // Cache
+    fromCache: 'Cached data',
+    cacheAge: '{time} ago',
   },
 };

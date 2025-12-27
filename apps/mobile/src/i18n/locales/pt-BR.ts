@@ -1323,6 +1323,7 @@ export const ptBR = {
     receivedRevenue: 'Receita Recebida',
     pending: 'Pendente',
     overdue: 'Vencido',
+    expenses: 'Despesas',
     // Stats cards
     workOrdersToday: 'OS para hoje',
     overdueWorkOrders: 'OS atrasadas',
@@ -1332,6 +1333,17 @@ export const ptBR = {
     todaysAgenda: 'Agenda de Hoje',
     viewAll: 'Ver tudo',
     noEventsToday: 'Nenhum evento para hoje',
+    viewAllOS: 'Ver todas as OS',
+    // Cache banners
+    offlineBanner: 'Voce esta offline. Dados financeiros {cacheAge}.',
+    cacheBanner: 'Dados do cache ({cacheAge}). Puxe para atualizar.',
+    // Cache age
+    cacheAgeHours: 'ha {hours}h',
+    cacheAgeMinutes: 'ha {minutes}min',
+    cacheAgeRecent: 'ha menos de 1min',
+    // Sync card
+    lastSyncAt: 'Ultima sync: {time}',
+    notSynced: 'Nao sincronizado',
   },
 
   agenda: {
@@ -1402,6 +1414,71 @@ export const ptBR = {
     noReferralsYet: 'Nenhuma indicacao ainda',
     noReferralsDescription: 'Compartilhe seu link e comece a ganhar meses gratis!',
     shareNow: 'Compartilhar agora',
+  },
+
+  reports: {
+    title: 'Relatorios',
+    overview: 'Visao Geral',
+    refresh: 'Atualizar',
+    errorLoadingData: 'Erro ao carregar dados. Tente novamente.',
+    // Period filters
+    period: 'Periodo',
+    today: 'Hoje',
+    yesterday: 'Ontem',
+    last7Days: 'Ultimos 7 dias',
+    last30Days: 'Ultimos 30 dias',
+    thisMonth: 'Este mes',
+    lastMonth: 'Mes passado',
+    thisYear: 'Este ano',
+    custom: 'Personalizado',
+    // KPIs
+    totalRevenue: 'Receita Total',
+    totalExpenses: 'Despesas Totais',
+    quotes: 'Orcamentos',
+    completedWorkOrders: 'OS Concluidas',
+    activeClients: 'Clientes Ativos',
+    conversionRate: 'taxa conversao',
+    completionRate: 'taxa conclusao',
+    vsPrevious: 'vs. anterior',
+    // Revenue vs Expenses
+    revenueVsExpenses: 'Receita vs Despesas',
+    periodComparison: 'Comparativo do periodo',
+    receivedRevenue: 'Receita Recebida',
+    paidExpenses: 'Despesas Pagas',
+    netResult: 'Resultado Liquido',
+    positiveResult: 'Lucro no periodo',
+    negativeResult: 'Prejuizo no periodo',
+    profitMargin: 'margem de lucro',
+    // Expenses Summary
+    expensesSummary: 'Resumo de Despesas',
+    expensesOverview: 'Visao geral das despesas',
+    paid: 'Pagas',
+    pending: 'Pendentes',
+    overdue: 'Vencidas',
+    items: 'itens',
+    // Revenue by Period Chart
+    revenueByPeriod: 'Receita por Periodo',
+    recentMonths: 'Ultimos meses',
+    received: 'Recebido',
+    // Detailed Reports
+    detailedReports: 'Relatorios Detalhados',
+    finance: 'Financas',
+    financeDescription: 'Receitas, cobrancas e vencidos',
+    sales: 'Vendas',
+    salesDescription: 'Orcamentos, conversao e ticket medio',
+    operations: 'Operacoes',
+    operationsDescription: 'Ordens de servico e produtividade',
+    clients: 'Clientes',
+    clientsDescription: 'Base de clientes e retencao',
+    profitLoss: 'DRE Simplificado',
+    profitLossDescription: 'Demonstrativo de resultado',
+    // Empty/Loading states
+    noDataAvailable: 'Nenhum dado disponivel',
+    noDataDescription: 'Nao ha dados para o periodo selecionado.',
+    loadingData: 'Carregando dados...',
+    // Cache
+    fromCache: 'Dados do cache',
+    cacheAge: 'ha {time}',
   },
 };
 

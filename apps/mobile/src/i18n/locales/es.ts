@@ -1325,6 +1325,7 @@ export const es: Translations = {
     receivedRevenue: 'Ingreso Recibido',
     pending: 'Pendiente',
     overdue: 'Vencido',
+    expenses: 'Gastos',
     // Stats cards
     workOrdersToday: 'OS para hoy',
     overdueWorkOrders: 'OS atrasadas',
@@ -1334,6 +1335,17 @@ export const es: Translations = {
     todaysAgenda: 'Agenda de Hoy',
     viewAll: 'Ver todo',
     noEventsToday: 'Sin eventos para hoy',
+    viewAllOS: 'Ver todas las OS',
+    // Cache banners
+    offlineBanner: 'Estas sin conexion. Datos financieros {cacheAge}.',
+    cacheBanner: 'Datos en cache ({cacheAge}). Desliza para actualizar.',
+    // Cache age
+    cacheAgeHours: 'hace {hours}h',
+    cacheAgeMinutes: 'hace {minutes}min',
+    cacheAgeRecent: 'hace menos de 1min',
+    // Sync card
+    lastSyncAt: 'Ultima sync: {time}',
+    notSynced: 'No sincronizado',
   },
 
   agenda: {
@@ -1404,5 +1416,70 @@ export const es: Translations = {
     noReferralsYet: 'Sin referencias aun',
     noReferralsDescription: 'Comparte tu enlace y empieza a ganar meses gratis!',
     shareNow: 'Compartir ahora',
+  },
+
+  reports: {
+    title: 'Informes',
+    overview: 'Vision General',
+    refresh: 'Actualizar',
+    errorLoadingData: 'Error al cargar datos. Intente de nuevo.',
+    // Period filters
+    period: 'Periodo',
+    today: 'Hoy',
+    yesterday: 'Ayer',
+    last7Days: 'Ultimos 7 dias',
+    last30Days: 'Ultimos 30 dias',
+    thisMonth: 'Este Mes',
+    lastMonth: 'Mes Pasado',
+    thisYear: 'Este Ano',
+    custom: 'Personalizado',
+    // KPIs
+    totalRevenue: 'Ingreso Total',
+    totalExpenses: 'Gastos Totales',
+    quotes: 'Presupuestos',
+    completedWorkOrders: 'OS Completadas',
+    activeClients: 'Clientes Activos',
+    conversionRate: 'tasa conversion',
+    completionRate: 'tasa conclusion',
+    vsPrevious: 'vs. anterior',
+    // Revenue vs Expenses
+    revenueVsExpenses: 'Ingresos vs Gastos',
+    periodComparison: 'Comparativo del periodo',
+    receivedRevenue: 'Ingreso Recibido',
+    paidExpenses: 'Gastos Pagados',
+    netResult: 'Resultado Neto',
+    positiveResult: 'Ganancia en periodo',
+    negativeResult: 'Perdida en periodo',
+    profitMargin: 'margen de ganancia',
+    // Expenses Summary
+    expensesSummary: 'Resumen de Gastos',
+    expensesOverview: 'Vision general de gastos',
+    paid: 'Pagados',
+    pending: 'Pendientes',
+    overdue: 'Vencidos',
+    items: 'items',
+    // Revenue by Period Chart
+    revenueByPeriod: 'Ingresos por Periodo',
+    recentMonths: 'Ultimos meses',
+    received: 'Recibido',
+    // Detailed Reports
+    detailedReports: 'Informes Detallados',
+    finance: 'Finanzas',
+    financeDescription: 'Ingresos, cobros y vencidos',
+    sales: 'Ventas',
+    salesDescription: 'Presupuestos, conversion y ticket promedio',
+    operations: 'Operaciones',
+    operationsDescription: 'Ordenes de servicio y productividad',
+    clients: 'Clientes',
+    clientsDescription: 'Base de clientes y retencion',
+    profitLoss: 'Estado de Resultados',
+    profitLossDescription: 'Demostrativo de resultados',
+    // Empty/Loading states
+    noDataAvailable: 'Sin datos disponibles',
+    noDataDescription: 'No hay datos para el periodo seleccionado.',
+    loadingData: 'Cargando datos...',
+    // Cache
+    fromCache: 'Datos en cache',
+    cacheAge: 'hace {time}',
   },
 };

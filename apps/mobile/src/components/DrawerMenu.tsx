@@ -267,7 +267,7 @@ export const DrawerMenu: React.FC<DrawerMenuProps> = ({ isOpen, onClose }) => {
       onClose();
 
       // Rotas que ainda não existem
-      const comingSoonRoutes = ['/relatorios', '/ajuda'];
+      const comingSoonRoutes = ['/ajuda'];
 
       if (comingSoonRoutes.includes(item.route)) {
         setTimeout(() => handleComingSoon(item.labelKey), 300);

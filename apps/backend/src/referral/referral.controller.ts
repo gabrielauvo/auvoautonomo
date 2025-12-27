@@ -143,6 +143,7 @@ export class ReferralController {
     return {
       valid: result.valid,
       referrerFirstName: result.referrerFirstName,
+      locale: result.locale,
     };
   }
 

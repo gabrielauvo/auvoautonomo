@@ -15,11 +15,11 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
-  Linking,
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import { Text } from '../design-system';
 import { useColors } from '../design-system/ThemeProvider';
 import { spacing, borderRadius, zIndex } from '../design-system/tokens';
@@ -90,9 +90,8 @@ export function TrialBanner({ billing: propBilling, onDismiss }: TrialBannerProp
   }, [onDismiss]);
 
   const handleSubscribe = useCallback(() => {
-    // Open web settings page for subscription
-    const webUrl = process.env.EXPO_PUBLIC_WEB_URL || 'http://localhost:3000';
-    Linking.openURL(`${webUrl}/settings/plan`);
+    // Navigate to plan screen in the app
+    router.push('/perfil/plano');
   }, []);
 
   // Don't show if:

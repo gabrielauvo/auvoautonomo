@@ -2,13 +2,63 @@ import { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 
+// Import translations
+import ptBR from '@/../../messages/pt-BR.json';
+import enUS from '@/../../messages/en-US.json';
+import es from '@/../../messages/es.json';
+
 interface PageProps {
   params: Promise<{ code: string }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
+interface ReferralData {
+  valid: boolean;
+  referrerFirstName?: string;
+  locale?: string;
+}
+
+type TranslationMessages = typeof ptBR;
+
+// Get translations based on locale
+function getTranslations(locale: string): TranslationMessages {
+  switch (locale) {
+    case 'en-US':
+    case 'en':
+      return enUS as TranslationMessages;
+    case 'es':
+    case 'es-ES':
+    case 'es-MX':
+      return es as TranslationMessages;
+    case 'pt-BR':
+    case 'pt':
+    default:
+      return ptBR;
+  }
+}
+
+// Get a specific translation with variable substitution
+function t(messages: TranslationMessages, key: string, vars?: Record<string, string>): string {
+  const keys = key.split('.');
+  let value: any = messages;
+
+  for (const k of keys) {
+    value = value?.[k];
+    if (value === undefined) return key;
+  }
+
+  if (typeof value !== 'string') return key;
+
+  // Replace variables like {name} with actual values
+  if (vars) {
+    return value.replace(/\{(\w+)\}/g, (_, varName) => vars[varName] || `{${varName}}`);
+  }
+
+  return value;
+}
+
 // Validate referral code and get referrer info
-async function validateReferralCode(code: string) {
+async function validateReferralCode(code: string): Promise<ReferralData | null> {
   try {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://monorepobackend-production.up.railway.app';
     const res = await fetch(`${apiUrl}/api/referral/validate/${code}`, {
@@ -59,21 +109,26 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { code } = await params;
   const data = await validateReferralCode(code);
 
-  const referrerName = data?.referrerFirstName || 'Um amigo';
+  const locale = data?.locale || 'pt-BR';
+  const messages = getTranslations(locale);
+  const referrerName = data?.referrerFirstName || (locale === 'pt-BR' ? 'Um amigo' : locale === 'es' ? 'Un amigo' : 'A friend');
+
+  const title = t(messages, 'referralLanding.metaTitle', { name: referrerName });
+  const description = t(messages, 'referralLanding.metaDescription');
 
   return {
-    title: `${referrerName} te convidou para o Auvo Autônomo`,
-    description: 'Gerencie seu negócio de prestação de serviços de forma simples e profissional. Orçamentos, ordens de serviço, clientes e muito mais.',
+    title,
+    description,
     openGraph: {
-      title: `${referrerName} te convidou para o Auvo Autônomo`,
-      description: 'Gerencie seu negócio de prestação de serviços de forma simples e profissional.',
+      title,
+      description,
       type: 'website',
       images: ['/images/og-referral.png'],
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${referrerName} te convidou para o Auvo Autônomo`,
-      description: 'Gerencie seu negócio de prestação de serviços de forma simples e profissional.',
+      title,
+      description,
     },
   };
 }
@@ -99,6 +154,10 @@ export default async function ReferralLandingPage({ params, searchParams }: Page
     notFound();
   }
 
+  // Get translations based on referrer's locale
+  const locale = referralData.locale || 'pt-BR';
+  const messages = getTranslations(locale);
+
   // Register the click
   const clickData = await registerClick(code, headersList);
   const clickId = clickData?.clickId;
@@ -113,12 +172,13 @@ export default async function ReferralLandingPage({ params, searchParams }: Page
 
   // Deep link URLs
   const deepLinkUrl = `auvoautonomo://referral?code=${code}${clickId ? `&clickId=${clickId}` : ''}`;
-  const universalLinkUrl = `https://auvoautonomo.com/app/referral?code=${code}${clickId ? `&clickId=${clickId}` : ''}`;
 
   // If direct param is set, redirect to signup (for web users)
   if (query.direct === 'web') {
     redirect(webSignupUrl);
   }
+
+  const referrerName = referralData.referrerFirstName || (locale === 'pt-BR' ? 'Um amigo' : locale === 'es' ? 'Un amigo' : 'A friend');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 via-purple-700 to-purple-900">
@@ -176,10 +236,10 @@ export default async function ReferralLandingPage({ params, searchParams }: Page
               <span className="text-4xl font-bold text-purple-600">A</span>
             </div>
             <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              {referralData.referrerFirstName || 'Um amigo'} te convidou!
+              {t(messages, 'referralLanding.title', { name: referrerName })}
             </h1>
             <p className="text-lg text-purple-100">
-              Experimente o Auvo Autônomo e gerencie seu negócio de forma profissional
+              {t(messages, 'referralLanding.subtitle')}
             </p>
           </div>
 
@@ -188,7 +248,7 @@ export default async function ReferralLandingPage({ params, searchParams }: Page
             {/* Benefits */}
             <div className="space-y-4 mb-8">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                Com o Auvo Autônomo você pode:
+                {t(messages, 'referralLanding.benefitsTitle')}
               </h2>
 
               <div className="flex items-start gap-3">
@@ -197,7 +257,7 @@ export default async function ReferralLandingPage({ params, searchParams }: Page
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <p className="text-gray-700">Criar orçamentos profissionais em segundos</p>
+                <p className="text-gray-700">{t(messages, 'referralLanding.benefit1')}</p>
               </div>
 
               <div className="flex items-start gap-3">
@@ -206,7 +266,7 @@ export default async function ReferralLandingPage({ params, searchParams }: Page
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <p className="text-gray-700">Gerenciar ordens de serviço no celular</p>
+                <p className="text-gray-700">{t(messages, 'referralLanding.benefit2')}</p>
               </div>
 
               <div className="flex items-start gap-3">
@@ -215,7 +275,7 @@ export default async function ReferralLandingPage({ params, searchParams }: Page
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <p className="text-gray-700">Controlar clientes, equipamentos e histórico</p>
+                <p className="text-gray-700">{t(messages, 'referralLanding.benefit3')}</p>
               </div>
 
               <div className="flex items-start gap-3">
@@ -224,7 +284,7 @@ export default async function ReferralLandingPage({ params, searchParams }: Page
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <p className="text-gray-700">Acompanhar finanças e relatórios</p>
+                <p className="text-gray-700">{t(messages, 'referralLanding.benefit4')}</p>
               </div>
             </div>
 
@@ -237,8 +297,8 @@ export default async function ReferralLandingPage({ params, searchParams }: Page
                   </svg>
                 </div>
                 <div>
-                  <p className="font-semibold text-green-800">14 dias grátis</p>
-                  <p className="text-sm text-green-600">Teste todas as funcionalidades sem compromisso</p>
+                  <p className="font-semibold text-green-800">{t(messages, 'referralLanding.trialDays')}</p>
+                  <p className="text-sm text-green-600">{t(messages, 'referralLanding.trialDescription')}</p>
                 </div>
               </div>
             </div>
@@ -256,7 +316,7 @@ export default async function ReferralLandingPage({ params, searchParams }: Page
                       <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
                       </svg>
-                      Baixar na App Store
+                      {t(messages, 'referralLanding.downloadAppStore')}
                     </a>
                   ) : (
                     <a
@@ -266,7 +326,7 @@ export default async function ReferralLandingPage({ params, searchParams }: Page
                       <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.53,12.9 20.18,13.18L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z"/>
                       </svg>
-                      Baixar no Google Play
+                      {t(messages, 'referralLanding.downloadPlayStore')}
                     </a>
                   )}
                 </>
@@ -284,29 +344,31 @@ export default async function ReferralLandingPage({ params, searchParams }: Page
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
-                {platform === 'web' ? 'Criar conta grátis' : 'Continuar no navegador'}
+                {platform === 'web'
+                  ? t(messages, 'referralLanding.createAccountFree')
+                  : t(messages, 'referralLanding.continueInBrowser')}
               </Link>
             </div>
           </div>
 
           {/* Referral Code Display */}
           <div className="text-center">
-            <p className="text-purple-200 text-sm mb-2">Código de indicação:</p>
+            <p className="text-purple-200 text-sm mb-2">{t(messages, 'referralLanding.referralCode')}</p>
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
               <span className="font-mono font-bold text-white text-lg tracking-wider">{code}</span>
             </div>
             <p className="text-purple-300 text-xs mt-2">
-              Use este código ao criar sua conta para ativar o benefício
+              {t(messages, 'referralLanding.useCodeHint')}
             </p>
           </div>
 
           {/* Footer */}
           <div className="mt-12 text-center">
             <p className="text-purple-200 text-sm">
-              Ao criar uma conta, você concorda com nossos{' '}
-              <a href="/terms" className="underline hover:text-white">Termos de Uso</a>
-              {' '}e{' '}
-              <a href="/privacy" className="underline hover:text-white">Política de Privacidade</a>
+              {t(messages, 'referralLanding.termsAgreement')}{' '}
+              <a href="/terms" className="underline hover:text-white">{t(messages, 'referralLanding.termsOfUse')}</a>
+              {' '}{t(messages, 'referralLanding.and')}{' '}
+              <a href="/privacy" className="underline hover:text-white">{t(messages, 'referralLanding.privacyPolicy')}</a>
             </p>
           </div>
         </div>

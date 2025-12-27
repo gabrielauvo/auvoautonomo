@@ -125,4 +125,5 @@ export class ResolveDeferredResponse {
 export class ValidateCodeResponse {
   valid: boolean;
   referrerFirstName?: string;
+  locale?: string;
 }

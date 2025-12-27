@@ -105,6 +105,7 @@ export class ReferralCodeService {
     referrerFirstName?: string;
     referrerUserId?: string;
     codeId?: string;
+    locale?: string;
   }> {
     const normalizedCode = code.toUpperCase().trim();
 
@@ -121,6 +122,7 @@ export class ReferralCodeService {
           select: {
             id: true,
             name: true,
+            language: true,
           },
         },
       },
@@ -137,6 +139,7 @@ export class ReferralCodeService {
       referrerFirstName: firstName,
       referrerUserId: referralCode.userId,
       codeId: referralCode.id,
+      locale: referralCode.user.language || 'pt-BR',
     };
   }
 

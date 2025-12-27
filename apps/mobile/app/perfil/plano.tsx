@@ -251,7 +251,7 @@ export default function PlanoScreen() {
   const handleCancel = () => {
     Alert.alert(
       'Cancelar Assinatura',
-      'Tem certeza que deseja cancelar sua assinatura? Você voltará para o plano gratuito e perderá acesso aos recursos PRO.',
+      'Tem certeza que deseja cancelar sua assinatura? Você perderá acesso à plataforma quando o período atual terminar.',
       [
         { text: 'Não', style: 'cancel' },
         {
@@ -475,7 +475,7 @@ export default function PlanoScreen() {
         {/* Compare Plans - Horizontal Scroll */}
         <View style={{ marginTop: spacing[6] }}>
           <Text variant="body" weight="semibold" style={{ marginBottom: spacing[3], paddingHorizontal: spacing[4] }}>
-            Comparar Planos
+            Planos Disponíveis
           </Text>
           <Text variant="caption" color="tertiary" style={{ marginBottom: spacing[3], paddingHorizontal: spacing[4] }}>
             Deslize para ver todos os planos
@@ -489,75 +489,6 @@ export default function PlanoScreen() {
             decelerationRate="fast"
             snapToInterval={PLAN_CARD_WIDTH + spacing[3]}
           >
-            {/* Free Plan Card */}
-            <View
-              style={[
-                styles.comparePlanCard,
-                {
-                  width: PLAN_CARD_WIDTH,
-                  backgroundColor: colors.background.primary,
-                  borderColor: !isPro ? colors.primary[500] : colors.border.light,
-                  borderWidth: !isPro ? 2 : 1,
-                },
-              ]}
-            >
-              {!isPro && (
-                <View style={[styles.currentPlanBadge, { backgroundColor: colors.primary[500] }]}>
-                  <Text variant="caption" weight="semibold" style={{ color: '#FFF' }}>
-                    Plano Atual
-                  </Text>
-                </View>
-              )}
-
-              <View style={styles.comparePlanHeader}>
-                <Ionicons name="star-outline" size={32} color={colors.warning[500]} />
-                <Text variant="h5" weight="bold" style={{ marginTop: spacing[2] }}>
-                  Gratuito
-                </Text>
-                <Text variant="h3" weight="bold" style={{ marginTop: spacing[1] }}>
-                  Grátis
-                </Text>
-              </View>
-
-              <View style={styles.comparePlanFeatures}>
-                {PLAN_FEATURES.map((feature) => (
-                  <View key={feature.key} style={styles.featureRow}>
-                    <Ionicons
-                      name={feature.freeLimit !== false ? 'checkmark-circle' : 'close-circle'}
-                      size={18}
-                      color={feature.freeLimit !== false ? colors.success[500] : colors.gray[400]}
-                    />
-                    <Text
-                      variant="caption"
-                      style={{
-                        marginLeft: 8,
-                        flex: 1,
-                        color: feature.freeLimit !== false ? colors.text.primary : colors.text.tertiary,
-                      }}
-                    >
-                      {feature.label}
-                    </Text>
-                    {typeof feature.freeLimit === 'number' && (
-                      <Text variant="caption" weight="medium" color="secondary">
-                        {feature.freeLimit}
-                      </Text>
-                    )}
-                  </View>
-                ))}
-              </View>
-
-              {isPro && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onPress={handleCancel}
-                  style={{ marginTop: spacing[4] }}
-                >
-                  Fazer Downgrade
-                </Button>
-              )}
-            </View>
-
             {/* Pro Plan Card - Monthly */}
             <View
               style={[

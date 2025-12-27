@@ -855,6 +855,7 @@ model NotificationLog {
   payload         Json?
   status          NotificationStatus
   errorMessage    String?
+  readAt          DateTime?
   createdAt       DateTime            @default(now())
   client          Client?             @relation(fields: [clientId], references: [id])
   user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -864,6 +865,7 @@ model NotificationLog {
   @@index([type])
   @@index([status])
   @@index([createdAt])
+  @@index([userId, readAt])
   @@map("notification_logs")
 }
 

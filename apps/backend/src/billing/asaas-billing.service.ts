@@ -1,4 +1,4 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -8,6 +8,7 @@ import {
   PaymentMethod,
   PaymentStatus,
 } from '@prisma/client';
+import { ReferralRewardsService } from '../referral/services/referral-rewards.service';
 
 // ============================================
 // INTERFACES
@@ -126,6 +127,7 @@ export class AsaasBillingService {
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
+    @Optional() private referralRewardsService?: ReferralRewardsService,
   ) {
     // URL da API (sandbox ou produção)
     this.apiUrl =
@@ -858,6 +860,8 @@ export class AsaasBillingService {
   ): Promise<void> {
     this.logger.log(`Payment confirmed for user ${userId}`);
 
+    let isFirstPayment = false;
+
     // Usar transação para evitar race conditions
     await this.prisma.$transaction(async (tx) => {
       // Atualizar histórico (idempotente - só atualiza se ainda não foi confirmado)
@@ -880,6 +884,15 @@ export class AsaasBillingService {
         }
       }
 
+      // Verificar se é o primeiro pagamento (para programa de indicação)
+      const paymentCount = await tx.subscriptionPaymentHistory.count({
+        where: {
+          userId,
+          status: PaymentStatus.CONFIRMED,
+        },
+      });
+      isFirstPayment = paymentCount === 1; // Conta 1 porque acabamos de confirmar
+
       // Ativar/reativar assinatura dentro da mesma transação
       const periodEnd = new Date();
       periodEnd.setMonth(periodEnd.getMonth() + 1);
@@ -900,6 +913,26 @@ export class AsaasBillingService {
 
       this.logger.log(`Subscription activated for user ${userId}`);
     });
+
+    // Processar recompensa de indicação (apenas no primeiro pagamento)
+    if (isFirstPayment && this.referralRewardsService) {
+      try {
+        const result = await this.referralRewardsService.processSubscriptionPaid({
+          refereeUserId: userId,
+          paymentId: payload.payment?.id || 'unknown',
+        });
+
+        if (result.rewarded) {
+          this.logger.log(
+            `Referral reward credited: ${result.monthsCredited} month(s) for referrer of user ${userId}` +
+            (result.milestoneReached ? ' (milestone reached!)' : ''),
+          );
+        }
+      } catch (error) {
+        // Log error but don't fail the payment confirmation
+        this.logger.error(`Error processing referral reward for user ${userId}:`, error);
+      }
+    }
   }
 
   private async handlePaymentOverdue(userId: string): Promise<void> {

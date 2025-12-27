@@ -11,6 +11,7 @@ import { MercadoPagoBillingService } from './mercadopago-billing.service';
 import { PaymentGatewayFactory } from './payment-gateway.factory';
 import { BillingScheduler } from './billing.scheduler';
 import { ClientPaymentsModule } from '../client-payments/client-payments.module';
+import { ReferralModule } from '../referral/referral.module';
 
 /**
  * BillingModule handles all subscription and plan limit functionality
@@ -26,7 +27,7 @@ import { ClientPaymentsModule } from '../client-payments/client-payments.module'
  */
 @Global()
 @Module({
-  imports: [ConfigModule, forwardRef(() => ClientPaymentsModule)],
+  imports: [ConfigModule, forwardRef(() => ClientPaymentsModule), ReferralModule],
   controllers: [BillingController, BillingWebhookController, ChargesController],
   providers: [
     SubscriptionService,

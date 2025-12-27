@@ -5,7 +5,7 @@
  * Usa Stripe para processar pagamentos em USD, EUR, GBP, etc.
  */
 
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -15,6 +15,7 @@ import {
   PaymentMethod,
   PaymentStatus,
 } from '@prisma/client';
+import { ReferralRewardsService } from '../referral/services/referral-rewards.service';
 import {
   IPaymentGateway,
   CustomerData,
@@ -71,6 +72,7 @@ export class StripeBillingService implements IPaymentGateway {
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
+    @Optional() private referralRewardsService?: ReferralRewardsService,
   ) {
     const apiKey = this.configService.get<string>('STRIPE_SECRET_KEY');
     this.webhookSecret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET') || '';
@@ -520,6 +522,8 @@ export class StripeBillingService implements IPaymentGateway {
       currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 dias
     };
 
+    const isFirstSubscription = !existingSubscription;
+
     if (existingSubscription) {
       await (this.prisma.userSubscription.update as any)({
         where: { userId },
@@ -532,6 +536,26 @@ export class StripeBillingService implements IPaymentGateway {
     }
 
     this.logger.log(`Subscription activated for user ${userId} via Stripe Checkout`);
+
+    // Processar recompensa de indicação (apenas na primeira assinatura)
+    if (isFirstSubscription && this.referralRewardsService) {
+      try {
+        const result = await this.referralRewardsService.processSubscriptionPaid({
+          refereeUserId: userId,
+          paymentId: session.payment_intent || subscriptionId || 'unknown',
+        });
+
+        if (result.rewarded) {
+          this.logger.log(
+            `Referral reward credited: ${result.monthsCredited} month(s) for referrer of user ${userId}` +
+            (result.milestoneReached ? ' (milestone reached!)' : ''),
+          );
+        }
+      } catch (error) {
+        // Log error but don't fail the subscription activation
+        this.logger.error(`Error processing referral reward for user ${userId}:`, error);
+      }
+    }
   }
 
   /**

@@ -12,7 +12,7 @@
  * - Uruguay (UY) - UYU
  */
 
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -22,6 +22,7 @@ import {
   PaymentMethod,
   PaymentStatus,
 } from '@prisma/client';
+import { ReferralRewardsService } from '../referral/services/referral-rewards.service';
 import {
   IPaymentGateway,
   CustomerData,
@@ -272,6 +273,7 @@ export class MercadoPagoBillingService implements IPaymentGateway {
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
+    @Optional() private referralRewardsService?: ReferralRewardsService,
   ) {
     const accessToken = this.configService.get<string>('MERCADOPAGO_ACCESS_TOKEN');
     this.publicKey = this.configService.get<string>('MERCADOPAGO_PUBLIC_KEY') || '';
@@ -857,6 +859,15 @@ export class MercadoPagoBillingService implements IPaymentGateway {
       return;
     }
 
+    // Verificar se é o primeiro pagamento confirmado
+    const previousPayments = await this.prisma.subscriptionPaymentHistory.count({
+      where: {
+        userId,
+        status: PaymentStatus.CONFIRMED,
+      },
+    });
+    const isFirstPayment = previousPayments === 0;
+
     // Calcular periodo
     const periodEnd = new Date();
     periodEnd.setMonth(periodEnd.getMonth() + 1);
@@ -884,6 +895,26 @@ export class MercadoPagoBillingService implements IPaymentGateway {
     });
 
     this.logger.log(`Subscription activated for user ${userId} via Mercado Pago`);
+
+    // Processar recompensa de indicação (apenas no primeiro pagamento)
+    if (isFirstPayment && this.referralRewardsService) {
+      try {
+        const result = await this.referralRewardsService.processSubscriptionPaid({
+          refereeUserId: userId,
+          paymentId: payment.id.toString(),
+        });
+
+        if (result.rewarded) {
+          this.logger.log(
+            `Referral reward credited: ${result.monthsCredited} month(s) for referrer of user ${userId}` +
+            (result.milestoneReached ? ' (milestone reached!)' : ''),
+          );
+        }
+      } catch (error) {
+        // Log error but don't fail the payment confirmation
+        this.logger.error(`Error processing referral reward for user ${userId}:`, error);
+      }
+    }
   }
 
   /**

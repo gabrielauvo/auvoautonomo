@@ -8,70 +8,42 @@
  * - Badge do plano
  * - Botão de logout
  * - Menu de usuário
- * - Dropdown de notificações
+ * - Dropdown de notificações (integrado com API)
  */
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { Badge, Avatar } from '@/components/ui';
-import { LogOut, User, Settings, ChevronDown, Bell, CreditCard, FileText, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { LogOut, User, Settings, ChevronDown, Bell, CreditCard, FileText, CheckCircle, AlertCircle, Clock, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useTranslations } from '@/i18n';
+import { useTranslations, useLocale } from '@/i18n';
+import { useNotificationDropdown } from '@/hooks/use-notifications';
+import type { NotificationItem } from '@/services/notifications.service';
 
 interface HeaderProps {
   className?: string;
 }
 
-// Tipos de notificação
-interface Notification {
-  id: string;
-  type: 'quote' | 'service_order' | 'payment' | 'system';
-  title: string;
-  message: string;
-  time: string;
-  read: boolean;
-}
-
-// Notificações mockadas (depois integrar com API)
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    type: 'quote',
-    title: 'Orçamento aprovado',
-    message: 'O cliente João Silva aprovou o orçamento #1234',
-    time: '5 min atrás',
-    read: false,
-  },
-  {
-    id: '2',
-    type: 'service_order',
-    title: 'Nova OS criada',
-    message: 'Ordem de serviço #5678 foi criada',
-    time: '1 hora atrás',
-    read: false,
-  },
-  {
-    id: '3',
-    type: 'payment',
-    title: 'Pagamento recebido',
-    message: 'Pagamento de R$ 1.500,00 confirmado',
-    time: '2 horas atrás',
-    read: true,
-  },
-];
-
 export function Header({ className }: HeaderProps) {
   const { user, billing, logout, isLoading } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
   const menuRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const { t: tNav } = useTranslations('navigation');
   const { t: tAuth } = useTranslations('auth');
   const { t: tCommon } = useTranslations('common');
+  const { locale } = useLocale();
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  // Hook de notificações com polling
+  const {
+    unreadCount,
+    notifications,
+    isLoading: isLoadingNotifications,
+    markAsRead,
+    markAllAsRead,
+    isMarkingAllRead,
+  } = useNotificationDropdown();
 
   // Fecha menus ao clicar fora
   useEffect(() => {
@@ -88,27 +60,43 @@ export function Header({ className }: HeaderProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev =>
-      prev.map(n => (n.id === id ? { ...n, read: true } : n))
-    );
+  // Formata tempo relativo
+  const formatRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return locale === 'pt-BR' ? 'agora' : 'now';
+    if (diffMins < 60) return locale === 'pt-BR' ? `${diffMins} min atrás` : `${diffMins} min ago`;
+    if (diffHours < 24) return locale === 'pt-BR' ? `${diffHours}h atrás` : `${diffHours}h ago`;
+    if (diffDays < 7) return locale === 'pt-BR' ? `${diffDays}d atrás` : `${diffDays}d ago`;
+    return date.toLocaleDateString(locale);
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  // Ícone baseado no tipo de notificação
+  const getNotificationIcon = (type: string) => {
+    if (type.includes('QUOTE')) return <FileText className="h-4 w-4 text-primary" />;
+    if (type.includes('WORK_ORDER')) return <CheckCircle className="h-4 w-4 text-success" />;
+    if (type.includes('PAYMENT')) return <AlertCircle className="h-4 w-4 text-warning" />;
+    return <Bell className="h-4 w-4 text-gray-500" />;
   };
 
-  const getNotificationIcon = (type: Notification['type']) => {
-    switch (type) {
-      case 'quote':
-        return <FileText className="h-4 w-4 text-primary" />;
-      case 'service_order':
-        return <CheckCircle className="h-4 w-4 text-success" />;
-      case 'payment':
-        return <AlertCircle className="h-4 w-4 text-warning" />;
-      default:
-        return <Bell className="h-4 w-4 text-gray-500" />;
-    }
+  // Título baseado no tipo de notificação
+  const getNotificationTitle = (notification: NotificationItem) => {
+    if (notification.subject) return notification.subject;
+    const typeMap: Record<string, string> = {
+      QUOTE_SENT: locale === 'pt-BR' ? 'Orçamento enviado' : 'Quote sent',
+      QUOTE_APPROVED: locale === 'pt-BR' ? 'Orçamento aprovado' : 'Quote approved',
+      QUOTE_REJECTED: locale === 'pt-BR' ? 'Orçamento recusado' : 'Quote rejected',
+      WORK_ORDER_CREATED: locale === 'pt-BR' ? 'Nova OS criada' : 'Work order created',
+      WORK_ORDER_COMPLETED: locale === 'pt-BR' ? 'OS finalizada' : 'Work order completed',
+      PAYMENT_RECEIVED: locale === 'pt-BR' ? 'Pagamento recebido' : 'Payment received',
+      PAYMENT_OVERDUE: locale === 'pt-BR' ? 'Pagamento atrasado' : 'Payment overdue',
+    };
+    return typeMap[notification.type] || notification.type;
   };
 
   const handleLogout = async () => {
@@ -184,17 +172,23 @@ export function Header({ className }: HeaderProps) {
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{tNav('notificationsTitle')}</h3>
                 {unreadCount > 0 && (
                   <button
-                    onClick={markAllAsRead}
-                    className="text-xs text-primary hover:text-primary-dark"
+                    onClick={() => markAllAsRead()}
+                    disabled={isMarkingAllRead}
+                    className="text-xs text-primary hover:text-primary-dark disabled:opacity-50"
                   >
-                    {tNav('markAllAsRead')}
+                    {isMarkingAllRead ? <Loader2 className="h-3 w-3 animate-spin" /> : tNav('markAllAsRead')}
                   </button>
                 )}
               </div>
 
               {/* Lista de notificações */}
               <div className="max-h-80 overflow-y-auto">
-                {notifications.length === 0 ? (
+                {isLoadingNotifications ? (
+                  <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                    <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                    <p className="text-sm">{tCommon('loading')}...</p>
+                  </div>
+                ) : notifications.length === 0 ? (
                   <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                     <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">{tNav('noNotifications')}</p>
@@ -203,10 +197,10 @@ export function Header({ className }: HeaderProps) {
                   notifications.map(notification => (
                     <div
                       key={notification.id}
-                      onClick={() => markAsRead(notification.id)}
+                      onClick={() => !notification.isRead && markAsRead(notification.id)}
                       className={cn(
                         'flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-50 dark:border-gray-700 last:border-0',
-                        !notification.read && 'bg-primary-50/30 dark:bg-primary-900/20'
+                        !notification.isRead && 'bg-primary-50/30 dark:bg-primary-900/20'
                       )}
                     >
                       <div className="flex-shrink-0 mt-0.5">
@@ -215,19 +209,19 @@ export function Header({ className }: HeaderProps) {
                       <div className="flex-1 min-w-0">
                         <p className={cn(
                           'text-sm',
-                          notification.read ? 'text-gray-700 dark:text-gray-300' : 'text-gray-900 dark:text-gray-100 font-medium'
+                          notification.isRead ? 'text-gray-700 dark:text-gray-300' : 'text-gray-900 dark:text-gray-100 font-medium'
                         )}>
-                          {notification.title}
+                          {getNotificationTitle(notification)}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                          {notification.message}
+                          {notification.body}
                         </p>
                         <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 flex items-center gap-1">
                           <Clock className="h-3 w-3" />
-                          {notification.time}
+                          {formatRelativeTime(notification.createdAt)}
                         </p>
                       </div>
-                      {!notification.read && (
+                      {!notification.isRead && (
                         <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-2" />
                       )}
                     </div>

@@ -28,6 +28,30 @@ export default function RelatoriosLayout() {
           headerShown: false,
         }}
       />
+      <Stack.Screen
+        name="finance"
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="sales"
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="operations"
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="clients"
+        options={{
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }

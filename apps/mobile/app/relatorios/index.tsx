@@ -13,7 +13,6 @@ import {
   RefreshControl,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -314,19 +313,9 @@ export default function ReportsScreen() {
     }).format(value);
   }, [locale]);
 
-  const handleComingSoon = useCallback((feature: string) => {
-    const featureNames: Record<string, string> = {
-      finance: t('reports.finance'),
-      sales: t('reports.sales'),
-      operations: t('reports.operations'),
-      clients: t('reports.clients'),
-    };
-    Alert.alert(
-      t('common.soon'),
-      t('menu.comingSoonMessage', { feature: featureNames[feature] || feature }),
-      [{ text: t('common.confirm') }]
-    );
-  }, [t]);
+  const handleReportPress = useCallback((report: string) => {
+    router.push(`/relatorios/${report}` as any);
+  }, [router]);
 
   return (
     <View style={[styles.container, { backgroundColor: themeColors.background.secondary }]}>
@@ -564,7 +553,7 @@ export default function ReportsScreen() {
               icon="cash"
               iconColor={colors.success[600]}
               iconBgColor={colors.success[50]}
-              onPress={() => handleComingSoon('finance')}
+              onPress={() => handleReportPress('finance')}
             />
             <DetailedReportLink
               title={t('reports.sales')}
@@ -572,7 +561,7 @@ export default function ReportsScreen() {
               icon="document-text"
               iconColor={colors.primary[600]}
               iconBgColor={colors.primary[50]}
-              onPress={() => handleComingSoon('sales')}
+              onPress={() => handleReportPress('sales')}
             />
             <DetailedReportLink
               title={t('reports.operations')}
@@ -580,7 +569,7 @@ export default function ReportsScreen() {
               icon="construct"
               iconColor={colors.warning[600]}
               iconBgColor={colors.warning[50]}
-              onPress={() => handleComingSoon('operations')}
+              onPress={() => handleReportPress('operations')}
             />
             <DetailedReportLink
               title={t('reports.clients')}
@@ -588,7 +577,7 @@ export default function ReportsScreen() {
               icon="people"
               iconColor={colors.info[600]}
               iconBgColor={colors.info[50]}
-              onPress={() => handleComingSoon('clients')}
+              onPress={() => handleReportPress('clients')}
             />
           </View>
         </Card>

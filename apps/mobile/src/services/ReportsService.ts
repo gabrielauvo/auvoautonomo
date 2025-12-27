@@ -56,6 +56,65 @@ export interface ReportsData {
   revenueByPeriod: RevenueByPeriod[];
 }
 
+// Finance Report Types
+export interface FinanceReportData {
+  revenue: {
+    total: number;
+    received: number;
+    pending: number;
+    overdue: number;
+  };
+  revenueByPeriod: { period: string; received: number; pending: number; overdue: number }[];
+  chargesByMethod: { method: string; amount: number; count: number }[];
+  topClients: { id: string; name: string; revenue: number; chargesCount: number }[];
+}
+
+// Sales Report Types
+export interface SalesReportData {
+  quotes: {
+    total: number;
+    approved: number;
+    pending: number;
+    rejected: number;
+    expired: number;
+    totalValue: number;
+    conversionRate: number;
+    averageTicket: number;
+    avgApprovalDays: number;
+  };
+  quotesByPeriod: { period: string; total: number; approved: number }[];
+  topServices: { id: string; name: string; quantity: number; value: number }[];
+}
+
+// Operations Report Types
+export interface OperationsReportData {
+  workOrders: {
+    total: number;
+    completed: number;
+    inProgress: number;
+    scheduled: number;
+    completionRate: number;
+    avgCompletionDays: number;
+  };
+  workOrdersByPeriod: { period: string; total: number; completed: number }[];
+  completionByMonth: { period: string; rate: number }[];
+}
+
+// Clients Report Types
+export interface ClientsReportData {
+  clients: {
+    total: number;
+    active: number;
+    new: number;
+    inactive: number;
+    avgRevenuePerClient: number;
+    retentionRate: number;
+  };
+  clientsByPeriod: { period: string; total: number; new: number }[];
+  clientsByCity: { city: string; count: number }[];
+  topClients: { id: string; name: string; quotesCount: number; workOrdersCount: number; revenue: number }[];
+}
+
 export type ReportPeriod = 'today' | 'yesterday' | 'last_7_days' | 'last_30_days' | 'this_month' | 'last_month' | 'this_year' | 'custom';
 
 interface CachedReportsData {
@@ -312,6 +371,142 @@ export const ReportsService = {
       return `${minutes}min`;
     }
     return '< 1min';
+  },
+
+  /**
+   * Busca dados do relatorio financeiro
+   */
+  async getFinanceReport(
+    period: ReportPeriod = 'last_30_days',
+    options?: { startDate?: string; endDate?: string }
+  ): Promise<FinanceReportData | null> {
+    const token = await AuthService.getAccessToken();
+    if (!token) return null;
+
+    try {
+      const baseUrl = getApiBaseUrl();
+      const { startDate, endDate } = options?.startDate && options?.endDate
+        ? { startDate: options.startDate, endDate: options.endDate }
+        : getPeriodDates(period);
+
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      };
+
+      const res = await fetchWithTimeout(
+        `${baseUrl}/reports/finance?startDate=${startDate}&endDate=${endDate}`,
+        { method: 'GET', headers, timeout: 15000 }
+      );
+
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (error) {
+      console.warn('[ReportsService] Error fetching finance report:', error);
+      return null;
+    }
+  },
+
+  /**
+   * Busca dados do relatorio de vendas
+   */
+  async getSalesReport(
+    period: ReportPeriod = 'last_30_days',
+    options?: { startDate?: string; endDate?: string }
+  ): Promise<SalesReportData | null> {
+    const token = await AuthService.getAccessToken();
+    if (!token) return null;
+
+    try {
+      const baseUrl = getApiBaseUrl();
+      const { startDate, endDate } = options?.startDate && options?.endDate
+        ? { startDate: options.startDate, endDate: options.endDate }
+        : getPeriodDates(period);
+
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      };
+
+      const res = await fetchWithTimeout(
+        `${baseUrl}/reports/sales?startDate=${startDate}&endDate=${endDate}`,
+        { method: 'GET', headers, timeout: 15000 }
+      );
+
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (error) {
+      console.warn('[ReportsService] Error fetching sales report:', error);
+      return null;
+    }
+  },
+
+  /**
+   * Busca dados do relatorio de operacoes
+   */
+  async getOperationsReport(
+    period: ReportPeriod = 'last_30_days',
+    options?: { startDate?: string; endDate?: string }
+  ): Promise<OperationsReportData | null> {
+    const token = await AuthService.getAccessToken();
+    if (!token) return null;
+
+    try {
+      const baseUrl = getApiBaseUrl();
+      const { startDate, endDate } = options?.startDate && options?.endDate
+        ? { startDate: options.startDate, endDate: options.endDate }
+        : getPeriodDates(period);
+
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      };
+
+      const res = await fetchWithTimeout(
+        `${baseUrl}/reports/operations?startDate=${startDate}&endDate=${endDate}`,
+        { method: 'GET', headers, timeout: 15000 }
+      );
+
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (error) {
+      console.warn('[ReportsService] Error fetching operations report:', error);
+      return null;
+    }
+  },
+
+  /**
+   * Busca dados do relatorio de clientes
+   */
+  async getClientsReport(
+    period: ReportPeriod = 'last_30_days',
+    options?: { startDate?: string; endDate?: string }
+  ): Promise<ClientsReportData | null> {
+    const token = await AuthService.getAccessToken();
+    if (!token) return null;
+
+    try {
+      const baseUrl = getApiBaseUrl();
+      const { startDate, endDate } = options?.startDate && options?.endDate
+        ? { startDate: options.startDate, endDate: options.endDate }
+        : getPeriodDates(period);
+
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      };
+
+      const res = await fetchWithTimeout(
+        `${baseUrl}/reports/clients?startDate=${startDate}&endDate=${endDate}`,
+        { method: 'GET', headers, timeout: 15000 }
+      );
+
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (error) {
+      console.warn('[ReportsService] Error fetching clients report:', error);
+      return null;
+    }
   },
 };
 

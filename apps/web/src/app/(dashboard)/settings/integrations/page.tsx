@@ -52,10 +52,6 @@ import {
   StripeEnvironment,
   MercadoPagoEnvironment,
 } from '@/services/integrations.service';
-import { useCompanySettings } from '@/context/company-settings-context';
-
-// Countries where WhatsApp is NOT commonly used for business messaging
-const NON_WHATSAPP_COUNTRIES = ['US', 'CA'];
 
 // Stripe Icon SVG Component
 const StripeIcon = ({ className }: { className?: string }) => (
@@ -73,11 +69,6 @@ const MercadoPagoIcon = ({ className }: { className?: string }) => (
 
 export default function IntegrationsSettingsPage() {
   const { t } = useTranslations('integrations');
-  const { settings: companySettings } = useCompanySettings();
-
-  // Show WhatsApp by default, only hide for US/CA where it's not common for business
-  const userCountry = companySettings?.country?.toUpperCase() || '';
-  const showWhatsApp = !NON_WHATSAPP_COUNTRIES.includes(userCountry);
 
   // Asaas hooks
   const { data: asaasStatus, isLoading: asaasLoading } = useAsaasStatus();
@@ -652,8 +643,8 @@ export default function IntegrationsSettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Z-API WhatsApp Integration - Hidden for English locales */}
-      {showWhatsApp && <ZApiIntegrationCard />}
+      {/* Z-API WhatsApp Integration */}
+      <ZApiIntegrationCard />
 
       {/* Asaas Disconnect Modal */}
       {showAsaasDisconnect && (

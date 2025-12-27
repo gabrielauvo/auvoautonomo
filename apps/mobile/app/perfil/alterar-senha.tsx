@@ -21,12 +21,14 @@ import { router } from 'expo-router';
 import { Text, Card, Button } from '../../src/design-system';
 import { useColors, useSpacing } from '../../src/design-system/ThemeProvider';
 import { AuthService } from '../../src/services/AuthService';
+import { useTranslation } from '../../src/i18n';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 
 export default function AlterarSenhaScreen() {
   const colors = useColors();
   const spacing = useSpacing();
+  const { t } = useTranslation();
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -44,22 +46,22 @@ export default function AlterarSenhaScreen() {
 
     // Validações
     if (!currentPassword) {
-      Alert.alert('Erro', 'Digite sua senha atual');
+      Alert.alert(t('common.error'), t('profile.changePassword.enterCurrentPassword'));
       return;
     }
 
     if (!newPassword) {
-      Alert.alert('Erro', 'Digite a nova senha');
+      Alert.alert(t('common.error'), t('profile.changePassword.enterNewPassword'));
       return;
     }
 
     if (newPassword.length < 6) {
-      Alert.alert('Erro', 'A nova senha deve ter no mínimo 6 caracteres');
+      Alert.alert(t('common.error'), t('profile.changePassword.minLength'));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      Alert.alert('Erro', 'As senhas não conferem');
+      Alert.alert(t('common.error'), t('profile.changePassword.passwordsDoNotMatch'));
       return;
     }
 
@@ -84,15 +86,15 @@ export default function AlterarSenhaScreen() {
       const data = await response.json();
 
       if (response.ok) {
-        Alert.alert('Sucesso', 'Senha alterada com sucesso', [
+        Alert.alert(t('common.success'), t('profile.changePassword.success'), [
           { text: 'OK', onPress: () => router.back() },
         ]);
       } else {
-        Alert.alert('Erro', data.message || 'Falha ao alterar senha');
+        Alert.alert(t('common.error'), data.message || t('profile.changePassword.error'));
       }
     } catch (error) {
       console.error('[AlterarSenha] Error:', error);
-      Alert.alert('Erro', 'Falha ao alterar senha');
+      Alert.alert(t('common.error'), t('profile.changePassword.error'));
     } finally {
       setIsSaving(false);
     }
@@ -106,7 +108,7 @@ export default function AlterarSenhaScreen() {
           <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
         </TouchableOpacity>
         <Text variant="h4" weight="semibold">
-          Alterar Senha
+          {t('profile.changePassword.title')}
         </Text>
         <View style={styles.headerSpacer} />
       </View>
@@ -124,13 +126,13 @@ export default function AlterarSenhaScreen() {
             {/* Senha Atual */}
             <View style={styles.inputGroup}>
               <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
-                Senha Atual *
+                {t('profile.changePassword.currentPassword')} *
               </Text>
               <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
                 <Ionicons name="lock-closed-outline" size={20} color={colors.text.tertiary} />
                 <TextInput
                   style={[styles.input, { color: colors.text.primary }]}
-                  placeholder="Digite sua senha atual"
+                  placeholder={t('profile.changePassword.currentPasswordPlaceholder')}
                   placeholderTextColor={colors.text.tertiary}
                   value={currentPassword}
                   onChangeText={setCurrentPassword}
@@ -150,13 +152,13 @@ export default function AlterarSenhaScreen() {
             {/* Nova Senha */}
             <View style={[styles.inputGroup, { marginTop: spacing[4] }]}>
               <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
-                Nova Senha *
+                {t('profile.changePassword.newPassword')} *
               </Text>
               <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
                 <Ionicons name="key-outline" size={20} color={colors.text.tertiary} />
                 <TextInput
                   style={[styles.input, { color: colors.text.primary }]}
-                  placeholder="Digite a nova senha"
+                  placeholder={t('profile.changePassword.newPasswordPlaceholder')}
                   placeholderTextColor={colors.text.tertiary}
                   value={newPassword}
                   onChangeText={setNewPassword}
@@ -172,20 +174,20 @@ export default function AlterarSenhaScreen() {
                 </TouchableOpacity>
               </View>
               <Text variant="caption" color="tertiary" style={{ marginTop: spacing[1] }}>
-                Mínimo de 6 caracteres
+                {t('profile.changePassword.minLengthHint')}
               </Text>
             </View>
 
             {/* Confirmar Senha */}
             <View style={[styles.inputGroup, { marginTop: spacing[4] }]}>
               <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
-                Confirmar Nova Senha *
+                {t('profile.changePassword.confirmNewPassword')} *
               </Text>
               <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
                 <Ionicons name="shield-checkmark-outline" size={20} color={colors.text.tertiary} />
                 <TextInput
                   style={[styles.input, { color: colors.text.primary }]}
-                  placeholder="Confirme a nova senha"
+                  placeholder={t('profile.changePassword.confirmNewPasswordPlaceholder')}
                   placeholderTextColor={colors.text.tertiary}
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
@@ -210,7 +212,7 @@ export default function AlterarSenhaScreen() {
             loading={isSaving}
             style={{ marginTop: spacing[4] }}
           >
-            Alterar Senha
+            {t('profile.changePassword.changePasswordButton')}
           </Button>
         </ScrollView>
       </KeyboardAvoidingView>

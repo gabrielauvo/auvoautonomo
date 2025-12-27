@@ -10,6 +10,7 @@ import { ExpenseForm } from '@/components/expenses';
 import { Button, Skeleton, Card, CardContent } from '@/components/ui';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslations } from '@/i18n';
 
 function NewExpenseLoading() {
   return (
@@ -37,6 +38,8 @@ function NewExpenseLoading() {
 }
 
 function NewExpenseContent() {
+  const { t } = useTranslations('expenses');
+
   return (
     <AppLayout>
       <div className="space-y-6 max-w-3xl mx-auto">
@@ -48,9 +51,9 @@ function NewExpenseContent() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Nova Despesa</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('newExpense')}</h1>
             <p className="text-gray-500 mt-1">
-              Cadastre uma nova conta a pagar
+              {t('registerNewBill')}
             </p>
           </div>
         </div>

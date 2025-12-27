@@ -8,7 +8,7 @@
  * - PRO: R$ 99,90/mês ou R$ 89,90/mês (anual)
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -34,6 +34,7 @@ import {
   calculateTrialDaysRemaining,
   BillingPeriod,
 } from '../../src/services/BillingService';
+import { useTranslation, useLocale } from '../../src/i18n';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -67,21 +68,25 @@ interface SubscriptionData {
   creditCardBrand?: string;
 }
 
-// Feature list for plan comparison
-const PLAN_FEATURES = [
-  { key: 'clients', label: 'Clientes', freeLimit: 10, proLimit: null },
-  { key: 'quotes', label: 'Orçamentos', freeLimit: 10, proLimit: null },
-  { key: 'workOrders', label: 'Ordens de Serviço', freeLimit: 10, proLimit: null },
-  { key: 'invoices', label: 'Cobranças', freeLimit: 5, proLimit: null },
-  { key: 'templates', label: 'Templates personalizados', freeLimit: false, proLimit: true },
-  { key: 'reports', label: 'Relatórios avançados', freeLimit: false, proLimit: true },
-  { key: 'support', label: 'Suporte prioritário', freeLimit: false, proLimit: true },
-];
+// Feature keys for plan comparison (labels are translated in component)
 
 export default function PlanoScreen() {
   const colors = useColors();
   const spacing = useSpacing();
+  const { t } = useTranslation();
+  const { locale } = useLocale();
   const plansScrollRef = useRef<ScrollView>(null);
+
+  // Translated plan features
+  const PLAN_FEATURES = useMemo(() => [
+    { key: 'clients', label: t('billing.features.clients'), freeLimit: 10, proLimit: null },
+    { key: 'quotes', label: t('billing.features.quotes'), freeLimit: 10, proLimit: null },
+    { key: 'workOrders', label: t('billing.features.workOrders'), freeLimit: 10, proLimit: null },
+    { key: 'invoices', label: t('billing.features.invoices'), freeLimit: 5, proLimit: null },
+    { key: 'templates', label: t('billing.features.customTemplates'), freeLimit: false, proLimit: true },
+    { key: 'reports', label: t('billing.features.advancedReports'), freeLimit: false, proLimit: true },
+    { key: 'support', label: t('billing.features.prioritySupport'), freeLimit: false, proLimit: true },
+  ], [t, locale]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
@@ -134,7 +139,7 @@ export default function PlanoScreen() {
 
   const handleCheckoutPix = async () => {
     if (!cpfCnpj.trim()) {
-      Alert.alert('Erro', 'Informe seu CPF ou CNPJ');
+      Alert.alert(t('common.error'), t('billing.checkout.cpfCnpjRequired'));
       return;
     }
 
@@ -162,11 +167,11 @@ export default function PlanoScreen() {
         setPixQrCode(data.pixQrCode);
         setPixCopyPaste(data.pixCopyPaste);
       } else {
-        Alert.alert('Erro', data.message || 'Falha ao gerar PIX');
+        Alert.alert(t('common.error'), data.message || t('billing.checkout.pixGenerationError'));
       }
     } catch (error) {
       console.error('[Plano] Error generating PIX:', error);
-      Alert.alert('Erro', 'Falha ao gerar pagamento PIX');
+      Alert.alert(t('common.error'), t('billing.checkout.pixGenerationError'));
     } finally {
       setIsProcessing(false);
     }
@@ -175,23 +180,23 @@ export default function PlanoScreen() {
   const handleCheckoutCreditCard = async () => {
     // Validações
     if (!cpfCnpj.trim()) {
-      Alert.alert('Erro', 'Informe seu CPF ou CNPJ');
+      Alert.alert(t('common.error'), t('billing.checkout.cpfCnpjRequired'));
       return;
     }
     if (!cardNumber.trim() || cardNumber.replace(/\s/g, '').length < 13) {
-      Alert.alert('Erro', 'Número do cartão inválido');
+      Alert.alert(t('common.error'), t('billing.checkout.invalidCardNumber'));
       return;
     }
     if (!cardExpiry.trim() || cardExpiry.length < 5) {
-      Alert.alert('Erro', 'Data de validade inválida');
+      Alert.alert(t('common.error'), t('billing.checkout.invalidExpiry'));
       return;
     }
     if (!cardCvv.trim() || cardCvv.length < 3) {
-      Alert.alert('Erro', 'CVV inválido');
+      Alert.alert(t('common.error'), t('billing.checkout.invalidCvv'));
       return;
     }
     if (!cardName.trim()) {
-      Alert.alert('Erro', 'Informe o nome no cartão');
+      Alert.alert(t('common.error'), t('billing.checkout.cardNameRequired'));
       return;
     }
 
@@ -228,7 +233,7 @@ export default function PlanoScreen() {
       const data = await response.json();
 
       if (data.success) {
-        Alert.alert('Sucesso', 'Pagamento aprovado! Seu plano foi atualizado.', [
+        Alert.alert(t('common.success'), t('billing.checkout.paymentApproved'), [
           {
             text: 'OK',
             onPress: () => {
@@ -238,11 +243,11 @@ export default function PlanoScreen() {
           },
         ]);
       } else {
-        Alert.alert('Erro', data.errorMessage || data.message || 'Pagamento não aprovado');
+        Alert.alert(t('common.error'), data.errorMessage || data.message || t('billing.checkout.paymentNotApproved'));
       }
     } catch (error) {
       console.error('[Plano] Error processing card:', error);
-      Alert.alert('Erro', 'Falha ao processar pagamento');
+      Alert.alert(t('common.error'), t('billing.checkout.paymentError'));
     } finally {
       setIsProcessing(false);
     }
@@ -250,12 +255,12 @@ export default function PlanoScreen() {
 
   const handleCancel = () => {
     Alert.alert(
-      'Cancelar Assinatura',
-      'Tem certeza que deseja cancelar sua assinatura? Você perderá acesso à plataforma quando o período atual terminar.',
+      t('billing.cancelConfirmTitle'),
+      t('billing.cancelConfirmMessage'),
       [
-        { text: 'Não', style: 'cancel' },
+        { text: t('common.no'), style: 'cancel' },
         {
-          text: 'Sim, cancelar',
+          text: t('billing.yesCancel'),
           style: 'destructive',
           onPress: async () => {
             setIsProcessing(true);
@@ -274,13 +279,13 @@ export default function PlanoScreen() {
               const data = await response.json();
 
               if (data.success) {
-                Alert.alert('Assinatura Cancelada', data.message);
+                Alert.alert(t('billing.subscriptionCancelled'), data.message);
                 loadData();
               } else {
-                Alert.alert('Erro', data.message || 'Falha ao cancelar');
+                Alert.alert(t('common.error'), data.message || t('billing.cancelError'));
               }
             } catch (error) {
-              Alert.alert('Erro', 'Falha ao cancelar assinatura');
+              Alert.alert(t('common.error'), t('billing.cancelError'));
             } finally {
               setIsProcessing(false);
             }
@@ -324,7 +329,7 @@ export default function PlanoScreen() {
   };
 
   const formatLimit = (limit: number | null | undefined) => {
-    if (limit === null || limit === undefined || limit === -1) return 'Ilimitado';
+    if (limit === null || limit === undefined || limit === -1) return t('billing.unlimited');
     return limit.toString();
   };
 
@@ -362,7 +367,7 @@ export default function PlanoScreen() {
           <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
         </TouchableOpacity>
         <Text variant="h4" weight="semibold">
-          Meu Plano
+          {t('billing.planTitle')}
         </Text>
         <View style={styles.headerSpacer} />
       </View>
@@ -385,18 +390,18 @@ export default function PlanoScreen() {
             <View style={styles.planInfo}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <Text variant="h4" weight="bold">
-                  {isPro ? 'Plano Profissional' : isTrialing ? 'Período de Teste' : 'Trial Expirado'}
+                  {isPro ? t('billing.proPlan') : isTrialing ? t('billing.trialPeriod') : t('billing.expiredPlan')}
                 </Text>
                 <Badge variant={isPro ? 'primary' : isTrialing ? 'warning' : 'error'} size="sm">
-                  {isPro ? 'PRO' : isTrialing ? `${trialDaysRemaining} dias` : 'Expirado'}
+                  {isPro ? 'PRO' : isTrialing ? t('billing.daysRemaining', { days: trialDaysRemaining }) : t('billing.expired')}
                 </Badge>
               </View>
               <Text variant="body" color="secondary">
                 {isPro
-                  ? `R$ ${selectedPrice.toFixed(2).replace('.', ',')}/mês`
+                  ? `R$ ${selectedPrice.toFixed(2).replace('.', ',')}/${t('billing.perMonth')}`
                   : isTrialing
-                    ? `${TRIAL_DURATION_DAYS} dias grátis com tudo liberado`
-                    : 'Assine para continuar usando'}
+                    ? t('billing.trialDescription')
+                    : t('billing.subscribeToAccess')}
               </Text>
             </View>
           </View>
@@ -407,8 +412,8 @@ export default function PlanoScreen() {
               <Ionicons name="warning" size={18} color={colors.warning[500]} />
               <Text variant="caption" weight="medium" style={{ color: colors.warning[700], marginLeft: 6, flex: 1 }}>
                 {trialDaysRemaining === 0
-                  ? 'Seu trial termina hoje! Assine agora.'
-                  : `Seu trial termina em ${trialDaysRemaining} dias. Assine agora para não perder acesso.`}
+                  ? t('billing.trialEndsTodayAlert')
+                  : t('billing.trialEndsInDaysAlert', { days: trialDaysRemaining })}
               </Text>
             </View>
           )}
@@ -418,7 +423,7 @@ export default function PlanoScreen() {
             <View style={[styles.statusBadge, { backgroundColor: colors.success[50], marginTop: spacing[3] }]}>
               <Ionicons name="checkmark-circle" size={18} color={colors.success[500]} />
               <Text variant="caption" weight="medium" style={{ color: colors.success[700], marginLeft: 6 }}>
-                Próxima cobrança: {new Date(subscription.currentPeriodEnd).toLocaleDateString('pt-BR')}
+                {t('billing.nextBilling')}: {new Date(subscription.currentPeriodEnd).toLocaleDateString(locale)}
               </Text>
             </View>
           )}
@@ -432,7 +437,7 @@ export default function PlanoScreen() {
               />
               <Text variant="caption" color="secondary" style={{ marginLeft: 6 }}>
                 {subscription.paymentMethod === 'CREDIT_CARD'
-                  ? `Cartão ${subscription.creditCardBrand || ''} •••• ${subscription.creditCardLastFour || ''}`
+                  ? `${t('billing.checkout.card')} ${subscription.creditCardBrand || ''} •••• ${subscription.creditCardLastFour || ''}`
                   : 'PIX'}
               </Text>
             </View>
@@ -443,17 +448,17 @@ export default function PlanoScreen() {
         {(isTrialing || isPro) && (
           <View style={{ marginTop: spacing[4], paddingHorizontal: spacing[4] }}>
             <Text variant="body" weight="semibold" style={{ marginBottom: spacing[3] }}>
-              Uso do Plano
+              {t('billing.planUsage')}
             </Text>
             <Card>
               {[
-                { label: 'Clientes', value: subscription?.usage?.clients || 0, limit: (isTrialing || isPro) ? null : subscription?.limits?.maxClients },
-                { label: 'Orçamentos', value: subscription?.usage?.quotes || 0, limit: (isTrialing || isPro) ? null : subscription?.limits?.maxQuotes },
-                { label: 'Ordens de Serviço', value: subscription?.usage?.workOrders || 0, limit: (isTrialing || isPro) ? null : subscription?.limits?.maxWorkOrders },
-                { label: 'Cobranças', value: subscription?.usage?.payments || 0, limit: (isTrialing || isPro) ? null : subscription?.limits?.maxInvoices },
+                { label: t('billing.features.clients'), value: subscription?.usage?.clients || 0, limit: (isTrialing || isPro) ? null : subscription?.limits?.maxClients },
+                { label: t('billing.features.quotes'), value: subscription?.usage?.quotes || 0, limit: (isTrialing || isPro) ? null : subscription?.limits?.maxQuotes },
+                { label: t('billing.features.workOrders'), value: subscription?.usage?.workOrders || 0, limit: (isTrialing || isPro) ? null : subscription?.limits?.maxWorkOrders },
+                { label: t('billing.features.invoices'), value: subscription?.usage?.payments || 0, limit: (isTrialing || isPro) ? null : subscription?.limits?.maxInvoices },
               ].map((item, index) => {
                 const limitText = formatLimit(item.limit);
-                const isUnlimited = limitText === 'Ilimitado';
+                const isUnlimited = limitText === t('billing.unlimited');
 
                 return (
                   <View key={item.label} style={[styles.usageRow, index > 0 && { marginTop: spacing[3] }]}>
@@ -475,10 +480,10 @@ export default function PlanoScreen() {
         {/* Compare Plans - Horizontal Scroll */}
         <View style={{ marginTop: spacing[6] }}>
           <Text variant="body" weight="semibold" style={{ marginBottom: spacing[3], paddingHorizontal: spacing[4] }}>
-            Planos Disponíveis
+            {t('billing.availablePlans')}
           </Text>
           <Text variant="caption" color="tertiary" style={{ marginBottom: spacing[3], paddingHorizontal: spacing[4] }}>
-            Deslize para ver todos os planos
+            {t('billing.swipeToSeePlans')}
           </Text>
 
           <ScrollView
@@ -504,16 +509,16 @@ export default function PlanoScreen() {
               <View style={styles.comparePlanHeader}>
                 <Ionicons name="calendar-outline" size={32} color={colors.primary[500]} />
                 <Text variant="h5" weight="bold" style={{ marginTop: spacing[2] }}>
-                  Mensal
+                  {t('billing.monthlyPlan')}
                 </Text>
                 <View style={{ flexDirection: 'row', alignItems: 'baseline', marginTop: spacing[1] }}>
                   <Text variant="h3" weight="bold" style={{ color: colors.primary[600] }}>
                     R$ {PRO_PLAN_PRICING.MONTHLY.toFixed(2).replace('.', ',')}
                   </Text>
-                  <Text variant="caption" color="secondary">/mês</Text>
+                  <Text variant="caption" color="secondary">/{t('billing.perMonth')}</Text>
                 </View>
                 <Text variant="caption" color="tertiary" style={{ marginTop: spacing[1] }}>
-                  Cobrado mensalmente
+                  {t('billing.billedMonthly')}
                 </Text>
               </View>
 
@@ -526,7 +531,7 @@ export default function PlanoScreen() {
                     </Text>
                     {feature.proLimit === null && (
                       <Text variant="caption" weight="medium" style={{ color: colors.primary[600] }}>
-                        Ilimitado
+                        {t('billing.unlimited')}
                       </Text>
                     )}
                   </View>
@@ -543,7 +548,7 @@ export default function PlanoScreen() {
                   }}
                   style={{ marginTop: spacing[4] }}
                 >
-                  Assinar Mensal
+                  {t('billing.subscribeMonthly')}
                 </Button>
               )}
             </View>
@@ -563,27 +568,27 @@ export default function PlanoScreen() {
               <View style={[styles.popularBadge, { backgroundColor: colors.primary[500] }]}>
                 <Ionicons name="trending-up" size={12} color="#FFF" />
                 <Text variant="caption" weight="semibold" style={{ color: '#FFF', marginLeft: 4 }}>
-                  {isPro ? 'Plano Atual' : 'Mais Popular'}
+                  {isPro ? t('billing.currentPlan') : t('billing.mostPopular')}
                 </Text>
               </View>
 
               <View style={styles.comparePlanHeader}>
                 <Ionicons name="star" size={32} color={colors.primary[500]} />
                 <Text variant="h5" weight="bold" style={{ marginTop: spacing[2] }}>
-                  Anual
+                  {t('billing.yearlyPlan')}
                 </Text>
                 <View style={{ flexDirection: 'row', alignItems: 'baseline', marginTop: spacing[1] }}>
                   <Text variant="h3" weight="bold" style={{ color: colors.primary[600] }}>
                     R$ {PRO_PLAN_PRICING.YEARLY.toFixed(2).replace('.', ',')}
                   </Text>
-                  <Text variant="caption" color="secondary">/mês</Text>
+                  <Text variant="caption" color="secondary">/{t('billing.perMonth')}</Text>
                 </View>
                 <Text variant="caption" color="tertiary" style={{ marginTop: spacing[1] }}>
-                  R$ {PRO_PLAN_PRICING.YEARLY_TOTAL.toFixed(2).replace('.', ',')} por ano
+                  R$ {PRO_PLAN_PRICING.YEARLY_TOTAL.toFixed(2).replace('.', ',')} {t('billing.billedYearly')}
                 </Text>
                 <View style={{ marginTop: spacing[2] }}>
                   <Badge variant="success" size="sm">
-                    {`Economize R$ ${PRO_PLAN_PRICING.YEARLY_SAVINGS.toFixed(2).replace('.', ',')}`}
+                    {`${t('billing.save')} R$ ${PRO_PLAN_PRICING.YEARLY_SAVINGS.toFixed(2).replace('.', ',')}`}
                   </Badge>
                 </View>
               </View>
@@ -597,7 +602,7 @@ export default function PlanoScreen() {
                     </Text>
                     {feature.proLimit === null && (
                       <Text variant="caption" weight="medium" style={{ color: colors.primary[600] }}>
-                        Ilimitado
+                        {t('billing.unlimited')}
                       </Text>
                     )}
                   </View>
@@ -614,7 +619,7 @@ export default function PlanoScreen() {
                   }}
                   style={{ marginTop: spacing[4] }}
                 >
-                  Assinar Anual
+                  {t('billing.subscribeYearly')}
                 </Button>
               )}
             </View>
@@ -630,7 +635,7 @@ export default function PlanoScreen() {
             >
               <Ionicons name="close-circle-outline" size={20} color={colors.error[500]} />
               <Text variant="body" style={{ color: colors.error[500], marginLeft: 8 }}>
-                Cancelar Assinatura
+                {t('billing.cancelSubscription')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -650,7 +655,7 @@ export default function PlanoScreen() {
               <Ionicons name="close" size={28} color={colors.text.primary} />
             </TouchableOpacity>
             <Text variant="h4" weight="semibold">
-              Upgrade para PRO
+              {t('billing.checkout.upgradeToPro')}
             </Text>
             <View style={{ width: 28 }} />
           </View>
@@ -670,15 +675,15 @@ export default function PlanoScreen() {
                   <View style={styles.pixContainer}>
                     <Ionicons name="qr-code" size={48} color={colors.primary[500]} />
                     <Text variant="h5" weight="semibold" style={{ marginTop: spacing[3] }}>
-                      PIX Gerado!
+                      {t('billing.checkout.pixGenerated')}
                     </Text>
                     <Text variant="body" color="secondary" align="center" style={{ marginTop: spacing[2] }}>
-                      Escaneie o QR Code ou copie o código abaixo para pagar
+                      {t('billing.checkout.scanOrCopyPix')}
                     </Text>
                     <TouchableOpacity
                       style={[styles.copyButton, { backgroundColor: colors.primary[50] }]}
                       onPress={() => {
-                        Alert.alert('Copiado!', 'Código PIX copiado para a área de transferência');
+                        Alert.alert(t('billing.checkout.copied'), t('billing.checkout.pixCodeCopied'));
                       }}
                     >
                       <Text variant="caption" style={{ color: colors.primary[600] }} numberOfLines={2}>
@@ -694,7 +699,7 @@ export default function PlanoScreen() {
                       }}
                       style={{ marginTop: spacing[4] }}
                     >
-                      Gerar Novo PIX
+                      {t('billing.checkout.generateNewPix')}
                     </Button>
                   </View>
                 </Card>
@@ -742,7 +747,7 @@ export default function PlanoScreen() {
                         weight={paymentMethod === 'credit_card' ? 'semibold' : 'normal'}
                         style={{ color: paymentMethod === 'credit_card' ? colors.primary[600] : colors.text.secondary }}
                       >
-                        Cartão
+                        {t('billing.checkout.card')}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -750,12 +755,12 @@ export default function PlanoScreen() {
                   {/* Common Fields */}
                   <Card style={{ marginTop: spacing[4] }}>
                     <Text variant="body" weight="semibold" style={{ marginBottom: spacing[3] }}>
-                      Dados de Cobrança
+                      {t('billing.checkout.billingData')}
                     </Text>
 
                     <View style={styles.inputGroup}>
                       <Text variant="caption" weight="medium" color="secondary">
-                        CPF/CNPJ *
+                        {t('billing.checkout.cpfCnpj')} *
                       </Text>
                       <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                         <TextInput
@@ -772,7 +777,7 @@ export default function PlanoScreen() {
 
                     <View style={[styles.inputGroup, { marginTop: spacing[3] }]}>
                       <Text variant="caption" weight="medium" color="secondary">
-                        Telefone
+                        {t('billing.checkout.phone')}
                       </Text>
                       <View style={[styles.inputContainer, { borderColor: colors.border.default }]}>
                         <TextInput

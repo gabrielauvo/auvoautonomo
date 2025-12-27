@@ -12,6 +12,7 @@ import { ExpenseForm } from '@/components/expenses';
 import { Button, Skeleton, Alert, Card, CardContent } from '@/components/ui';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { useExpense } from '@/hooks/use-expenses';
+import { useTranslations } from '@/i18n';
 
 function EditExpenseLoading() {
   return (

@@ -134,7 +134,7 @@ export default function DadosPessoaisScreen() {
           <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
         </TouchableOpacity>
         <Text variant="h4" weight="semibold">
-          Dados Pessoais
+          {t('profile.personalData.title')}
         </Text>
         <View style={styles.headerSpacer} />
       </View>
@@ -152,13 +152,13 @@ export default function DadosPessoaisScreen() {
             {/* Nome */}
             <View style={styles.inputGroup}>
               <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
-                Nome Completo *
+                {t('profile.personalData.fullName')} *
               </Text>
               <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
                 <Ionicons name="person-outline" size={20} color={colors.text.tertiary} />
                 <TextInput
                   style={[styles.input, { color: colors.text.primary }]}
-                  placeholder="Seu nome"
+                  placeholder={t('profile.personalData.yourName')}
                   placeholderTextColor={colors.text.tertiary}
                   value={name}
                   onChangeText={setName}
@@ -170,7 +170,7 @@ export default function DadosPessoaisScreen() {
             {/* Email (read-only) */}
             <View style={[styles.inputGroup, { marginTop: spacing[4] }]}>
               <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
-                Email
+                {t('profile.personalData.email')}
               </Text>
               <View style={[styles.inputContainer, { borderColor: colors.border.medium, backgroundColor: colors.gray[50] }]}>
                 <Ionicons name="mail-outline" size={20} color={colors.text.tertiary} />
@@ -182,14 +182,14 @@ export default function DadosPessoaisScreen() {
                 <Ionicons name="lock-closed-outline" size={16} color={colors.text.tertiary} />
               </View>
               <Text variant="caption" color="tertiary" style={{ marginTop: spacing[1] }}>
-                O email não pode ser alterado
+                {t('profile.personalData.emailCannotBeChanged')}
               </Text>
             </View>
 
             {/* Telefone */}
             <View style={[styles.inputGroup, { marginTop: spacing[4] }]}>
               <Text variant="caption" weight="medium" color="secondary" style={{ marginBottom: spacing[1] }}>
-                Telefone
+                {t('profile.personalData.phone')}
               </Text>
               <View style={[styles.inputContainer, { borderColor: colors.border.medium }]}>
                 <Ionicons name="call-outline" size={20} color={colors.text.tertiary} />
@@ -213,7 +213,7 @@ export default function DadosPessoaisScreen() {
             loading={isSaving}
             style={{ marginTop: spacing[4] }}
           >
-            Salvar Alterações
+            {t('profile.personalData.saveChanges')}
           </Button>
         </ScrollView>
       </KeyboardAvoidingView>

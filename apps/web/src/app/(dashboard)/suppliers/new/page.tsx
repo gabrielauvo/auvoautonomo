@@ -9,8 +9,11 @@ import { SupplierForm } from '@/components/suppliers';
 import { Button } from '@/components/ui';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslations } from '@/i18n';
 
 export default function NewSupplierPage() {
+  const { t } = useTranslations('suppliers');
+
   return (
     <AppLayout>
       <div className="space-y-6 max-w-3xl mx-auto">
@@ -22,9 +25,9 @@ export default function NewSupplierPage() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Novo Fornecedor</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('newSupplier')}</h1>
             <p className="text-gray-500 mt-1">
-              Preencha os dados do fornecedor
+              {t('fillSupplierData')}
             </p>
           </div>
         </div>

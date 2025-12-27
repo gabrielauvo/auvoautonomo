@@ -45,25 +45,12 @@ import {
 } from 'lucide-react';
 import { useSupplier, useDeleteSupplier } from '@/hooks/use-suppliers';
 import { formatDocument } from '@/lib/utils';
-
-// Formatar valor em moeda
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
-}
-
-// Formatar data
-function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-  });
-}
+import { useTranslations } from '@/i18n';
+import { useFormatting } from '@/hooks/use-formatting';
 
 export default function SupplierDetailsPage() {
+  const { t } = useTranslations('suppliers');
+  const { formatCurrency, formatDate } = useFormatting();
   const params = useParams();
   const id = params.id as string;
   const router = useRouter();
@@ -107,7 +94,7 @@ export default function SupplierDetailsPage() {
                   </div>
                   <p className="text-gray-500 mt-1 flex items-center gap-2">
                     <Building2 className="h-4 w-4" />
-                    {supplier?.document ? formatDocument(supplier.document) : 'Sem documento'}
+                    {supplier?.document ? formatDocument(supplier.document) : t('noDocument')}
                   </p>
                 </>
               )}
@@ -118,7 +105,7 @@ export default function SupplierDetailsPage() {
           <div className="flex items-center gap-2">
             <Link href={`/suppliers/${id}/edit`}>
               <Button variant="outline" leftIcon={<Edit className="h-4 w-4" />}>
-                Editar
+                {t('edit')}
               </Button>
             </Link>
             <Button
@@ -126,14 +113,14 @@ export default function SupplierDetailsPage() {
               leftIcon={<Receipt className="h-4 w-4" />}
               onClick={() => router.push(`/expenses/new?supplierId=${id}`)}
             >
-              Nova Despesa
+              {t('newExpense')}
             </Button>
             <Button
               variant="ghost"
               leftIcon={<Trash2 className="h-4 w-4 text-error" />}
               onClick={() => setShowDeleteConfirm(true)}
             >
-              Excluir
+              {t('delete')}
             </Button>
           </div>
         </div>
@@ -143,7 +130,7 @@ export default function SupplierDetailsPage() {
           <Alert variant="error">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
-              Erro ao carregar fornecedor
+              {t('errorLoading')}
             </div>
           </Alert>
         )}
@@ -155,7 +142,7 @@ export default function SupplierDetailsPage() {
             {/* Dados de contato */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Dados de Contato</CardTitle>
+                <CardTitle className="text-base">{t('contactData')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {isLoading ? (
@@ -175,7 +162,7 @@ export default function SupplierDetailsPage() {
                           <Phone className="h-4 w-4 text-gray-500" />
                         </div>
                         <div>
-                          <p className="text-xs text-gray-500">Telefone</p>
+                          <p className="text-xs text-gray-500">{t('phone')}</p>
                           <p className="text-sm font-medium text-primary hover:underline">{supplier.phone}</p>
                         </div>
                       </a>
@@ -189,7 +176,7 @@ export default function SupplierDetailsPage() {
                           <Mail className="h-4 w-4 text-gray-500" />
                         </div>
                         <div>
-                          <p className="text-xs text-gray-500">Email</p>
+                          <p className="text-xs text-gray-500">{t('email')}</p>
                           <p className="text-sm font-medium break-all text-primary hover:underline">{supplier.email}</p>
                         </div>
                       </a>
@@ -200,20 +187,20 @@ export default function SupplierDetailsPage() {
                           <MapPin className="h-4 w-4 text-gray-500" />
                         </div>
                         <div>
-                          <p className="text-xs text-gray-500">Endereço</p>
+                          <p className="text-xs text-gray-500">{t('address')}</p>
                           <p className="text-sm font-medium">{supplier.address}</p>
                         </div>
                       </div>
                     )}
                     {!supplier?.phone && !supplier?.email && !supplier?.address && (
                       <p className="text-sm text-gray-400 text-center py-4">
-                        Nenhum dado de contato cadastrado
+                        {t('noContactData')}
                       </p>
                     )}
                     {supplier?.createdAt && (
                       <div className="pt-3 border-t border-gray-100">
                         <p className="text-xs text-gray-400">
-                          Cadastrado em {formatDate(supplier.createdAt)}
+                          {t('registeredAt', { date: formatDate(new Date(supplier.createdAt)) })}
                         </p>
                       </div>
                     )}
@@ -226,7 +213,7 @@ export default function SupplierDetailsPage() {
             {supplier?.notes && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Observações</CardTitle>
+                  <CardTitle className="text-base">{t('notes')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-gray-600 whitespace-pre-wrap">
@@ -239,7 +226,7 @@ export default function SupplierDetailsPage() {
             {/* Resumo */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Resumo</CardTitle>
+                <CardTitle className="text-base">{t('summary')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
@@ -247,7 +234,7 @@ export default function SupplierDetailsPage() {
                     <Receipt className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">Total de Despesas</p>
+                    <p className="text-xs text-gray-500">{t('totalExpenses')}</p>
                     <p className="text-lg font-semibold text-gray-900">
                       {supplier?._count?.expenses || 0}
                     </p>
@@ -262,24 +249,24 @@ export default function SupplierDetailsPage() {
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">Despesas</CardTitle>
+                  <CardTitle className="text-base">{t('expenses')}</CardTitle>
                   <Button
                     variant="outline"
                     size="sm"
                     leftIcon={<Plus className="h-4 w-4" />}
                     onClick={() => router.push(`/expenses/new?supplierId=${id}`)}
                   >
-                    Nova Despesa
+                    {t('newExpense')}
                   </Button>
                 </div>
               </CardHeader>
               <CardContent>
                 <EmptyState
                   icon={Receipt}
-                  title="Nenhuma despesa cadastrada"
-                  description="As despesas deste fornecedor aparecerão aqui"
+                  title={t('noExpensesRegistered')}
+                  description={t('expensesWillAppearHere')}
                   action={{
-                    label: 'Cadastrar Despesa',
+                    label: t('registerExpense'),
                     onClick: () => router.push(`/expenses/new?supplierId=${id}`),
                   }}
                 />
@@ -299,7 +286,7 @@ export default function SupplierDetailsPage() {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">
-                      Excluir fornecedor?
+                      {t('deleteSupplier')}
                     </h3>
                     <p className="text-sm text-gray-500">
                       {supplier?.name}
@@ -312,10 +299,9 @@ export default function SupplierDetailsPage() {
                     <div className="flex items-start gap-2">
                       <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
                       <div className="text-sm">
-                        <p className="font-medium">Atenção</p>
+                        <p className="font-medium">{t('attention')}</p>
                         <p>
-                          Este fornecedor possui {supplier?._count?.expenses} despesa(s) associada(s).
-                          As despesas permanecerão no sistema.
+                          {t('supplierHasExpenses', { count: supplier?._count?.expenses })}
                         </p>
                       </div>
                     </div>
@@ -328,7 +314,7 @@ export default function SupplierDetailsPage() {
                     onClick={() => setShowDeleteConfirm(false)}
                     disabled={deleteSupplier.isPending}
                   >
-                    Cancelar
+                    {t('cancel')}
                   </Button>
                   <Button
                     variant="error"
@@ -336,7 +322,7 @@ export default function SupplierDetailsPage() {
                     loading={deleteSupplier.isPending}
                     leftIcon={<Trash2 className="h-4 w-4" />}
                   >
-                    Excluir
+                    {t('deleteConfirm')}
                   </Button>
                 </div>
               </CardContent>

@@ -11,8 +11,10 @@ import { SupplierForm } from '@/components/suppliers';
 import { Button, Skeleton, Alert, Card, CardContent } from '@/components/ui';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { useSupplier } from '@/hooks/use-suppliers';
+import { useTranslations } from '@/i18n';
 
 export default function EditSupplierPage() {
+  const { t } = useTranslations('suppliers');
   const params = useParams();
   const id = params.id as string;
 
@@ -54,13 +56,13 @@ export default function EditSupplierPage() {
               </Button>
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Editar Fornecedor</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{t('editSupplier')}</h1>
             </div>
           </div>
           <Alert variant="error">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
-              Fornecedor não encontrado
+              {t('supplierNotFound')}
             </div>
           </Alert>
         </div>
@@ -79,7 +81,7 @@ export default function EditSupplierPage() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Editar Fornecedor</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('editSupplier')}</h1>
             <p className="text-gray-500 mt-1">
               {supplier.name}
             </p>

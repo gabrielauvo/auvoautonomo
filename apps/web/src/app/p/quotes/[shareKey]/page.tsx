@@ -4,17 +4,13 @@
  * Página pública de visualização do Orçamento
  * Acessível via link compartilhável sem autenticação
  * Permite aprovar (com assinatura) ou rejeitar o orçamento
+ *
+ * Layout profissional estilo documento comercial
  */
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { useTranslations } from '@/i18n';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,7 +25,7 @@ import {
   Phone,
   Mail,
   User,
-  Package,
+  MapPin,
   X,
   ZoomIn,
   ChevronLeft,
@@ -40,6 +36,7 @@ import {
   PenTool,
   Trash2,
   ScrollText,
+  Check,
 } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -76,6 +73,9 @@ interface QuoteData {
     unitPrice: number;
     discountValue: number;
     totalPrice: number;
+    description?: string;
+    imageUrl?: string;
+    optional?: boolean;
   }>;
   signature: {
     signerName: string | null;
@@ -99,12 +99,12 @@ interface QuoteData {
   };
 }
 
-const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
-  DRAFT: { label: 'Rascunho', color: 'bg-gray-100 text-gray-800', icon: FileText },
-  SENT: { label: 'Enviado', color: 'bg-blue-100 text-blue-800', icon: Send },
-  APPROVED: { label: 'Aprovado', color: 'bg-green-100 text-green-800', icon: CheckCircle2 },
-  REJECTED: { label: 'Recusado', color: 'bg-red-100 text-red-800', icon: XCircle },
-  EXPIRED: { label: 'Expirado', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
+const statusConfig: Record<string, { label: string; color: string; bgColor: string; icon: any }> = {
+  DRAFT: { label: 'Rascunho', color: 'text-gray-700', bgColor: 'bg-gray-100', icon: FileText },
+  SENT: { label: 'Enviado', color: 'text-blue-700', bgColor: 'bg-blue-100', icon: Send },
+  APPROVED: { label: 'Aprovado', color: 'text-green-700', bgColor: 'bg-green-100', icon: CheckCircle2 },
+  REJECTED: { label: 'Recusado', color: 'text-red-700', bgColor: 'bg-red-100', icon: XCircle },
+  EXPIRED: { label: 'Expirado', color: 'text-yellow-700', bgColor: 'bg-yellow-100', icon: Clock },
 };
 
 function formatCurrency(value: number): string {
@@ -122,30 +122,6 @@ function formatDate(dateString: string | null): string {
 function formatDateTime(dateString: string | null): string {
   if (!dateString) return '-';
   return new Date(dateString).toLocaleString('pt-BR');
-}
-
-// Componente para seção com título
-function Section({ title, icon: Icon, children, primaryColor }: { title: string; icon: any; children: React.ReactNode; primaryColor?: string }) {
-  const color = primaryColor || '#7C3AED';
-  return (
-    <div className="mb-6">
-      <div className="flex items-center gap-2 mb-3 pb-2 border-b-2" style={{ borderColor: color }}>
-        <Icon className="h-5 w-5" style={{ color }} />
-        <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-// Componente para campo de informação
-function InfoField({ label, value }: { label: string; value: string | React.ReactNode }) {
-  return (
-    <div className="py-2 border-b border-gray-100 last:border-0">
-      <dt className="text-sm font-medium text-gray-500">{label}</dt>
-      <dd className="mt-1 text-sm text-gray-900">{value || '-'}</dd>
-    </div>
-  );
 }
 
 // Componente de Canvas para assinatura
@@ -338,7 +314,7 @@ function SignatureModal({
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold flex items-center gap-2">
-              <PenTool className="h-5 w-5 text-primary" />
+              <PenTool className="h-5 w-5 text-green-600" />
               Assinar e Aprovar
             </h2>
             <button
@@ -895,7 +871,7 @@ export default function PublicQuotePage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+          <Loader2 className="h-8 w-8 animate-spin text-green-600 mx-auto mb-4" />
           <p className="text-gray-600">{t('loading')}</p>
         </div>
       </div>
@@ -905,13 +881,11 @@ export default function PublicQuotePage() {
   if (error || !quote) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full">
-          <CardContent className="pt-6 text-center">
-            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Link Inválido</h2>
-            <p className="text-gray-600">{error || 'Orçamento não encontrado.'}</p>
-          </CardContent>
-        </Card>
+        <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-8 text-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Link Inválido</h2>
+          <p className="text-gray-600">{error || 'Orçamento não encontrado.'}</p>
+        </div>
       </div>
     );
   }
@@ -919,412 +893,459 @@ export default function PublicQuotePage() {
   const status = statusConfig[quote.status] || statusConfig.DRAFT;
   const StatusIcon = status.icon;
 
-  // Cores do template (fallback para roxo padrão)
-  const primaryColor = quote.template?.primaryColor || '#7C3AED';
-  const secondaryColor = quote.template?.secondaryColor || primaryColor;
+  // Cores do template (fallback para verde padrão)
+  const primaryColor = quote.template?.primaryColor || '#16a34a';
 
   // Calcular subtotal dos itens
   const subtotal = quote.items.reduce((sum, item) => sum + item.totalPrice, 0);
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Header com logo da empresa */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              {quote.company.logoUrl ? (
-                <div className="relative w-16 h-16 rounded-lg overflow-hidden border bg-white flex items-center justify-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={quote.company.logoUrl}
-                    alt={quote.company.name}
-                    className="w-full h-full object-contain"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                      const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-                      if (fallback) fallback.style.display = 'flex';
-                    }}
-                  />
-                  <div className="hidden w-full h-full items-center justify-center">
-                    <Building2 className="h-8 w-8" style={{ color: primaryColor }} />
-                  </div>
-                </div>
-              ) : (
-                <div
-                  className="w-16 h-16 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: `${primaryColor}1A` }}
-                >
-                  <Building2 className="h-8 w-8" style={{ color: primaryColor }} />
-                </div>
-              )}
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">{quote.company.name}</h1>
-                {quote.company.phone && (
-                  <p className="text-sm text-gray-500 flex items-center gap-1">
-                    <Phone className="h-3 w-3" />
-                    {quote.company.phone}
-                  </p>
-                )}
-                {quote.company.email && (
-                  <p className="text-sm text-gray-500 flex items-center gap-1">
-                    <Mail className="h-3 w-3" />
-                    {quote.company.email}
-                  </p>
-                )}
-              </div>
-            </div>
-            <Badge className={status.color}>
-              <StatusIcon className="h-3 w-3 mr-1" />
-              {status.label}
-            </Badge>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gray-100 print:bg-white">
+      {/* Documento principal - estilo papel A4 */}
+      <div className="max-w-4xl mx-auto py-8 px-4 print:p-0">
+        <div className="bg-white shadow-lg rounded-lg overflow-hidden print:shadow-none print:rounded-none">
 
-      {/* Conteúdo principal */}
-      <main className="max-w-4xl mx-auto px-4 py-6">
-        {/* Título do Orçamento */}
-        <Card className="mb-6">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Orçamento</p>
-                <CardTitle className="text-2xl">
-                  #{quote.id.substring(0, 8).toUpperCase()}
-                </CardTitle>
-                <p className="text-sm text-gray-500 mt-1">
-                  Criado em {formatDate(quote.createdAt)}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-gray-500">Valor Total</p>
-                <p className="text-2xl font-bold" style={{ color: primaryColor }}>
-                  {formatCurrency(quote.totalValue)}
-                </p>
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
-
-        {/* Grid de informações */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          {/* Informações do Cliente */}
-          <Card>
-            <CardContent className="pt-6">
-              <Section title="Informações do Cliente" icon={User} primaryColor={primaryColor}>
-                <dl className="space-y-1">
-                  <InfoField label="Nome" value={quote.client.name} />
-                  <InfoField label="CPF/CNPJ" value={quote.client.taxId} />
-                  <InfoField label="E-mail" value={quote.client.email} />
-                  <InfoField label="Telefone" value={quote.client.phone} />
-                  <InfoField label="Endereço" value={quote.client.address} />
-                  {quote.client.notes && (
-                    <InfoField label="Observação" value={quote.client.notes} />
-                  )}
-                </dl>
-              </Section>
-            </CardContent>
-          </Card>
-
-          {/* Informações do Orçamento */}
-          <Card>
-            <CardContent className="pt-6">
-              <Section title="Detalhes do Orçamento" icon={FileText} primaryColor={primaryColor}>
-                <dl className="space-y-1">
-                  <InfoField label="Status" value={
-                    <Badge className={status.color}>
-                      <StatusIcon className="h-3 w-3 mr-1" />
-                      {status.label}
-                    </Badge>
-                  } />
-                  <InfoField label="Data de Criação" value={formatDate(quote.createdAt)} />
-                  {quote.validUntil && (
-                    <InfoField label="Válido até" value={formatDate(quote.validUntil)} />
-                  )}
-                  {quote.sentAt && (
-                    <InfoField label="Enviado em" value={formatDateTime(quote.sentAt)} />
-                  )}
-                  {quote.visitScheduledAt && (
-                    <InfoField label="Visita Agendada" value={formatDateTime(quote.visitScheduledAt)} />
-                  )}
-                </dl>
-              </Section>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Observações */}
-        {quote.notes && (
-          <Card className="mb-6">
-            <CardContent className="pt-6">
-              <Section title="Observações" icon={FileText} primaryColor={primaryColor}>
-                <p className="text-gray-700 whitespace-pre-wrap">{quote.notes}</p>
-              </Section>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Itens/Serviços */}
-        {quote.items.length > 0 && (
-          <Card className="mb-6">
-            <CardContent className="pt-6">
-              <Section title="Itens" icon={Package} primaryColor={primaryColor}>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="bg-gray-50 text-left">
-                        <th className="px-3 py-2 font-medium text-gray-600">Item</th>
-                        <th className="px-3 py-2 font-medium text-gray-600 text-center">Qtd</th>
-                        <th className="px-3 py-2 font-medium text-gray-600 text-center">Unidade</th>
-                        <th className="px-3 py-2 font-medium text-gray-600 text-right">Preço Un.</th>
-                        <th className="px-3 py-2 font-medium text-gray-600 text-right">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {quote.items.map((item, index) => (
-                        <tr key={index} className="hover:bg-gray-50">
-                          <td className="px-3 py-2">
-                            <div>
-                              <span className="font-medium">{item.name}</span>
-                              <span className="text-xs text-gray-500 ml-2">
-                                ({item.type === 'SERVICE' ? 'Serviço' : 'Produto'})
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-3 py-2 text-center">{item.quantity.toFixed(2)}</td>
-                          <td className="px-3 py-2 text-center">{item.unit}</td>
-                          <td className="px-3 py-2 text-right">{formatCurrency(item.unitPrice)}</td>
-                          <td className="px-3 py-2 text-right font-medium">{formatCurrency(item.totalPrice)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                    <tfoot>
-                      <tr className="bg-gray-50">
-                        <td colSpan={4} className="px-3 py-2 text-right font-medium">Subtotal:</td>
-                        <td className="px-3 py-2 text-right">{formatCurrency(subtotal)}</td>
-                      </tr>
-                      {quote.discountValue > 0 && (
-                        <tr className="bg-gray-50">
-                          <td colSpan={4} className="px-3 py-2 text-right font-medium text-red-600">Desconto:</td>
-                          <td className="px-3 py-2 text-right text-red-600">-{formatCurrency(quote.discountValue)}</td>
-                        </tr>
-                      )}
-                      <tr className="font-semibold" style={{ backgroundColor: `${primaryColor}0D` }}>
-                        <td colSpan={4} className="px-3 py-2 text-right">TOTAL:</td>
-                        <td className="px-3 py-2 text-right text-lg" style={{ color: primaryColor }}>
-                          {formatCurrency(quote.totalValue)}
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-              </Section>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Fotos/Anexos */}
-        {quote.attachments.length > 0 && (
-          <Card className="mb-6">
-            <CardContent className="pt-6">
-              <Section title={`Anexos (${quote.attachments.length} arquivo${quote.attachments.length > 1 ? 's' : ''})`} icon={ImageIcon} primaryColor={primaryColor}>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {quote.attachments.map((attachment, index) => {
-                    const isImage = attachment.mimeType?.startsWith('image/');
-                    const hasUrl = !!attachment.url;
-
-                    // Para imagens, usar o lightbox
-                    if (isImage && hasUrl) {
-                      return (
-                        <button
-                          key={attachment.id}
-                          className="relative aspect-video rounded-lg overflow-hidden border bg-gray-100 cursor-pointer group"
-                          onClick={() => {
-                            const images = quote.attachments
-                              .filter((att) => att.mimeType?.startsWith('image/') && att.url)
-                              .map((att) => ({ url: att.url!, caption: formatDateTime(att.createdAt) }));
-                            const imageIndex = images.findIndex((img) => img.url === attachment.url);
-                            openLightbox(images, imageIndex >= 0 ? imageIndex : 0);
-                          }}
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={attachment.url}
-                            alt="Anexo"
-                            className="w-full h-full object-cover"
-                          />
-                          {/* Overlay com ícone de zoom */}
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                            <ZoomIn className="h-10 w-10 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </div>
-                          <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs px-2 py-1">
-                            {formatDateTime(attachment.createdAt)}
-                          </div>
-                        </button>
-                      );
-                    }
-
-                    // Para PDFs e outros documentos, abrir em nova aba
-                    return (
-                      <a
-                        key={attachment.id}
-                        href={attachment.url || '#'}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="relative aspect-video rounded-lg overflow-hidden border bg-gray-100 cursor-pointer group hover:bg-gray-200 transition-colors flex flex-col items-center justify-center"
-                      >
-                        <FileText className="h-12 w-12 text-gray-400 group-hover:text-primary transition-colors" />
-                        <span className="text-xs text-gray-500 mt-2">
-                          {attachment.mimeType === 'application/pdf' ? 'PDF' : 'Documento'}
-                        </span>
-                        <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs px-2 py-1 text-center">
-                          {formatDateTime(attachment.createdAt)}
-                        </div>
-                      </a>
-                    );
-                  })}
-                </div>
-              </Section>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Assinatura */}
-        {quote.signature && (
-          <Card className="mb-6">
-            <CardContent className="pt-6">
-              <Section title="Assinatura do Cliente" icon={FileText} primaryColor={primaryColor}>
-                <div className="text-center">
-                  {quote.signature.imageUrl && (
-                    <div className="relative w-64 h-24 mx-auto mb-4 border-b-2 border-gray-300">
+          {/* Header do documento */}
+          <div className="border-b-4" style={{ borderColor: primaryColor }}>
+            <div className="p-6 md:p-8">
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+                {/* Logo e info da empresa */}
+                <div className="flex items-start gap-4">
+                  {quote.company.logoUrl ? (
+                    <div className="w-20 h-20 rounded-lg overflow-hidden border bg-white flex items-center justify-center flex-shrink-0">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={quote.signature.imageUrl}
-                        alt="Assinatura"
+                        src={quote.company.logoUrl}
+                        alt={quote.company.name}
                         className="w-full h-full object-contain"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
                       />
+                      <div className="hidden w-full h-full items-center justify-center">
+                        <Building2 className="h-10 w-10" style={{ color: primaryColor }} />
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      className="w-20 h-20 rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: `${primaryColor}1A` }}
+                    >
+                      <Building2 className="h-10 w-10" style={{ color: primaryColor }} />
                     </div>
                   )}
-                  <div className="border-t border-gray-300 pt-2 max-w-xs mx-auto">
-                    {quote.signature.signerName && (
-                      <p className="font-semibold text-gray-900">{quote.signature.signerName}</p>
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-900">{quote.company.name}</h1>
+                    {quote.company.phone && (
+                      <p className="text-sm text-gray-600 flex items-center gap-2 mt-1">
+                        <Phone className="h-4 w-4" />
+                        {quote.company.phone}
+                      </p>
                     )}
-                    {quote.signature.signerDocument && (
-                      <p className="text-sm text-gray-500">CPF/RG: {quote.signature.signerDocument}</p>
-                    )}
-                    {quote.signature.signedAt && (
-                      <p className="text-sm text-gray-500">
-                        Assinado em: {formatDateTime(quote.signature.signedAt)}
+                    {quote.company.email && (
+                      <p className="text-sm text-gray-600 flex items-center gap-2">
+                        <Mail className="h-4 w-4" />
+                        {quote.company.email}
                       </p>
                     )}
                   </div>
                 </div>
-              </Section>
-            </CardContent>
-          </Card>
-        )}
 
-        {/* Mensagem de sucesso após ação */}
-        {actionSuccess && (
-          <Card className={`mb-6 ${actionSuccess === 'approved' ? 'border-green-500' : 'border-red-500'}`}>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-center gap-3">
+                {/* Número e data do orçamento */}
+                <div className="text-left md:text-right">
+                  <div className="inline-block">
+                    <p className="text-sm text-gray-500 uppercase tracking-wide">Orçamento</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      #{quote.id.substring(0, 8).toUpperCase()}
+                    </p>
+                    <div className="mt-2 space-y-1">
+                      <p className="text-sm text-gray-600 flex items-center gap-2 md:justify-end">
+                        <Calendar className="h-4 w-4" />
+                        {formatDate(quote.createdAt)}
+                      </p>
+                      {quote.validUntil && (
+                        <p className="text-sm text-gray-500">
+                          Válido até: {formatDate(quote.validUntil)}
+                        </p>
+                      )}
+                    </div>
+                    <Badge className={`mt-3 ${status.bgColor} ${status.color}`}>
+                      <StatusIcon className="h-3 w-3 mr-1" />
+                      {status.label}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Informações do cliente */}
+          <div className="bg-gray-50 border-b px-6 py-4 md:px-8">
+            <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8">
+              <div className="flex items-center gap-2 text-sm">
+                <User className="h-4 w-4 text-gray-400" />
+                <span className="text-gray-500">Cliente:</span>
+                <span className="font-medium text-gray-900">{quote.client.name}</span>
+              </div>
+              {quote.client.phone && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Phone className="h-4 w-4 text-gray-400" />
+                  <span className="text-gray-700">{quote.client.phone}</span>
+                </div>
+              )}
+              {quote.client.email && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Mail className="h-4 w-4 text-gray-400" />
+                  <span className="text-gray-700">{quote.client.email}</span>
+                </div>
+              )}
+              {quote.client.address && (
+                <div className="flex items-center gap-2 text-sm">
+                  <MapPin className="h-4 w-4 text-gray-400" />
+                  <span className="text-gray-700">{quote.client.address}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Observações (se houver) */}
+          {quote.notes && (
+            <div className="px-6 py-4 md:px-8 bg-yellow-50 border-b">
+              <p className="text-sm text-yellow-800">
+                <span className="font-medium">Observações:</span> {quote.notes}
+              </p>
+            </div>
+          )}
+
+          {/* Tabela de itens */}
+          {quote.items.length > 0 && (
+            <div className="px-6 py-6 md:px-8">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Itens do Orçamento</h2>
+
+              {/* Tabela desktop */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b-2" style={{ borderColor: primaryColor }}>
+                      <th className="text-left py-3 px-2 text-sm font-semibold text-gray-700 w-8"></th>
+                      <th className="text-left py-3 px-2 text-sm font-semibold text-gray-700">Descrição</th>
+                      <th className="text-center py-3 px-2 text-sm font-semibold text-gray-700 w-20">Qtd</th>
+                      <th className="text-right py-3 px-2 text-sm font-semibold text-gray-700 w-28">Valor Un.</th>
+                      <th className="text-right py-3 px-2 text-sm font-semibold text-gray-700 w-28">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {quote.items.map((item, index) => (
+                      <tr key={index} className={`hover:bg-gray-50 ${item.optional ? 'bg-blue-50/50' : ''}`}>
+                        <td className="py-4 px-2">
+                          <div
+                            className="w-5 h-5 rounded border-2 flex items-center justify-center"
+                            style={{ borderColor: primaryColor }}
+                          >
+                            {!item.optional && (
+                              <Check className="w-3 h-3" style={{ color: primaryColor }} />
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-4 px-2">
+                          <div className="flex items-start gap-3">
+                            {item.imageUrl && (
+                              <div className="w-12 h-12 rounded overflow-hidden border bg-gray-100 flex-shrink-0">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={item.imageUrl}
+                                  alt={item.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            )}
+                            <div>
+                              <p className="font-medium text-gray-900">
+                                {item.name}
+                                {item.optional && (
+                                  <span className="ml-2 text-xs font-normal text-blue-600 bg-blue-100 px-2 py-0.5 rounded">
+                                    Opcional
+                                  </span>
+                                )}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {item.type === 'SERVICE' ? 'Serviço' : 'Produto'} • {item.unit}
+                              </p>
+                              {item.description && (
+                                <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-2 text-center text-gray-700">
+                          {item.quantity % 1 === 0 ? item.quantity : item.quantity.toFixed(2)}
+                        </td>
+                        <td className="py-4 px-2 text-right text-gray-700">
+                          {formatCurrency(item.unitPrice)}
+                        </td>
+                        <td className="py-4 px-2 text-right font-semibold text-gray-900">
+                          {formatCurrency(item.totalPrice)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Cards mobile */}
+              <div className="md:hidden space-y-4">
+                {quote.items.map((item, index) => (
+                  <div
+                    key={index}
+                    className={`border rounded-lg p-4 ${item.optional ? 'bg-blue-50/50 border-blue-200' : 'bg-white'}`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div
+                        className="w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-1"
+                        style={{ borderColor: primaryColor }}
+                      >
+                        {!item.optional && (
+                          <Check className="w-3 h-3" style={{ color: primaryColor }} />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">
+                          {item.name}
+                          {item.optional && (
+                            <span className="ml-2 text-xs font-normal text-blue-600 bg-blue-100 px-2 py-0.5 rounded">
+                              Opcional
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {item.type === 'SERVICE' ? 'Serviço' : 'Produto'} • {item.unit}
+                        </p>
+                        <div className="flex justify-between mt-2">
+                          <span className="text-sm text-gray-600">
+                            {item.quantity % 1 === 0 ? item.quantity : item.quantity.toFixed(2)} x {formatCurrency(item.unitPrice)}
+                          </span>
+                          <span className="font-semibold text-gray-900">
+                            {formatCurrency(item.totalPrice)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Totais */}
+              <div className="mt-6 flex justify-end">
+                <div className="w-full md:w-72">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Subtotal:</span>
+                      <span className="text-gray-900">{formatCurrency(subtotal)}</span>
+                    </div>
+                    {quote.discountValue > 0 && (
+                      <div className="flex justify-between text-sm text-red-600">
+                        <span>Desconto:</span>
+                        <span>-{formatCurrency(quote.discountValue)}</span>
+                      </div>
+                    )}
+                    <div
+                      className="flex justify-between pt-3 border-t-2 font-bold text-lg"
+                      style={{ borderColor: primaryColor }}
+                    >
+                      <span className="text-gray-900">Total:</span>
+                      <span style={{ color: primaryColor }}>{formatCurrency(quote.totalValue)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Fotos/Anexos */}
+          {quote.attachments.length > 0 && (
+            <div className="px-6 py-6 md:px-8 border-t">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                Anexos ({quote.attachments.length})
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {quote.attachments.map((attachment, index) => {
+                  const isImage = attachment.mimeType?.startsWith('image/');
+                  const hasUrl = !!attachment.url;
+
+                  if (isImage && hasUrl) {
+                    return (
+                      <button
+                        key={attachment.id}
+                        className="relative aspect-square rounded-lg overflow-hidden border bg-gray-100 cursor-pointer group"
+                        onClick={() => {
+                          const images = quote.attachments
+                            .filter((att) => att.mimeType?.startsWith('image/') && att.url)
+                            .map((att) => ({ url: att.url!, caption: formatDateTime(att.createdAt) }));
+                          const imageIndex = images.findIndex((img) => img.url === attachment.url);
+                          openLightbox(images, imageIndex >= 0 ? imageIndex : 0);
+                        }}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={attachment.url}
+                          alt="Anexo"
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                          <ZoomIn className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                      </button>
+                    );
+                  }
+
+                  return (
+                    <a
+                      key={attachment.id}
+                      href={attachment.url || '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="aspect-square rounded-lg overflow-hidden border bg-gray-100 cursor-pointer flex flex-col items-center justify-center hover:bg-gray-200 transition-colors"
+                    >
+                      <FileText className="h-10 w-10 text-gray-400" />
+                      <span className="text-xs text-gray-500 mt-2">
+                        {attachment.mimeType === 'application/pdf' ? 'PDF' : 'Documento'}
+                      </span>
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Área de assinatura */}
+          <div className="px-6 py-6 md:px-8 border-t bg-gray-50">
+            {quote.signature ? (
+              // Assinatura existente
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Assinatura</h2>
+                <div className="flex flex-col md:flex-row md:items-end gap-6">
+                  <div className="flex-1">
+                    {quote.signature.imageUrl && (
+                      <div className="border-b-2 border-gray-400 pb-2 mb-2 max-w-xs">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={quote.signature.imageUrl}
+                          alt="Assinatura"
+                          className="h-16 object-contain"
+                        />
+                      </div>
+                    )}
+                    <p className="font-medium text-gray-900">{quote.signature.signerName}</p>
+                    {quote.signature.signerDocument && (
+                      <p className="text-sm text-gray-500">CPF/RG: {quote.signature.signerDocument}</p>
+                    )}
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    <p>Assinado em:</p>
+                    <p className="font-medium text-gray-700">{formatDateTime(quote.signature.signedAt)}</p>
+                  </div>
+                </div>
+              </div>
+            ) : (quote.status === 'SENT' || quote.status === 'DRAFT') && !actionSuccess ? (
+              // Área para assinar
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 mb-2">Assinatura do Cliente</h2>
+                <p className="text-sm text-gray-600 mb-4">
+                  Para aprovar este orçamento, assine digitalmente clicando no botão abaixo.
+                </p>
+
+                {/* Card de Termos de Aceite (se obrigatório) */}
+                {acceptanceTerms?.required && (
+                  <div
+                    className={`mb-4 p-4 rounded-lg border cursor-pointer ${
+                      termsAccepted
+                        ? 'bg-green-50 border-green-200'
+                        : 'bg-yellow-50 border-yellow-200'
+                    }`}
+                    onClick={() => setTermsModalOpen(true)}
+                  >
+                    <div className="flex items-center gap-3">
+                      {termsAccepted ? (
+                        <CheckCircle2 className="h-5 w-5 text-green-600" />
+                      ) : (
+                        <ScrollText className="h-5 w-5 text-yellow-600" />
+                      )}
+                      <div className="flex-1">
+                        <p className={`font-medium ${termsAccepted ? 'text-green-800' : 'text-yellow-800'}`}>
+                          Termos de Aceite
+                        </p>
+                        <p className={`text-sm ${termsAccepted ? 'text-green-600' : 'text-yellow-600'}`}>
+                          {termsAccepted
+                            ? 'Termos aceitos. Pronto para assinar.'
+                            : 'Leia e aceite os termos antes de assinar.'}
+                        </p>
+                      </div>
+                      <ChevronRight className={`h-5 w-5 ${termsAccepted ? 'text-green-400' : 'text-yellow-400'}`} />
+                    </div>
+                  </div>
+                )}
+
+                {/* Botões de ação */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button
+                    onClick={() => {
+                      if (acceptanceTerms?.required && !termsAccepted) {
+                        setTermsModalOpen(true);
+                      } else {
+                        setSignatureModalOpen(true);
+                      }
+                    }}
+                    className="flex-1 py-6 text-lg"
+                    style={{ backgroundColor: primaryColor }}
+                  >
+                    <PenTool className="h-5 w-5 mr-2" />
+                    Assinar e Aprovar
+                  </Button>
+                  <Button
+                    onClick={() => setRejectModalOpen(true)}
+                    variant="outline"
+                    className="sm:w-auto border-gray-300 text-gray-700 hover:bg-gray-100"
+                  >
+                    <XCircle className="h-5 w-5 mr-2" />
+                    Recusar
+                  </Button>
+                </div>
+              </div>
+            ) : actionSuccess ? (
+              // Mensagem de sucesso
+              <div className="text-center py-4">
                 {actionSuccess === 'approved' ? (
-                  <>
+                  <div className="flex items-center justify-center gap-3">
                     <CheckCircle2 className="h-8 w-8 text-green-600" />
-                    <div className="text-center">
+                    <div>
                       <h3 className="text-lg font-semibold text-green-600">Orçamento Aprovado!</h3>
                       <p className="text-gray-600">Obrigado por aprovar este orçamento.</p>
                     </div>
-                  </>
+                  </div>
                 ) : (
-                  <>
+                  <div className="flex items-center justify-center gap-3">
                     <XCircle className="h-8 w-8 text-red-600" />
-                    <div className="text-center">
+                    <div>
                       <h3 className="text-lg font-semibold text-red-600">Orçamento Recusado</h3>
                       <p className="text-gray-600">Este orçamento foi recusado.</p>
                     </div>
-                  </>
+                  </div>
                 )}
               </div>
-            </CardContent>
-          </Card>
-        )}
+            ) : null}
+          </div>
 
-        {/* Card de Termos de Aceite - mostrar quando ha termos obrigatorios */}
-        {(quote.status === 'SENT' || quote.status === 'DRAFT') && acceptanceTerms?.required && !actionSuccess && (
-          <Card className={`mb-6 ${termsAccepted ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'}`}>
-            <CardContent className="pt-6">
-              <div
-                className="flex items-start gap-4 cursor-pointer"
-                onClick={() => setTermsModalOpen(true)}
-              >
-                {termsAccepted ? (
-                  <CheckCircle2 className="h-8 w-8 text-green-600 flex-shrink-0" />
-                ) : (
-                  <ScrollText className="h-8 w-8 text-amber-600 flex-shrink-0" />
-                )}
-                <div className="flex-1">
-                  <h3 className={`text-lg font-semibold ${termsAccepted ? 'text-green-800' : 'text-amber-800'}`}>
-                    Termos de Aceite
-                  </h3>
-                  <p className={`text-sm ${termsAccepted ? 'text-green-600' : 'text-amber-600'}`}>
-                    {termsAccepted
-                      ? 'Termos lidos e aceitos. Voce pode prosseguir com a assinatura.'
-                      : 'Antes de assinar, voce precisa ler e aceitar os termos obrigatorios.'}
-                  </p>
-                </div>
-                <ChevronRight className={`h-6 w-6 ${termsAccepted ? 'text-green-400' : 'text-amber-400'}`} />
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Botões de ação para orçamentos com status SENT ou DRAFT */}
-        {(quote.status === 'SENT' || quote.status === 'DRAFT') && !actionSuccess && (
-          <Card className="mb-6" style={{ borderColor: `${primaryColor}33`, backgroundColor: `${primaryColor}0D` }}>
-            <CardContent className="pt-6">
-              <div className="text-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">O que deseja fazer?</h3>
-                <p className="text-sm text-gray-600">Voce pode aprovar ou recusar este orcamento</p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button
-                  onClick={() => {
-                    // Se tem termos obrigatorios e nao foram aceitos, mostrar modal de termos
-                    if (acceptanceTerms?.required && !termsAccepted) {
-                      setTermsModalOpen(true);
-                    } else {
-                      setSignatureModalOpen(true);
-                    }
-                  }}
-                  className="bg-green-600 hover:bg-green-700 text-white px-8 py-3"
-                  size="lg"
-                >
-                  <PenTool className="h-5 w-5 mr-2" />
-                  Assinar e Aprovar
-                </Button>
-                <Button
-                  onClick={() => setRejectModalOpen(true)}
-                  variant="outline"
-                  className="border-red-500 text-red-700 bg-red-50 hover:bg-red-100 px-8 py-3 font-medium"
-                  size="lg"
-                >
-                  <XCircle className="h-5 w-5 mr-2" />
-                  Recusar Orçamento
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Rodapé */}
-        <footer className="text-center text-sm text-gray-500 py-6 border-t">
-          <p>Documento gerado em {formatDateTime(new Date().toISOString())}</p>
-          <p className="mt-1">{quote.company.name}</p>
-        </footer>
-      </main>
+          {/* Rodapé */}
+          <div className="px-6 py-4 md:px-8 border-t bg-white text-center text-sm text-gray-500">
+            <p>{quote.company.name}</p>
+            {quote.template?.footerText && (
+              <p className="mt-1">{quote.template.footerText}</p>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Lightbox para zoom de fotos */}
       {lightboxOpen && (
@@ -1361,7 +1382,6 @@ export default function PublicQuotePage() {
         onAccept={() => {
           setTermsAccepted(true);
           setTermsModalOpen(false);
-          // Abrir modal de assinatura apos aceitar termos
           setSignatureModalOpen(true);
         }}
         termsContent={acceptanceTerms?.termsContent || null}

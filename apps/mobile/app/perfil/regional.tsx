@@ -5,7 +5,7 @@
  * Sincroniza automaticamente com o web através da API
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -29,6 +29,7 @@ import {
   CurrencyInfo,
   TimezoneInfo,
 } from '../../src/services/RegionalService';
+import { useTranslation, useLocale } from '../../src/i18n';
 
 // =============================================================================
 // TYPES
@@ -51,6 +52,8 @@ interface SelectOption {
 export default function RegionalScreen() {
   const colors = useColors();
   const spacing = useSpacing();
+  const { t } = useTranslation();
+  const { locale } = useLocale();
 
   // State
   const [isLoading, setIsLoading] = useState(true);
@@ -112,7 +115,7 @@ export default function RegionalScreen() {
       }
     } catch (error) {
       console.error('[Regional] Error loading data:', error);
-      Alert.alert('Erro', 'Falha ao carregar configurações regionais');
+      Alert.alert(t('common.error'), t('profile.regional.loadError'));
     } finally {
       setIsLoading(false);
     }
@@ -163,10 +166,10 @@ export default function RegionalScreen() {
       const updatedSettings = await RegionalService.updateSettings(settings);
       setSettings(updatedSettings);
       setOriginalSettings(updatedSettings);
-      Alert.alert('Sucesso', 'Configurações regionais atualizadas com sucesso');
+      Alert.alert(t('common.success'), t('profile.regional.updateSuccess'));
     } catch (error) {
       console.error('[Regional] Error saving settings:', error);
-      Alert.alert('Erro', 'Falha ao salvar configurações');
+      Alert.alert(t('common.error'), t('profile.regional.saveError'));
     } finally {
       setIsSaving(false);
     }
@@ -182,27 +185,27 @@ export default function RegionalScreen() {
   // MODAL DATA
   // =============================================================================
 
-  const getModalTitle = () => {
+  const getModalTitle = useCallback(() => {
     switch (modalType) {
       case 'country':
-        return 'Selecionar País';
+        return t('profile.regional.selectCountry');
       case 'currency':
-        return 'Selecionar Moeda';
+        return t('profile.regional.selectCurrency');
       case 'timezone':
-        return 'Selecionar Fuso Horário';
+        return t('profile.regional.selectTimezone');
     }
-  };
+  }, [modalType, t, locale]);
 
-  const getSearchPlaceholder = () => {
+  const getSearchPlaceholder = useCallback(() => {
     switch (modalType) {
       case 'country':
-        return 'Buscar país...';
+        return t('profile.regional.searchCountry');
       case 'currency':
-        return 'Buscar moeda...';
+        return t('profile.regional.searchCurrency');
       case 'timezone':
-        return 'Buscar fuso horário...';
+        return t('profile.regional.searchTimezone');
     }
-  };
+  }, [modalType, t, locale]);
 
   const getModalOptions = (): SelectOption[] => {
     const query = searchQuery.toLowerCase();
@@ -299,7 +302,7 @@ export default function RegionalScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary[500]} />
           <Text variant="body" color="secondary" style={{ marginTop: spacing[3] }}>
-            Carregando...
+            {t('common.loading')}
           </Text>
         </View>
       </SafeAreaView>
@@ -314,7 +317,7 @@ export default function RegionalScreen() {
           <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
         </TouchableOpacity>
         <Text variant="h4" weight="semibold">
-          Configurações Regionais
+          {t('profile.regional.title')}
         </Text>
         <View style={styles.headerSpacer} />
       </View>
@@ -326,7 +329,7 @@ export default function RegionalScreen() {
       >
         {/* Country Select */}
         <Text variant="caption" weight="semibold" color="tertiary" style={{ marginBottom: spacing[2] }}>
-          PAÍS
+          {t('profile.regional.country').toUpperCase()}
         </Text>
         <Card style={{ marginBottom: spacing[4] }}>
           <TouchableOpacity
@@ -348,7 +351,7 @@ export default function RegionalScreen() {
                 </>
               ) : (
                 <Text variant="body" color="secondary">
-                  Selecione um país
+                  {t('profile.regional.selectCountry')}
                 </Text>
               )}
             </View>
@@ -358,7 +361,7 @@ export default function RegionalScreen() {
 
         {/* Currency Select */}
         <Text variant="caption" weight="semibold" color="tertiary" style={{ marginBottom: spacing[2] }}>
-          MOEDA
+          {t('profile.regional.currency').toUpperCase()}
         </Text>
         <Card style={{ marginBottom: spacing[4] }}>
           <TouchableOpacity
@@ -384,7 +387,7 @@ export default function RegionalScreen() {
                 </>
               ) : (
                 <Text variant="body" color="secondary">
-                  Selecione uma moeda
+                  {t('profile.regional.selectCurrency')}
                 </Text>
               )}
             </View>
@@ -394,7 +397,7 @@ export default function RegionalScreen() {
 
         {/* Timezone Select */}
         <Text variant="caption" weight="semibold" color="tertiary" style={{ marginBottom: spacing[2] }}>
-          FUSO HORÁRIO
+          {t('profile.regional.timezone').toUpperCase()}
         </Text>
         <Card style={{ marginBottom: spacing[4] }}>
           <TouchableOpacity
@@ -419,7 +422,7 @@ export default function RegionalScreen() {
                 </>
               ) : (
                 <Text variant="body" color="secondary">
-                  {timezones.length === 0 ? 'Selecione um país primeiro' : 'Selecione um fuso horário'}
+                  {timezones.length === 0 ? t('profile.regional.selectCountryFirst') : t('profile.regional.selectTimezone')}
                 </Text>
               )}
             </View>
@@ -431,7 +434,7 @@ export default function RegionalScreen() {
         <View style={[styles.infoBox, { backgroundColor: colors.primary[50] }]}>
           <Ionicons name="information-circle" size={20} color={colors.primary[600]} />
           <Text variant="caption" style={{ color: colors.primary[700], flex: 1, marginLeft: spacing[2] }}>
-            Novos registros usarão a moeda configurada. Registros existentes mantêm sua moeda original.
+            {t('profile.regional.currencyNote')}
           </Text>
         </View>
 
@@ -443,7 +446,7 @@ export default function RegionalScreen() {
             loading={isSaving}
             style={{ marginTop: spacing[4] }}
           >
-            {isSaving ? 'Salvando...' : 'Salvar Alterações'}
+            {isSaving ? t('common.saving') : t('profile.regional.saveChanges')}
           </Button>
         )}
       </ScrollView>
@@ -549,9 +552,9 @@ export default function RegionalScreen() {
             ListEmptyComponent={
               <View style={styles.emptyList}>
                 <Text variant="body" color="secondary">
-                  {modalType === 'country' && 'Nenhum país encontrado'}
-                  {modalType === 'currency' && 'Nenhuma moeda encontrada'}
-                  {modalType === 'timezone' && 'Nenhum fuso horário encontrado'}
+                  {modalType === 'country' && t('profile.regional.noCountryFound')}
+                  {modalType === 'currency' && t('profile.regional.noCurrencyFound')}
+                  {modalType === 'timezone' && t('profile.regional.noTimezoneFound')}
                 </Text>
               </View>
             }

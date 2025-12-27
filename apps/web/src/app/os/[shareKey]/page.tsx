@@ -3,19 +3,14 @@
 /**
  * Página pública de visualização da Ordem de Serviço
  * Acessível via link compartilhável sem autenticação
+ *
+ * Layout profissional estilo documento comercial
  */
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useTranslations } from '@/i18n';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import {
   AlertCircle,
   Building2,
@@ -37,6 +32,9 @@ import {
   ZoomIn,
   ChevronLeft,
   ChevronRight,
+  Check,
+  Play,
+  Timer,
 } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -111,11 +109,11 @@ interface WorkOrderData {
   }>;
 }
 
-const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
-  SCHEDULED: { label: 'Agendada', color: 'bg-blue-100 text-blue-800', icon: Calendar },
-  IN_PROGRESS: { label: 'Em Andamento', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
-  DONE: { label: 'Concluída', color: 'bg-green-100 text-green-800', icon: CheckCircle2 },
-  CANCELED: { label: 'Cancelada', color: 'bg-red-100 text-red-800', icon: AlertCircle },
+const statusConfig: Record<string, { label: string; color: string; bgColor: string; icon: any }> = {
+  SCHEDULED: { label: 'Agendada', color: 'text-blue-700', bgColor: 'bg-blue-100', icon: Calendar },
+  IN_PROGRESS: { label: 'Em Andamento', color: 'text-yellow-700', bgColor: 'bg-yellow-100', icon: Clock },
+  DONE: { label: 'Concluída', color: 'text-green-700', bgColor: 'bg-green-100', icon: CheckCircle2 },
+  CANCELED: { label: 'Cancelada', color: 'text-red-700', bgColor: 'bg-red-100', icon: AlertCircle },
 };
 
 function formatCurrency(value: number): string {
@@ -184,7 +182,6 @@ function getChecklistAnswerDisplay(answer: any, questions: any[]): string | { ty
       return answer.attachments?.length > 0 ? `${answer.attachments.length} foto(s)` : '-';
     case 'SIGNATURE_TECHNICIAN':
     case 'SIGNATURE_CLIENT':
-      // Assinaturas podem estar em valueText (base64) ou attachments
       const signatureData = answer.valueText || answer.valueJson?.data || answer.valueJson;
       if (signatureData && typeof signatureData === 'string' && signatureData.length > 50) {
         return { type: 'signature', data: signatureData };
@@ -199,29 +196,6 @@ function getChecklistAnswerDisplay(answer: any, questions: any[]): string | { ty
     default:
       return answer.valueText || answer.valueNumber?.toString() || '-';
   }
-}
-
-// Componente para seção com título
-function Section({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) {
-  return (
-    <div className="mb-6">
-      <div className="flex items-center gap-2 mb-3 pb-2 border-b-2 border-primary">
-        <Icon className="h-5 w-5 text-primary" />
-        <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-// Componente para campo de informação
-function InfoField({ label, value }: { label: string; value: string | React.ReactNode }) {
-  return (
-    <div className="py-2 border-b border-gray-100 last:border-0">
-      <dt className="text-sm font-medium text-gray-500">{label}</dt>
-      <dd className="mt-1 text-sm text-gray-900">{value || '-'}</dd>
-    </div>
-  );
 }
 
 // Componente Lightbox para visualização de fotos em tela cheia
@@ -240,7 +214,6 @@ function ImageLightbox({
 }) {
   const currentImage = images[currentIndex];
 
-  // Fechar com tecla ESC e navegar com setas
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -255,7 +228,6 @@ function ImageLightbox({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center">
-      {/* Botão fechar */}
       <button
         onClick={onClose}
         className="absolute top-4 right-4 p-2 text-white hover:text-gray-300 transition-colors z-10"
@@ -264,12 +236,10 @@ function ImageLightbox({
         <X className="h-8 w-8" />
       </button>
 
-      {/* Contador de imagens */}
       <div className="absolute top-4 left-4 text-white text-sm bg-black/50 px-3 py-1 rounded-full">
         {currentIndex + 1} / {images.length}
       </div>
 
-      {/* Botão anterior */}
       {images.length > 1 && (
         <button
           onClick={onPrev}
@@ -280,7 +250,6 @@ function ImageLightbox({
         </button>
       )}
 
-      {/* Imagem */}
       <div className="max-w-[90vw] max-h-[90vh] flex items-center justify-center">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -290,7 +259,6 @@ function ImageLightbox({
         />
       </div>
 
-      {/* Botão próximo */}
       {images.length > 1 && (
         <button
           onClick={onNext}
@@ -301,7 +269,6 @@ function ImageLightbox({
         </button>
       )}
 
-      {/* Legenda */}
       {currentImage.caption && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-center bg-black/50 px-4 py-2 rounded-lg max-w-lg">
           {currentImage.caption}
@@ -325,7 +292,6 @@ export default function PublicWorkOrderPage() {
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
-  // Funções do lightbox
   const openLightbox = (images: { url: string; caption?: string }[], index: number) => {
     setLightboxImages(images);
     setLightboxIndex(index);
@@ -379,7 +345,7 @@ export default function PublicWorkOrderPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
           <p className="text-gray-600">{t('loading')}</p>
         </div>
       </div>
@@ -389,13 +355,11 @@ export default function PublicWorkOrderPage() {
   if (error || !workOrder) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full">
-          <CardContent className="pt-6 text-center">
-            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Link Inválido</h2>
-            <p className="text-gray-600">{error || 'Ordem de serviço não encontrada.'}</p>
-          </CardContent>
-        </Card>
+        <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-8 text-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Link Inválido</h2>
+          <p className="text-gray-600">{error || 'Ordem de serviço não encontrada.'}</p>
+        </div>
       </div>
     );
   }
@@ -403,397 +367,474 @@ export default function PublicWorkOrderPage() {
   const status = statusConfig[workOrder.status] || statusConfig.SCHEDULED;
   const StatusIcon = status.icon;
 
+  // Cor primária (azul para OS)
+  const primaryColor = '#2563eb';
+
+  // Calcular subtotal dos itens
+  const subtotal = workOrder.items.reduce((sum, item) => sum + item.totalPrice, 0);
+
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Header com logo da empresa */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              {workOrder.company.logoUrl ? (
-                <div className="relative w-16 h-16 rounded-lg overflow-hidden border bg-white flex items-center justify-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={workOrder.company.logoUrl}
-                    alt={workOrder.company.name}
-                    className="w-full h-full object-contain"
-                    onError={(e) => {
-                      // Se a imagem falhar, esconde e mostra o fallback
-                      e.currentTarget.style.display = 'none';
-                      const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-                      if (fallback) fallback.style.display = 'flex';
-                    }}
-                  />
-                  <div className="hidden w-full h-full items-center justify-center">
-                    <Building2 className="h-8 w-8 text-primary" />
-                  </div>
-                </div>
-              ) : (
-                <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Building2 className="h-8 w-8 text-primary" />
-                </div>
-              )}
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">{workOrder.company.name}</h1>
-                {workOrder.company.phone && (
-                  <p className="text-sm text-gray-500 flex items-center gap-1">
-                    <Phone className="h-3 w-3" />
-                    {workOrder.company.phone}
-                  </p>
-                )}
-                {workOrder.company.email && (
-                  <p className="text-sm text-gray-500 flex items-center gap-1">
-                    <Mail className="h-3 w-3" />
-                    {workOrder.company.email}
-                  </p>
-                )}
-              </div>
-            </div>
-            <Badge className={status.color}>
-              <StatusIcon className="h-3 w-3 mr-1" />
-              {status.label}
-            </Badge>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gray-100 print:bg-white">
+      {/* Documento principal - estilo papel A4 */}
+      <div className="max-w-4xl mx-auto py-8 px-4 print:p-0">
+        <div className="bg-white shadow-lg rounded-lg overflow-hidden print:shadow-none print:rounded-none">
 
-      {/* Conteúdo principal */}
-      <main className="max-w-4xl mx-auto px-4 py-6">
-        {/* Título da OS */}
-        <Card className="mb-6">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Ordem de Serviço</p>
-                <CardTitle className="text-2xl">
-                  {workOrder.title}
-                </CardTitle>
-                <p className="text-sm text-gray-500 mt-1">
-                  #{workOrder.id.substring(0, 8).toUpperCase()}
-                </p>
-              </div>
-              {workOrder.totalValue && (
-                <div className="text-right">
-                  <p className="text-sm text-gray-500">Valor Total</p>
-                  <p className="text-2xl font-bold text-primary">
-                    {formatCurrency(workOrder.totalValue)}
-                  </p>
-                </div>
-              )}
-            </div>
-          </CardHeader>
-        </Card>
-
-        {/* Grid de informações */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          {/* Informações do Cliente */}
-          <Card>
-            <CardContent className="pt-6">
-              <Section title="Informações do Cliente" icon={User}>
-                <dl className="space-y-1">
-                  <InfoField label="Nome do cliente" value={workOrder.client.name} />
-                  <InfoField label="CPF/CNPJ" value={workOrder.client.taxId} />
-                  <InfoField label="E-mail" value={workOrder.client.email} />
-                  <InfoField label="Endereço" value={workOrder.client.address} />
-                  <InfoField label="Telefone" value={workOrder.client.phone} />
-                  <InfoField label="Falar com" value={workOrder.client.contactName || workOrder.client.name} />
-                  {workOrder.client.notes && (
-                    <InfoField label="Observação" value={workOrder.client.notes} />
-                  )}
-                </dl>
-              </Section>
-            </CardContent>
-          </Card>
-
-          {/* Informações da Tarefa */}
-          <Card>
-            <CardContent className="pt-6">
-              <Section title="Detalhes da Tarefa" icon={Wrench}>
-                <dl className="space-y-1">
-                  <InfoField label="Técnico" value={workOrder.company.technicianName} />
-                  <InfoField label="Data/Hora" value={formatDateTime(workOrder.scheduledDate)} />
-                  <InfoField label="Serviço" value={workOrder.title} />
-                  <InfoField label="Chegada" value={formatDateTime(workOrder.executionStart)} />
-                  <InfoField label="Saída" value={formatDateTime(workOrder.executionEnd)} />
-                  <InfoField
-                    label="Duração"
-                    value={calculateDuration(workOrder.executionStart, workOrder.executionEnd)}
-                  />
-                  {workOrder.address && (
-                    <InfoField
-                      label="Endereço"
-                      value={
-                        <span className="flex items-start gap-1">
-                          <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                          {workOrder.address}
-                        </span>
-                      }
-                    />
-                  )}
-                </dl>
-              </Section>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Orientação / Descrição */}
-        {workOrder.description && (
-          <Card className="mb-6">
-            <CardContent className="pt-6">
-              <Section title="Orientação" icon={FileText}>
-                <p className="text-gray-700 whitespace-pre-wrap">{workOrder.description}</p>
-              </Section>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Relato de Execução / Notas */}
-        {workOrder.notes && (
-          <Card className="mb-6">
-            <CardContent className="pt-6">
-              <Section title="Relato de Execução" icon={FileText}>
-                <p className="text-gray-700 whitespace-pre-wrap">{workOrder.notes}</p>
-              </Section>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Itens/Serviços */}
-        {workOrder.items.length > 0 && (
-          <Card className="mb-6">
-            <CardContent className="pt-6">
-              <Section title="Itens/Serviços" icon={Package}>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="bg-gray-50 text-left">
-                        <th className="px-3 py-2 font-medium text-gray-600">Item</th>
-                        <th className="px-3 py-2 font-medium text-gray-600 text-center">Qtd</th>
-                        <th className="px-3 py-2 font-medium text-gray-600 text-center">Unidade</th>
-                        <th className="px-3 py-2 font-medium text-gray-600 text-right">Preço Un.</th>
-                        <th className="px-3 py-2 font-medium text-gray-600 text-right">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {workOrder.items.map((item, index) => (
-                        <tr key={index} className="hover:bg-gray-50">
-                          <td className="px-3 py-2">{item.name}</td>
-                          <td className="px-3 py-2 text-center">{item.quantity.toFixed(2)}</td>
-                          <td className="px-3 py-2 text-center">{item.unit}</td>
-                          <td className="px-3 py-2 text-right">{formatCurrency(item.unitPrice)}</td>
-                          <td className="px-3 py-2 text-right font-medium">{formatCurrency(item.totalPrice)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                    <tfoot>
-                      <tr className="bg-primary/5 font-semibold">
-                        <td colSpan={4} className="px-3 py-2 text-right">TOTAL:</td>
-                        <td className="px-3 py-2 text-right text-primary">
-                          {formatCurrency(workOrder.totalValue || 0)}
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-              </Section>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Checklists */}
-        {workOrder.checklists.map((checklist, idx) => (
-          <Card key={idx} className="mb-6">
-            <CardContent className="pt-6">
-              <Section title={checklist.name} icon={ClipboardCheck}>
-                <div className="space-y-2">
-                  {checklist.templateSnapshot?.questions?.map((question: any) => {
-                    if (question.type === 'SECTION_TITLE') {
-                      return (
-                        <div key={question.id} className="pt-4 pb-2">
-                          <h4 className="font-semibold text-gray-800 border-b pb-1">
-                            {question.title}
-                          </h4>
-                        </div>
-                      );
-                    }
-
-                    const answer = checklist.answers.find((a) => a.questionId === question.id);
-                    const displayValue = answer
-                      ? getChecklistAnswerDisplay(answer, checklist.templateSnapshot?.questions || [])
-                      : '-';
-                    const hasPhotos = answer?.attachments && answer.attachments.length > 0 &&
-                      answer.type !== 'SIGNATURE_TECHNICIAN' && answer.type !== 'SIGNATURE_CLIENT';
-                    const isSignature = typeof displayValue === 'object' && displayValue?.type === 'signature';
-
-                    return (
-                      <div key={question.id} className="py-2 border-b border-gray-100">
-                        <div className="flex justify-between items-start">
-                          <span className="text-gray-700">{question.title}</span>
-                          {isSignature ? (
-                            <div className="flex items-center gap-2">
-                              <CheckCircle2 className="h-4 w-4 text-green-500" />
-                              <span className="text-sm text-green-600">Assinatura registrada</span>
-                            </div>
-                          ) : (
-                            <span className="font-medium text-gray-900">{displayValue as string}</span>
-                          )}
-                        </div>
-                        {/* Assinatura */}
-                        {isSignature && (
-                          <div className="mt-3 p-4 bg-green-50 border border-green-200 rounded-lg">
-                            <div className="flex items-center gap-2 mb-2">
-                              <CheckCircle2 className="h-5 w-5 text-green-500" />
-                              <span className="text-sm font-medium text-green-700">Assinatura registrada</span>
-                            </div>
-                            <div className="bg-white border rounded p-2">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src={displayValue.data.startsWith('data:') ? displayValue.data : `data:image/png;base64,${displayValue.data}`}
-                                alt={question.title}
-                                className="max-h-24 mx-auto object-contain"
-                              />
-                            </div>
-                          </div>
-                        )}
-                        {/* Fotos do checklist */}
-                        {hasPhotos && (
-                          <div className="mt-2 grid grid-cols-2 md:grid-cols-3 gap-2">
-                            {answer.attachments.map((att: { id: string; url: string }, attIndex: number) => (
-                              <button
-                                key={att.id}
-                                className="relative aspect-video rounded overflow-hidden border bg-gray-100 cursor-pointer group"
-                                onClick={() => {
-                                  const images = answer.attachments
-                                    .filter((a: { url: string }) => a.url)
-                                    .map((a: { url: string }) => ({ url: a.url, caption: question.title }));
-                                  openLightbox(images, attIndex);
-                                }}
-                              >
-                                {att.url ? (
-                                  <>
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img
-                                      src={att.url}
-                                      alt="Foto do checklist"
-                                      className="w-full h-full object-cover"
-                                    />
-                                    {/* Overlay com ícone de zoom */}
-                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                                      <ZoomIn className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                                    </div>
-                                  </>
-                                ) : (
-                                  <div className="flex items-center justify-center h-full">
-                                    <ImageIcon className="h-6 w-6 text-gray-400" />
-                                  </div>
-                                )}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </Section>
-            </CardContent>
-          </Card>
-        ))}
-
-        {/* Fotos/Anexos */}
-        {workOrder.attachments.length > 0 && (
-          <Card className="mb-6">
-            <CardContent className="pt-6">
-              <Section title={`Anexos (${workOrder.attachments.length} foto${workOrder.attachments.length > 1 ? 's' : ''})`} icon={ImageIcon}>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {workOrder.attachments.map((attachment, index) => (
-                    <button
-                      key={attachment.id}
-                      className="relative aspect-video rounded-lg overflow-hidden border bg-gray-100 cursor-pointer group"
-                      onClick={() => {
-                        const images = workOrder.attachments
-                          .filter((att) => att.mimeType?.startsWith('image/') && att.url)
-                          .map((att) => ({ url: att.url!, caption: formatDateTime(att.createdAt) }));
-                        const imageIndex = images.findIndex((img) => img.url === attachment.url);
-                        openLightbox(images, imageIndex >= 0 ? imageIndex : 0);
-                      }}
-                      disabled={!attachment.mimeType?.startsWith('image/') || !attachment.url}
-                    >
-                      {attachment.mimeType?.startsWith('image/') && attachment.url ? (
-                        <>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={attachment.url}
-                            alt="Anexo"
-                            className="w-full h-full object-cover"
-                          />
-                          {/* Overlay com ícone de zoom */}
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                            <ZoomIn className="h-10 w-10 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </div>
-                        </>
-                      ) : (
-                        <div className="flex items-center justify-center h-full">
-                          <FileText className="h-8 w-8 text-gray-400" />
-                        </div>
-                      )}
-                      <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs px-2 py-1">
-                        {formatDateTime(attachment.createdAt)}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </Section>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Assinatura */}
-        {workOrder.signature && (
-          <Card className="mb-6">
-            <CardContent className="pt-6">
-              <Section title="Assinatura do Cliente" icon={PenTool}>
-                <div className="text-center">
-                  {workOrder.signature.imageUrl && (
-                    <div className="relative w-64 h-24 mx-auto mb-4 border-b-2 border-gray-300">
+          {/* Header do documento */}
+          <div className="border-b-4" style={{ borderColor: primaryColor }}>
+            <div className="p-6 md:p-8">
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+                {/* Logo e info da empresa */}
+                <div className="flex items-start gap-4">
+                  {workOrder.company.logoUrl ? (
+                    <div className="w-20 h-20 rounded-lg overflow-hidden border bg-white flex items-center justify-center flex-shrink-0">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={workOrder.signature.imageUrl}
-                        alt="Assinatura"
+                        src={workOrder.company.logoUrl}
+                        alt={workOrder.company.name}
                         className="w-full h-full object-contain"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
                       />
+                      <div className="hidden w-full h-full items-center justify-center">
+                        <Building2 className="h-10 w-10" style={{ color: primaryColor }} />
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      className="w-20 h-20 rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: `${primaryColor}1A` }}
+                    >
+                      <Building2 className="h-10 w-10" style={{ color: primaryColor }} />
                     </div>
                   )}
-                  <div className="border-t border-gray-300 pt-2 max-w-xs mx-auto">
-                    {workOrder.signature.signerName && (
-                      <p className="font-semibold text-gray-900">{workOrder.signature.signerName}</p>
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-900">{workOrder.company.name}</h1>
+                    {workOrder.company.phone && (
+                      <p className="text-sm text-gray-600 flex items-center gap-2 mt-1">
+                        <Phone className="h-4 w-4" />
+                        {workOrder.company.phone}
+                      </p>
                     )}
-                    {workOrder.signature.signerDocument && (
-                      <p className="text-sm text-gray-500">CPF/RG: {workOrder.signature.signerDocument}</p>
-                    )}
-                    {workOrder.signature.signedAt && (
-                      <p className="text-sm text-gray-500">
-                        Assinado em: {formatDateTime(workOrder.signature.signedAt)}
+                    {workOrder.company.email && (
+                      <p className="text-sm text-gray-600 flex items-center gap-2">
+                        <Mail className="h-4 w-4" />
+                        {workOrder.company.email}
                       </p>
                     )}
                   </div>
                 </div>
-              </Section>
-            </CardContent>
-          </Card>
-        )}
 
-        {/* Rodapé */}
-        <footer className="text-center text-sm text-gray-500 py-6 border-t">
-          <p>Documento gerado em {formatDateTime(new Date().toISOString())}</p>
-          <p className="mt-1">
-            {workOrder.company.name}
-            {workOrder.company.address && ` | ${workOrder.company.address}`}
-          </p>
-        </footer>
-      </main>
+                {/* Número e data da OS */}
+                <div className="text-left md:text-right">
+                  <div className="inline-block">
+                    <p className="text-sm text-gray-500 uppercase tracking-wide">Ordem de Serviço</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      #{workOrder.id.substring(0, 8).toUpperCase()}
+                    </p>
+                    <div className="mt-2 space-y-1">
+                      <p className="text-sm text-gray-600 flex items-center gap-2 md:justify-end">
+                        <Calendar className="h-4 w-4" />
+                        {formatDate(workOrder.scheduledDate || workOrder.createdAt)}
+                      </p>
+                    </div>
+                    <Badge className={`mt-3 ${status.bgColor} ${status.color}`}>
+                      <StatusIcon className="h-3 w-3 mr-1" />
+                      {status.label}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-      {/* Lightbox para zoom de fotos */}
+          {/* Título do serviço */}
+          <div className="px-6 py-4 md:px-8 bg-gray-50 border-b">
+            <div className="flex items-center gap-3">
+              <Wrench className="h-5 w-5 text-gray-400" />
+              <h2 className="text-lg font-semibold text-gray-900">{workOrder.title}</h2>
+            </div>
+          </div>
+
+          {/* Informações do cliente e técnico */}
+          <div className="px-6 py-4 md:px-8 border-b">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Cliente */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Cliente</h3>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-gray-400" />
+                    <span className="font-medium text-gray-900">{workOrder.client.name}</span>
+                  </div>
+                  {workOrder.client.phone && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Phone className="h-4 w-4 text-gray-400" />
+                      {workOrder.client.phone}
+                    </div>
+                  )}
+                  {workOrder.client.email && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Mail className="h-4 w-4 text-gray-400" />
+                      {workOrder.client.email}
+                    </div>
+                  )}
+                  {(workOrder.address || workOrder.client.address) && (
+                    <div className="flex items-start gap-2 text-sm text-gray-600">
+                      <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
+                      <span>{workOrder.address || workOrder.client.address}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Técnico e Execução */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Execução</h3>
+                <div className="space-y-2">
+                  {workOrder.company.technicianName && (
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-gray-400" />
+                      <span className="text-gray-700">Técnico: <span className="font-medium text-gray-900">{workOrder.company.technicianName}</span></span>
+                    </div>
+                  )}
+                  {workOrder.executionStart && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Play className="h-4 w-4 text-green-500" />
+                      <span>Início: {formatDateTime(workOrder.executionStart)}</span>
+                    </div>
+                  )}
+                  {workOrder.executionEnd && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <CheckCircle2 className="h-4 w-4 text-blue-500" />
+                      <span>Término: {formatDateTime(workOrder.executionEnd)}</span>
+                    </div>
+                  )}
+                  {workOrder.executionStart && workOrder.executionEnd && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Timer className="h-4 w-4 text-gray-400" />
+                      <span>Duração: <span className="font-medium">{calculateDuration(workOrder.executionStart, workOrder.executionEnd)}</span></span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Descrição/Orientação */}
+          {workOrder.description && (
+            <div className="px-6 py-4 md:px-8 border-b">
+              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Descrição do Serviço</h3>
+              <p className="text-gray-700 whitespace-pre-wrap">{workOrder.description}</p>
+            </div>
+          )}
+
+          {/* Relato de Execução */}
+          {workOrder.notes && (
+            <div className="px-6 py-4 md:px-8 bg-blue-50 border-b">
+              <h3 className="text-sm font-semibold text-blue-800 uppercase tracking-wide mb-2">Relato de Execução</h3>
+              <p className="text-blue-900 whitespace-pre-wrap">{workOrder.notes}</p>
+            </div>
+          )}
+
+          {/* Itens/Serviços */}
+          {workOrder.items.length > 0 && (
+            <div className="px-6 py-6 md:px-8">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Itens e Serviços</h2>
+
+              {/* Tabela desktop */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b-2" style={{ borderColor: primaryColor }}>
+                      <th className="text-left py-3 px-2 text-sm font-semibold text-gray-700 w-8"></th>
+                      <th className="text-left py-3 px-2 text-sm font-semibold text-gray-700">Descrição</th>
+                      <th className="text-center py-3 px-2 text-sm font-semibold text-gray-700 w-20">Qtd</th>
+                      <th className="text-right py-3 px-2 text-sm font-semibold text-gray-700 w-28">Valor Un.</th>
+                      <th className="text-right py-3 px-2 text-sm font-semibold text-gray-700 w-28">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {workOrder.items.map((item, index) => (
+                      <tr key={index} className="hover:bg-gray-50">
+                        <td className="py-4 px-2">
+                          <div
+                            className="w-5 h-5 rounded border-2 flex items-center justify-center"
+                            style={{ borderColor: primaryColor }}
+                          >
+                            <Check className="w-3 h-3" style={{ color: primaryColor }} />
+                          </div>
+                        </td>
+                        <td className="py-4 px-2">
+                          <div>
+                            <p className="font-medium text-gray-900">{item.name}</p>
+                            <p className="text-xs text-gray-500">
+                              {item.type === 'SERVICE' ? 'Serviço' : 'Produto'} • {item.unit}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="py-4 px-2 text-center text-gray-700">
+                          {item.quantity % 1 === 0 ? item.quantity : item.quantity.toFixed(2)}
+                        </td>
+                        <td className="py-4 px-2 text-right text-gray-700">
+                          {formatCurrency(item.unitPrice)}
+                        </td>
+                        <td className="py-4 px-2 text-right font-semibold text-gray-900">
+                          {formatCurrency(item.totalPrice)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Cards mobile */}
+              <div className="md:hidden space-y-4">
+                {workOrder.items.map((item, index) => (
+                  <div key={index} className="border rounded-lg p-4 bg-white">
+                    <div className="flex items-start gap-3">
+                      <div
+                        className="w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-1"
+                        style={{ borderColor: primaryColor }}
+                      >
+                        <Check className="w-3 h-3" style={{ color: primaryColor }} />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">{item.name}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {item.type === 'SERVICE' ? 'Serviço' : 'Produto'} • {item.unit}
+                        </p>
+                        <div className="flex justify-between mt-2">
+                          <span className="text-sm text-gray-600">
+                            {item.quantity % 1 === 0 ? item.quantity : item.quantity.toFixed(2)} x {formatCurrency(item.unitPrice)}
+                          </span>
+                          <span className="font-semibold text-gray-900">
+                            {formatCurrency(item.totalPrice)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Totais */}
+              <div className="mt-6 flex justify-end">
+                <div className="w-full md:w-72">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Subtotal:</span>
+                      <span className="text-gray-900">{formatCurrency(subtotal)}</span>
+                    </div>
+                    <div
+                      className="flex justify-between pt-3 border-t-2 font-bold text-lg"
+                      style={{ borderColor: primaryColor }}
+                    >
+                      <span className="text-gray-900">Total:</span>
+                      <span style={{ color: primaryColor }}>{formatCurrency(workOrder.totalValue || subtotal)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Checklists */}
+          {workOrder.checklists.map((checklist, idx) => (
+            <div key={idx} className="px-6 py-6 md:px-8 border-t">
+              <div className="flex items-center gap-2 mb-4">
+                <ClipboardCheck className="h-5 w-5" style={{ color: primaryColor }} />
+                <h2 className="text-lg font-semibold text-gray-900">{checklist.name}</h2>
+              </div>
+
+              <div className="space-y-3">
+                {checklist.templateSnapshot?.questions?.map((question: any) => {
+                  if (question.type === 'SECTION_TITLE') {
+                    return (
+                      <div key={question.id} className="pt-4 pb-2">
+                        <h4 className="font-semibold text-gray-800 border-b pb-1" style={{ borderColor: `${primaryColor}40` }}>
+                          {question.title}
+                        </h4>
+                      </div>
+                    );
+                  }
+
+                  const answer = checklist.answers.find((a) => a.questionId === question.id);
+                  const displayValue = answer
+                    ? getChecklistAnswerDisplay(answer, checklist.templateSnapshot?.questions || [])
+                    : '-';
+                  const hasPhotos = answer?.attachments && answer.attachments.length > 0 &&
+                    answer.type !== 'SIGNATURE_TECHNICIAN' && answer.type !== 'SIGNATURE_CLIENT';
+                  const isSignature = typeof displayValue === 'object' && displayValue?.type === 'signature';
+
+                  return (
+                    <div key={question.id} className="py-3 border-b border-gray-100">
+                      <div className="flex justify-between items-start">
+                        <span className="text-gray-700">{question.title}</span>
+                        {isSignature ? (
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-green-500" />
+                            <span className="text-sm text-green-600">Assinatura registrada</span>
+                          </div>
+                        ) : (
+                          <span className="font-medium text-gray-900 text-right">{displayValue as string}</span>
+                        )}
+                      </div>
+
+                      {/* Assinatura */}
+                      {isSignature && (
+                        <div className="mt-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+                          <div className="bg-white border rounded p-2">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={displayValue.data.startsWith('data:') ? displayValue.data : `data:image/png;base64,${displayValue.data}`}
+                              alt={question.title}
+                              className="max-h-24 mx-auto object-contain"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Fotos do checklist */}
+                      {hasPhotos && (
+                        <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2">
+                          {answer.attachments.map((att: { id: string; url: string }, attIndex: number) => (
+                            <button
+                              key={att.id}
+                              className="relative aspect-square rounded overflow-hidden border bg-gray-100 cursor-pointer group"
+                              onClick={() => {
+                                const images = answer.attachments
+                                  .filter((a: { url: string }) => a.url)
+                                  .map((a: { url: string }) => ({ url: a.url, caption: question.title }));
+                                openLightbox(images, attIndex);
+                              }}
+                            >
+                              {att.url ? (
+                                <>
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={att.url}
+                                    alt="Foto"
+                                    className="w-full h-full object-cover"
+                                  />
+                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                                    <ZoomIn className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                  </div>
+                                </>
+                              ) : (
+                                <div className="flex items-center justify-center h-full">
+                                  <ImageIcon className="h-6 w-6 text-gray-400" />
+                                </div>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+
+          {/* Fotos/Anexos */}
+          {workOrder.attachments.length > 0 && (
+            <div className="px-6 py-6 md:px-8 border-t">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                Anexos ({workOrder.attachments.length})
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {workOrder.attachments.map((attachment) => {
+                  const isImage = attachment.mimeType?.startsWith('image/');
+                  const hasUrl = !!attachment.url;
+
+                  if (isImage && hasUrl) {
+                    return (
+                      <button
+                        key={attachment.id}
+                        className="relative aspect-square rounded-lg overflow-hidden border bg-gray-100 cursor-pointer group"
+                        onClick={() => {
+                          const images = workOrder.attachments
+                            .filter((att) => att.mimeType?.startsWith('image/') && att.url)
+                            .map((att) => ({ url: att.url!, caption: formatDateTime(att.createdAt) }));
+                          const imageIndex = images.findIndex((img) => img.url === attachment.url);
+                          openLightbox(images, imageIndex >= 0 ? imageIndex : 0);
+                        }}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={attachment.url}
+                          alt="Anexo"
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                          <ZoomIn className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                      </button>
+                    );
+                  }
+
+                  return (
+                    <a
+                      key={attachment.id}
+                      href={attachment.url || '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="aspect-square rounded-lg overflow-hidden border bg-gray-100 cursor-pointer flex flex-col items-center justify-center hover:bg-gray-200 transition-colors"
+                    >
+                      <FileText className="h-10 w-10 text-gray-400" />
+                      <span className="text-xs text-gray-500 mt-2">
+                        {attachment.mimeType === 'application/pdf' ? 'PDF' : 'Documento'}
+                      </span>
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Área de assinatura */}
+          {workOrder.signature && (
+            <div className="px-6 py-6 md:px-8 border-t bg-gray-50">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Assinatura do Cliente</h2>
+              <div className="flex flex-col md:flex-row md:items-end gap-6">
+                <div className="flex-1">
+                  {workOrder.signature.imageUrl && (
+                    <div className="border-b-2 border-gray-400 pb-2 mb-2 max-w-xs">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={workOrder.signature.imageUrl}
+                        alt="Assinatura"
+                        className="h-16 object-contain"
+                      />
+                    </div>
+                  )}
+                  <p className="font-medium text-gray-900">{workOrder.signature.signerName}</p>
+                  {workOrder.signature.signerDocument && (
+                    <p className="text-sm text-gray-500">CPF/RG: {workOrder.signature.signerDocument}</p>
+                  )}
+                </div>
+                <div className="text-sm text-gray-500">
+                  <p>Assinado em:</p>
+                  <p className="font-medium text-gray-700">{formatDateTime(workOrder.signature.signedAt)}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Rodapé */}
+          <div className="px-6 py-4 md:px-8 border-t bg-white text-center text-sm text-gray-500">
+            <p>{workOrder.company.name}</p>
+            {workOrder.company.address && (
+              <p className="mt-1">{workOrder.company.address}</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Lightbox */}
       {lightboxOpen && (
         <ImageLightbox
           images={lightboxImages}

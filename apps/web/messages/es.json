@@ -1510,7 +1510,8 @@
     "zapiConnectionFailed": "Error al conectar. Verifica tus credenciales.",
     "zapiConnect": "Conectar Z-API",
     "zapiNeedsScan": "Escanear QR",
-    "zapiConnected": "WhatsApp conectado",
+    "zapiConnected": "Conectado",
+    "zapiNotConfigured": "No configurado",
     "zapiPhoneNumber": "Número",
     "zapiReadyToSend": "Listo para enviar mensajes",
     "zapiConnectedAt": "Conectado en",
@@ -1772,7 +1773,8 @@
       "paymentReminder": "Recordatorios de pago",
       "paymentReminderDescription": "Enviar recordatorios antes y después del vencimiento",
       "scheduleReminder": "Recordatorios de agenda",
-      "scheduleReminderDescription": "Enviar recordatorio antes de la fecha programada de la OT"
+      "scheduleReminderDescription": "Enviar recordatorio antes de la fecha programada de la OT",
+      "configureIntegration": "Configurar"
     },
     "reminders": {
       "chargeReminders": "Recordatorios de Cobro",

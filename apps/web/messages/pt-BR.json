@@ -1541,7 +1541,8 @@
     "zapiConnectionFailed": "Falha ao conectar. Verifique suas credenciais.",
     "zapiConnect": "Conectar Z-API",
     "zapiNeedsScan": "Escanear QR",
-    "zapiConnected": "WhatsApp conectado",
+    "zapiConnected": "Conectado",
+    "zapiNotConfigured": "Não configurado",
     "zapiPhoneNumber": "Número",
     "zapiReadyToSend": "Pronto para enviar mensagens",
     "zapiConnectedAt": "Conectado em",
@@ -1803,7 +1804,8 @@
       "paymentReminder": "Lembretes de pagamento",
       "paymentReminderDescription": "Enviar lembretes antes e após o vencimento",
       "scheduleReminder": "Lembretes de agendamento",
-      "scheduleReminderDescription": "Enviar lembrete antes da data agendada da OS"
+      "scheduleReminderDescription": "Enviar lembrete antes da data agendada da OS",
+      "configureIntegration": "Configurar"
     },
     "reminders": {
       "chargeReminders": "Lembretes de Cobrança",

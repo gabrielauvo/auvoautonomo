@@ -11,6 +11,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useTranslations } from '@/i18n';
 import {
   Bell,
@@ -20,6 +21,7 @@ import {
   Check,
   AlertCircle,
   Info,
+  ExternalLink,
 } from 'lucide-react';
 import {
   Card,
@@ -48,12 +50,18 @@ import {
   NotificationPreferences,
   NotificationMessages,
 } from '@/services/settings.service';
+import { useZApiStatus } from '@/hooks/use-integrations';
 
 export default function NotificationsSettingsPage() {
   const { t } = useTranslations('notifications');
+  const tIntegrations = useTranslations('integrations');
   const { data: settings, isLoading } = useNotificationSettings();
+  const { data: zapiStatus } = useZApiStatus();
   const updatePreferences = useUpdateNotificationPreferences();
   const updateMessages = useUpdateNotificationMessages();
+
+  // Z-API connection status
+  const isZApiConnected = zapiStatus?.configured && zapiStatus?.connectionStatus === 'connected';
 
   // Tab state
   const [activeTab, setActiveTab] = useState('email');
@@ -330,15 +338,33 @@ export default function NotificationsSettingsPage() {
                   />
                 </div>
 
-                <Alert variant="info" className="mb-4">
-                  <div className="flex items-start gap-2">
-                    <Info className="h-4 w-4 mt-0.5" />
-                    <div className="text-sm">
-                      <p className="font-medium">{t('whatsapp.integrationTitle')}</p>
-                      <p>
-                        {t('whatsapp.integrationDescription')}
-                      </p>
+                <Alert variant={isZApiConnected ? 'success' : 'warning'} className="mb-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-2">
+                      <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                      <div className="text-sm">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-medium">{t('whatsapp.integrationTitle')}</p>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                            isZApiConnected
+                              ? 'bg-success/10 text-success'
+                              : 'bg-warning/10 text-warning'
+                          }`}>
+                            {isZApiConnected ? tIntegrations.t('zapiConnected') : tIntegrations.t('zapiNotConfigured')}
+                          </span>
+                        </div>
+                        <p className="mt-1">
+                          {t('whatsapp.integrationDescription')}
+                        </p>
+                      </div>
                     </div>
+                    <Link
+                      href="/settings/integrations"
+                      className="flex-shrink-0 inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                    >
+                      {t('whatsapp.configureIntegration')}
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </Link>
                   </div>
                 </Alert>
 

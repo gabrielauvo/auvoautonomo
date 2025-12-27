@@ -724,8 +724,9 @@ export default function WorkOrderDetailsPage() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowActionsMenu(!showActionsMenu)}
+                className="h-9 w-9 p-0"
               >
-                <MoreVertical className="h-4 w-4" />
+                <MoreVertical className="h-5 w-5" />
               </Button>
 
               {showActionsMenu && (
@@ -734,24 +735,32 @@ export default function WorkOrderDetailsPage() {
                     className="fixed inset-0 z-10"
                     onClick={() => setShowActionsMenu(false)}
                   />
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-20">
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 z-20 py-1 overflow-hidden">
+                    {/* Ações principais */}
                     {canEdit && (
                       <Link href={`/work-orders/${workOrder.id}/edit`}>
-                        <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                          <Edit className="h-4 w-4" />
+                        <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                          <Edit className="h-4 w-4 text-gray-500" />
                           {tCommon('edit')}
                         </button>
                       </Link>
                     )}
                     <Link href={`/expenses/new?workOrderId=${workOrder.id}`}>
-                      <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                        <Receipt className="h-4 w-4" />
-                        Adicionar Despesa
+                      <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                        <Receipt className="h-4 w-4 text-primary" />
+                        <span>Adicionar Despesa</span>
                       </button>
                     </Link>
+
+                    {/* Separador antes de ações destrutivas */}
+                    {(canCancel || true) && (
+                      <div className="my-1 border-t border-gray-100" />
+                    )}
+
+                    {/* Ações destrutivas */}
                     {canCancel && (
                       <button
-                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-error hover:bg-gray-50"
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-amber-600 hover:bg-amber-50 transition-colors"
                         onClick={() => {
                           setShowActionsMenu(false);
                           setShowCancelModal(true);
@@ -762,7 +771,7 @@ export default function WorkOrderDetailsPage() {
                       </button>
                     )}
                     <button
-                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-error hover:bg-gray-50"
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-error hover:bg-red-50 transition-colors"
                       onClick={() => {
                         setShowActionsMenu(false);
                         setShowDeleteModal(true);
